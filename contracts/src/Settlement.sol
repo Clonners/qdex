@@ -5,10 +5,10 @@ import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
 import {TradingVault} from "./TradingVault.sol";
 
-/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, and proof-event truth.
+/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, and proof-event truth.
 /// @dev This is intentionally minimal: fee movement, external nonce/market/fee managers, and real Quai proof wiring
-///      remain future ratchets. ST-02 keeps nonce cancellation local and user-owned so cancellation/reuse rejects
-///      before vault movement without adding deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
+///      remain future ratchets. ST-03 keeps expiry and replay-domain rejects ahead of nonce consumption and vault
+///      movement without adding deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
 contract Settlement is ISettlement {
     uint256 private constant MAX_CANCEL_RANGE_SIZE = 256;
 
@@ -147,7 +147,7 @@ contract Settlement is ISettlement {
         require(fill.quoteAmount > 0, "ST_QUOTE_AMOUNT_ZERO");
         require(fill.makerFee == 0 && fill.takerFee == 0, "ST_FEES_NOT_READY");
         require(fill.makerNonce != fill.takerNonce || fill.maker != fill.taker, "ST_NONCE_PAIR_INVALID");
-        require(fill.expiresAt >= block.timestamp, "ST_EXPIRED");
+        require(fill.expiresAt > block.timestamp, "ST_EXPIRED");
         require(fill.chainId == block.chainid, "ST_CHAIN_ID_MISMATCH");
         require(fill.settlementContract == address(this), "ST_SETTLEMENT_CONTRACT_MISMATCH");
         require(fill.makerFilledAmount == fill.baseAmount, "ST_MAKER_FILL_AMOUNT_MISMATCH");
