@@ -2,6 +2,14 @@
 
 MVP contract set for a non-custodial orderbook DEX.
 
+## Tooling baseline
+
+Contract implementation should start from the single-zone Hardhat + Quais SDK decision in [`docs/quai-tooling.md`](./quai-tooling.md): Cyprus-1 first, Orchard testnet only for approved live testing, regular Solidity before SolidityX, and no autonomous cron deploys or transaction sends.
+
+Important current risk: Quai docs/examples disagree on the exact maximum Solidity compiler (`0.8.19` reference page vs `0.8.20` deployment guide/example). Keep contract source compiler pins explicit and verify locally/testnet before value-bearing deployment.
+
+Token assumption: native QUAI is account-model and contract-friendly; native Qi is UTXO-model and must not be treated as an ERC-20-style vault token until a wrapper/adapter/conversion primitive is confirmed.
+
 ## TradingVault
 
 Responsible for non-custodial user balances.
