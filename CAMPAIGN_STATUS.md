@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: TradingVault `TV-06` pause/withdrawal-freeze boundary ratchet green -> next local `Settlement` `ST-01` valid signed fill skeleton without deploy/RPC/wallet use
+- Current phase: local `Settlement` `ST-01` valid signed fill skeleton green -> next `ST-02` nonce reuse/cancel rejection coverage without deploy/RPC/wallet use
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Start the local `Settlement` contract `ST-01` valid signed fill skeleton: verify signatures/replay fields at the boundary and emit the future `TradeSettled` proof trigger, local Hardhat only.
+1. Add local `Settlement` `ST-02` nonce reuse/cancel rejection coverage before expanding market/fee dependencies.
 2. Keep TradingVault `TV-01`..`TV-06` custody/pause boundaries green while settlement tests are added.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
@@ -88,3 +88,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 11:44 -03: Added local Hardhat `TV-04` locked-balance withdrawal ratchet: settlement-authority `lockForSettlement` moves available funds to locked, normal user `withdraw` cannot move the locked portion, and local harness docs now track TV-01..TV-04 coverage; verified RED focused `TV-04` failed on `TV_SETTLEMENT_HOOK_NOT_READY`, GREEN focused `TV-04`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `6b379fa`; next slice: RED `TV-05` settlement-hook authorization ratchet.
 - 2026-06-06 12:04 -03: Added local Hardhat `TV-05` settlement-hook authorization ratchet: non-authority callers cannot lock/unlock/settle, authority unlock/settle hooks validate trace IDs and locked-balance limits before internal accounting moves; verified RED focused `TV-05` failed on ungated/unimplemented hooks, GREEN focused `TV-05`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `872250e`; next slice: RED `TV-06` pause/withdrawal-freeze boundary ratchet.
 - 2026-06-06 12:24 -03: Added local Hardhat `TV-06` pause/withdrawal-freeze boundary ratchet: caller-owned available withdrawals stay possible, withdraw source cannot be wired to broad pause/admin/operator gates, and local harness docs now move next to `ST-01`; verified RED focused `TV-06` failed on missing boundary marker, RED docs guard failed on missing README coverage, GREEN focused `TV-06`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `e7aae04`; next slice: local `Settlement` `ST-01` valid signed fill skeleton.
+- 2026-06-06 12:47 -03: Added local `Settlement` `ST-01` valid signed fill skeleton: signatures bind the fill hash/replay fields, valid fills move maker base and taker quote through the vault exactly once, mark nonces, and emit `TradeSettled`; verified RED focused `ST-01` failed on missing `Settlement`, GREEN focused `ST-01`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `31a1864`; next slice: local `ST-02` nonce reuse/cancel rejection coverage.
