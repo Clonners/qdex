@@ -43,6 +43,18 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 4. Specify matching-engine command/event boundary.
 5. Implement first mock vertical slice: order -> match -> mock settlement -> proof.
 
+## Cron runner
+
+- Job ID: `bd3c1b71af75`
+- Name: `qdex-autonomous-builder`
+- Schedule: `0 8-22/2 * * *` America/Buenos_Aires local time
+- Repeat: 60 runs
+- Delivery: origin Telegram chat
+- Profile: `intielsolcito`
+- Workdir: this repo
+- Boundaries: source/docs/tests only; no deploys, txs, wallets, pushes, public servers or external side effects without approval.
+
 ## Latest checkpoints
 
 - 2026-06-06: Campaign contract/status created by interactive session.
+- 2026-06-06: Autonomous cron runner `bd3c1b71af75` created and scheduled for bounded builder slices.
