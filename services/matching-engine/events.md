@@ -129,13 +129,14 @@ Emitted immediately after `ORDER_MATCHED` with a `FillPacket` suitable for relay
       "amount": "1000000000000000000",
       "makerFee": "0",
       "takerFee": "0",
-      "settlementMode": "mock",
-      "createdAt": 1780000001
+      "settlementMode": "mock"
     },
     "next": "relayer.submitFillPacket"
   }
 }
 ```
+
+Do not copy matcher-local timestamps into `payload.fillPacket`; `sourceEventId` comes from the settlement/indexer event once confirmation is projected.
 
 Handoff:
 

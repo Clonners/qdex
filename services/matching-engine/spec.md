@@ -202,10 +202,11 @@ Every deterministic match creates a settlement candidate:
   "amount": "1000000000000000000",
   "makerFee": "0",
   "takerFee": "0",
-  "settlementMode": "mock",
-  "createdAt": 1780000001
+  "settlementMode": "mock"
 }
 ```
+
+`createdAt` belongs only to matcher event envelopes or private audit logs, not to the `FillPacket` handoff. `sourceEventId` is added only after settlement confirmation, when the indexer projects a mock or contract settlement event into public fill/proof rows.
 
 Handoff contract:
 

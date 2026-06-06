@@ -6,6 +6,14 @@ const repoRoot = new URL('../', import.meta.url);
 
 const readText = (relativePath) => readFile(new URL(relativePath, repoRoot), 'utf8');
 
+const sectionBetween = (text, start, end) => {
+  const startIndex = text.indexOf(start);
+  assert.notEqual(startIndex, -1, `expected to find section start ${start}`);
+  const endIndex = text.indexOf(end, startIndex + start.length);
+  assert.notEqual(endIndex, -1, `expected to find section end ${end}`);
+  return text.slice(startIndex, endIndex);
+};
+
 test('relayer spec defines non-custodial fill settlement state machine', async () => {
   const spec = await readText('services/relayer/spec.md');
 
@@ -48,5 +56,24 @@ test('relayer spec preserves deterministic handoff and failure visibility', asyn
     'Real Quai mode must reference settlementTx, blockNumber, eventIndex, and explorerUrl',
   ]) {
     assert.ok(spec.includes(requiredText), `services/relayer/spec.md should include ${requiredText}`);
+  }
+});
+
+test('relayer FillPacket input stays separate from indexed fill projection timestamps', async () => {
+  const spec = await readText('services/relayer/spec.md');
+  const minimumFieldsSection = sectionBetween(spec, 'Minimum `FillPacket` fields:', '## State model');
+
+  assert.equal(
+    minimumFieldsSection.includes('"createdAt"'),
+    false,
+    'relayer FillPacket input must not expose matcher-local createdAt',
+  );
+
+  for (const requiredText of [
+    '`createdAt` can exist on private lifecycle rows',
+    '`createdAt` is not a `FillPacket` field',
+    '`sourceEventId` is not a relayer input',
+  ]) {
+    assert.ok(minimumFieldsSection.includes(requiredText), `relayer FillPacket docs should include ${requiredText}`);
   }
 });

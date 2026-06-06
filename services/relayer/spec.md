@@ -56,10 +56,11 @@ Minimum `FillPacket` fields:
   "amount": "1000000000000000000",
   "makerFee": "0",
   "takerFee": "0",
-  "settlementMode": "mock",
-  "createdAt": 1780000001
+  "settlementMode": "mock"
 }
 ```
+
+Relayer lifecycle rows may keep private receive/validation timestamps for operations. `createdAt` can exist on private lifecycle rows, but `createdAt` is not a `FillPacket` field. `sourceEventId` is not a relayer input; the indexer adds it after `SETTLEMENT_CONFIRMED` when a mock or contract settlement event becomes public projection truth.
 
 ## State model
 
