@@ -2,6 +2,8 @@
 
 Python client for agents, research scripts and market makers.
 
+Current status: contract/spec only. The TypeScript SDK and `qdex smoke` now pin the first executable mock API bot loop; the Python implementation should mirror that surface next without adding wallet, transaction, withdrawal, or custody authority.
+
 Planned surface:
 
 ```python

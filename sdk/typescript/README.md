@@ -2,13 +2,19 @@
 
 First-class client for bots, market makers and frontend code.
 
-Planned surface:
+Smoke stub available now:
 
 ```ts
-const dex = new QDexClient({ baseUrl, wallet });
-await dex.markets.list();
-await dex.orderbook.get('QI-QUAI');
-await dex.orders.placeLimit({ market: 'QI-QUAI', side: 'buy', amount, price });
-await dex.orders.cancelAll({ market: 'QI-QUAI' });
-await dex.proofs.trade(tradeId);
+import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-typescript';
+
+const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
+const result = await runMockCrossSmoke(dex, {
+  restingSell: createMockSignedOrder({ side: 'sell', amount: '100', price: '5', nonce: '1' }),
+  crossingBuy: createMockSignedOrder({ side: 'buy', amount: '100', price: '6', nonce: '2' }),
+});
+
+console.log(result.fill.sourceEventId);
+console.log(result.proof.settlementMode); // mock
 ```
+
+The smoke helper is deliberately mock-only: it proves the API/indexer/proof loop without wallets, transactions, real Quai settlement, or fund movement.

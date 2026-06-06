@@ -1,0 +1,13 @@
+{
+  "name": "@qdex/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "qdex": "src/cli.js"
+  },
+  "scripts": {
+    "check": "node --check src/cli.js && node --test test/*.test.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

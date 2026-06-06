@@ -2,16 +2,12 @@
 
 Terminal client for humans, bots and ops.
 
-Planned commands:
+Implemented smoke/read-only stubs:
 
 ```bash
-qdex markets
-qdex ticker QI-QUAI
-qdex book QI-QUAI
-qdex balance
-qdex order buy QI-QUAI --amount 1000 --price 0.123
-qdex order sell QI-QUAI --amount 500 --market --slippage-bps 50
-qdex cancel --all
-qdex stream fills
-qdex proof trade <trade-id>
+qdex --base-url http://127.0.0.1:8787 markets
+qdex --base-url http://127.0.0.1:8787 book QI-QUAI
+qdex --base-url http://127.0.0.1:8787 smoke
 ```
+
+`qdex smoke` submits two deterministic mock signed orders, verifies the indexed fill/proof loop, and prints explicit mock-settlement safety fields (`settlementMode: mock`, `settlementTx: null`, `explorerUrl: null`, no real Quai tx/no funds moved). Delegate/API-key safety remains `NO_WITHDRAW`/`NO_ADMIN` by default.
