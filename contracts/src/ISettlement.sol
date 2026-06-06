@@ -26,6 +26,8 @@ interface ISettlement {
         address settlementContract;
         address feeRecipient;
         uint256 maxFeeBps;
+        uint256 makerOrderAmount;
+        uint256 takerOrderAmount;
         uint256 makerFilledAmount;
         uint256 takerFilledAmount;
     }

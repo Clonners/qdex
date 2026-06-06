@@ -89,6 +89,8 @@ describe('Settlement ST-01 valid signed fill skeleton', function () {
       settlementContract: settlementAddress,
       feeRecipient: ethers.ZeroAddress,
       maxFeeBps: 0n,
+      makerOrderAmount: baseAmount,
+      takerOrderAmount: baseAmount,
       makerFilledAmount: baseAmount,
       takerFilledAmount: baseAmount,
     };

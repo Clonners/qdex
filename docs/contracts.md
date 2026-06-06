@@ -68,7 +68,7 @@ Must verify:
 - available vault balances
 - fee cap and fee recipient
 
-The local `ISettlement.FillPacket` surface already carries `fillId`, order hashes, maker/taker, tokens, price, amounts, fees, maker/taker nonces, expiration, `chainId`, `settlementContract`, `feeRecipient`, `maxFeeBps`, and cumulative fill accounting fields. `TradeSettled` exposes `fillId`, `marketId`, price, amounts, fees and fee recipient so the indexer/proof service can project final event truth.
+The local `ISettlement.FillPacket` surface already carries `fillId`, order hashes, maker/taker, tokens, price, amounts, fees, maker/taker nonces, expiration, `chainId`, `settlementContract`, `feeRecipient`, `maxFeeBps`, signed maker/taker order amount caps, and cumulative fill accounting fields. `TradeSettled` exposes `fillId`, `marketId`, price, amounts, fees and fee recipient so the indexer/proof service can project final event truth.
 
 ## NonceManager
 

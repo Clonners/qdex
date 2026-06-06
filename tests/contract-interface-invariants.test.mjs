@@ -77,6 +77,8 @@ test('Settlement FillPacket carries replay, price, fee-cap, and event-proof fiel
     'address settlementContract;',
     'address feeRecipient;',
     'uint256 maxFeeBps;',
+    'uint256 makerOrderAmount;',
+    'uint256 takerOrderAmount;',
     'uint256 makerFilledAmount;',
     'uint256 takerFilledAmount;',
     'function settle(FillPacket calldata fill, bytes calldata makerSignature, bytes calldata takerSignature) external;',

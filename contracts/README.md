@@ -30,7 +30,8 @@ Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-
 8. `ST-02`: local Settlement rejects reused or cancelled maker/taker nonces before vault movement, including single nonce and bounded range cancellation.
 9. `ST-03`: local Settlement rejects expired fills and replay-domain mismatches before nonce consumption or vault movement.
 10. `ST-04`: local Settlement rejects disabled local markets, invalid price/amount arithmetic, unsupported fees, and fill-accounting mismatches before nonce consumption or vault movement.
+11. `ST-05`: local Settlement tracks cumulative partial-fill amounts by order hash and rejects fills that would exceed signed maker/taker order amounts.
 
-Recommended next slice: add local `ST-05` partial fill accounting ratchet so fills cannot exceed signed order amounts before external MarketRegistry/FeeManager wiring.
+Recommended next slice: add local `ST-06` fee cap and fee-recipient enforcement before balance movement.
 
 Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.

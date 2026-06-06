@@ -5,16 +5,18 @@ import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
 import {TradingVault} from "./TradingVault.sol";
 
-/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, and proof-event truth.
+/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, and proof-event truth.
 /// @dev This is intentionally minimal: fee movement, external nonce/market/fee managers, and real Quai proof wiring
-///      remain future ratchets. ST-04 keeps local market and fill-constraint rejects ahead of nonce consumption and vault
-///      movement without adding deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
+///      remain future ratchets. ST-05 keeps local partial-fill accounting bounded by signed order amounts without adding
+///      deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
 contract Settlement is ISettlement {
     uint256 private constant MAX_CANCEL_RANGE_SIZE = 256;
 
     ITradingVault public immutable vault;
 
     mapping(address => mapping(uint256 => bool)) private usedNonces;
+    mapping(address => mapping(uint256 => bytes32)) private activeOrderHashByNonce;
+    mapping(bytes32 => uint256) private orderFilledAmountByHash;
 
     event NonceCancelled(address indexed user, uint256 indexed nonce);
     event NonceRangeCancelled(address indexed user, uint256 from, uint256 to);
@@ -25,6 +27,10 @@ contract Settlement is ISettlement {
 
     function isNonceUsed(address user, uint256 nonce) external view returns (bool) {
         return usedNonces[user][nonce];
+    }
+
+    function filledAmountOf(bytes32 orderHash) external view returns (uint256) {
+        return orderFilledAmountByHash[orderHash];
     }
 
     function cancelNonce(uint256 nonce) external {
@@ -86,6 +92,8 @@ contract Settlement is ISettlement {
                 fill.takerFee,
                 fill.feeRecipient,
                 fill.maxFeeBps,
+                fill.makerOrderAmount,
+                fill.takerOrderAmount,
                 fill.makerFilledAmount,
                 fill.takerFilledAmount
             )
@@ -94,15 +102,17 @@ contract Settlement is ISettlement {
 
     function settle(FillPacket calldata fill, bytes calldata makerSignature, bytes calldata takerSignature) external {
         _validateFillBoundary(fill);
-        require(!usedNonces[fill.maker][fill.makerNonce], "ST_MAKER_NONCE_USED");
-        require(!usedNonces[fill.taker][fill.takerNonce], "ST_TAKER_NONCE_USED");
+        _validateNonceAvailableForOrder(fill.maker, fill.makerNonce, fill.makerOrderHash, "ST_MAKER_NONCE_USED", "ST_MAKER_NONCE_ORDER_MISMATCH");
+        _validateNonceAvailableForOrder(fill.taker, fill.takerNonce, fill.takerOrderHash, "ST_TAKER_NONCE_USED", "ST_TAKER_NONCE_ORDER_MISMATCH");
+        _validatePartialFillAccounting(fill);
 
         bytes32 fillHash = hashFill(fill);
         require(_recoverEthSignedMessage(fillHash, makerSignature) == fill.maker, "ST_MAKER_SIGNATURE_INVALID");
         require(_recoverEthSignedMessage(fillHash, takerSignature) == fill.taker, "ST_TAKER_SIGNATURE_INVALID");
 
-        usedNonces[fill.maker][fill.makerNonce] = true;
-        usedNonces[fill.taker][fill.takerNonce] = true;
+        _recordPartialFillAccounting(fill);
+        _advanceNonceLifecycle(fill.maker, fill.makerNonce, fill.makerOrderHash, fill.makerFilledAmount, fill.makerOrderAmount);
+        _advanceNonceLifecycle(fill.taker, fill.takerNonce, fill.takerOrderHash, fill.takerFilledAmount, fill.takerOrderAmount);
 
         vault.lockForSettlement(fill.maker, fill.baseToken, fill.baseAmount, fill.makerOrderHash);
         vault.lockForSettlement(fill.taker, fill.quoteToken, fill.quoteAmount, fill.takerOrderHash);
@@ -148,12 +158,77 @@ contract Settlement is ISettlement {
         require(fill.quoteAmount > 0, "ST_QUOTE_AMOUNT_ZERO");
         require(fill.quoteAmount == fill.baseAmount * fill.price, "ST_PRICE_AMOUNT_MISMATCH");
         require(fill.makerFee == 0 && fill.takerFee == 0, "ST_FEES_NOT_READY");
+        require(fill.makerOrderAmount > 0, "ST_MAKER_ORDER_AMOUNT_ZERO");
+        require(fill.takerOrderAmount > 0, "ST_TAKER_ORDER_AMOUNT_ZERO");
         require(fill.makerNonce != fill.takerNonce || fill.maker != fill.taker, "ST_NONCE_PAIR_INVALID");
         require(fill.expiresAt > block.timestamp, "ST_EXPIRED");
         require(fill.chainId == block.chainid, "ST_CHAIN_ID_MISMATCH");
         require(fill.settlementContract == address(this), "ST_SETTLEMENT_CONTRACT_MISMATCH");
-        require(fill.makerFilledAmount == fill.baseAmount, "ST_MAKER_FILL_AMOUNT_MISMATCH");
-        require(fill.takerFilledAmount == fill.baseAmount, "ST_TAKER_FILL_AMOUNT_MISMATCH");
+    }
+
+    function _validateNonceAvailableForOrder(
+        address user,
+        uint256 nonce,
+        bytes32 orderHash,
+        string memory usedError,
+        string memory orderMismatchError
+    ) private view {
+        require(!usedNonces[user][nonce], usedError);
+
+        bytes32 activeOrderHash = activeOrderHashByNonce[user][nonce];
+        require(activeOrderHash == bytes32(0) || activeOrderHash == orderHash, orderMismatchError);
+    }
+
+    function _validatePartialFillAccounting(FillPacket calldata fill) private view {
+        _validateOrderFillAccounting(
+            fill.makerOrderHash,
+            fill.baseAmount,
+            fill.makerOrderAmount,
+            fill.makerFilledAmount,
+            "ST_MAKER_FILL_AMOUNT_MISMATCH",
+            "ST_MAKER_ORDER_AMOUNT_EXCEEDED"
+        );
+        _validateOrderFillAccounting(
+            fill.takerOrderHash,
+            fill.baseAmount,
+            fill.takerOrderAmount,
+            fill.takerFilledAmount,
+            "ST_TAKER_FILL_AMOUNT_MISMATCH",
+            "ST_TAKER_ORDER_AMOUNT_EXCEEDED"
+        );
+    }
+
+    function _validateOrderFillAccounting(
+        bytes32 orderHash,
+        uint256 currentFillAmount,
+        uint256 orderAmount,
+        uint256 cumulativeFilledAmount,
+        string memory mismatchError,
+        string memory exceededError
+    ) private view {
+        require(cumulativeFilledAmount == orderFilledAmountByHash[orderHash] + currentFillAmount, mismatchError);
+        require(cumulativeFilledAmount <= orderAmount, exceededError);
+    }
+
+    function _recordPartialFillAccounting(FillPacket calldata fill) private {
+        orderFilledAmountByHash[fill.makerOrderHash] = fill.makerFilledAmount;
+        orderFilledAmountByHash[fill.takerOrderHash] = fill.takerFilledAmount;
+    }
+
+    function _advanceNonceLifecycle(
+        address user,
+        uint256 nonce,
+        bytes32 orderHash,
+        uint256 cumulativeFilledAmount,
+        uint256 orderAmount
+    ) private {
+        if (cumulativeFilledAmount == orderAmount) {
+            usedNonces[user][nonce] = true;
+            delete activeOrderHashByNonce[user][nonce];
+            return;
+        }
+
+        activeOrderHashByNonce[user][nonce] = orderHash;
     }
 
     function _localMarketId() private pure returns (bytes32) {

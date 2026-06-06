@@ -82,6 +82,8 @@ async function deploySettlementHarness() {
       settlementContract,
       feeRecipient: ethers.ZeroAddress,
       maxFeeBps: 0n,
+      makerOrderAmount: baseAmount,
+      takerOrderAmount: baseAmount,
       makerFilledAmount: baseAmount,
       takerFilledAmount: baseAmount,
     };
