@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: local `Settlement` `ST-02` nonce reuse/cancel rejection coverage green -> next `ST-03` expired order and replay-domain mismatch rejection coverage without deploy/RPC/wallet use
+- Current phase: local `Settlement` `ST-03` expiry/replay-domain rejection coverage green -> next `ST-04` invalid price/amount/fill-constraint rejection coverage before external MarketRegistry/FeeManager wiring
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add local `Settlement` `ST-03` expired order plus `chainId`/`settlementContract` replay-domain mismatch rejection coverage before market/fee dependencies.
-2. Keep TradingVault `TV-01`..`TV-06` custody/pause boundaries green while settlement tests are added.
+1. Add local `Settlement` `ST-04` invalid price/amount/fill-constraint rejection coverage before external MarketRegistry/FeeManager wiring.
+2. Keep TradingVault `TV-01`..`TV-06` and Settlement `ST-01`..`ST-03` custody/replay boundaries green while settlement constraints are added.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
@@ -90,3 +90,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 12:24 -03: Added local Hardhat `TV-06` pause/withdrawal-freeze boundary ratchet: caller-owned available withdrawals stay possible, withdraw source cannot be wired to broad pause/admin/operator gates, and local harness docs now move next to `ST-01`; verified RED focused `TV-06` failed on missing boundary marker, RED docs guard failed on missing README coverage, GREEN focused `TV-06`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `e7aae04`; next slice: local `Settlement` `ST-01` valid signed fill skeleton.
 - 2026-06-06 12:47 -03: Added local `Settlement` `ST-01` valid signed fill skeleton: signatures bind the fill hash/replay fields, valid fills move maker base and taker quote through the vault exactly once, mark nonces, and emit `TradeSettled`; verified RED focused `ST-01` failed on missing `Settlement`, GREEN focused `ST-01`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `31a1864`; next slice: local `ST-02` nonce reuse/cancel rejection coverage.
 - 2026-06-06 13:05 -03: Added local `Settlement` `ST-02` nonce reuse/cancel rejection ratchet: different fills cannot reuse maker/taker nonces, user-owned `cancelNonce`/bounded `cancelNonceRange` make nonces unavailable before any vault movement, and docs guard now tracks `ST-03` next; verified RED focused `ST-02` failed on missing cancel functions, GREEN focused `ST-02`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `664145c`; next slice: local `ST-03` expired order plus replay-domain mismatch rejection coverage.
+- 2026-06-06 13:24 -03: Added local `Settlement` `ST-03` expiry/replay-domain rejection ratchet: exact `expiresAt` boundary, wrong `chainId`, and wrong `settlementContract` all reject before nonce consumption or vault movement; verified RED focused `ST-03` failed on exact-expiry still settling, GREEN focused `ST-03`, docs guard, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `9d58999`; next slice: local `ST-04` invalid price/amount/fill-constraint rejection coverage before external MarketRegistry/FeeManager wiring.
