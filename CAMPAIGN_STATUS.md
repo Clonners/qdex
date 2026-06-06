@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: contract implementation test matrix complete -> local-only contract harness planning without deploy/RPC/wallet use
+- Current phase: local-only contract harness guard complete -> first TradingVault TV-01 local test/implementation without deploy/RPC/wallet use
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add a local-only contract test harness scaffold/guard for TradingVault tests without RPC, wallets, deploy scripts, or Orchard activity.
-2. Start TradingVault implementation tests from `docs/contract-implementation-test-matrix.md` only after the local harness guard is green.
+1. Add/install only local contract dev dependencies as needed, then write the RED `TV-01` TradingVault deposit test using the in-memory Hardhat harness.
+2. Implement the smallest TradingVault deposit/balance behavior after the RED test is confirmed; keep admin/operator withdrawal selectors absent.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
@@ -81,3 +81,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 09:26 -03: Added terminal UI mock order trigger/browser smoke: browser button posts deterministic local/dev GTC sell plus `market_ioc` IOC buy, verifies proof-service mock proof, and keeps no-real-Quai/no-funds safety copy; verified RED/GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, and secret-pattern scan no matches; slice commit `9159357`; next slice: contract interface custody invariant ratchets (local/static, no deploy/tx).
 - 2026-06-06 09:45 -03: Added static contract custody interface ratchets plus expanded Solidity interfaces for vault, settlement, nonce, market, fee, and delegate-key safety; pinned interfaces to Solidity `0.8.20`, forbade admin/operator withdrawal selectors, and preserved `NO_WITHDRAW`/`NO_ADMIN`; verified RED `node --test tests/contract-interface-invariants.test.mjs`, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `4a6de5d`; next slice: implementation-oriented contract spec/test matrix without deploys or wallet use.
 - 2026-06-06 10:03 -03: Added `docs/contract-implementation-test-matrix.md` plus docs ratchet coverage for local-only TradingVault/Settlement/dependency tests, proof-event truth, and approval gates; verified RED/GREEN `node --test tests/contract-implementation-matrix.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `1f33fb6`; next slice: local-only contract test harness scaffold/guard without RPC, wallets, deploy scripts, or Orchard activity.
+- 2026-06-06 10:24 -03: Added local-only `@qdex/contracts` Hardhat harness scaffold plus guard ratchet: workspace package, `hardhat`-only config, dependency-light guard script, and docs for starting `TV-01`; verified RED/GREEN `node --test tests/contract-local-harness-guard.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `89fdb94`; next slice: RED `TV-01` TradingVault deposit test on the local harness, then minimal deposit/balance implementation.
