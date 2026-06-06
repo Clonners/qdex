@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: signed order schema documented -> API route skeleton
+- Current phase: API route skeleton -> matching-engine command/event boundary
 
 ## Current repo baseline
 
@@ -60,3 +60,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06: Cron cadence updated to every 20 minutes 24/7 (`*/20 * * * *`), repeat changed to forever.
 - 2026-06-06: Documented Quai contract tooling in `docs/quai-tooling.md` and linked contract assumptions in `docs/contracts.md`; verified docs check, `pnpm check`, and secret scan; commit `db04a47`; next slice: signed order schema + OpenAPI components.
 - 2026-06-06 03:04 -03: Defined canonical signed order schema in `docs/order-schema.md`, added OpenAPI order/fill components plus Node test coverage wired into `pnpm check`; verified RED `node --test tests/order-schema.test.mjs`, GREEN `pnpm check`, and secret scan; slice commit `9c10404`; next slice: API route modules + tests for health/markets/orders/proofs.
+- 2026-06-06: Added API route modules for public/private/proof surfaces plus node:test coverage for health, markets, order/fill placeholders, balances, and proof-not-found projection; verified RED `pnpm --filter @qdex/api test`, GREEN `pnpm check`, and secret scan; slice commit `bb5ccc0`; next slice: matching-engine command/event boundary.
