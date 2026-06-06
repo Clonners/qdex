@@ -24,6 +24,110 @@ const assertOk = ({ status, body }, path) => {
   return body;
 };
 
+class QDexStream {
+  constructor({ channel, url, WebSocketImpl, timeoutMs = 2_000 }) {
+    if (typeof WebSocketImpl !== 'function') {
+      throw new TypeError('QDexClient stream support requires a WebSocket implementation.');
+    }
+
+    this.channel = channel;
+    this.url = url;
+    this.timeoutMs = timeoutMs;
+    this.messages = [];
+    this.waiters = [];
+    this.error = null;
+    this.closed = false;
+    this.ws = new WebSocketImpl(url);
+
+    this.ws.addEventListener('message', (event) => {
+      if (typeof event.data !== 'string') {
+        this.#fail(new Error(`QDex stream expected text JSON for ${channel}.`));
+        return;
+      }
+
+      try {
+        this.#push(JSON.parse(event.data));
+      } catch (error) {
+        this.#fail(error instanceof Error ? error : new Error(String(error)));
+      }
+    });
+
+    this.ws.addEventListener('error', () => {
+      this.#fail(new Error(`QDex WebSocket stream failed for ${channel}.`));
+    }, { once: true });
+
+    this.ws.addEventListener('close', () => {
+      this.closed = true;
+      this.#fail(new Error(`QDex WebSocket stream closed for ${channel}.`));
+    }, { once: true });
+  }
+
+  async next({ timeoutMs = this.timeoutMs } = {}) {
+    if (this.messages.length > 0) {
+      return this.messages.shift();
+    }
+
+    if (this.error !== null) {
+      throw this.error;
+    }
+
+    return await new Promise((resolve, reject) => {
+      const waiter = { resolve, reject, timer: null };
+      waiter.timer = setTimeout(() => {
+        this.waiters = this.waiters.filter((candidate) => candidate !== waiter);
+        reject(new Error(`timed out waiting for ${this.channel} stream message`));
+      }, timeoutMs);
+
+      this.waiters.push(waiter);
+    });
+  }
+
+  async close() {
+    this.closed = true;
+
+    for (const waiter of this.waiters.splice(0)) {
+      clearTimeout(waiter.timer);
+      waiter.reject(new Error(`QDex WebSocket stream closed for ${this.channel}.`));
+    }
+
+    if (this.ws.readyState === 3) {
+      return;
+    }
+
+    await new Promise((resolve) => {
+      const timeout = setTimeout(resolve, 250);
+      this.ws.addEventListener('close', () => {
+        clearTimeout(timeout);
+        resolve();
+      }, { once: true });
+      this.ws.close();
+    });
+  }
+
+  #push(message) {
+    const waiter = this.waiters.shift();
+    if (waiter === undefined) {
+      this.messages.push(message);
+      return;
+    }
+
+    clearTimeout(waiter.timer);
+    waiter.resolve(message);
+  }
+
+  #fail(error) {
+    if (this.closed && this.waiters.length === 0) {
+      return;
+    }
+
+    this.error = error;
+    for (const waiter of this.waiters.splice(0)) {
+      clearTimeout(waiter.timer);
+      waiter.reject(error);
+    }
+  }
+}
+
 export const createMockSignedOrder = (overrides = {}) => {
   const type = overrides.type ?? 'limit';
   const owner = overrides.owner ?? DEFAULT_OWNER;
@@ -64,13 +168,18 @@ export const createMockSignedOrder = (overrides = {}) => {
 };
 
 export class QDexClient {
-  constructor({ baseUrl = DEFAULT_BASE_URL, fetch: fetchImpl = globalThis.fetch } = {}) {
+  constructor({
+    baseUrl = DEFAULT_BASE_URL,
+    fetch: fetchImpl = globalThis.fetch,
+    WebSocket: WebSocketImpl = globalThis.WebSocket,
+  } = {}) {
     if (typeof fetchImpl !== 'function') {
       throw new TypeError('QDexClient requires a fetch implementation.');
     }
 
     this.baseUrl = trimTrailingSlash(baseUrl);
     this.fetch = fetchImpl;
+    this.WebSocket = WebSocketImpl;
 
     this.markets = {
       list: async () => (await this.#requestOk('/v1/markets')).markets,
@@ -96,6 +205,8 @@ export class QDexClient {
 
     this.fills = {
       list: async () => this.#requestOk('/v1/fills'),
+      openStream: (options = {}) => this.streams.open('fills', options),
+      stream: async (options = {}) => this.streams.read('fills', options),
     };
 
     this.trades = {
@@ -109,6 +220,48 @@ export class QDexClient {
     this.delegateKeys = {
       list: async () => this.#requestOk('/v1/delegate-keys'),
     };
+
+    this.streams = {
+      open: (channel, options = {}) => this.#openStream(channel, options),
+      read: async (channel, options = {}) => this.#readStream(channel, options),
+    };
+  }
+
+  #streamUrl(channel) {
+    const url = new URL(this.baseUrl);
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    url.pathname = '/v1/ws';
+    url.search = '';
+    url.searchParams.set('channel', channel);
+    return url.toString();
+  }
+
+  #openStream(channel, { timeoutMs = 2_000 } = {}) {
+    return new QDexStream({
+      channel,
+      url: this.#streamUrl(channel),
+      WebSocketImpl: this.WebSocket,
+      timeoutMs,
+    });
+  }
+
+  async #readStream(channel, { limit = 1, timeoutMs = 2_000 } = {}) {
+    if (!Number.isInteger(limit) || limit < 1) {
+      throw new TypeError('QDex stream read limit must be a positive integer.');
+    }
+
+    const stream = this.#openStream(channel, { timeoutMs });
+    const messages = [];
+
+    try {
+      while (messages.length < limit) {
+        messages.push(await stream.next({ timeoutMs }));
+      }
+    } finally {
+      await stream.close();
+    }
+
+    return messages;
   }
 
   async #requestOk(path, options = {}) {

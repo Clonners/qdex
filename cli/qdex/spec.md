@@ -22,6 +22,7 @@ qdex api create-key bot-mm-1 --scope trade --expires 7d
 - Limit commands create signed `SignedOrder` payloads and submit them to `POST /v1/orders`.
 - CLI market orders are market_ioc IOC limit orders with signed price/slippage bounds.
 - `--slippage-bps` maps to signed slippage protection, not unlimited market execution.
+- `stream fills --limit N` consumes local WebSocket snapshots from `/v1/ws?channel=fills` and keeps private stream permissions read-only: `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`.
 - Fills stream from confirmed/mock-confirmed projections; proofs use `GET /v1/proofs/trades/:tradeId`.
 
 ## API/delegate key scopes

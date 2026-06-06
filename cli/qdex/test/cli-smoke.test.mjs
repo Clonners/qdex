@@ -58,6 +58,22 @@ test('qdex smoke command drives current mock API flow and prints mock-proof safe
   });
 });
 
+test('qdex stream fills command consumes local WebSocket snapshots with read-only private permissions', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'stream', 'fills', '--limit', '1']);
+
+    assert.equal(result.command, 'stream fills');
+    assert.equal(result.channel, 'fills');
+    assert.equal(result.transport, 'websocket');
+    assert.equal(result.messages.length, 1);
+    assert.equal(result.messages[0].type, 'snapshot');
+    assert.equal(result.messages[0].snapshot.channel, 'fills');
+    assert.equal(result.messages[0].snapshot.visibility, 'private');
+    assert.deepEqual(result.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.messages[0].snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+  });
+});
+
 test('qdex read-only commands return market and book JSON from the API', async () => {
   await withServer(async (baseUrl) => {
     const markets = await runCliJson(['--base-url', baseUrl, 'markets']);

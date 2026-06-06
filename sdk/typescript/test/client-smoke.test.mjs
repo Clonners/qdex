@@ -80,6 +80,61 @@ test('TypeScript SDK smoke drives mock API order -> fill -> proof loop without c
   });
 });
 
+test('TypeScript SDK consumes private fills stream over local WebSocket with live fanout', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+    const fillsStream = client.fills.openStream({ timeoutMs: 2_000 });
+
+    try {
+      const initialMessage = await fillsStream.next();
+      assert.equal(initialMessage.type, 'snapshot');
+      assert.equal(initialMessage.transport, 'websocket');
+      assert.equal(initialMessage.snapshot.channel, 'fills');
+      assert.equal(initialMessage.snapshot.visibility, 'private');
+      assert.deepEqual(initialMessage.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(initialMessage.snapshot.data.fills, []);
+
+      const restingSell = createMockSignedOrder({
+        side: 'sell',
+        amount: '100',
+        price: '5',
+        nonce: '904',
+        owner: '0x1111111111111111111111111111111111111111',
+      });
+      const crossingBuy = createMockSignedOrder({
+        side: 'buy',
+        amount: '100',
+        price: '6',
+        nonce: '905',
+        owner: '0x3333333333333333333333333333333333333333',
+      });
+
+      const restingOrder = await client.orders.submitSignedOrder(restingSell);
+      assert.equal(restingOrder.fills.length, 0);
+      const crossingOrder = await client.orders.submitSignedOrder(crossingBuy);
+      assert.equal(crossingOrder.fills.length, 1);
+
+      const liveMessage = await fillsStream.next();
+      assert.equal(liveMessage.streamEvent.reason, 'mock_settlement_confirmed');
+      assert.deepEqual(liveMessage.streamEvent.channels, [
+        'market.QI-QUAI.depth',
+        'orders',
+        'market.QI-QUAI.trades',
+        'fills',
+        'settlements',
+        'global.tickers',
+      ]);
+      assert.equal(liveMessage.snapshot.source, 'in-memory-indexer-projection');
+      assert.deepEqual(liveMessage.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(liveMessage.snapshot.data.fills, [crossingOrder.fills[0]]);
+      assert.equal(liveMessage.snapshot.data.fills[0].sourceEventId, 'event-000001');
+      assert.equal(Object.hasOwn(liveMessage.snapshot.data.fills[0], 'createdAt'), false);
+    } finally {
+      await fillsStream.close();
+    }
+  });
+});
+
 test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippage bounds', () => {
   const order = createMockSignedOrder({
     side: 'sell',

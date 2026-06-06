@@ -25,10 +25,14 @@ const marketOrder: SignedOrder = await dex.orders.createMarketIocOrder({
 });
 
 const fillPacket: FillPacket = await dex.orders.submitSignedOrder(limitOrder); // POST /v1/orders
-await dex.fills.stream();
+const fillsStream = dex.fills.openStream({ timeoutMs: 2000 }); // /v1/ws?channel=fills
+const fillsSnapshot = await fillsStream.next();
+await fillsStream.close();
 const proof: TradeProof = await dex.proofs.trade(tradeId); // GET /v1/proofs/trades/:tradeId
 await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 ```
+
+`fills.openStream()` and `fills.stream()`/`fills.stream({ limit })` consume WebSocket snapshots only; they never grant withdrawal/admin authority and private snapshots must preserve `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN` permissions.
 
 ## Order semantics
 
