@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: OpenAPI adapter-shaped fill projection schema green -> next matching-engine/relayer FillPacket examples cleanup
+- Current phase: matching-engine/relayer FillPacket timestamp cleanup green -> next SDK/Python/CLI bot docs response/projection terminology cleanup
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Clean matching-engine and relayer FillPacket examples so pending handoff docs and public projection docs no longer imply matcher-local `createdAt` is part of indexed fills.
+1. Clean SDK/Python/CLI bot docs so `submitSignedOrder`/`submit_signed_order` examples return order or indexed-fill projections instead of labeling public API responses as matcher/relayer `FillPacket` handoff objects.
 2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
@@ -107,3 +107,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 18:05 -03: Added read-only TypeScript SDK `contracts.get()` plus `qdex contracts` CLI exposure for `/v1/contracts`, preserving local-only null addresses, no wallet/deploy/tx claims, `TradeSettled`, and `NO_WITHDRAW`/`NO_ADMIN` safety; verified RED focused SDK/CLI/doc tests, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `70c498e`; next slice: Python SDK read-only contract registry exposure.
 - 2026-06-06 18:23 -03: Added Python SDK `contracts.get()` for read-only `/v1/contracts` metadata plus Python README/spec ratchets, preserving local-only null addresses, no wallet/deploy/tx claims, `TradeSettled`, native Qi caveat, and `NO_WITHDRAW`/`NO_ADMIN` safety; verified RED focused Python/doc tests, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `cfdb7d2`; next slice: OpenAPI adapter-shaped FillPacket schema cleanup.
 - 2026-06-06 18:44 -03: Aligned OpenAPI/order-schema fill projection docs with adapter-shaped indexed fills: `FillPacket` now carries `tradeId`, `settlementStatus`, and `sourceEventId`, `/v1/fills` has a `FillListResponse`, and matcher-local `createdAt` is guarded out of public fill docs; verified RED/GREEN `node --test tests/order-schema.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `bb66b1c`; next slice: clean matching-engine/relayer FillPacket examples.
+- 2026-06-06 19:03 -03: Cleaned matching-engine/relayer FillPacket handoff docs so pending settlement examples no longer carry matcher-local `createdAt`; added ratchets separating matcher event/private lifecycle timestamps from settlement/indexer `sourceEventId`; verified RED/GREEN `node --test tests/matching-engine-spec.test.mjs tests/relayer-spec.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `70ad615`; next slice: SDK/Python/CLI bot docs response/projection terminology cleanup.
