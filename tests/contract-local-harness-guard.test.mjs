@@ -56,7 +56,7 @@ test('Hardhat harness config cannot point at external Quai networks autonomously
   }
 });
 
-test('local harness documentation keeps first contract tests scoped to the matrix', async () => {
+test('local harness documentation tracks current local TradingVault coverage', async () => {
   const readme = await readRepoFile('contracts/README.md');
 
   for (const requiredText of [
@@ -64,8 +64,12 @@ test('local harness documentation keeps first contract tests scoped to the matri
     'Local in-memory Hardhat network only.',
     'No RPC URLs, external accounts, deploy scripts, or Orchard/testnet activity belong in autonomous runs.',
     '`pnpm --filter @qdex/contracts check` validates the local-only harness guard without compiling or sending anything.',
-    '`pnpm --filter @qdex/contracts test:local` is reserved for future local implementation tests after the contract package dependencies are installed.',
-    'Start with `TV-01` from `docs/contract-implementation-test-matrix.md`.',
+    '`pnpm --filter @qdex/contracts test:local` runs the local-only Hardhat implementation tests against the in-memory `hardhat` network.',
+    'Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-matrix.md`:',
+    '`TV-01`: caller deposits increase caller-owned available balance.',
+    '`TV-02`: callers can withdraw only their own available balance.',
+    '`TV-03`: deployer/operator-like accounts cannot withdraw or drain a user\'s deposited balance, and admin/operator withdrawal selectors remain absent.',
+    'Recommended next slice: start the `TV-04` locked-balance withdrawal ratchet locally, without adding RPC URLs, deploy scripts, real wallets, or any admin/operator withdrawal surface.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);

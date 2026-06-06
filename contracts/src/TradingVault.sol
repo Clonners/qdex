@@ -9,7 +9,9 @@ interface IERC20VaultTokenMinimal {
 }
 
 /// @notice Local-first non-custodial trading vault implementation.
-/// @dev TV-01 covers caller deposits. TV-02 covers caller-owned available withdrawals. Settlement hooks intentionally stay non-operational until their own tests define access control.
+/// @dev TV-01 covers caller deposits. TV-02 covers caller-owned available withdrawals.
+///      TV-03 hardens the admin/operator custody boundary by keeping withdrawals caller-owned only.
+///      Settlement hooks intentionally stay non-operational until their own tests define access control.
 contract TradingVault is ITradingVault {
     mapping(address => mapping(address => uint256)) private availableBalances;
     mapping(address => mapping(address => uint256)) private lockedBalances;
