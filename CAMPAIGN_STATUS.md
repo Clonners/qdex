@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: WebSocket snapshot transport complete -> live stream fanout
+- Current phase: WebSocket live fanout complete -> SDK/CLI stream consumers
 
 ## Current repo baseline
 
@@ -37,10 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add WebSocket live fanout so open `/v1/ws` clients receive orderbook/fill snapshots after mock orders cross.
-2. Add SDK/CLI stream consumers against the local WebSocket transport.
-3. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
-4. Keep contract/admin custody invariants explicit before any real settlement implementation.
+1. Add SDK/CLI stream consumers against the local WebSocket transport.
+2. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
+3. Keep contract/admin custody invariants explicit before any real settlement implementation.
 
 ## Cron runner
 
@@ -76,3 +75,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 07:24 -03: Added dependency-light Python SDK mock smoke stub against the local API loop, covering markets/book -> crossed mock orders -> indexed fill/proof and `market_ioc` slippage invariants; verified RED `pnpm --filter @qdex/sdk-python test` failed on missing module, GREEN focused test plus `pnpm check` pass, secret-pattern scan no matches; slice commit `4f96a84`; next slice: WebSocket stream contract tests for market data and private fills.
 - 2026-06-06 07:44 -03: Added API stream contract registry and snapshot builder for public market data plus custody-safe private fill streams, preserving adapter-shaped indexed fills (`sourceEventId`, no `createdAt`) and `NO_WITHDRAW`/`NO_ADMIN` private permissions; verified RED `pnpm --filter @qdex/api test` failed on missing `streams.js`, GREEN `pnpm --filter @qdex/api test`, `pnpm --filter @qdex/api check`, `pnpm check`, and secret-pattern scan no matches; slice commit `887e980`; next slice: wire a minimal local WebSocket upgrade/transport to these stream contracts.
 - 2026-06-06 08:06 -03: Wired minimal local `/v1/ws?channel=...` WebSocket snapshot transport to API stream contracts, including public orderbook snapshots and private indexed fill snapshots with `NO_WITHDRAW`/`NO_ADMIN` safety metadata; verified RED `pnpm --filter @qdex/api test` failed on missing upgrade transport, GREEN focused WebSocket test, `pnpm --filter @qdex/api test`, `pnpm --filter @qdex/api check`, `pnpm check`, and secret-pattern scan no matches; slice commit `1b30261`; next slice: live WebSocket fanout when mock orders mutate orderbook/fill projections.
+- 2026-06-06 08:26 -03: Added live WebSocket fanout for open `/v1/ws` clients on mock orderbook/fill mutations, with stream-event metadata and private fill snapshots preserving `NO_WITHDRAW`/`NO_ADMIN` plus adapter-shaped `sourceEventId`; verified RED `pnpm --filter @qdex/api test` timed out waiting for fanout, GREEN `pnpm --filter @qdex/api test`, `pnpm --filter @qdex/api check`, `pnpm check`, and secret-pattern scan no matches; slice commit `edf2971`; next slice: SDK/CLI stream consumers against the local WebSocket transport.
