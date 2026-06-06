@@ -32,7 +32,8 @@ Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-
 10. `ST-04`: local Settlement rejects disabled local markets, invalid price/amount arithmetic, and fill-accounting mismatches before nonce consumption or vault movement.
 11. `ST-05`: local Settlement tracks cumulative partial-fill amounts by order hash and rejects fills that would exceed signed maker/taker order amounts.
 12. `ST-06`: local Settlement enforces signed/hard fee caps, configured fee recipient, and fee-split accounting before proof-event emission.
+13. `ST-07`: contract proof adapter pins `TradeSettled` as the only public proof trigger, suppresses matcher/non-TradeSettled events, and requires real Quai event evidence before public projection.
 
-Recommended next slice: add local `ST-07` proof-trigger ratchet so `TradeSettled` remains the only public proof trigger.
+Recommended next slice: add local `NonceManager NM-01` user-owned cancellation and settlement-only mark-used ratchet before replacing the embedded nonce state.
 
 Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.
