@@ -34,7 +34,8 @@ Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-
 12. `ST-06`: local Settlement enforces signed/hard fee caps, configured fee recipient, and fee-split accounting before proof-event emission.
 13. `ST-07`: contract proof adapter pins `TradeSettled` as the only public proof trigger, suppresses matcher/non-TradeSettled events, and requires real Quai event evidence before public projection.
 14. `NM-01`: local NonceManager keeps cancellation user-owned, bounds range cancellation, and restricts `markNonceUsed` to the configured settlement authority.
+15. `MR-01`: local MarketRegistry keeps market metadata stable, enabled/disabled status explicit, and market-authority changes dependency-scoped before Settlement wiring.
 
-Recommended next slice: add local `MarketRegistry MR-01` enabled/disabled market metadata ratchet before Settlement wiring.
+Recommended next slice: add local `FeeManager FM-01` hard fee cap/update-event ratchet before wiring external fee policy into Settlement.
 
 Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.

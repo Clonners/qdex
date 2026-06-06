@@ -38,8 +38,8 @@ This matrix is the implementation handoff between the current Solidity interface
 | Contract | Required implementation tests | Notes |
 | --- | --- | --- |
 | NonceManager | `NM-01`: `cancelNonce`, `cancelNonceRange`, `markNonceUsed` | Users can cancel their own nonces; settlement-only nonce consumption cannot be called by arbitrary accounts; used/cancelled nonces are replay-proof. |
-| MarketRegistry | enabled market metadata and precision/minimums | Markets start disabled until added; disabled markets reject settlement; precision/minimums are evented and stable for indexer proof replay. |
-| FeeManager | hard `maxFeeBps()` cap plus fee-update events | Fee changes emit deterministic events, cannot exceed cap, and should be timelock/multisig-gated before production. |
+| MarketRegistry | `MR-01`: enabled market metadata and precision/minimums | Markets start disabled until added; disabled markets reject settlement; precision/minimums are evented and stable for indexer proof replay. |
+| FeeManager | `FM-01`: hard `maxFeeBps()` cap plus fee-update events | Fee changes emit deterministic events, cannot exceed cap, and should be timelock/multisig-gated before production. |
 | DelegateKeyRegistry | `READ_ONLY`, trading/cancel permissions, `NO_WITHDRAW`, `NO_ADMIN` | Delegate keys can place/cancel within expiry, allowed markets, and max notional; they never gain withdrawal or admin authority in the MVP. |
 
 ## Approval gates before real Quai activity
