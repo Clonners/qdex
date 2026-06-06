@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
 
+import { createInMemoryIndexerProjection } from '../../indexer/src/in-memory-projection.js';
+import { createInMemoryProofService } from '../../proof-service/src/in-memory-proof-service.js';
+
 export const MARKET_ID = 'QI-QUAI';
 export const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
+export const INDEXER_SOURCE = 'in-memory-indexer-projection';
 
 const MOCK_EPOCH_SECONDS = 1780000000;
 const ALLOWED_SIDES = new Set(['buy', 'sell']);
@@ -163,15 +167,15 @@ const bookOrder = (order) => ({
   owner: order.owner,
 });
 
-export const createMockDexState = () => {
+export const createMockDexState = ({
+  indexer = createInMemoryIndexerProjection(),
+  proofService = createInMemoryProofService({ indexer }),
+} = {}) => {
   const state = {
     orderSequence: 0,
     fillSequence: 0,
     tradeSequence: 0,
     orders: new Map(),
-    fills: [],
-    trades: [],
-    proofs: new Map(),
     book: {
       bids: [],
       asks: [],
@@ -193,36 +197,13 @@ export const createMockDexState = () => {
     const eventId = paddedId('event', state.fillSequence);
     const eventIndex = state.fillSequence - 1;
     const mockSettlementReference = `mock-settlement-${fillId}`;
-    const fill = {
-      fillId,
-      tradeId,
-      marketId: MARKET_ID,
-      makerOrderHash: maker.orderHash,
-      takerOrderHash: taker.orderHash,
-      maker: maker.owner,
-      taker: taker.owner,
-      price,
-      amount,
-      makerFee: '0',
-      takerFee: '0',
-      settlementMode: 'mock',
-      settlementStatus: 'confirmed',
-      createdAt: MOCK_EPOCH_SECONDS + state.fillSequence,
-    };
 
-    const trade = {
-      tradeId,
+    const settlementEvent = {
+      eventId,
+      type: 'SETTLEMENT_CONFIRMED',
+      source: 'mock-settlement',
       fillId,
-      marketId: MARKET_ID,
-      price,
-      amount,
-      settlementStatus: 'confirmed',
-      proofUrl: `/v1/proofs/trades/${tradeId}`,
-    };
-
-    const proof = {
       tradeId,
-      fillId,
       orderHashes: [maker.orderHash, taker.orderHash],
       settlementMode: 'mock',
       mockSettlementReference,
@@ -240,27 +221,19 @@ export const createMockDexState = () => {
         taker: '0',
       },
       explorerUrl: null,
-      safetyNotice: 'Mock proof only: no real Quai transaction, no explorer URL, no funds moved.',
-      rawEvent: {
-        eventId,
-        type: 'SETTLEMENT_CONFIRMED',
-        source: 'mock-settlement',
-        fillId,
-        settlementMode: 'mock',
-        mockSettlementReference,
-        settlementTx: null,
-        blockNumber: null,
-        blockHash: null,
-        eventIndex,
-      },
-      createdFromEventId: eventId,
     };
 
-    state.fills.push(fill);
-    state.trades.push(trade);
-    state.proofs.set(tradeId, proof);
+    const projectionResult = indexer.projectSettlementEvent(settlementEvent);
+    if (!projectionResult.projected) {
+      throw new Error(`Mock settlement event failed indexer projection: ${projectionResult.reason ?? 'unknown'}`);
+    }
 
-    return clone(fill);
+    const projectedFill = indexer.listFills().find((fill) => fill.fillId === fillId);
+    if (projectedFill === undefined) {
+      throw new Error(`Indexer did not expose projected fill ${fillId}`);
+    }
+
+    return projectedFill;
   };
 
   const removeFilledRestingOrders = () => {
@@ -303,6 +276,8 @@ export const createMockDexState = () => {
   };
 
   return {
+    projectionSource: INDEXER_SOURCE,
+
     submitOrder(order) {
       const validation = validateOrder(order);
       if (!validation.accepted) {
@@ -353,15 +328,20 @@ export const createMockDexState = () => {
     },
 
     listFills() {
-      return clone(state.fills);
+      return indexer.listFills();
     },
 
     listTrades(marketId) {
-      return clone(state.trades.filter((trade) => trade.marketId === marketId));
+      return indexer.listTrades(marketId);
+    },
+
+    getTradeProof(tradeId) {
+      return proofService.getTradeProof(tradeId);
     },
 
     getProof(tradeId) {
-      return state.proofs.has(tradeId) ? clone(state.proofs.get(tradeId)) : null;
+      const result = proofService.getTradeProof(tradeId);
+      return result.statusCode === 200 ? clone(result.body.proof) : null;
     },
 
     getOrderbook(marketId) {

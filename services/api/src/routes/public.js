@@ -74,7 +74,7 @@ export const handlePublicRoute = (context) => {
     return jsonResult(200, {
       marketId: tradesMarket,
       trades: state.listTrades(tradesMarket),
-      source: 'mock-trade-projection',
+      source: state.projectionSource ?? 'in-memory-indexer-projection',
     });
   }
 

@@ -203,14 +203,17 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     assert.equal(fill.amount, '100');
     assert.equal(fill.settlementMode, 'mock');
     assert.equal(fill.settlementStatus, 'confirmed');
+    assert.equal(fill.sourceEventId, 'event-000001');
+    assert.equal(Object.hasOwn(fill, 'createdAt'), false);
 
     const fills = await requestJson(baseUrl, '/v1/fills');
     assert.equal(fills.status, 200);
-    assert.equal(fills.body.source, 'mock-settlement-indexer-projection');
+    assert.equal(fills.body.source, 'in-memory-indexer-projection');
     assert.deepEqual(fills.body.fills, [fill]);
 
     const trades = await requestJson(baseUrl, '/v1/trades/QI-QUAI');
     assert.equal(trades.status, 200);
+    assert.equal(trades.body.source, 'in-memory-indexer-projection');
     assert.deepEqual(trades.body.trades, [
       {
         tradeId: 'trade-000001',

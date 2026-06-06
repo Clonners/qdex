@@ -66,7 +66,7 @@ export const handlePrivateRoute = (context) => {
   if (method === 'GET' && pathname === '/v1/fills') {
     return jsonResult(200, {
       fills: context.state.listFills(),
-      source: 'mock-settlement-indexer-projection',
+      source: context.state.projectionSource ?? 'in-memory-indexer-projection',
     });
   }
 
