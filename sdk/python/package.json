@@ -1,0 +1,9 @@
+{
+  "name": "@qdex/sdk-python",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "check": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s test -p '*.py'",
+    "test": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=src python3 -m unittest discover -s test -p '*.py'"
+  }
+}
