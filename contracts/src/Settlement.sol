@@ -5,14 +5,19 @@ import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
 import {TradingVault} from "./TradingVault.sol";
 
-/// @notice Local-only ST-01 settlement skeleton for signed fill validation and proof-event truth.
+/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, and proof-event truth.
 /// @dev This is intentionally minimal: fee movement, external nonce/market/fee managers, and real Quai proof wiring
-///      remain future ratchets. The contract deploys a local vault so this settlement contract is the vault's
-///      explicit settlement authority without adding deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
+///      remain future ratchets. ST-02 keeps nonce cancellation local and user-owned so cancellation/reuse rejects
+///      before vault movement without adding deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
 contract Settlement is ISettlement {
+    uint256 private constant MAX_CANCEL_RANGE_SIZE = 256;
+
     ITradingVault public immutable vault;
 
     mapping(address => mapping(uint256 => bool)) private usedNonces;
+
+    event NonceCancelled(address indexed user, uint256 indexed nonce);
+    event NonceRangeCancelled(address indexed user, uint256 from, uint256 to);
 
     constructor() {
         vault = ITradingVault(address(new TradingVault()));
@@ -20,6 +25,30 @@ contract Settlement is ISettlement {
 
     function isNonceUsed(address user, uint256 nonce) external view returns (bool) {
         return usedNonces[user][nonce];
+    }
+
+    function cancelNonce(uint256 nonce) external {
+        _cancelNonce(msg.sender, nonce);
+        emit NonceCancelled(msg.sender, nonce);
+    }
+
+    function cancelNonceRange(uint256 from, uint256 to) external {
+        require(from <= to, "ST_NONCE_RANGE_INVALID");
+        require(to - from < MAX_CANCEL_RANGE_SIZE, "ST_NONCE_RANGE_TOO_LARGE");
+
+        for (uint256 nonce = from; ; nonce++) {
+            _cancelNonce(msg.sender, nonce);
+            if (nonce == to) {
+                break;
+            }
+        }
+
+        emit NonceRangeCancelled(msg.sender, from, to);
+    }
+
+    function _cancelNonce(address user, uint256 nonce) private {
+        require(!usedNonces[user][nonce], "ST_NONCE_ALREADY_USED");
+        usedNonces[user][nonce] = true;
     }
 
     function hashFill(FillPacket calldata fill) public pure returns (bytes32) {

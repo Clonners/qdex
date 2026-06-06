@@ -27,7 +27,8 @@ Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-
 5. `TV-05`: settlement-only lock/unlock/move hooks reject non-authority callers; authorized hook calls validate trace IDs and balance limits before emitting `BalanceLocked`, `BalanceUnlocked`, or `SettlementBalanceMoved`.
 6. `TV-06`: future trading pause or emergency controls cannot become a broad freeze on caller-owned available withdrawals without a separately approved narrow emergency design.
 7. `ST-01`: local Settlement validates signed fill replay fields, moves vault balances exactly once, marks nonces, and emits `TradeSettled` proof truth.
+8. `ST-02`: local Settlement rejects reused or cancelled maker/taker nonces before vault movement, including single nonce and bounded range cancellation.
 
-Recommended next slice: add local `ST-02` nonce reuse/cancel rejection coverage before expanding market/fee dependencies.
+Recommended next slice: add local `ST-03` expired order and replay-domain mismatch rejection coverage.
 
 Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.
