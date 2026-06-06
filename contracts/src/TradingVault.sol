@@ -3,12 +3,13 @@ pragma solidity 0.8.20;
 
 import {ITradingVault} from "./ITradingVault.sol";
 
-interface IERC20TransferFromMinimal {
+interface IERC20VaultTokenMinimal {
+    function transfer(address to, uint256 amount) external returns (bool);
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
 
 /// @notice Local-first non-custodial trading vault implementation.
-/// @dev TV-01 covers caller deposits. Withdrawals and settlement hooks intentionally stay non-operational until their own tests define access control.
+/// @dev TV-01 covers caller deposits. TV-02 covers caller-owned available withdrawals. Settlement hooks intentionally stay non-operational until their own tests define access control.
 contract TradingVault is ITradingVault {
     mapping(address => mapping(address => uint256)) private availableBalances;
     mapping(address => mapping(address => uint256)) private lockedBalances;
@@ -17,7 +18,7 @@ contract TradingVault is ITradingVault {
         require(token != address(0), "TV_TOKEN_ZERO");
         require(amount > 0, "TV_AMOUNT_ZERO");
 
-        bool transferred = IERC20TransferFromMinimal(token).transferFrom(msg.sender, address(this), amount);
+        bool transferred = IERC20VaultTokenMinimal(token).transferFrom(msg.sender, address(this), amount);
         require(transferred, "TV_TRANSFER_IN_FAILED");
 
         availableBalances[msg.sender][token] += amount;
@@ -25,8 +26,17 @@ contract TradingVault is ITradingVault {
         emit Deposit(msg.sender, token, amount);
     }
 
-    function withdraw(address, uint256) external pure {
-        revert("TV_WITHDRAW_NOT_READY");
+    function withdraw(address token, uint256 amount) external {
+        require(token != address(0), "TV_TOKEN_ZERO");
+        require(amount > 0, "TV_AMOUNT_ZERO");
+        require(availableBalances[msg.sender][token] >= amount, "TV_AVAILABLE_LOW");
+
+        availableBalances[msg.sender][token] -= amount;
+
+        bool transferred = IERC20VaultTokenMinimal(token).transfer(msg.sender, amount);
+        require(transferred, "TV_TRANSFER_OUT_FAILED");
+
+        emit Withdraw(msg.sender, token, amount);
     }
 
     function balanceOf(address user, address token) external view returns (uint256) {
