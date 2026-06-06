@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: local `Settlement` `ST-07` proof-trigger ratchet green -> next local `NonceManager` `NM-01` user-owned cancellation / settlement-only mark-used boundary
+- Current phase: local `NonceManager` `NM-01` extraction green -> next local `MarketRegistry` `MR-01` enabled/disabled market metadata boundary
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add local `NonceManager` `NM-01` user-owned cancellation and settlement-only mark-used ratchet before replacing embedded nonce state.
+1. Add local `MarketRegistry` `MR-01` enabled/disabled market metadata ratchet before wiring market checks into `Settlement`.
 2. Keep TradingVault `TV-01`..`TV-06` and Settlement `ST-01`..`ST-07` custody/replay/constraint/partial-fill/fee/proof-trigger boundaries green while dependency contracts are added.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
@@ -95,3 +95,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 14:09 -03: Added local `Settlement` `ST-05` partial-fill accounting ratchet: FillPacket carries signed maker/taker order amount caps, cumulative fill accounting is tracked by order hash, residual partial fills can complete an order, and over-cap fills reject before nonce/accounting/vault movement; verified RED focused `ST-05` failed on missing `filledAmountOf`/cap behavior, GREEN focused `ST-05`, `pnpm --filter @qdex/contracts test:local`, docs/interface guards, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `b3cf01f`; next slice: local `ST-06` fee cap and fee-recipient enforcement before balance movement.
 - 2026-06-06 14:27 -03: Added local `Settlement` `ST-06` fee-cap/recipient ratchet: valid fees now split received-asset fee credits to the configured local recipient, maker/taker fees are capped by signed `maxFeeBps` plus hard local cap, and invalid fee policy rejects before nonce/accounting/vault movement; verified RED focused `ST-06` failed on missing `configuredFeeRecipient`, GREEN focused `ST-06`, `pnpm --filter @qdex/contracts test:local`, docs guard, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `ebf81af`; next slice: local `ST-07` proof-trigger ratchet (`TradeSettled` only public proof trigger).
 - 2026-06-06 14:47 -03: Added `ST-07` contract proof-trigger adapter: `TradeSettled` is pinned as the only public contract proof trigger, matcher/non-TradeSettled events are suppressed, and real Quai event evidence is required before `SETTLEMENT_CONFIRMED` proof projection; verified RED missing adapter / incomplete-event regression, GREEN focused adapter tests, `pnpm check`, `pnpm --filter @qdex/contracts test:local`, `git diff --check`, and secret-pattern scan no matches; slice commit `12d4ab7`; next slice: local `NonceManager NM-01` user-owned cancellation / settlement-only mark-used ratchet.
+- 2026-06-06 15:05 -03: Added local `NonceManager` `NM-01` dependency extraction: user-owned single/range cancellation, bounded range guard, settlement-only `markNonceUsed`, precise nonce events, and source/ABI guards against custody/admin-style surfaces; verified RED focused `NonceManager NM-01` failed on missing contract, GREEN focused test, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `a0d8ba3`; next slice: local `MarketRegistry MR-01` enabled/disabled market metadata ratchet.
