@@ -30,6 +30,7 @@ const requestJson = async (baseUrl, path, options = {}) => {
 
   return {
     status: response.status,
+    headers: response.headers,
     body: await response.json(),
   };
 };
@@ -74,6 +75,22 @@ const mockOrder = (overrides = {}) => {
     },
   };
 };
+
+test('API JSON responses allow local terminal UI proof fetches without exposing custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const proof = await requestJson(baseUrl, '/v1/proofs/trades/mock-trade-0001', {
+      headers: {
+        origin: 'http://127.0.0.1:8080',
+      },
+    });
+
+    assert.equal(proof.status, 404);
+    assert.equal(proof.headers.get('access-control-allow-origin'), '*');
+    assert.equal(proof.headers.get('access-control-allow-methods'), 'GET, POST, DELETE, OPTIONS');
+    assert.match(proof.headers.get('access-control-allow-headers'), /content-type/i);
+    assert.equal(proof.body.custody, 'non-custodial-no-withdrawal-authority');
+  });
+});
 
 test('public routes expose mock market data with non-custodial settlement metadata', async () => {
   await withServer(async (baseUrl) => {

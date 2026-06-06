@@ -21,6 +21,31 @@ const renderOrderbookSide = (orders, emptyLabel) => {
   `).join('');
 };
 
+const renderLiveStreamPanel = (liveStream) => {
+  if (liveStream === undefined || liveStream === null) {
+    return '';
+  }
+
+  const permissions = (liveStream.permissions ?? []).join(', ');
+  const streamReason = liveStream.streamEvent?.reason ?? 'initial_snapshot';
+  const streamMarket = liveStream.streamEvent?.marketId ?? 'all-markets';
+
+  return `
+        <article class="panel stream-panel">
+          <h2>live fills stream</h2>
+          <p class="warning">${escapeHtml(liveStream.safetyNotice)}</p>
+          <dl class="kv">
+            <div><dt>channel</dt><dd>${escapeHtml(liveStream.channel)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(liveStream.source)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(liveStream.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>last event</dt><dd>${escapeHtml(streamReason)}</dd></div>
+            <div><dt>market</dt><dd>${escapeHtml(streamMarket)}</dd></div>
+          </dl>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -103,6 +128,8 @@ export const renderTradeProofPanel = (fixture) => {
             <pre>${escapeHtml(proofJson)}</pre>
           </details>
         </article>
+
+${renderLiveStreamPanel(fixture.liveStream)}
 
         <article class="panel command-panel">
           <h2>keyboard</h2>

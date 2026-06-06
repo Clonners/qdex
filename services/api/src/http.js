@@ -1,12 +1,17 @@
 export const jsonResult = (statusCode, body) => ({ statusCode, body });
 
+const JSON_RESPONSE_HEADERS = Object.freeze({
+  'content-type': 'application/json; charset=utf-8',
+  'cache-control': 'no-store',
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, authorization',
+});
+
 export const sendJson = (response, { statusCode, body }) => {
   const payload = JSON.stringify(body, null, 2);
 
-  response.writeHead(statusCode, {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-store',
-  });
+  response.writeHead(statusCode, JSON_RESPONSE_HEADERS);
   response.end(`${payload}\n`);
 };
 

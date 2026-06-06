@@ -44,3 +44,27 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /&gt; order signed locally/);
   assert.match(html, /&gt; mock settlement reference: mock-settlement-fill-000001/);
 });
+
+test('renderTradeProofPanel surfaces live fills stream safety when present', () => {
+  const html = renderTradeProofPanel({
+    ...mockVerticalSliceFixture,
+    liveStream: {
+      channel: 'fills',
+      source: 'in-memory-indexer-projection',
+      custody: 'non-custodial-no-withdrawal-authority',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+      safetyNotice: 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.',
+      streamEvent: {
+        reason: 'mock_settlement_confirmed',
+        marketId: 'QI-QUAI',
+      },
+    },
+  });
+
+  assert.match(html, /live fills stream/i);
+  assert.match(html, /channel[\s\S]*fills/i);
+  assert.match(html, /READ_ONLY, NO_WITHDRAW, NO_ADMIN/);
+  assert.match(html, /mock_settlement_confirmed/);
+  assert.match(html, /no real Quai transaction/i);
+  assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
+});

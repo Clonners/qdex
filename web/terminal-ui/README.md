@@ -17,16 +17,20 @@ font       monospace
 
 Current slice:
 
-- `index.html` renders a static terminal-native trade/proof panel.
+- `index.html` renders a static terminal-native trade/proof panel, then attempts a local `fills` WebSocket binding at `http://127.0.0.1:8787`.
+- `src/live-fills.js` consumes `/v1/ws?channel=fills`, validates private stream safety (`READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`), fetches the proof-service envelope, and re-renders the panel from adapter-shaped fill/proof rows.
 - `src/mock-vertical-fixture.js` mirrors the deterministic adapter-shaped mock API slice: crossed `QI-QUAI` orders -> `fill-000001` with `sourceEventId` -> `trade-000001` -> proof-service/indexer projection.
-- `src/render.js` surfaces projection sources while keeping the mock settlement boundary explicit: `settlementMode: mock`, no real Quai transaction, no explorer URL, no funds moved.
+- `src/render.js` surfaces projection sources and live stream safety while keeping the mock settlement boundary explicit: `settlementMode: mock`, no real Quai transaction, no explorer URL, no funds moved.
 
 Run locally:
 
 ```bash
+pnpm --filter @qdex/api dev
 pnpm --filter @qdex/terminal-ui check
 python3 -m http.server 8080 -d web/terminal-ui
 ```
+
+With the API running, the browser keeps the static fixture as fallback and updates after confirmed mock fills arrive over the local WebSocket stream.
 
 Core screens:
 
