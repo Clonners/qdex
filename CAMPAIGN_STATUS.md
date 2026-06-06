@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: TypeScript SDK + qdex CLI smoke stubs complete -> Python SDK smoke stub
+- Current phase: SDK/CLI smoke stubs complete -> WebSocket stream contract tests
 
 ## Current repo baseline
 
@@ -37,9 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add Python SDK smoke stub mirroring the TypeScript mock API flow.
-2. Add WebSocket stream contract tests for public market data and private fills once SDK/CLI smoke is pinned.
-3. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
+1. Add WebSocket stream contract tests for public market data and private fills once SDK/CLI smoke is pinned.
+2. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
+3. Keep contract/admin custody invariants explicit before any real settlement implementation.
 
 ## Cron runner
 
@@ -72,3 +72,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 06:23 -03: Wired API mock vertical loop to the in-memory indexer/proof-service adapter; `/v1/fills`, `/v1/trades/:market`, and proof routes now consume adapter projections with `sourceEventId` and no mock `createdAt` fill shortcut; verified RED `pnpm --filter @qdex/api test` failed on missing `sourceEventId`, GREEN `pnpm --filter @qdex/api test` and `pnpm check` pass, secret-pattern scan no matches; slice commit `4365589`; next slice: terminal UI adapter-shaped fill/proof fixture alignment.
 - 2026-06-06 06:43 -03: Aligned terminal UI fixture/rendering with adapter-shaped fill/proof rows: `sourceEventId`, projection source labels, no `createdAt`, and proof-service/indexer source visibility; verified RED/GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, and secret-pattern scan no matches; slice commit `34c7b94`; next slice: SDK/CLI smoke stubs against the current mock API flow.
 - 2026-06-06 07:06 -03: Added TypeScript SDK and `qdex` CLI mock smoke stubs for markets/book/order-cross/fill/proof flow with explicit mock-proof safety and delegate `NO_WITHDRAW`/`NO_ADMIN` checks; verified RED `pnpm --filter @qdex/sdk-typescript test` and `pnpm --filter @qdex/cli test` failed on missing modules, GREEN focused tests plus `pnpm check` pass, secret-pattern scan no matches; slice commit `30ff6a9`; next slice: Python SDK smoke stub mirroring the TypeScript mock API flow.
+- 2026-06-06 07:24 -03: Added dependency-light Python SDK mock smoke stub against the local API loop, covering markets/book -> crossed mock orders -> indexed fill/proof and `market_ioc` slippage invariants; verified RED `pnpm --filter @qdex/sdk-python test` failed on missing module, GREEN focused test plus `pnpm check` pass, secret-pattern scan no matches; slice commit `4f96a84`; next slice: WebSocket stream contract tests for market data and private fills.
