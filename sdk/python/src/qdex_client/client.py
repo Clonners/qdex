@@ -96,6 +96,14 @@ class _OrderbookApi:
         return self._client._request_ok(f"/v1/orderbook/{_encode_path_value(market_id)}")
 
 
+class _ContractsApi:
+    def __init__(self, client):
+        self._client = client
+
+    def get(self):
+        return self._client._request_ok("/v1/contracts")
+
+
 class _OrdersApi:
     def __init__(self, client):
         self._client = client
@@ -149,6 +157,7 @@ class QDexClient:
         self.markets = _MarketsApi(self)
         self.tickers = _TickersApi(self)
         self.orderbook = _OrderbookApi(self)
+        self.contracts = _ContractsApi(self)
         self.orders = _OrdersApi(self)
         self.fills = _FillsApi(self)
         self.trades = _TradesApi(self)

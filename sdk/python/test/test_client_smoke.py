@@ -67,6 +67,41 @@ class ApiServer:
 
 
 class QDexPythonSdkSmokeTest(unittest.TestCase):
+    def test_python_sdk_exposes_local_only_contract_registry_metadata_without_wallet_or_deploy_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            registry = client.contracts.get()
+
+            self.assertEqual(registry["deploymentStatus"], "local-only-not-deployed")
+            self.assertFalse(registry["realQuaiTransactions"])
+            self.assertFalse(registry["walletRequired"])
+            self.assertIn("UTXO-model", registry["nativeQiCaveat"])
+            self.assertIsNone(registry["contracts"]["tradingVault"]["address"])
+            self.assertFalse(registry["contracts"]["tradingVault"]["operatorWithdrawalAuthority"])
+            self.assertEqual(registry["contracts"]["settlement"]["proofTrigger"], "TradeSettled")
+            self.assertEqual(
+                registry["contracts"]["settlement"]["dependencies"],
+                [
+                    "TradingVault",
+                    "NonceManager",
+                    "MarketRegistry",
+                    "FeeManager",
+                    "DelegateKeyRegistry",
+                ],
+            )
+            self.assertEqual(registry["contracts"]["nonceManager"]["nonceTruth"], "external-nonce-manager")
+            self.assertEqual(registry["contracts"]["marketRegistry"]["marketTruth"], "external-market-registry")
+            self.assertEqual(registry["contracts"]["feeManager"]["feeTruth"], "external-fee-manager")
+            self.assertEqual(
+                registry["contracts"]["delegateKeyRegistry"]["requiredPermissions"],
+                ["PLACE_ORDER", "NO_WITHDRAW", "NO_ADMIN"],
+            )
+            self.assertEqual(
+                registry["safety"]["approvalGate"],
+                "explicit-approval-required-before-deploy-or-transaction",
+            )
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

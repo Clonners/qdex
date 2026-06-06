@@ -9,6 +9,7 @@ dex = QDexClient(base_url=base_url, wallet=wallet, delegate_key=delegate_key)
 
 markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
+contracts = dex.contracts.get()  # GET /v1/contracts
 
 limit_order: SignedOrder = dex.orders.create_limit_order(
     market_id='QI-QUAI',
@@ -37,6 +38,12 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 - `create_market_ioc_order` creates a `market_ioc` IOC limit order, never an unbounded market order.
 - Every `market_ioc` order carries signed price/slippage bounds through `max_slippage_bps`.
 - `submit_signed_order` posts the exact signed payload to `POST /v1/orders`; the SDK must not mutate amount, price, nonce, owner, delegate, chain, or settlement contract fields after signing.
+
+## Contract registry
+
+`contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
+
+The Python SDK must not load wallets, send transactions, read RPC URLs, infer real contract addresses, or imply deploy authority from this metadata. Native Qi remains UTXO-model and requires a wrapper/adapter/conversion design before any real `QI-QUAI` vault settlement claim.
 
 ## Delegate/API key safety
 
