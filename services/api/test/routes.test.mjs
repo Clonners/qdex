@@ -34,6 +34,47 @@ const requestJson = async (baseUrl, path, options = {}) => {
   };
 };
 
+const ZERO_DELEGATE = '0x0000000000000000000000000000000000000000';
+const SETTLEMENT_CONTRACT = '0x2222222222222222222222222222222222222222';
+
+const mockOrder = (overrides = {}) => {
+  const owner = overrides.owner ?? '0x1111111111111111111111111111111111111111';
+  const nonce = overrides.nonce ?? '1';
+
+  return {
+    marketId: 'QI-QUAI',
+    side: 'sell',
+    type: 'limit',
+    baseToken: 'mock:QI',
+    quoteToken: 'mock:QUAI',
+    amount: '100',
+    price: '5',
+    timeInForce: 'GTC',
+    maxSlippageBps: 0,
+    owner,
+    delegate: ZERO_DELEGATE,
+    nonce,
+    expiresAt: 1780003600,
+    chainId: 0,
+    settlementContract: SETTLEMENT_CONTRACT,
+    clientOrderId: `mock-order-${nonce}`,
+    signature: {
+      scheme: 'mock',
+      signer: owner,
+      value: `0xmock-${nonce}`,
+      signedAt: 1780000000,
+    },
+    ...overrides,
+    signature: {
+      scheme: 'mock',
+      signer: owner,
+      value: `0xmock-${nonce}`,
+      signedAt: 1780000000,
+      ...(overrides.signature ?? {}),
+    },
+  };
+};
+
 test('public routes expose mock market data with non-custodial settlement metadata', async () => {
   await withServer(async (baseUrl) => {
     const health = await requestJson(baseUrl, '/v1/health');
@@ -93,10 +134,121 @@ test('private routes expose order and fill placeholders without withdrawal autho
       method: 'POST',
       body: JSON.stringify({ order: { marketId: 'QI-QUAI' } }),
     });
-    assert.equal(postOrder.status, 501);
-    assert.equal(postOrder.body.error, 'not_implemented');
-    assert.equal(postOrder.body.route, 'POST /v1/orders');
-    assert.equal(postOrder.body.next, 'wire_signed_order_validation_and_matching_engine');
+    assert.equal(postOrder.status, 400);
+    assert.equal(postOrder.body.error, 'order_rejected');
+    assert.equal(postOrder.body.reason, 'missing_required_fields');
+    assert.equal(postOrder.body.custody, 'non-custodial-no-withdrawal-authority');
+  });
+});
+
+test('POST /v1/orders crosses mock orders into confirmed fills and proof projection', async () => {
+  await withServer(async (baseUrl) => {
+    const restingSell = mockOrder({
+      side: 'sell',
+      amount: '100',
+      price: '5',
+      nonce: '101',
+      owner: '0x1111111111111111111111111111111111111111',
+    });
+
+    const sell = await requestJson(baseUrl, '/v1/orders', {
+      method: 'POST',
+      body: JSON.stringify({ order: restingSell }),
+    });
+    assert.equal(sell.status, 201);
+    assert.equal(sell.body.status, 'open');
+    assert.equal(sell.body.filledAmount, '0');
+    assert.equal(sell.body.remainingAmount, '100');
+    assert.deepEqual(sell.body.fills, []);
+    assert.equal(sell.body.custody, 'non-custodial-no-withdrawal-authority');
+
+    const bookAfterSell = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    assert.equal(bookAfterSell.status, 200);
+    assert.deepEqual(bookAfterSell.body.bids, []);
+    assert.deepEqual(bookAfterSell.body.asks, [
+      {
+        orderHash: sell.body.orderHash,
+        price: '5',
+        amount: '100',
+        remainingAmount: '100',
+        owner: restingSell.owner,
+      },
+    ]);
+
+    const takerBuy = mockOrder({
+      side: 'buy',
+      amount: '100',
+      price: '6',
+      nonce: '202',
+      owner: '0x3333333333333333333333333333333333333333',
+    });
+
+    const buy = await requestJson(baseUrl, '/v1/orders', {
+      method: 'POST',
+      body: JSON.stringify({ order: takerBuy }),
+    });
+    assert.equal(buy.status, 201);
+    assert.equal(buy.body.status, 'filled');
+    assert.equal(buy.body.filledAmount, '100');
+    assert.equal(buy.body.remainingAmount, '0');
+    assert.equal(buy.body.fills.length, 1);
+
+    const [fill] = buy.body.fills;
+    assert.equal(fill.fillId, 'fill-000001');
+    assert.equal(fill.tradeId, 'trade-000001');
+    assert.equal(fill.marketId, 'QI-QUAI');
+    assert.equal(fill.makerOrderHash, sell.body.orderHash);
+    assert.equal(fill.takerOrderHash, buy.body.orderHash);
+    assert.equal(fill.price, '5');
+    assert.equal(fill.amount, '100');
+    assert.equal(fill.settlementMode, 'mock');
+    assert.equal(fill.settlementStatus, 'confirmed');
+
+    const fills = await requestJson(baseUrl, '/v1/fills');
+    assert.equal(fills.status, 200);
+    assert.equal(fills.body.source, 'mock-settlement-indexer-projection');
+    assert.deepEqual(fills.body.fills, [fill]);
+
+    const trades = await requestJson(baseUrl, '/v1/trades/QI-QUAI');
+    assert.equal(trades.status, 200);
+    assert.deepEqual(trades.body.trades, [
+      {
+        tradeId: 'trade-000001',
+        fillId: 'fill-000001',
+        marketId: 'QI-QUAI',
+        price: '5',
+        amount: '100',
+        settlementStatus: 'confirmed',
+        proofUrl: '/v1/proofs/trades/trade-000001',
+      },
+    ]);
+
+    const proof = await requestJson(baseUrl, '/v1/proofs/trades/trade-000001');
+    assert.equal(proof.status, 200);
+    assert.equal(proof.body.source, 'mock-proof-projection');
+    assert.deepEqual(proof.body.proof, {
+      tradeId: 'trade-000001',
+      orderHashes: [sell.body.orderHash, buy.body.orderHash],
+      settlementTx: 'mock-settlement-fill-000001',
+      blockNumber: 0,
+      eventIndex: 0,
+      market: 'QI-QUAI',
+      price: '5',
+      amount: '100',
+      makerFee: '0',
+      takerFee: '0',
+      explorerUrl: null,
+      rawEvent: {
+        type: 'MockSettlementConfirmed',
+        fillId: 'fill-000001',
+        settlementMode: 'mock',
+      },
+    });
+
+    const bookAfterMatch = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    assert.equal(bookAfterMatch.status, 200);
+    assert.deepEqual(bookAfterMatch.body.bids, []);
+    assert.deepEqual(bookAfterMatch.body.asks, []);
   });
 });
 

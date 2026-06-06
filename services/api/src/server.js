@@ -2,20 +2,73 @@ import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 
 import { notFound, sendJson } from './http.js';
+import { createMockDexState } from './mock-dex.js';
 import { handlePrivateRoute } from './routes/private.js';
 import { handleProofRoute } from './routes/proofs.js';
 import { handlePublicRoute } from './routes/public.js';
 
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
 const ROUTE_HANDLERS = [handlePublicRoute, handlePrivateRoute, handleProofRoute];
+const METHODS_WITH_JSON_BODY = new Set(['POST', 'PUT', 'PATCH']);
+const MAX_JSON_BODY_BYTES = 1_000_000;
 
-export const handleApiRequest = (request) => {
+const readJsonBody = async (request) => {
+  const method = request.method ?? 'GET';
+  if (!METHODS_WITH_JSON_BODY.has(method)) {
+    return { body: null };
+  }
+
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > MAX_JSON_BODY_BYTES) {
+      return {
+        error: {
+          statusCode: 413,
+          body: {
+            error: 'payload_too_large',
+            message: 'JSON request body exceeds the 1MB mock API limit.',
+          },
+        },
+      };
+    }
+    chunks.push(chunk);
+  }
+
+  if (chunks.length === 0) {
+    return { body: null };
+  }
+
+  const rawBody = Buffer.concat(chunks).toString('utf8').trim();
+  if (rawBody.length === 0) {
+    return { body: null };
+  }
+
+  try {
+    return { body: JSON.parse(rawBody) };
+  } catch {
+    return {
+      error: {
+        statusCode: 400,
+        body: {
+          error: 'invalid_json',
+          message: 'Request body must be valid JSON.',
+        },
+      },
+    };
+  }
+};
+
+export const handleApiRequest = (request, state = createMockDexState(), body = null) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
   const context = {
     method: request.method ?? 'GET',
     pathname: url.pathname,
     searchParams: url.searchParams,
     headers: request.headers,
+    body,
+    state,
   };
 
   for (const handleRoute of ROUTE_HANDLERS) {
@@ -28,9 +81,15 @@ export const handleApiRequest = (request) => {
   return notFound(context);
 };
 
-export const createApiServer = () => http.createServer((request, response) => {
+export const createApiServer = ({ state = createMockDexState() } = {}) => http.createServer(async (request, response) => {
   try {
-    sendJson(response, handleApiRequest(request));
+    const bodyResult = await readJsonBody(request);
+    if (bodyResult.error !== undefined) {
+      sendJson(response, bodyResult.error);
+      return;
+    }
+
+    sendJson(response, handleApiRequest(request, state, bodyResult.body));
   } catch (error) {
     sendJson(response, {
       statusCode: 500,

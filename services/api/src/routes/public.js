@@ -21,7 +21,8 @@ const marketPathValue = (pathname, prefix) => {
   return rawValue.length > 0 ? decodeURIComponent(rawValue) : null;
 };
 
-export const handlePublicRoute = ({ method, pathname, searchParams }) => {
+export const handlePublicRoute = (context) => {
+  const { method, pathname, searchParams, state } = context;
   if (method === 'GET' && pathname === '/v1/health') {
     return jsonResult(200, {
       ok: true,
@@ -65,20 +66,14 @@ export const handlePublicRoute = ({ method, pathname, searchParams }) => {
 
   const orderbookMarket = marketPathValue(pathname, '/v1/orderbook/');
   if (method === 'GET' && orderbookMarket !== null) {
-    return jsonResult(200, {
-      marketId: orderbookMarket,
-      sequence: 0,
-      bids: [],
-      asks: [],
-      source: 'mock-orderbook',
-    });
+    return jsonResult(200, state.getOrderbook(orderbookMarket));
   }
 
   const tradesMarket = marketPathValue(pathname, '/v1/trades/');
   if (method === 'GET' && tradesMarket !== null) {
     return jsonResult(200, {
       marketId: tradesMarket,
-      trades: [],
+      trades: state.listTrades(tradesMarket),
       source: 'mock-trade-projection',
     });
   }

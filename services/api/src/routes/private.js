@@ -44,13 +44,14 @@ export const handlePrivateRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/orders') {
     return jsonResult(200, {
-      orders: [],
+      orders: context.state.listOrders(),
       source: 'mock-order-projection',
     });
   }
 
   if (method === 'POST' && pathname === '/v1/orders') {
-    return notImplemented(context, 'wire_signed_order_validation_and_matching_engine');
+    const result = context.state.submitOrder(context.body?.order);
+    return jsonResult(result.statusCode, result.body);
   }
 
   const orderHash = pathValue(pathname, '/v1/orders/');
@@ -64,8 +65,8 @@ export const handlePrivateRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/fills') {
     return jsonResult(200, {
-      fills: [],
-      source: 'mock-fill-projection',
+      fills: context.state.listFills(),
+      source: 'mock-settlement-indexer-projection',
     });
   }
 
