@@ -194,6 +194,10 @@ export class QDexClient {
       get: async (marketId) => this.#requestOk(`/v1/orderbook/${encodeURIComponent(marketId)}`),
     };
 
+    this.contracts = {
+      get: async () => this.#requestOk('/v1/contracts'),
+    };
+
     this.orders = {
       list: async () => this.#requestOk('/v1/orders'),
       submitSignedOrder: async (order) => this.#requestOk('/v1/orders', {

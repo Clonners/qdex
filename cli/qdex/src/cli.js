@@ -81,6 +81,7 @@ const parseStreamOptions = (args) => {
 const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 markets
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
+  qdex --base-url http://127.0.0.1:8787 contracts
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
   qdex --base-url http://127.0.0.1:8787 stream fills [--limit 1]
   qdex --base-url http://127.0.0.1:8787 smoke
@@ -110,6 +111,15 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       writeJson(stdout, {
         command: 'book',
         ...(await client.orderbook.get(marketId)),
+      });
+      return 0;
+    }
+
+    if (command === 'contracts') {
+      writeJson(stdout, {
+        command: 'contracts',
+        baseUrl,
+        ...(await client.contracts.get()),
       });
       return 0;
     }

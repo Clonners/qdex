@@ -74,6 +74,34 @@ test('qdex stream fills command consumes local WebSocket snapshots with read-onl
   });
 });
 
+test('qdex contracts command prints local-only registry metadata without wallet or tx claims', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'contracts']);
+
+    assert.equal(result.command, 'contracts');
+    assert.equal(result.deploymentStatus, 'local-only-not-deployed');
+    assert.equal(result.realQuaiTransactions, false);
+    assert.equal(result.walletRequired, false);
+    assert.match(result.nativeQiCaveat, /UTXO-model/);
+    assert.equal(result.contracts.tradingVault.address, null);
+    assert.equal(result.contracts.tradingVault.operatorWithdrawalAuthority, false);
+    assert.equal(result.contracts.settlement.proofTrigger, 'TradeSettled');
+    assert.deepEqual(result.contracts.settlement.dependencies, [
+      'TradingVault',
+      'NonceManager',
+      'MarketRegistry',
+      'FeeManager',
+      'DelegateKeyRegistry',
+    ]);
+    assert.deepEqual(result.contracts.delegateKeyRegistry.requiredPermissions, [
+      'PLACE_ORDER',
+      'NO_WITHDRAW',
+      'NO_ADMIN',
+    ]);
+    assert.equal(result.safety.approvalGate, 'explicit-approval-required-before-deploy-or-transaction');
+  });
+});
+
 test('qdex read-only commands return market and book JSON from the API', async () => {
   await withServer(async (baseUrl) => {
     const markets = await runCliJson(['--base-url', baseUrl, 'markets']);

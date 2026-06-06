@@ -80,6 +80,38 @@ test('TypeScript SDK smoke drives mock API order -> fill -> proof loop without c
   });
 });
 
+test('TypeScript SDK exposes local-only contract registry metadata without wallet or deploy authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const registry = await client.contracts.get();
+
+    assert.equal(registry.deploymentStatus, 'local-only-not-deployed');
+    assert.equal(registry.realQuaiTransactions, false);
+    assert.equal(registry.walletRequired, false);
+    assert.match(registry.nativeQiCaveat, /UTXO-model/);
+    assert.equal(registry.contracts.tradingVault.address, null);
+    assert.equal(registry.contracts.tradingVault.operatorWithdrawalAuthority, false);
+    assert.equal(registry.contracts.settlement.proofTrigger, 'TradeSettled');
+    assert.deepEqual(registry.contracts.settlement.dependencies, [
+      'TradingVault',
+      'NonceManager',
+      'MarketRegistry',
+      'FeeManager',
+      'DelegateKeyRegistry',
+    ]);
+    assert.equal(registry.contracts.nonceManager.nonceTruth, 'external-nonce-manager');
+    assert.equal(registry.contracts.marketRegistry.marketTruth, 'external-market-registry');
+    assert.equal(registry.contracts.feeManager.feeTruth, 'external-fee-manager');
+    assert.deepEqual(registry.contracts.delegateKeyRegistry.requiredPermissions, [
+      'PLACE_ORDER',
+      'NO_WITHDRAW',
+      'NO_ADMIN',
+    ]);
+    assert.equal(registry.safety.approvalGate, 'explicit-approval-required-before-deploy-or-transaction');
+  });
+});
+
 test('TypeScript SDK consumes private fills stream over local WebSocket with live fanout', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

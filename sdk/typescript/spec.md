@@ -9,6 +9,7 @@ const dex = new QDexClient({ baseUrl, wallet, delegateKey });
 
 await dex.markets.list();
 await dex.orderbook.get(marketId);
+await dex.contracts.get(); // GET /v1/contracts
 
 const limitOrder: SignedOrder = await dex.orders.createLimitOrder({
   marketId: 'QI-QUAI',
@@ -33,6 +34,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 ```
 
 `fills.openStream()` and `fills.stream()`/`fills.stream({ limit })` consume WebSocket snapshots only; they never grant withdrawal/admin authority and private snapshots must preserve `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN` permissions.
+
+`contracts.get()` is read-only contract-registry metadata from `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety; it must not load wallets, send transactions, or imply deployment authority.
 
 ## Order semantics
 

@@ -8,6 +8,7 @@
 qdex markets
 qdex ticker QI-QUAI
 qdex book QI-QUAI
+qdex contracts
 qdex balance
 qdex order buy QI-QUAI --amount 1000 --price 0.123
 qdex order sell QI-QUAI --quote-amount 100 --market --slippage-bps 50
@@ -24,6 +25,7 @@ qdex api create-key bot-mm-1 --scope trade --expires 7d
 - `--slippage-bps` maps to signed slippage protection, not unlimited market execution.
 - `stream fills --limit N` consumes local WebSocket snapshots from `/v1/ws?channel=fills` and keeps private stream permissions read-only: `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`.
 - Fills stream from confirmed/mock-confirmed projections; proofs use `GET /v1/proofs/trades/:tradeId`.
+- `qdex contracts` calls `GET /v1/contracts` and prints `local-only-not-deployed` metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no wallet/deploy/transaction authority.
 
 ## API/delegate key scopes
 
