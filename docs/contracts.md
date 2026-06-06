@@ -12,6 +12,8 @@ Token assumption: native QUAI is account-model and contract-friendly; native Qi 
 
 Static ratchet: `tests/contract-interface-invariants.test.mjs` must stay green before adding implementation code. It guards compiler drift, no admin/operator withdrawal selectors, replay-domain fields, fee-cap fields, and `NO_WITHDRAW`/`NO_ADMIN` delegate semantics.
 
+Implementation matrix: [`docs/contract-implementation-test-matrix.md`](./contract-implementation-test-matrix.md) pins the local-only TradingVault, Settlement, and dependency-contract tests to write before any Hardhat implementation or approved Orchard/testnet activity.
+
 ## TradingVault
 
 Responsible for non-custodial user balances.
