@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: read-only TypeScript SDK/CLI contract registry exposure green -> next Python SDK contract registry exposure
+- Current phase: Python SDK contract registry exposure green -> next OpenAPI adapter-shaped FillPacket schema cleanup
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add read-only SDK/CLI contract registry exposure (`GET /v1/contracts` client method and `qdex contracts`) so bots can inspect local-only contract metadata without wallet/deploy authority.
+1. Align OpenAPI FillPacket/TradeProof schema with adapter-shaped indexed fills (`sourceEventId`, no matcher-local `createdAt`) so bots and docs consume projection truth consistently.
 2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
@@ -105,3 +105,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 17:27 -03: Wired local `Settlement` `FM-02` to a fee-authority-scoped `FeeManager`: nonzero fees now require manager recipient truth plus signed and market-schedule caps before nonce/accounting/vault/proof mutation; verified RED focused `Settlement FM-02` failed on missing `feeManager`, GREEN focused tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `f796000`; next slice: contract dependency cleanup / contract-address API alignment.
 - 2026-06-06 17:46 -03: Aligned `/v1/contracts` with local-only contract dependency metadata: API now exposes null addresses, `local-only-not-deployed`, `TradeSettled` proof trigger, Settlement dependencies, external nonce/market/fee truth, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety; verified RED/GREEN API + docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: read-only SDK/CLI contract registry exposure.
 - 2026-06-06 18:05 -03: Added read-only TypeScript SDK `contracts.get()` plus `qdex contracts` CLI exposure for `/v1/contracts`, preserving local-only null addresses, no wallet/deploy/tx claims, `TradeSettled`, and `NO_WITHDRAW`/`NO_ADMIN` safety; verified RED focused SDK/CLI/doc tests, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `70c498e`; next slice: Python SDK read-only contract registry exposure.
+- 2026-06-06 18:23 -03: Added Python SDK `contracts.get()` for read-only `/v1/contracts` metadata plus Python README/spec ratchets, preserving local-only null addresses, no wallet/deploy/tx claims, `TradeSettled`, native Qi caveat, and `NO_WITHDRAW`/`NO_ADMIN` safety; verified RED focused Python/doc tests, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `cfdb7d2`; next slice: OpenAPI adapter-shaped FillPacket schema cleanup.
