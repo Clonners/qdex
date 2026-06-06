@@ -22,11 +22,13 @@ const renderOrderbookSide = (orders, emptyLabel) => {
 };
 
 export const renderTradeProofPanel = (fixture) => {
-  const { market, orderbook, fill, trade, proof, custody } = fixture;
+  const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
   const proofSettlementTx = proof.settlementTx ?? 'null (mock)';
   const proofBlockNumber = proof.blockNumber ?? 'null (mock)';
   const proofSettlementMode = proof.settlementMode ?? proof.rawEvent.settlementMode;
+  const fillSource = sources?.fills ?? 'unknown-fill-source';
+  const proofSource = sources?.proof ?? 'unknown-proof-source';
 
   return `
     <section class="terminal-shell" aria-label="Quai Terminal DEX mock vertical slice">
@@ -76,6 +78,8 @@ export const renderTradeProofPanel = (fixture) => {
             <div><dt>price</dt><dd>price ${escapeHtml(trade.price)}</dd></div>
             <div><dt>amount</dt><dd>amount ${escapeHtml(trade.amount)}</dd></div>
             <div><dt>status</dt><dd><span class="green">mock settlement confirmed</span></dd></div>
+            <div><dt>fill source</dt><dd>${escapeHtml(fillSource)}</dd></div>
+            <div><dt>source event</dt><dd><code>${escapeHtml(fill.sourceEventId)}</code></dd></div>
             <div><dt>proof</dt><dd><a href="${escapeHtml(trade.proofUrl)}">${escapeHtml(trade.proofUrl)}</a></dd></div>
           </dl>
         </article>
@@ -88,6 +92,8 @@ export const renderTradeProofPanel = (fixture) => {
             <div><dt>mock reference</dt><dd><code>${escapeHtml(proof.mockSettlementReference)}</code></dd></div>
             <div><dt>block</dt><dd>${escapeHtml(proofBlockNumber)}</dd></div>
             <div><dt>event index</dt><dd>${escapeHtml(proof.eventIndex)}</dd></div>
+            <div><dt>proof source</dt><dd>${escapeHtml(proofSource)}</dd></div>
+            <div><dt>created from</dt><dd><code>${escapeHtml(proof.createdFromEventId)}</code></dd></div>
             <div><dt>settlementMode</dt><dd>${escapeHtml(proofSettlementMode)}</dd></div>
             <div><dt>maker order</dt><dd><code>${escapeHtml(shortHash(fill.makerOrderHash))}</code></dd></div>
             <div><dt>taker order</dt><dd><code>${escapeHtml(shortHash(fill.takerOrderHash))}</code></dd></div>

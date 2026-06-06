@@ -18,8 +18,8 @@ font       monospace
 Current slice:
 
 - `index.html` renders a static terminal-native trade/proof panel.
-- `src/mock-vertical-fixture.js` mirrors the deterministic mock vertical API slice: crossed `QI-QUAI` orders -> `fill-000001` -> `trade-000001` -> mock proof projection.
-- `src/render.js` keeps the mock settlement boundary explicit: `settlementMode: mock`, no real Quai transaction, no explorer URL, no funds moved.
+- `src/mock-vertical-fixture.js` mirrors the deterministic adapter-shaped mock API slice: crossed `QI-QUAI` orders -> `fill-000001` with `sourceEventId` -> `trade-000001` -> proof-service/indexer projection.
+- `src/render.js` surfaces projection sources while keeping the mock settlement boundary explicit: `settlementMode: mock`, no real Quai transaction, no explorer URL, no funds moved.
 
 Run locally:
 
@@ -47,6 +47,6 @@ Command palette ideas:
 :buy QI-QUAI 1000 @ 0.123
 :sell QI-QUAI 500 market slippage=0.5%
 :cancel all
-:withdraw QUAI 10
+:withdraw QUAI 10  # future owner-wallet-only flow, never delegate/API-key default
 :api create-key bot-mm-1 scope=trade expires=7d
 ```

@@ -1,4 +1,9 @@
 export const mockVerticalSliceFixture = Object.freeze({
+  sources: Object.freeze({
+    fills: 'in-memory-indexer-projection',
+    trades: 'in-memory-indexer-projection',
+    proof: 'proof-service-indexer-projection',
+  }),
   market: Object.freeze({
     id: 'QI-QUAI',
     base: 'QI',
@@ -26,7 +31,7 @@ export const mockVerticalSliceFixture = Object.freeze({
     takerFee: '0',
     settlementMode: 'mock',
     settlementStatus: 'confirmed',
-    createdAt: 1780000001,
+    sourceEventId: 'event-000001',
   }),
   trade: Object.freeze({
     tradeId: 'trade-000001',

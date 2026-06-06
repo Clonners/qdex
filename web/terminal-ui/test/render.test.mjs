@@ -19,6 +19,15 @@ test('renderTradeProofPanel shows the confirmed mock trade and proof without imp
   assert.match(html, /mock-settlement-fill-000001/);
   assert.match(html, /settlement tx[\s\S]*null \(mock\)/i);
   assert.doesNotMatch(html, /settlement tx<\/dt><dd><code>mock-settlement-fill-000001<\/code>/i);
+  assert.equal(Object.hasOwn(mockVerticalSliceFixture.fill, 'createdAt'), false);
+  assert.equal(mockVerticalSliceFixture.fill.sourceEventId, 'event-000001');
+  assert.equal(mockVerticalSliceFixture.sources.fills, 'in-memory-indexer-projection');
+  assert.equal(mockVerticalSliceFixture.sources.trades, 'in-memory-indexer-projection');
+  assert.equal(mockVerticalSliceFixture.sources.proof, 'proof-service-indexer-projection');
+  assert.match(html, /fill source[\s\S]*in-memory-indexer-projection/i);
+  assert.match(html, /source event[\s\S]*event-000001/i);
+  assert.match(html, /proof source[\s\S]*proof-service-indexer-projection/i);
+  assert.doesNotMatch(html, /createdAt/i);
   assert.match(html, /no real Quai transaction/i);
   assert.match(html, /non-custodial-no-withdrawal-authority/);
   assert.doesNotMatch(html, /explorer\.quai/i);
