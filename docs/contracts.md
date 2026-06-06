@@ -14,6 +14,8 @@ Static ratchet: `tests/contract-interface-invariants.test.mjs` must stay green b
 
 Implementation matrix: [`docs/contract-implementation-test-matrix.md`](./contract-implementation-test-matrix.md) pins the local-only TradingVault, Settlement, and dependency-contract tests to write before any Hardhat implementation or approved Orchard/testnet activity.
 
+Local harness: [`contracts/hardhat.config.cjs`](../contracts/hardhat.config.cjs) and [`contracts/scripts/guard-local-only-hardhat-config.mjs`](../contracts/scripts/guard-local-only-hardhat-config.mjs) define a dependency-light Hardhat scaffold that only exposes the in-memory `hardhat` network during autonomous runs. It intentionally has no external network entries, no deploy scripts, and no account loading.
+
 ## TradingVault
 
 Responsible for non-custodial user balances.
