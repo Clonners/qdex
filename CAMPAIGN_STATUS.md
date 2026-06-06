@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: local `MarketRegistry` `MR-01` extraction green -> next local `FeeManager` `FM-01` hard fee cap/update-event boundary
+- Current phase: local `FeeManager` `FM-01` extraction green -> next local `DelegateKeyRegistry` `DK-01` `NO_WITHDRAW`/`NO_ADMIN` permission boundary
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add local `FeeManager` `FM-01` hard fee cap/update-event ratchet before wiring external fee policy into `Settlement`.
-2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`, NonceManager `NM-01`, and MarketRegistry `MR-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are added.
+1. Add local `DelegateKeyRegistry` `DK-01` `NO_WITHDRAW`/`NO_ADMIN` permission, expiry, market, and notional ratchet before bot/delegate signing integration.
+2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`, NonceManager `NM-01`, MarketRegistry `MR-01`, and FeeManager `FM-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are added.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
@@ -97,3 +97,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 14:47 -03: Added `ST-07` contract proof-trigger adapter: `TradeSettled` is pinned as the only public contract proof trigger, matcher/non-TradeSettled events are suppressed, and real Quai event evidence is required before `SETTLEMENT_CONFIRMED` proof projection; verified RED missing adapter / incomplete-event regression, GREEN focused adapter tests, `pnpm check`, `pnpm --filter @qdex/contracts test:local`, `git diff --check`, and secret-pattern scan no matches; slice commit `12d4ab7`; next slice: local `NonceManager NM-01` user-owned cancellation / settlement-only mark-used ratchet.
 - 2026-06-06 15:05 -03: Added local `NonceManager` `NM-01` dependency extraction: user-owned single/range cancellation, bounded range guard, settlement-only `markNonceUsed`, precise nonce events, and source/ABI guards against custody/admin-style surfaces; verified RED focused `NonceManager NM-01` failed on missing contract, GREEN focused test, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `a0d8ba3`; next slice: local `MarketRegistry MR-01` enabled/disabled market metadata ratchet.
 - 2026-06-06 15:25 -03: Added local `MarketRegistry` `MR-01` dependency extraction: market-authority-gated add/disable, deterministic base/quote market IDs, stable precision/minimum metadata, disabled-state retention, and source/ABI guards against custody/role-like surfaces; verified RED focused `MarketRegistry MR-01` failed on missing contract, GREEN focused test, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `0b7319b`; next slice: local `FeeManager FM-01` hard fee cap/update-event ratchet.
+- 2026-06-06 15:46 -03: Added local `FeeManager` `FM-01` dependency extraction: fee-authority-gated maker/taker fee updates, hard `maxFeeBps()` cap aligned with local Settlement, evented recipient updates, and source/ABI guards against custody/owner/role/external-call surfaces; verified RED focused `FeeManager FM-01` failed on missing contract, GREEN focused test, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `9459611`; next slice: local `DelegateKeyRegistry DK-01` `NO_WITHDRAW`/`NO_ADMIN` permission ratchet.
