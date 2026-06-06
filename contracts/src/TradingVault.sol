@@ -13,6 +13,7 @@ interface IERC20VaultTokenMinimal {
 ///      TV-03 hardens the admin/operator custody boundary by keeping withdrawals caller-owned only.
 ///      TV-04 introduced settlement-authority locking. TV-05 gates all settlement hooks and adds
 ///      local-only unlock/settle accounting without any admin/operator withdrawal surface.
+///      TV-06: available withdrawals must not be gated by trading pause or broad emergency controls.
 contract TradingVault is ITradingVault {
     mapping(address => mapping(address => uint256)) private availableBalances;
     mapping(address => mapping(address => uint256)) private lockedBalances;
@@ -40,6 +41,7 @@ contract TradingVault is ITradingVault {
         emit Deposit(msg.sender, token, amount);
     }
 
+    /// @notice Withdraw caller-owned available balance without operator/admin custody involvement.
     function withdraw(address token, uint256 amount) external {
         require(token != address(0), "TV_TOKEN_ZERO");
         require(amount > 0, "TV_AMOUNT_ZERO");

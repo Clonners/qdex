@@ -71,7 +71,8 @@ test('local harness documentation tracks current local TradingVault coverage', a
     '`TV-03`: deployer/operator-like accounts cannot withdraw or drain a user\'s deposited balance, and admin/operator withdrawal selectors remain absent.',
     '`TV-04`: settlement-authority locks move funds from available to locked, and normal user withdrawals cannot move the locked portion.',
     '`TV-05`: settlement-only lock/unlock/move hooks reject non-authority callers; authorized hook calls validate trace IDs and balance limits before emitting `BalanceLocked`, `BalanceUnlocked`, or `SettlementBalanceMoved`.',
-    'Recommended next slice: add the `TV-06` pause/withdrawal-freeze boundary ratchet locally, without adding RPC URLs, deploy scripts, real wallets, or any admin/operator withdrawal surface.',
+    '`TV-06`: future trading pause or emergency controls cannot become a broad freeze on caller-owned available withdrawals without a separately approved narrow emergency design.',
+    'Recommended next slice: start local `ST-01` Settlement valid signed fill skeleton only after vault pause/custody boundaries stay green.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);

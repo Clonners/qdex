@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 /// @notice Interface for the non-custodial trading vault.
 /// @dev Implementations must ensure only users can withdraw their own available balances.
 ///      Settlement-only functions are balance movement hooks for validated fills, not operator custody.
+///      Future withdrawals of available balances must remain caller-owned and not become a broad trading-pause freeze.
 interface ITradingVault {
     event Deposit(address indexed user, address indexed token, uint256 amount);
     event Withdraw(address indexed user, address indexed token, uint256 amount);
