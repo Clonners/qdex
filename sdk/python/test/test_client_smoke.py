@@ -135,6 +135,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(smoke["resting_order"]["status"], "filled")
             self.assertEqual(smoke["crossing_order"]["status"], "filled")
             self.assertEqual(smoke["fill"]["fillId"], "fill-000001")
+            self.assertEqual(smoke["fill"]["projectionType"], "IndexedFillProjection")
             self.assertEqual(smoke["fill"]["tradeId"], "trade-000001")
             self.assertEqual(smoke["fill"]["sourceEventId"], "event-000001")
             self.assertEqual(smoke["fill"]["settlementMode"], "mock")

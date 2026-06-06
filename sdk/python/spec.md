@@ -27,6 +27,8 @@ market_order: SignedOrder = dex.orders.create_market_ioc_order(
 
 order_result: OrderSubmissionResult = dex.orders.submit_signed_order(limit_order)  # POST /v1/orders
 fill_projection: IndexedFillProjection | None = (order_result.get('fills') or [None])[0]
+if fill_projection is not None:
+    assert fill_projection['projectionType'] == 'IndexedFillProjection'
 for fill in dex.fills.stream():
     handle_fill(fill)
 proof: TradeProof = dex.proofs.trade(trade_id)  # GET /v1/proofs/trades/:tradeId
@@ -40,6 +42,7 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 - Every `market_ioc` order carries signed price/slippage bounds through `max_slippage_bps`.
 - `submit_signed_order` posts the exact signed payload to `POST /v1/orders`; the SDK must not mutate amount, price, nonce, owner, delegate, chain, or settlement contract fields after signing.
 - `OrderSubmissionResult` is the API response shape: it contains order state plus zero or more `IndexedFillProjection` rows projected from confirmed/mock-confirmed settlement.
+- OrderSubmissionResult fills are public IndexedFillProjection rows and each row must carry `projectionType: 'IndexedFillProjection'` plus `sourceEventId`.
 - `submit_signed_order` must not expose the matcher/relayer `FillPacket` handoff object as its public return type.
 
 ## Contract registry

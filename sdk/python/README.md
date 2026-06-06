@@ -17,6 +17,7 @@ contracts = dex.contracts.get()
 resting_sell = create_mock_signed_order(side="sell", amount="100", price="5", nonce="1")
 crossing_buy = create_mock_signed_order(side="buy", amount="100", price="6", nonce="2")
 smoke = run_mock_cross_smoke(dex, resting_sell=resting_sell, crossing_buy=crossing_buy)
+assert smoke["fill"]["projectionType"] == "IndexedFillProjection"
 proof = smoke["proof"]
 ```
 

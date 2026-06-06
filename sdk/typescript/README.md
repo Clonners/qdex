@@ -20,6 +20,7 @@ const result = await runMockCrossSmoke(dex, {
 
 console.log(contractRegistry.deploymentStatus); // local-only-not-deployed
 console.log(initialFillsSnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(result.fill.projectionType); // IndexedFillProjection
 console.log(result.fill.sourceEventId);
 console.log(result.proof.settlementMode); // mock
 ```

@@ -53,6 +53,7 @@ test('TypeScript SDK smoke drives mock API order -> fill -> proof loop without c
     assert.equal(smoke.restingOrder.status, 'filled');
     assert.equal(smoke.crossingOrder.status, 'filled');
     assert.equal(smoke.fill.fillId, 'fill-000001');
+    assert.equal(smoke.fill.projectionType, 'IndexedFillProjection');
     assert.equal(smoke.fill.tradeId, 'trade-000001');
     assert.equal(smoke.fill.sourceEventId, 'event-000001');
     assert.equal(smoke.fill.settlementMode, 'mock');
@@ -159,6 +160,7 @@ test('TypeScript SDK consumes private fills stream over local WebSocket with liv
       assert.equal(liveMessage.snapshot.source, 'in-memory-indexer-projection');
       assert.deepEqual(liveMessage.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
       assert.deepEqual(liveMessage.snapshot.data.fills, [crossingOrder.fills[0]]);
+      assert.equal(liveMessage.snapshot.data.fills[0].projectionType, 'IndexedFillProjection');
       assert.equal(liveMessage.snapshot.data.fills[0].sourceEventId, 'event-000001');
       assert.equal(Object.hasOwn(liveMessage.snapshot.data.fills[0], 'createdAt'), false);
     } finally {

@@ -46,6 +46,7 @@ test('qdex smoke command drives current mock API flow and prints mock-proof safe
     assert.equal(result.command, 'smoke');
     assert.equal(result.marketId, 'QI-QUAI');
     assert.equal(result.fill.fillId, 'fill-000001');
+    assert.equal(result.fill.projectionType, 'IndexedFillProjection');
     assert.equal(result.fill.sourceEventId, 'event-000001');
     assert.equal(result.fill.settlementMode, 'mock');
     assert.equal(result.proof.source, 'proof-service-indexer-projection');

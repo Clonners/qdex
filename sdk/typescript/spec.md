@@ -27,6 +27,7 @@ const marketOrder: SignedOrder = await dex.orders.createMarketIocOrder({
 
 const orderResult: OrderSubmissionResult = await dex.orders.submitSignedOrder(limitOrder); // POST /v1/orders
 const fillProjection: IndexedFillProjection | undefined = orderResult.fills[0];
+type IndexedFillProjection = { projectionType: 'IndexedFillProjection'; sourceEventId: string };
 const fillsStream = dex.fills.openStream({ timeoutMs: 2000 }); // /v1/ws?channel=fills
 const fillsSnapshot = await fillsStream.next();
 await fillsStream.close();
@@ -45,6 +46,7 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 - Every `market_ioc` order carries signed price/slippage bounds through `maxSlippageBps`.
 - `submitSignedOrder` sends the exact signed payload to `POST /v1/orders`; the SDK must not rewrite price, amount, nonce, owner, delegate, chain, or settlement contract fields after signing.
 - `OrderSubmissionResult` is the API response shape: it contains order state plus zero or more `IndexedFillProjection` rows projected from confirmed/mock-confirmed settlement.
+- OrderSubmissionResult.fills are public IndexedFillProjection rows and each row must carry `projectionType: 'IndexedFillProjection'` plus `sourceEventId`.
 - `submitSignedOrder` must not expose the matcher/relayer `FillPacket` handoff object as its public return type.
 
 ## Delegate/API key safety

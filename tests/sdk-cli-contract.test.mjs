@@ -137,7 +137,7 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
       'no withdraw command is available for delegate/API keys',
       'market orders are market_ioc IOC limit orders',
       'signed price/slippage bounds',
-      'order responses contain order state plus indexed-fill projections, not matcher/relayer FillPacket handoffs',
+      'order responses contain order state plus IndexedFillProjection rows',
       'mockSettlementReference',
       'local-only-not-deployed',
       'GET /v1/contracts',
@@ -146,4 +146,63 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
     ],
     'cli/qdex/spec.md',
   );
+});
+
+test('SDK, CLI, and terminal consumer docs pin IndexedFillProjection projectionType', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/spec.md',
+      terms: [
+        "projectionType: 'IndexedFillProjection'",
+        'OrderSubmissionResult.fills are public IndexedFillProjection rows',
+      ],
+    },
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'result.fill.projectionType',
+        'IndexedFillProjection',
+      ],
+    },
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        "fill_projection['projectionType'] == 'IndexedFillProjection'",
+        'OrderSubmissionResult fills are public IndexedFillProjection rows',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'smoke["fill"]["projectionType"]',
+        'IndexedFillProjection',
+      ],
+    },
+    {
+      path: 'cli/qdex/spec.md',
+      terms: [
+        'projectionType: IndexedFillProjection',
+        'order responses contain order state plus IndexedFillProjection rows',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'projectionType: IndexedFillProjection',
+        'not matcher/relayer FillPacket handoffs',
+      ],
+    },
+    {
+      path: 'web/terminal-ui/README.md',
+      terms: [
+        'projectionType: IndexedFillProjection',
+        'not a matcher-local FillPacket',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
 });

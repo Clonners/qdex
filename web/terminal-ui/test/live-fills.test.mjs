@@ -57,6 +57,7 @@ const fillStreamMessage = Object.freeze({
       source: 'in-memory-indexer-projection',
       fills: Object.freeze([
         Object.freeze({
+          projectionType: 'IndexedFillProjection',
           fillId: 'fill-live-000001',
           tradeId: 'trade-live-000001',
           marketId: 'QI-QUAI',
@@ -149,10 +150,25 @@ test('normalizeFillStreamMessage accepts only adapter-shaped custody-safe fill s
   assert.equal(normalized.channel, 'fills');
   assert.equal(normalized.source, 'in-memory-indexer-projection');
   assert.deepEqual(normalized.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+  assert.equal(normalized.latestFill.projectionType, 'IndexedFillProjection');
   assert.equal(normalized.latestFill.fillId, 'fill-live-000001');
   assert.equal(normalized.latestFill.sourceEventId, 'event-live-000001');
   assert.equal(Object.hasOwn(normalized.latestFill, 'createdAt'), false);
   assert.match(normalized.safetyNotice, /no real Quai transaction/);
+
+  assert.throws(
+    () => normalizeFillStreamMessage({
+      ...fillStreamMessage,
+      snapshot: {
+        ...fillStreamMessage.snapshot,
+        data: {
+          ...fillStreamMessage.snapshot.data,
+          fills: fillStreamMessage.snapshot.data.fills.map(({ projectionType: _projectionType, ...fill }) => fill),
+        },
+      },
+    }),
+    /projectionType.*IndexedFillProjection/i,
+  );
 
   assert.throws(
     () => normalizeFillStreamMessage({

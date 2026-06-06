@@ -18,6 +18,7 @@ export const mockVerticalSliceFixture = Object.freeze({
     source: 'mock-orderbook',
   }),
   fill: Object.freeze({
+    projectionType: 'IndexedFillProjection',
     fillId: 'fill-000001',
     tradeId: 'trade-000001',
     marketId: 'QI-QUAI',

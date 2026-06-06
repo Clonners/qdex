@@ -51,6 +51,7 @@ const assertSafePermissions = (permissions) => {
 
 const requireLatestFillShape = (fill) => {
   assertObject(fill, 'latest fill');
+  assertEqual(fill.projectionType, 'IndexedFillProjection', 'latest fill projectionType');
 
   for (const field of ['fillId', 'tradeId', 'marketId', 'makerOrderHash', 'takerOrderHash', 'price', 'amount', 'settlementMode', 'settlementStatus', 'sourceEventId']) {
     if (fill[field] === undefined || fill[field] === null || fill[field] === '') {

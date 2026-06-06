@@ -104,6 +104,7 @@ export const renderTradeProofPanel = (fixture) => {
             <div><dt>amount</dt><dd>amount ${escapeHtml(trade.amount)}</dd></div>
             <div><dt>status</dt><dd><span class="green">mock settlement confirmed</span></dd></div>
             <div><dt>fill source</dt><dd>${escapeHtml(fillSource)}</dd></div>
+            <div><dt>projection type</dt><dd><code>${escapeHtml(fill.projectionType)}</code></dd></div>
             <div><dt>source event</dt><dd><code>${escapeHtml(fill.sourceEventId)}</code></dd></div>
             <div><dt>proof</dt><dd><a href="${escapeHtml(trade.proofUrl)}">${escapeHtml(trade.proofUrl)}</a></dd></div>
           </dl>
