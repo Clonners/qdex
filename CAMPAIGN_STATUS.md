@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: proof-service/indexer in-memory adapter complete -> API adapter wiring
+- Current phase: API adapter wiring complete -> terminal UI adapter-shaped fill/proof fixture alignment
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Wire in-memory indexer/proof adapter into the API mock vertical loop and proof routes.
-2. Update terminal fixture/rendering to consume adapter-shaped proof rows only after API wiring tests are green.
+1. Update terminal fixture/rendering to consume adapter-shaped fill/proof rows after API wiring tests are green.
+2. Add focused SDK/CLI smoke stubs against the current mock API flow.
 3. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
 
 ## Cron runner
@@ -69,3 +69,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 05:27 -03: Refined proof-service/indexer route contract in OpenAPI, API proof responses, proof-service spec, and terminal mock proof panel; mock proofs now use `mockSettlementReference` with null `settlementTx`/block/explorer and explicit no-funds safety copy; verified RED doc/API/UI tests, GREEN `pnpm check`, and secret scan no matches; slice commit `57b4cea`; next slice: SDK/CLI bot contract specs.
 - 2026-06-06 05:42 -03: Completed SDK/CLI bot contract slice by adding TypeScript/Python/qdex specs plus ratchet test coverage for bot flow, `market_ioc` slippage bounds, and `NO_WITHDRAW`/`NO_ADMIN` delegate keys; verified RED `node --test tests/sdk-cli-contract.test.mjs` failed on missing specs, GREEN `pnpm check` pass, and secret-pattern scan no matches; slice commit `4a7538f`; next slice: proof-service/indexer in-memory adapter.
 - 2026-06-06 06:04 -03: Added minimal in-memory indexer/proof-service adapter with ratchet tests for confirmed mock settlement projection, duplicate-event idempotency, non-final `ORDER_MATCHED` suppression, and unsafe real-Quai proof rejection; verified RED `node --test tests/in-memory-indexer-proof-adapter.test.mjs` missing adapter modules, GREEN `pnpm check` pass, and secret-pattern scan no matches; slice commit `2b7c4d7`; next slice: wire adapter into API mock vertical loop and proof routes.
+- 2026-06-06 06:23 -03: Wired API mock vertical loop to the in-memory indexer/proof-service adapter; `/v1/fills`, `/v1/trades/:market`, and proof routes now consume adapter projections with `sourceEventId` and no mock `createdAt` fill shortcut; verified RED `pnpm --filter @qdex/api test` failed on missing `sourceEventId`, GREEN `pnpm --filter @qdex/api test` and `pnpm check` pass, secret-pattern scan no matches; slice commit `4365589`; next slice: terminal UI adapter-shaped fill/proof fixture alignment.
