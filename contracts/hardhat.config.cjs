@@ -1,3 +1,5 @@
+require('@nomicfoundation/hardhat-ethers');
+
 module.exports = {
   defaultNetwork: 'hardhat',
   solidity: {

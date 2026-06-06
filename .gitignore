@@ -8,6 +8,8 @@ build/
 out/
 coverage/
 .cache/
+contracts/artifacts/
+contracts/cache/
 
 # env/secrets
 .env
