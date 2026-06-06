@@ -4,65 +4,40 @@ pragma solidity 0.8.20;
 import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
 import {IDelegateKeyRegistry} from "./IDelegateKeyRegistry.sol";
+import {INonceManager} from "./INonceManager.sol";
 import {DelegateKeyRegistry} from "./DelegateKeyRegistry.sol";
+import {NonceManager} from "./NonceManager.sol";
 import {TradingVault} from "./TradingVault.sol";
 
 /// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, fee policy, and proof-event truth.
-/// @dev This is intentionally minimal: external nonce/market/fee managers and real Quai proof wiring remain future
-///      ratchets. ST-06 keeps fee caps and fee-recipient checks local-only without adding deploy scripts, RPC URLs,
-///      wallets, or admin withdrawal paths.
+/// @dev This is intentionally minimal: MarketRegistry/FeeManager dependencies and real Quai proof wiring remain future
+///      ratchets. NM-02 wires nonce truth through a local NonceManager without adding deploy scripts, RPC URLs,
+///      wallets, cancellation wrappers, or admin withdrawal paths.
 contract Settlement is ISettlement {
-    uint256 private constant MAX_CANCEL_RANGE_SIZE = 256;
     uint256 private constant BPS_DENOMINATOR = 10_000;
     uint256 public constant LOCAL_MAX_FEE_BPS = 1_000;
 
     ITradingVault public immutable vault;
+    INonceManager public immutable nonceManager;
     IDelegateKeyRegistry public immutable delegateKeyRegistry;
     address public immutable configuredFeeRecipient;
 
-    mapping(address => mapping(uint256 => bool)) private usedNonces;
     mapping(address => mapping(uint256 => bytes32)) private activeOrderHashByNonce;
     mapping(bytes32 => uint256) private orderFilledAmountByHash;
 
-    event NonceCancelled(address indexed user, uint256 indexed nonce);
-    event NonceRangeCancelled(address indexed user, uint256 from, uint256 to);
-
     constructor() {
         vault = ITradingVault(address(new TradingVault()));
+        nonceManager = INonceManager(address(new NonceManager(address(this))));
         delegateKeyRegistry = IDelegateKeyRegistry(address(new DelegateKeyRegistry()));
         configuredFeeRecipient = msg.sender;
     }
 
     function isNonceUsed(address user, uint256 nonce) external view returns (bool) {
-        return usedNonces[user][nonce];
+        return nonceManager.isNonceUsed(user, nonce);
     }
 
     function filledAmountOf(bytes32 orderHash) external view returns (uint256) {
         return orderFilledAmountByHash[orderHash];
-    }
-
-    function cancelNonce(uint256 nonce) external {
-        _cancelNonce(msg.sender, nonce);
-        emit NonceCancelled(msg.sender, nonce);
-    }
-
-    function cancelNonceRange(uint256 from, uint256 to) external {
-        require(from <= to, "ST_NONCE_RANGE_INVALID");
-        require(to - from < MAX_CANCEL_RANGE_SIZE, "ST_NONCE_RANGE_TOO_LARGE");
-
-        for (uint256 nonce = from; ; nonce++) {
-            _cancelNonce(msg.sender, nonce);
-            if (nonce == to) {
-                break;
-            }
-        }
-
-        emit NonceRangeCancelled(msg.sender, from, to);
-    }
-
-    function _cancelNonce(address user, uint256 nonce) private {
-        require(!usedNonces[user][nonce], "ST_NONCE_ALREADY_USED");
-        usedNonces[user][nonce] = true;
     }
 
     function hashFill(FillPacket calldata fill) public pure returns (bytes32) {
@@ -247,7 +222,7 @@ contract Settlement is ISettlement {
         string memory usedError,
         string memory orderMismatchError
     ) private view {
-        require(!usedNonces[user][nonce], usedError);
+        require(!nonceManager.isNonceUsed(user, nonce), usedError);
 
         bytes32 activeOrderHash = activeOrderHashByNonce[user][nonce];
         require(activeOrderHash == bytes32(0) || activeOrderHash == orderHash, orderMismatchError);
@@ -297,7 +272,7 @@ contract Settlement is ISettlement {
         uint256 orderAmount
     ) private {
         if (cumulativeFilledAmount == orderAmount) {
-            usedNonces[user][nonce] = true;
+            nonceManager.markNonceUsed(user, nonce, orderHash);
             delete activeOrderHashByNonce[user][nonce];
             return;
         }

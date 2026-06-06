@@ -41,6 +41,8 @@ async function deploySettlementHarness() {
   await settlement.waitForDeployment();
 
   const settlementAddress = await settlement.getAddress();
+  const nonceManagerAddress = await settlement.nonceManager();
+  const nonceManager = await ethers.getContractAt('NonceManager', nonceManagerAddress);
   const vaultAddress = await settlement.vault();
   const vault = await ethers.getContractAt('TradingVault', vaultAddress);
   const baseToken = await deployToken('Local Mock Base', 'LMB');
@@ -104,6 +106,7 @@ async function deploySettlementHarness() {
     taker,
     relayer,
     settlement,
+    nonceManager,
     vault,
     vaultAddress,
     baseToken,
@@ -151,11 +154,11 @@ describe('Settlement ST-02 nonce reuse and cancellation rejection', function () 
 
   it('lets users cancel single nonces and rejects otherwise-valid fills using those cancelled nonces', async function () {
     const harness = await deploySettlementHarness();
-    const { maker, taker, relayer, settlement, vault, baseTokenAddress, quoteTokenAddress, makerBaseDeposit, takerQuoteDeposit, makeFill, signFill } = harness;
+    const { maker, taker, relayer, settlement, nonceManager, vault, baseTokenAddress, quoteTokenAddress, makerBaseDeposit, takerQuoteDeposit, makeFill, signFill } = harness;
 
-    const makerCancelTx = await settlement.connect(maker).cancelNonce(77n);
+    const makerCancelTx = await nonceManager.connect(maker).cancelNonce(77n);
     const makerCancelReceipt = await makerCancelTx.wait();
-    const makerCancelEvents = parseEvents(makerCancelReceipt, settlement, 'NonceCancelled');
+    const makerCancelEvents = parseEvents(makerCancelReceipt, nonceManager, 'NonceCancelled');
     assert.equal(makerCancelEvents.length, 1, 'single nonce cancellation should emit one NonceCancelled event');
     assert.equal(makerCancelEvents[0].args.user, maker.address);
     assert.equal(makerCancelEvents[0].args.nonce, 77n);
@@ -170,9 +173,9 @@ describe('Settlement ST-02 nonce reuse and cancellation rejection', function () 
     );
     assert.equal(await settlement.isNonceUsed(taker.address, 88n), false, 'failed maker-cancelled fill must not consume taker nonce');
 
-    const takerCancelTx = await settlement.connect(taker).cancelNonce(99n);
+    const takerCancelTx = await nonceManager.connect(taker).cancelNonce(99n);
     const takerCancelReceipt = await takerCancelTx.wait();
-    const takerCancelEvents = parseEvents(takerCancelReceipt, settlement, 'NonceCancelled');
+    const takerCancelEvents = parseEvents(takerCancelReceipt, nonceManager, 'NonceCancelled');
     assert.equal(takerCancelEvents.length, 1, 'taker nonce cancellation should emit one NonceCancelled event');
     assert.equal(takerCancelEvents[0].args.user, taker.address);
     assert.equal(takerCancelEvents[0].args.nonce, 99n);
@@ -192,11 +195,11 @@ describe('Settlement ST-02 nonce reuse and cancellation rejection', function () 
 
   it('lets users cancel a bounded nonce range while leaving unrelated nonces available', async function () {
     const harness = await deploySettlementHarness();
-    const { maker, taker, relayer, settlement, vault, baseTokenAddress, makerBaseDeposit, makeFill, signFill } = harness;
+    const { maker, taker, relayer, settlement, nonceManager, vault, baseTokenAddress, makerBaseDeposit, makeFill, signFill } = harness;
 
-    const rangeCancelTx = await settlement.connect(maker).cancelNonceRange(100n, 102n);
+    const rangeCancelTx = await nonceManager.connect(maker).cancelNonceRange(100n, 102n);
     const rangeCancelReceipt = await rangeCancelTx.wait();
-    const rangeCancelEvents = parseEvents(rangeCancelReceipt, settlement, 'NonceRangeCancelled');
+    const rangeCancelEvents = parseEvents(rangeCancelReceipt, nonceManager, 'NonceRangeCancelled');
     assert.equal(rangeCancelEvents.length, 1, 'range cancellation should emit one NonceRangeCancelled event');
     assert.equal(rangeCancelEvents[0].args.user, maker.address);
     assert.equal(rangeCancelEvents[0].args.from, 100n);
@@ -217,8 +220,8 @@ describe('Settlement ST-02 nonce reuse and cancellation rejection', function () 
     assert.equal(await vault.availableBalanceOf(maker.address, baseTokenAddress), makerBaseDeposit, 'range-cancelled nonce attempts must not move vault balances');
 
     await assert.rejects(
-      settlement.connect(maker).cancelNonceRange(5n, 4n),
-      /ST_NONCE_RANGE_INVALID/,
+      nonceManager.connect(maker).cancelNonceRange(5n, 4n),
+      /NM_NONCE_RANGE_INVALID/,
       'nonce range cancellation should reject inverted ranges',
     );
   });
