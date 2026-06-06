@@ -223,6 +223,36 @@ details {
   padding-top: 12px;
 }
 
+.mock-trigger {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+button[data-qdx-trigger-cross] {
+  width: fit-content;
+  border: 1px solid var(--green);
+  background: #001a0a;
+  color: var(--green);
+  cursor: pointer;
+  font: inherit;
+  padding: 0.45rem 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+button[data-qdx-trigger-cross]:disabled {
+  border-color: var(--muted);
+  color: var(--muted);
+  cursor: wait;
+}
+
+[data-qdx-trigger-status] {
+  margin-bottom: 0;
+}
+
 summary {
   cursor: pointer;
   color: var(--green);

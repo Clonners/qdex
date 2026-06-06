@@ -1,16 +1,36 @@
 import { bindLiveFillStream } from './live-fills.js';
+import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
 
 const mount = document.querySelector('[data-qdx-app]');
 
 if (mount) {
+  const baseUrl = mount.dataset.qdxStreamBaseUrl || globalThis.QDEX_STREAM_BASE_URL || 'http://127.0.0.1:8787';
+
   mount.innerHTML = renderTradeProofPanel(mockVerticalSliceFixture);
+
+  try {
+    bindMockOrderTrigger({
+      mount,
+      baseUrl,
+      onError: (error) => {
+        mount.dataset.qdxMockOrderTrigger = 'error';
+        console.warn('QDEX mock order trigger failed; no real Quai transaction was attempted.', error);
+      },
+      onSmoke: () => {
+        mount.dataset.qdxMockOrderTrigger = 'filled';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxMockOrderTrigger = 'disabled';
+    console.warn('QDEX mock order trigger disabled.', error);
+  }
 
   try {
     bindLiveFillStream({
       mount,
-      baseUrl: mount.dataset.qdxStreamBaseUrl || globalThis.QDEX_STREAM_BASE_URL || 'http://127.0.0.1:8787',
+      baseUrl,
       baseFixture: mockVerticalSliceFixture,
       render: renderTradeProofPanel,
       onError: (error) => {

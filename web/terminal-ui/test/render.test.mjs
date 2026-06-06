@@ -39,8 +39,14 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /<kbd>\/<\/kbd> search market/);
   assert.match(html, /<kbd>b<\/kbd> buy/);
   assert.match(html, /<kbd>s<\/kbd> sell/);
-  assert.match(html, /:buy QI-QUAI 100 @ 5/);
+  assert.match(html, /:sell QI-QUAI 100 @ 5/);
+  assert.match(html, /:buy QI-QUAI 100 market_ioc slippage=50bps/);
   assert.match(html, /:proof trade-000001/);
+  assert.match(html, /data-qdx-trigger-cross/);
+  assert.match(html, /submit mock cross/i);
+  assert.match(html, /market_ioc slippage=50bps/i);
+  assert.match(html, /no real Quai tx\/explorer\/funds/i);
+  assert.match(html, /data-qdx-trigger-status/);
   assert.match(html, /&gt; order signed locally/);
   assert.match(html, /&gt; mock settlement reference: mock-settlement-fill-000001/);
 });

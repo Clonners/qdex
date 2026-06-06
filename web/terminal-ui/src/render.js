@@ -134,9 +134,14 @@ ${renderLiveStreamPanel(fixture.liveStream)}
         <article class="panel command-panel">
           <h2>keyboard</h2>
           <p><kbd>/</kbd> search market · <kbd>b</kbd> buy · <kbd>s</kbd> sell · <kbd>o</kbd> open orders · <kbd>?</kbd> help</p>
-          <pre>:buy QI-QUAI 100 @ 5
+          <pre>:sell QI-QUAI 100 @ 5
+:buy QI-QUAI 100 market_ioc slippage=50bps
 :proof trade-000001
 :cancel all</pre>
+          <div class="mock-trigger">
+            <button type="button" data-qdx-trigger-cross>submit mock cross</button>
+            <p class="muted" data-qdx-trigger-status>Posts a local/dev GTC sell plus IOC buy with signed slippage bounds; no real Quai tx/explorer/funds.</p>
+          </div>
         </article>
 
         <article class="panel log-panel">
