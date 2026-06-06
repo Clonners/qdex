@@ -5,8 +5,8 @@
   "description": "Terminal-native, API-first, non-custodial orderbook DEX for Quai.",
   "type": "module",
   "scripts": {
-    "check": "pnpm -r --if-present check",
-    "test": "pnpm -r --if-present test",
+    "check": "node --test tests/*.test.mjs && pnpm -r --if-present check",
+    "test": "node --test tests/*.test.mjs && pnpm -r --if-present test",
     "dev:api": "pnpm --filter @qdex/api dev"
   },
   "engines": {

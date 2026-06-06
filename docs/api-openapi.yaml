@@ -136,10 +136,20 @@ paths:
     post:
       tags: [private]
       summary: Submit signed order
-      description: Market orders must be modeled as IOC limit orders with slippage bounds.
+      description: POST /v1/orders accepts SignedOrder-like payloads. Market orders must be modeled as IOC limit orders with slippage bounds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderRequest"
       responses:
         "201":
           description: Order accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderAccepted"
   /v1/orders/{orderHash}:
     delete:
       tags: [private]
@@ -206,6 +216,171 @@ paths:
           description: Trade proof
 components:
   schemas:
+    OrderSide:
+      type: string
+      enum: [buy, sell]
+    OrderType:
+      type: string
+      description: market_ioc orders are IOC limit orders with signed slippage/price bounds.
+      enum: [limit, market_ioc]
+    TimeInForce:
+      type: string
+      enum: [GTC, IOC, FOK, POST_ONLY]
+    OrderSignature:
+      type: object
+      required: [scheme, signer, value]
+      properties:
+        scheme:
+          type: string
+          enum: [mock, typed_data]
+          description: MVP supports mock signatures; production should use Quai-compatible typed structured data.
+        signer:
+          type: string
+          description: Owner or approved delegate signer address.
+          example: "0x1111111111111111111111111111111111111111"
+        value:
+          type: string
+          description: Signature bytes or mock signature marker.
+          example: "0xmock-signature"
+        signedAt:
+          type: integer
+          format: int64
+          minimum: 0
+    SignedOrder:
+      type: object
+      required:
+        - marketId
+        - side
+        - type
+        - baseToken
+        - quoteToken
+        - amount
+        - price
+        - timeInForce
+        - maxSlippageBps
+        - owner
+        - delegate
+        - nonce
+        - expiresAt
+        - chainId
+        - settlementContract
+        - signature
+      properties:
+        marketId:
+          type: string
+          example: QI-QUAI
+        side:
+          $ref: "#/components/schemas/OrderSide"
+        type:
+          $ref: "#/components/schemas/OrderType"
+        baseToken:
+          type: string
+          description: Mock token ID now; later token/adapter address. Native Qi requires a wrapper/adapter before real vault settlement.
+          example: mock:QI
+        quoteToken:
+          type: string
+          example: mock:QUAI
+        amount:
+          type: string
+          pattern: "^[0-9]+$"
+          description: Base amount in atomic units as a decimal string.
+          example: "1000000000000000000"
+        price:
+          type: string
+          pattern: "^[0-9]+$"
+          description: Quote-per-base limit price in atomic units as a decimal string.
+          example: "123000000000000000"
+        timeInForce:
+          $ref: "#/components/schemas/TimeInForce"
+        maxSlippageBps:
+          type: integer
+          minimum: 0
+          maximum: 10000
+          description: Required slippage guard for market_ioc orders; normally 0 for strict limit orders.
+        owner:
+          type: string
+          description: Main wallet that owns funds and retains withdrawal authority.
+          example: "0x1111111111111111111111111111111111111111"
+        delegate:
+          type: string
+          description: Optional trade delegate; delegates default to NO_WITHDRAW and cannot withdraw funds.
+          example: "0x0000000000000000000000000000000000000000"
+        nonce:
+          type: string
+          pattern: "^[0-9]+$"
+          description: Owner/delegate replay-protection nonce.
+          example: "1"
+        expiresAt:
+          type: integer
+          format: int64
+          minimum: 0
+        chainId:
+          type: integer
+          minimum: 0
+          description: Quai replay domain; mock/dev may use 0 until real chain ID is pinned.
+        settlementContract:
+          type: string
+          description: Settlement contract address included in the signature domain.
+          example: "0x2222222222222222222222222222222222222222"
+        clientOrderId:
+          type: string
+          description: Optional client/bot correlation ID.
+        signature:
+          $ref: "#/components/schemas/OrderSignature"
+    OrderRequest:
+      type: object
+      required: [order]
+      properties:
+        order:
+          $ref: "#/components/schemas/SignedOrder"
+    OrderStatus:
+      type: string
+      enum: [accepted, open, partially_filled, filled, cancelled, expired, rejected]
+    OrderAccepted:
+      type: object
+      required: [orderHash, status, filledAmount, remainingAmount]
+      properties:
+        orderHash:
+          type: string
+          description: Deterministic hash of the canonical SignedOrder payload.
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        filledAmount:
+          type: string
+          pattern: "^[0-9]+$"
+          example: "0"
+        remainingAmount:
+          type: string
+          pattern: "^[0-9]+$"
+          example: "1000000000000000000"
+    FillPacket:
+      type: object
+      required: [fillId, marketId, makerOrderHash, takerOrderHash, price, amount, settlementMode, createdAt]
+      properties:
+        fillId: { type: string, example: fill-000001 }
+        marketId: { type: string, example: QI-QUAI }
+        makerOrderHash: { type: string }
+        takerOrderHash: { type: string }
+        maker: { type: string }
+        taker: { type: string }
+        price:
+          type: string
+          pattern: "^[0-9]+$"
+        amount:
+          type: string
+          pattern: "^[0-9]+$"
+        makerFee:
+          type: string
+          pattern: "^[0-9]+$"
+        takerFee:
+          type: string
+          pattern: "^[0-9]+$"
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        createdAt:
+          type: integer
+          format: int64
     Market:
       type: object
       required: [id, base, quote, status]

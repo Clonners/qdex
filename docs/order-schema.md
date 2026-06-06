@@ -1,0 +1,138 @@
+# Signed Order Schema
+
+This document defines the canonical payload shared by the API gateway, matching engine, relayer, mock settlement, indexer, SDKs and CLI. The MVP may accept mock signatures, but the payload must already carry the replay-protection fields needed by Quai settlement contracts.
+
+The schema is intentionally spot-only and single-zone for the MVP. It does not introduce custody: users keep withdrawal authority in the vault/settlement design, and delegate/API keys are trade-only by default with `NO_WITHDRAW`.
+
+## Canonical payload
+
+```json
+{
+  "marketId": "QI-QUAI",
+  "side": "buy",
+  "type": "limit",
+  "baseToken": "mock:QI",
+  "quoteToken": "mock:QUAI",
+  "amount": "1000000000000000000",
+  "price": "123000000000000000",
+  "timeInForce": "GTC",
+  "maxSlippageBps": 0,
+  "owner": "0x1111111111111111111111111111111111111111",
+  "delegate": "0x0000000000000000000000000000000000000000",
+  "nonce": "1",
+  "expiresAt": 1780000000,
+  "chainId": 0,
+  "settlementContract": "0x2222222222222222222222222222222222222222",
+  "clientOrderId": "optional-bot-id-001",
+  "signature": {
+    "scheme": "mock",
+    "signer": "0x1111111111111111111111111111111111111111",
+    "value": "0xmock-signature",
+    "signedAt": 1780000000
+  }
+}
+```
+
+## Field rules
+
+| Field | Rule |
+| --- | --- |
+| `marketId` | Canonical market pair string, e.g. `QI-QUAI`. Must exist in `MarketRegistry` before real settlement. |
+| `side` | `buy` or `sell`. |
+| `type` | `limit` or `market_ioc`. Market orders are IOC limit orders with slippage bounds, never unbounded market execution. |
+| `baseToken`, `quoteToken` | Mock token IDs for the MVP, later canonical token/adapter addresses. Native Qi is not assumed to be ERC-20 vault collateral until a wrapper/adapter is designed. |
+| `amount` | Base quantity in atomic units as a decimal string. |
+| `price` | Quote-per-base limit price in atomic units as a decimal string. |
+| `timeInForce` | `GTC`, `IOC`, `FOK`, or `POST_ONLY`; `market_ioc` must use `IOC`. |
+| `maxSlippageBps` | Required for `market_ioc`; zero for normal limit orders unless the client wants stricter execution guards. |
+| `owner` | Main wallet address that owns funds and can withdraw. |
+| `delegate` | Optional delegate signer. Delegates can place/cancel orders only within permission caps and must be `NO_WITHDRAW`. |
+| `nonce` | Owner/delegate nonce consumed by settlement; cancelled or used nonces cannot be replayed. |
+| `expiresAt` | Unix seconds. Expired orders are rejected by matching and settlement. |
+| `chainId` | Quai chain/zone replay domain. Mock/dev may use `0`; real deployments must pin the actual chain ID. |
+| `settlementContract` | Settlement contract address in the replay domain. Prevents signatures intended for one venue from filling elsewhere. |
+| `signature` | Signature over the canonical order hash. MVP supports `mock`; production should use typed structured data once Quai signing details are pinned. |
+
+## Hashing and replay domain
+
+The order hash is computed over the normalized order fields excluding mutable projection fields such as `filledAmount`, `remainingAmount`, `status`, and indexer metadata.
+
+Replay protection is mandatory:
+
+```text
+orderHash = hash(
+  marketId,
+  side,
+  type,
+  baseToken,
+  quoteToken,
+  amount,
+  price,
+  timeInForce,
+  maxSlippageBps,
+  owner,
+  delegate,
+  nonce,
+  expiresAt,
+  chainId,
+  settlementContract
+)
+```
+
+The settlement plane must reject a fill when the nonce is used/cancelled, the order is expired, the chain ID or settlement contract differs, the market is disabled, or the fee/slippage constraints are violated.
+
+## Partial fills
+
+Limit orders support partial fills. The indexer/API projection tracks:
+
+```json
+{
+  "orderHash": "0x...",
+  "status": "partially_filled",
+  "filledAmount": "400000000000000000",
+  "remainingAmount": "600000000000000000"
+}
+```
+
+A fill is valid only if cumulative `filledAmount <= amount`. The settlement contract or mock settlement ledger is the source of truth; API state is a projection.
+
+## Market orders
+
+Market orders are represented as `type = "market_ioc"` plus a limit price and `maxSlippageBps`. The matcher may cross immediately, but the FillPacket must still prove the executed price satisfies the signed maximum paid/minimum received.
+
+For example, a buy-side market IOC signs a maximum quote paid. A sell-side market IOC signs a minimum quote received. Any residual amount is cancelled instead of resting on the book.
+
+## FillPacket
+
+A deterministic match produces a `FillPacket` for relayer/mock settlement:
+
+```json
+{
+  "fillId": "fill-000001",
+  "marketId": "QI-QUAI",
+  "makerOrderHash": "0xmaker",
+  "takerOrderHash": "0xtaker",
+  "maker": "0x1111111111111111111111111111111111111111",
+  "taker": "0x3333333333333333333333333333333333333333",
+  "price": "123000000000000000",
+  "amount": "1000000000000000000",
+  "makerFee": "0",
+  "takerFee": "0",
+  "settlementMode": "mock",
+  "createdAt": 1780000001
+}
+```
+
+The relayer then marks the packet `confirmed` after mock settlement. The indexer projects it into fills and trade proofs. Later, the same packet shape should map to real Quai settlement events.
+
+## API usage
+
+`POST /v1/orders` accepts an `OrderRequest` containing the `SignedOrder`. Successful acceptance returns an `OrderAccepted` payload with `orderHash`, `status`, and projection fields. A confirmed fill must be retrievable through `GET /v1/fills` and `GET /v1/proofs/trades/{tradeId}`.
+
+## Invariants
+
+- No order schema field grants withdrawal authority.
+- Delegate/API keys default to `NO_WITHDRAW` and cannot withdraw funds.
+- Contract events or mock settlement confirmations are final truth; API state is cache/projection.
+- `chainId`, `settlementContract`, `nonce`, and `expiresAt` are required for replay-safe orders.
+- Every FillPacket must be traceable to a proof projection.
