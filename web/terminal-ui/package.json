@@ -1,0 +1,10 @@
+{
+  "name": "@qdex/terminal-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/mock-vertical-fixture.js && node --check src/render.js && node --check src/app.js && node --test test/*.test.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}

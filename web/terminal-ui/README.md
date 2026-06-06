@@ -15,6 +15,19 @@ border     #222222
 font       monospace
 ```
 
+Current slice:
+
+- `index.html` renders a static terminal-native trade/proof panel.
+- `src/mock-vertical-fixture.js` mirrors the deterministic mock vertical API slice: crossed `QI-QUAI` orders -> `fill-000001` -> `trade-000001` -> mock proof projection.
+- `src/render.js` keeps the mock settlement boundary explicit: `settlementMode: mock`, no real Quai transaction, no explorer URL, no funds moved.
+
+Run locally:
+
+```bash
+pnpm --filter @qdex/terminal-ui check
+python3 -m http.server 8080 -d web/terminal-ui
+```
+
 Core screens:
 
 - markets
