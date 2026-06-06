@@ -81,7 +81,8 @@ test('local harness documentation tracks current local contract coverage', async
     '`ST-07`: contract proof adapter pins `TradeSettled` as the only public proof trigger, suppresses matcher/non-TradeSettled events, and requires real Quai event evidence before public projection.',
     '`NM-01`: local NonceManager keeps cancellation user-owned, bounds range cancellation, and restricts `markNonceUsed` to the configured settlement authority.',
     '`MR-01`: local MarketRegistry keeps market metadata stable, enabled/disabled status explicit, and market-authority changes dependency-scoped before Settlement wiring.',
-    'Recommended next slice: add local `FeeManager FM-01` hard fee cap/update-event ratchet before wiring external fee policy into Settlement.',
+    '`FM-01`: local FeeManager keeps maker/taker fee updates fee-authority gated, hard-capped by `maxFeeBps()`, and evented for indexer replay.',
+    'Recommended next slice: add local `DelegateKeyRegistry DK-01` `NO_WITHDRAW`/`NO_ADMIN` permission ratchet before bot/delegate signing integration.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);

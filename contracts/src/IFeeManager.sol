@@ -12,4 +12,5 @@ interface IFeeManager {
     function takerFeeBps(bytes32 marketId) external view returns (uint256);
     function feeRecipient() external view returns (address);
     function updateFees(bytes32 marketId, uint256 makerFeeBps, uint256 takerFeeBps) external;
+    function updateFeeRecipient(address feeRecipient) external;
 }
