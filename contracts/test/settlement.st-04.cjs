@@ -179,10 +179,8 @@ describe('Settlement ST-04 market and fill-constraint rejection', function () {
     }
   });
 
-  it('rejects unsupported fees and fill-accounting mismatches before nonce consumption or vault movement', async function () {
+  it('rejects fill-accounting mismatches before nonce consumption or vault movement', async function () {
     const cases = [
-      { label: 'st04-maker-fee', makerNonce: 631n, takerNonce: 632n, overrides: { makerFee: 1n }, error: /ST_FEES_NOT_READY/ },
-      { label: 'st04-taker-fee', makerNonce: 633n, takerNonce: 634n, overrides: { takerFee: 1n }, error: /ST_FEES_NOT_READY/ },
       { label: 'st04-maker-filled-mismatch', makerNonce: 635n, takerNonce: 636n, overrides: { makerFilledAmount: 99n }, error: /ST_MAKER_FILL_AMOUNT_MISMATCH/ },
       { label: 'st04-taker-filled-mismatch', makerNonce: 637n, takerNonce: 638n, overrides: { takerFilledAmount: 99n }, error: /ST_TAKER_FILL_AMOUNT_MISMATCH/ },
     ];

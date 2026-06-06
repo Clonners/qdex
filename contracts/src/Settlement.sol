@@ -5,14 +5,17 @@ import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
 import {TradingVault} from "./TradingVault.sol";
 
-/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, and proof-event truth.
-/// @dev This is intentionally minimal: fee movement, external nonce/market/fee managers, and real Quai proof wiring
-///      remain future ratchets. ST-05 keeps local partial-fill accounting bounded by signed order amounts without adding
-///      deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
+/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, fee policy, and proof-event truth.
+/// @dev This is intentionally minimal: external nonce/market/fee managers and real Quai proof wiring remain future
+///      ratchets. ST-06 keeps fee caps and fee-recipient checks local-only without adding deploy scripts, RPC URLs,
+///      wallets, or admin withdrawal paths.
 contract Settlement is ISettlement {
     uint256 private constant MAX_CANCEL_RANGE_SIZE = 256;
+    uint256 private constant BPS_DENOMINATOR = 10_000;
+    uint256 public constant LOCAL_MAX_FEE_BPS = 1_000;
 
     ITradingVault public immutable vault;
+    address public immutable configuredFeeRecipient;
 
     mapping(address => mapping(uint256 => bool)) private usedNonces;
     mapping(address => mapping(uint256 => bytes32)) private activeOrderHashByNonce;
@@ -23,6 +26,7 @@ contract Settlement is ISettlement {
 
     constructor() {
         vault = ITradingVault(address(new TradingVault()));
+        configuredFeeRecipient = msg.sender;
     }
 
     function isNonceUsed(address user, uint256 nonce) external view returns (bool) {
@@ -114,12 +118,41 @@ contract Settlement is ISettlement {
         _advanceNonceLifecycle(fill.maker, fill.makerNonce, fill.makerOrderHash, fill.makerFilledAmount, fill.makerOrderAmount);
         _advanceNonceLifecycle(fill.taker, fill.takerNonce, fill.takerOrderHash, fill.takerFilledAmount, fill.takerOrderAmount);
 
-        vault.lockForSettlement(fill.maker, fill.baseToken, fill.baseAmount, fill.makerOrderHash);
-        vault.lockForSettlement(fill.taker, fill.quoteToken, fill.quoteAmount, fill.takerOrderHash);
-        vault.settleLockedBalance(fill.maker, fill.taker, fill.baseToken, fill.baseAmount, fill.fillId);
-        vault.settleLockedBalance(fill.taker, fill.maker, fill.quoteToken, fill.quoteAmount, fill.fillId);
+        _settleFillBalances(fill);
 
         _emitTradeSettled(fill);
+    }
+
+    function _settleFillBalances(FillPacket calldata fill) private {
+        vault.lockForSettlement(fill.maker, fill.baseToken, fill.baseAmount, fill.makerOrderHash);
+        vault.lockForSettlement(fill.taker, fill.quoteToken, fill.quoteAmount, fill.takerOrderHash);
+
+        _settleGrossAmountWithOptionalFee(
+            fill.maker, fill.taker, fill.feeRecipient, fill.baseToken, fill.baseAmount, fill.takerFee, fill.fillId
+        );
+        _settleGrossAmountWithOptionalFee(
+            fill.taker, fill.maker, fill.feeRecipient, fill.quoteToken, fill.quoteAmount, fill.makerFee, fill.fillId
+        );
+    }
+
+    function _settleGrossAmountWithOptionalFee(
+        address debitUser,
+        address creditUser,
+        address feeRecipient,
+        address token,
+        uint256 grossAmount,
+        uint256 feeAmount,
+        bytes32 fillId
+    ) private {
+        uint256 netAmount = grossAmount - feeAmount;
+
+        if (netAmount > 0) {
+            vault.settleLockedBalance(debitUser, creditUser, token, netAmount, fillId);
+        }
+
+        if (feeAmount > 0) {
+            vault.settleLockedBalance(debitUser, feeRecipient, token, feeAmount, fillId);
+        }
     }
 
     function _emitTradeSettled(FillPacket calldata fill) private {
@@ -157,13 +190,32 @@ contract Settlement is ISettlement {
         require(fill.baseAmount > 0, "ST_BASE_AMOUNT_ZERO");
         require(fill.quoteAmount > 0, "ST_QUOTE_AMOUNT_ZERO");
         require(fill.quoteAmount == fill.baseAmount * fill.price, "ST_PRICE_AMOUNT_MISMATCH");
-        require(fill.makerFee == 0 && fill.takerFee == 0, "ST_FEES_NOT_READY");
+        _validateFeePolicy(fill);
         require(fill.makerOrderAmount > 0, "ST_MAKER_ORDER_AMOUNT_ZERO");
         require(fill.takerOrderAmount > 0, "ST_TAKER_ORDER_AMOUNT_ZERO");
         require(fill.makerNonce != fill.takerNonce || fill.maker != fill.taker, "ST_NONCE_PAIR_INVALID");
         require(fill.expiresAt > block.timestamp, "ST_EXPIRED");
         require(fill.chainId == block.chainid, "ST_CHAIN_ID_MISMATCH");
         require(fill.settlementContract == address(this), "ST_SETTLEMENT_CONTRACT_MISMATCH");
+    }
+
+    function _validateFeePolicy(FillPacket calldata fill) private view {
+        require(fill.maxFeeBps <= LOCAL_MAX_FEE_BPS, "ST_MAX_FEE_BPS_TOO_HIGH");
+
+        if (fill.makerFee == 0 && fill.takerFee == 0) {
+            return;
+        }
+
+        require(
+            fill.feeRecipient != address(0) && fill.feeRecipient == configuredFeeRecipient,
+            "ST_FEE_RECIPIENT_INVALID"
+        );
+        require(fill.makerFee <= _feeCap(fill.quoteAmount, fill.maxFeeBps), "ST_MAKER_FEE_CAP_EXCEEDED");
+        require(fill.takerFee <= _feeCap(fill.baseAmount, fill.maxFeeBps), "ST_TAKER_FEE_CAP_EXCEEDED");
+    }
+
+    function _feeCap(uint256 grossAmount, uint256 maxFeeBps) private pure returns (uint256) {
+        return (grossAmount * maxFeeBps) / BPS_DENOMINATOR;
     }
 
     function _validateNonceAvailableForOrder(
