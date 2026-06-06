@@ -69,7 +69,8 @@ test('local harness documentation tracks current local TradingVault coverage', a
     '`TV-01`: caller deposits increase caller-owned available balance.',
     '`TV-02`: callers can withdraw only their own available balance.',
     '`TV-03`: deployer/operator-like accounts cannot withdraw or drain a user\'s deposited balance, and admin/operator withdrawal selectors remain absent.',
-    'Recommended next slice: start the `TV-04` locked-balance withdrawal ratchet locally, without adding RPC URLs, deploy scripts, real wallets, or any admin/operator withdrawal surface.',
+    '`TV-04`: settlement-authority locks move funds from available to locked, and normal user withdrawals cannot move the locked portion.',
+    'Recommended next slice: start the `TV-05` settlement-hook authorization ratchet locally, without adding RPC URLs, deploy scripts, real wallets, or any admin/operator withdrawal surface.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);
