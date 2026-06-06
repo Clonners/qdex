@@ -72,7 +72,8 @@ test('local harness documentation tracks current local TradingVault coverage', a
     '`TV-04`: settlement-authority locks move funds from available to locked, and normal user withdrawals cannot move the locked portion.',
     '`TV-05`: settlement-only lock/unlock/move hooks reject non-authority callers; authorized hook calls validate trace IDs and balance limits before emitting `BalanceLocked`, `BalanceUnlocked`, or `SettlementBalanceMoved`.',
     '`TV-06`: future trading pause or emergency controls cannot become a broad freeze on caller-owned available withdrawals without a separately approved narrow emergency design.',
-    'Recommended next slice: start local `ST-01` Settlement valid signed fill skeleton only after vault pause/custody boundaries stay green.',
+    '`ST-01`: local Settlement validates signed fill replay fields, moves vault balances exactly once, marks nonces, and emits `TradeSettled` proof truth.',
+    'Recommended next slice: add local `ST-02` nonce reuse/cancel rejection coverage before expanding market/fee dependencies.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);
