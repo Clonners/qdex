@@ -47,8 +47,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 - Job ID: `bd3c1b71af75`
 - Name: `qdex-autonomous-builder`
-- Schedule: `0 8-22/2 * * *` America/Buenos_Aires local time
-- Repeat: 60 runs
+- Schedule: `*/20 8-22 * * *` America/Buenos_Aires local time
+- Repeat: 180 runs
 - Delivery: origin Telegram chat
 - Profile: `intielsolcito`
 - Workdir: this repo
@@ -58,3 +58,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 - 2026-06-06: Campaign contract/status created by interactive session.
 - 2026-06-06: Autonomous cron runner `bd3c1b71af75` created and scheduled for bounded builder slices.
+- 2026-06-06: Cron cadence updated to every 20 minutes during active window (`*/20 8-22 * * *`), repeat budget raised to 180 runs.
