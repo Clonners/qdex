@@ -45,8 +45,10 @@ async function deploySettlementHarness() {
   await settlement.waitForDeployment();
 
   const settlementAddress = await settlement.getAddress();
-  const configuredFeeRecipient = await settlement.configuredFeeRecipient();
-  assert.equal(configuredFeeRecipient, feeRecipient.address, 'ST-06 local settlement should expose the configured fee recipient');
+  const feeManagerAddress = await settlement.feeManager();
+  const feeManager = await ethers.getContractAt('FeeManager', feeManagerAddress);
+  const configuredFeeRecipient = await feeManager.feeRecipient();
+  assert.equal(configuredFeeRecipient, feeRecipient.address, 'ST-06 local settlement should read the configured fee recipient from FeeManager');
 
   const marketRegistryAddress = await settlement.marketRegistry();
   const marketRegistry = await ethers.getContractAt('MarketRegistry', marketRegistryAddress);
@@ -70,6 +72,7 @@ async function deploySettlementHarness() {
   });
   const marketId = marketIdFor(baseTokenAddress, quoteTokenAddress);
   await marketRegistry.connect(feeRecipient).addMarket(baseTokenAddress, quoteTokenAddress, 1, 1, 1n);
+  await feeManager.connect(feeRecipient).updateFees(marketId, 500n, 500n);
   const block = await ethers.provider.getBlock('latest');
   const network = await ethers.provider.getNetwork();
 

@@ -74,6 +74,8 @@ Current local delegate-signing boundary: `Settlement` exposes a local `delegateK
 
 Current local market boundary: `Settlement` exposes a local `marketRegistry()` dependency whose market authority is the settlement deployer in the in-memory harness. A fill must reference an enabled MarketRegistry row whose base/quote token metadata matches the fill tokens and whose `minAmount` is satisfied; disabled, unknown, or token-mismatched markets reject before nonce consumption, cumulative fill accounting, vault movement, or `TradeSettled` proof emission.
 
+Current local fee boundary: `Settlement` exposes a local `feeManager()` dependency whose fee authority and initial fee recipient are the settlement deployer in the in-memory harness. Nonzero fill fees must use the current `FeeManager.feeRecipient()`, respect the user-signed `maxFeeBps`, and stay under the market-specific `makerFeeBps`/`takerFeeBps` schedule before nonce consumption, cumulative fill accounting, vault movement, or `TradeSettled` proof emission.
+
 ## NonceManager
 
 Replay protection and cancellation.

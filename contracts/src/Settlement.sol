@@ -4,26 +4,27 @@ pragma solidity 0.8.20;
 import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
 import {IDelegateKeyRegistry} from "./IDelegateKeyRegistry.sol";
+import {IFeeManager} from "./IFeeManager.sol";
 import {IMarketRegistry} from "./IMarketRegistry.sol";
 import {INonceManager} from "./INonceManager.sol";
 import {DelegateKeyRegistry} from "./DelegateKeyRegistry.sol";
+import {FeeManager} from "./FeeManager.sol";
 import {MarketRegistry} from "./MarketRegistry.sol";
 import {NonceManager} from "./NonceManager.sol";
 import {TradingVault} from "./TradingVault.sol";
 
 /// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, fee policy, and proof-event truth.
-/// @dev This is intentionally minimal: FeeManager dependency and real Quai proof wiring remain future ratchets. MR-02/NM-02
-///      wire market and nonce truth through local dependency contracts without adding deploy scripts, RPC URLs, wallets,
-///      cancellation wrappers, or admin withdrawal paths.
+/// @dev This is intentionally minimal: real Quai proof wiring remains a future ratchet. NM-02/MR-02/FM-02
+///      wire nonce, market, and fee truth through local dependency contracts without adding deploy scripts, RPC URLs,
+///      wallets, cancellation wrappers, or admin withdrawal paths.
 contract Settlement is ISettlement {
     uint256 private constant BPS_DENOMINATOR = 10_000;
-    uint256 public constant LOCAL_MAX_FEE_BPS = 1_000;
 
     ITradingVault public immutable vault;
     INonceManager public immutable nonceManager;
     IMarketRegistry public immutable marketRegistry;
+    IFeeManager public immutable feeManager;
     IDelegateKeyRegistry public immutable delegateKeyRegistry;
-    address public immutable configuredFeeRecipient;
 
     mapping(address => mapping(uint256 => bytes32)) private activeOrderHashByNonce;
     mapping(bytes32 => uint256) private orderFilledAmountByHash;
@@ -32,8 +33,8 @@ contract Settlement is ISettlement {
         vault = ITradingVault(address(new TradingVault()));
         nonceManager = INonceManager(address(new NonceManager(address(this))));
         marketRegistry = IMarketRegistry(address(new MarketRegistry(msg.sender)));
+        feeManager = IFeeManager(address(new FeeManager(msg.sender, msg.sender)));
         delegateKeyRegistry = IDelegateKeyRegistry(address(new DelegateKeyRegistry()));
-        configuredFeeRecipient = msg.sender;
     }
 
     function isNonceUsed(address user, uint256 nonce) external view returns (bool) {
@@ -192,18 +193,26 @@ contract Settlement is ISettlement {
     }
 
     function _validateFeePolicy(FillPacket calldata fill) private view {
-        require(fill.maxFeeBps <= LOCAL_MAX_FEE_BPS, "ST_MAX_FEE_BPS_TOO_HIGH");
+        require(fill.maxFeeBps <= feeManager.maxFeeBps(), "ST_MAX_FEE_BPS_TOO_HIGH");
 
         if (fill.makerFee == 0 && fill.takerFee == 0) {
             return;
         }
 
         require(
-            fill.feeRecipient != address(0) && fill.feeRecipient == configuredFeeRecipient,
+            fill.feeRecipient != address(0) && fill.feeRecipient == feeManager.feeRecipient(),
             "ST_FEE_RECIPIENT_INVALID"
         );
         require(fill.makerFee <= _feeCap(fill.quoteAmount, fill.maxFeeBps), "ST_MAKER_FEE_CAP_EXCEEDED");
         require(fill.takerFee <= _feeCap(fill.baseAmount, fill.maxFeeBps), "ST_TAKER_FEE_CAP_EXCEEDED");
+        require(
+            fill.makerFee <= _feeCap(fill.quoteAmount, feeManager.makerFeeBps(fill.marketId)),
+            "ST_MAKER_FEE_POLICY_EXCEEDED"
+        );
+        require(
+            fill.takerFee <= _feeCap(fill.baseAmount, feeManager.takerFeeBps(fill.marketId)),
+            "ST_TAKER_FEE_POLICY_EXCEEDED"
+        );
     }
 
     function _feeCap(uint256 grossAmount, uint256 maxFeeBps) private pure returns (uint256) {
