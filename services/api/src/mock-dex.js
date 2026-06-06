@@ -53,6 +53,13 @@ const isObject = (value) => value !== null && typeof value === 'object' && !Arra
 const isDecimalString = (value) => typeof value === 'string' && /^[0-9]+$/.test(value);
 const isPositiveDecimalString = (value) => isDecimalString(value) && BigInt(value) > 0n;
 const paddedId = (prefix, value) => `${prefix}-${String(value).padStart(6, '0')}`;
+const streamChannelsForMutation = (fills) => {
+  const channels = [`market.${MARKET_ID}.depth`, 'orders'];
+  if (fills.length > 0) {
+    channels.push(`market.${MARKET_ID}.trades`, 'fills', 'settlements', 'global.tickers');
+  }
+  return channels;
+};
 
 const compareRestingOrders = (side) => (left, right) => {
   const leftPrice = BigInt(left.price);
@@ -180,6 +187,19 @@ export const createMockDexState = ({
       bids: [],
       asks: [],
     },
+  };
+  const streamListeners = new Set();
+
+  const emitStreamUpdate = ({ fills }) => {
+    const streamEvent = {
+      reason: fills.length > 0 ? 'mock_settlement_confirmed' : 'orderbook_changed',
+      marketId: MARKET_ID,
+      channels: streamChannelsForMutation(fills),
+    };
+
+    for (const listener of streamListeners) {
+      listener(streamEvent);
+    }
   };
 
   const sortedBookSide = (side) => {
@@ -310,6 +330,7 @@ export const createMockDexState = ({
       state.orders.set(orderHash, projectedOrder);
       const fills = matchOrder(projectedOrder);
       restOrder(projectedOrder);
+      emitStreamUpdate({ fills });
 
       return {
         accepted: true,
@@ -351,6 +372,17 @@ export const createMockDexState = ({
         bids: state.book.bids.map(bookOrder),
         asks: state.book.asks.map(bookOrder),
         source: 'mock-orderbook',
+      };
+    },
+
+    subscribeStreamUpdates(listener) {
+      if (typeof listener !== 'function') {
+        throw new TypeError('subscribeStreamUpdates requires a listener function.');
+      }
+
+      streamListeners.add(listener);
+      return () => {
+        streamListeners.delete(listener);
       };
     },
   };

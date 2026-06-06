@@ -84,6 +84,49 @@ const readWebSocketSnapshot = async (baseUrl, channel) => {
   });
 };
 
+const nextWebSocketMessage = async (ws, label) => await new Promise((resolve, reject) => {
+  const onMessage = (event) => {
+    cleanup();
+    assert.equal(typeof event.data, 'string');
+    resolve(JSON.parse(event.data));
+  };
+
+  const onError = () => {
+    cleanup();
+    reject(new Error(`websocket transport failed while waiting for ${label}`));
+  };
+
+  const timeout = setTimeout(() => {
+    cleanup();
+    ws.close();
+    reject(new Error(`timed out waiting for ${label}`));
+  }, 2_000);
+
+  const cleanup = () => {
+    clearTimeout(timeout);
+    ws.removeEventListener('message', onMessage);
+    ws.removeEventListener('error', onError);
+  };
+
+  ws.addEventListener('message', onMessage);
+  ws.addEventListener('error', onError, { once: true });
+});
+
+const requestJson = async (baseUrl, path, options = {}) => {
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...options,
+    headers: {
+      'content-type': 'application/json',
+      ...(options.headers ?? {}),
+    },
+  });
+
+  return {
+    status: response.status,
+    body: await response.json(),
+  };
+};
+
 test('WebSocket transport sends public stream snapshots from /v1/ws channel query', async () => {
   await withServer(async (baseUrl) => {
     const message = await readWebSocketSnapshot(baseUrl, 'market.QI-QUAI.depth');
@@ -144,4 +187,92 @@ test('WebSocket transport sends private fill snapshots without withdrawal author
     assert.equal(message.snapshot.data.fills[0].sourceEventId, 'event-000001');
     assert.equal(Object.hasOwn(message.snapshot.data.fills[0], 'createdAt'), false);
   }, { state });
+});
+
+test('WebSocket transport fanouts live snapshots after mock orderbook and fill mutations', async () => {
+  await withServer(async (baseUrl) => {
+    const httpBaseUrl = baseUrl.replace('ws://', 'http://');
+    const depthWs = new WebSocket(`${baseUrl}/v1/ws?channel=${encodeURIComponent('market.QI-QUAI.depth')}`);
+    const fillsWs = new WebSocket(`${baseUrl}/v1/ws?channel=fills`);
+
+    try {
+      const initialDepth = await nextWebSocketMessage(depthWs, 'initial depth snapshot');
+      assert.equal(initialDepth.type, 'snapshot');
+      assert.deepEqual(initialDepth.snapshot.data.asks, []);
+      assert.deepEqual(initialDepth.snapshot.data.bids, []);
+
+      const initialFills = await nextWebSocketMessage(fillsWs, 'initial fills snapshot');
+      assert.equal(initialFills.type, 'snapshot');
+      assert.deepEqual(initialFills.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(initialFills.snapshot.data.fills, []);
+
+      const depthAfterRestingOrder = nextWebSocketMessage(depthWs, 'depth update after resting sell');
+      const sell = await requestJson(httpBaseUrl, '/v1/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          order: mockOrder({
+            side: 'sell',
+            amount: '100',
+            price: '5',
+            nonce: '501',
+            owner: '0x1111111111111111111111111111111111111111',
+          }),
+        }),
+      });
+      assert.equal(sell.status, 201);
+
+      const restingDepth = await depthAfterRestingOrder;
+      assert.equal(restingDepth.type, 'snapshot');
+      assert.equal(restingDepth.streamEvent.reason, 'orderbook_changed');
+      assert.deepEqual(restingDepth.snapshot.data.asks, [
+        {
+          orderHash: sell.body.orderHash,
+          price: '5',
+          amount: '100',
+          remainingAmount: '100',
+          owner: '0x1111111111111111111111111111111111111111',
+        },
+      ]);
+
+      const depthAfterMatch = nextWebSocketMessage(depthWs, 'depth update after matched buy');
+      const fillsAfterMatch = nextWebSocketMessage(fillsWs, 'fills update after matched buy');
+      const buy = await requestJson(httpBaseUrl, '/v1/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          order: mockOrder({
+            side: 'buy',
+            amount: '100',
+            price: '6',
+            nonce: '502',
+            owner: '0x3333333333333333333333333333333333333333',
+          }),
+        }),
+      });
+      assert.equal(buy.status, 201);
+      assert.equal(buy.body.fills.length, 1);
+
+      const [matchedDepth, matchedFills] = await Promise.all([depthAfterMatch, fillsAfterMatch]);
+      assert.equal(matchedDepth.streamEvent.reason, 'mock_settlement_confirmed');
+      assert.deepEqual(matchedDepth.snapshot.data.asks, []);
+      assert.deepEqual(matchedDepth.snapshot.data.bids, []);
+
+      assert.equal(matchedFills.streamEvent.reason, 'mock_settlement_confirmed');
+      assert.deepEqual(matchedFills.streamEvent.channels, [
+        'market.QI-QUAI.depth',
+        'orders',
+        'market.QI-QUAI.trades',
+        'fills',
+        'settlements',
+        'global.tickers',
+      ]);
+      assert.equal(matchedFills.snapshot.source, 'in-memory-indexer-projection');
+      assert.deepEqual(matchedFills.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(matchedFills.snapshot.data.fills, [buy.body.fills[0]]);
+      assert.equal(matchedFills.snapshot.data.fills[0].sourceEventId, 'event-000001');
+      assert.equal(Object.hasOwn(matchedFills.snapshot.data.fills[0], 'createdAt'), false);
+    } finally {
+      depthWs.close();
+      fillsWs.close();
+    }
+  });
 });

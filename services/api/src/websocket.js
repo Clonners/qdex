@@ -53,7 +53,7 @@ export const encodeTextFrame = (text) => {
   return Buffer.concat([header, payload]);
 };
 
-const snapshotMessage = ({ channel, state }) => {
+const snapshotMessage = ({ channel, state, streamEvent }) => {
   const snapshot = createStreamSnapshot({ channel, state });
 
   if (snapshot.error !== undefined) {
@@ -61,6 +61,7 @@ const snapshotMessage = ({ channel, state }) => {
       type: 'error',
       transport: 'websocket',
       ...snapshot,
+      ...(streamEvent === undefined ? {} : { streamEvent }),
     };
   }
 
@@ -68,6 +69,7 @@ const snapshotMessage = ({ channel, state }) => {
     type: 'snapshot',
     transport: 'websocket',
     snapshot,
+    ...(streamEvent === undefined ? {} : { streamEvent }),
   };
 };
 
@@ -114,6 +116,30 @@ export const attachStreamWebSocketUpgrade = (server, { state }) => {
 
       socket.write(encodeTextFrame(JSON.stringify(snapshotMessage({ channel, state }))));
 
+      let unsubscribe = () => {};
+      const cleanup = () => {
+        unsubscribe();
+        unsubscribe = () => {};
+      };
+
+      if (typeof state.subscribeStreamUpdates === 'function') {
+        unsubscribe = state.subscribeStreamUpdates((streamEvent) => {
+          if (!streamEvent.channels.includes(channel) || socket.destroyed) {
+            return;
+          }
+
+          try {
+            socket.write(encodeTextFrame(JSON.stringify(snapshotMessage({ channel, state, streamEvent }))));
+          } catch {
+            cleanup();
+          }
+        });
+      }
+
+      socket.on('close', cleanup);
+      socket.on('end', cleanup);
+      socket.on('error', cleanup);
+
       socket.on('data', (chunk) => {
         if (chunk.length === 0) {
           return;
@@ -121,6 +147,7 @@ export const attachStreamWebSocketUpgrade = (server, { state }) => {
 
         const opcode = chunk[0] & 0x0f;
         if (opcode === 0x08) {
+          cleanup();
           socket.write(Buffer.from([0x88, 0x00]));
           socket.end();
         }
