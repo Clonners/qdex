@@ -204,7 +204,14 @@ export class QDexClient {
         method: 'POST',
         body: { order },
       }),
-      cancelAll: async () => this.#request('/v1/orders/cancel-all', { method: 'POST' }),
+      cancel: async (orderHash) => this.#requestOk(`/v1/orders/${encodeURIComponent(orderHash)}`, { method: 'DELETE' }),
+      cancelAll: async ({ marketId, owner } = {}) => {
+        const body = Object.fromEntries(Object.entries({ marketId, owner }).filter(([, value]) => value !== undefined));
+        return this.#requestOk('/v1/orders/cancel-all', {
+          method: 'POST',
+          body: Object.keys(body).length > 0 ? body : undefined,
+        });
+      },
     };
 
     this.fills = {

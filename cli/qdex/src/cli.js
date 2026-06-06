@@ -83,6 +83,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
   qdex --base-url http://127.0.0.1:8787 contracts
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
+  qdex --base-url http://127.0.0.1:8787 cancel --all
   qdex --base-url http://127.0.0.1:8787 stream fills [--limit 1]
   qdex --base-url http://127.0.0.1:8787 smoke
 `;
@@ -131,6 +132,15 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         source: proofEnvelope.source,
         custody: proofEnvelope.custody,
         proof: proofEnvelope.proof,
+      });
+      return 0;
+    }
+
+    if (command === 'cancel' && rest.length === 1 && rest[0] === '--all') {
+      writeJson(stdout, {
+        command: 'cancel all',
+        baseUrl,
+        ...(await client.orders.cancelAll()),
       });
       return 0;
     }

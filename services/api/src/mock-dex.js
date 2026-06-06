@@ -7,6 +7,10 @@ export const MARKET_ID = 'QI-QUAI';
 export const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
 export const INDEXER_SOURCE = 'in-memory-indexer-projection';
 
+const CANCELLATION_NONCE_NOTE = 'matcher-local-cancel-only-on-chain-nonce-unchanged';
+const CANCELLATION_MESSAGE = 'Mock cancellation removes only matcher-open quantity and does not cancel the on-chain nonce; user nonce cancellation must be signed through NonceManager later.';
+const CANCEL_ORDER_PERMISSIONS = ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'];
+const CANCEL_ALL_PERMISSIONS = ['CANCEL_ALL', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'];
 const MOCK_EPOCH_SECONDS = 1780000000;
 const ALLOWED_SIDES = new Set(['buy', 'sell']);
 const ALLOWED_TYPES = new Set(['limit', 'market_ioc']);
@@ -150,6 +154,7 @@ const validateOrder = (order) => {
 };
 
 const canRest = (order) => order.type === 'limit' && order.timeInForce !== 'IOC' && order.timeInForce !== 'FOK';
+const hasOpenQuantity = (order) => (order.status === 'open' || order.status === 'partially_filled') && BigInt(order.remainingAmount) > 0n;
 const crosses = (incoming, resting) => (
   incoming.side === 'buy'
     ? BigInt(incoming.price) >= BigInt(resting.price)
@@ -261,6 +266,37 @@ export const createMockDexState = ({
     state.book.asks = state.book.asks.filter((order) => order.remainingAmount !== '0');
   };
 
+  const removeRestingOrder = (orderHash) => {
+    state.book.bids = state.book.bids.filter((order) => order.orderHash !== orderHash);
+    state.book.asks = state.book.asks.filter((order) => order.orderHash !== orderHash);
+  };
+
+  const cancelProjectedOrder = (order, reason) => {
+    const cancelledAmount = order.remainingAmount;
+
+    order.remainingAmount = '0';
+    order.status = 'cancelled';
+    order.cancelledAmount = cancelledAmount;
+    order.cancelReason = reason;
+    order.nonceCancellation = 'not-implied-matcher-local-only';
+    removeRestingOrder(order.orderHash);
+
+    return publicOrder(order);
+  };
+
+  const cancellationBody = ({ cancelledOrders, permissions, filters, orderHash }) => ({
+    cancelled: cancelledOrders.length > 0,
+    cancelledCount: cancelledOrders.length,
+    ...(orderHash === undefined ? {} : { orderHash }),
+    cancelledOrders,
+    ...(filters === undefined ? {} : { filters }),
+    source: 'mock-matching-engine',
+    custody: CUSTODY_NOTE,
+    nonceManager: CANCELLATION_NONCE_NOTE,
+    permissions,
+    message: CANCELLATION_MESSAGE,
+  });
+
   const matchOrder = (incoming) => {
     const fills = [];
     const oppositeSide = incoming.side === 'buy' ? 'sell' : 'buy';
@@ -346,6 +382,85 @@ export const createMockDexState = ({
 
     listOrders() {
       return Array.from(state.orders.values()).map(publicOrder);
+    },
+
+    cancelOrder(orderHash) {
+      const order = state.orders.get(orderHash);
+      if (order === undefined) {
+        return {
+          statusCode: 404,
+          body: {
+            error: 'order_not_found',
+            orderHash,
+            source: 'mock-matching-engine',
+            custody: CUSTODY_NOTE,
+            message: 'No mock matcher order exists for this orderHash.',
+          },
+        };
+      }
+
+      if (!hasOpenQuantity(order)) {
+        return {
+          statusCode: 409,
+          body: {
+            error: 'order_not_open',
+            orderHash,
+            status: order.status,
+            source: 'mock-matching-engine',
+            custody: CUSTODY_NOTE,
+            nonceManager: CANCELLATION_NONCE_NOTE,
+            message: 'Only remaining matcher-open quantity can be cancelled.',
+          },
+        };
+      }
+
+      const cancelledOrders = [cancelProjectedOrder(order, 'cancel_order')];
+      emitStreamUpdate({ fills: [] });
+
+      return {
+        statusCode: 200,
+        body: cancellationBody({
+          cancelledOrders,
+          orderHash,
+          permissions: CANCEL_ORDER_PERMISSIONS,
+        }),
+      };
+    },
+
+    cancelAll(options = {}) {
+      const filters = {
+        marketId: options?.marketId ?? null,
+        owner: options?.owner ?? null,
+      };
+      const candidates = Array.from(state.orders.values()).filter((order) => {
+        if (!hasOpenQuantity(order)) {
+          return false;
+        }
+
+        if (filters.marketId !== null && order.marketId !== filters.marketId) {
+          return false;
+        }
+
+        if (filters.owner !== null && order.owner !== filters.owner) {
+          return false;
+        }
+
+        return true;
+      });
+
+      const cancelledOrders = candidates.map((order) => cancelProjectedOrder(order, 'cancel_all'));
+      if (cancelledOrders.length > 0) {
+        emitStreamUpdate({ fills: [] });
+      }
+
+      return {
+        statusCode: 200,
+        body: cancellationBody({
+          cancelledOrders,
+          filters,
+          permissions: CANCEL_ALL_PERMISSIONS,
+        }),
+      };
     },
 
     listFills() {

@@ -162,6 +162,35 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertIn("NO_WITHDRAW", delegate_keys["defaultPermissions"])
             self.assertIn("NO_ADMIN", delegate_keys["defaultPermissions"])
 
+    def test_python_sdk_cancel_all_cancels_mock_resting_orders_without_nonce_or_withdrawal_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            accepted_order = client.orders.submit_signed_order(
+                create_mock_signed_order(
+                    side="sell",
+                    amount="100",
+                    price="5",
+                    nonce="1904",
+                    owner="0x1111111111111111111111111111111111111111",
+                )
+            )
+            self.assertEqual(accepted_order["status"], "open")
+
+            cancel_result = client.orders.cancel_all(market_id="QI-QUAI")
+
+            self.assertTrue(cancel_result["cancelled"])
+            self.assertEqual(cancel_result["cancelledCount"], 1)
+            self.assertEqual(cancel_result["permissions"], ["CANCEL_ALL", "CANCEL_ORDER", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(cancel_result["nonceManager"], "matcher-local-cancel-only-on-chain-nonce-unchanged")
+            self.assertIn("does not cancel the on-chain nonce", cancel_result["message"])
+            self.assertEqual(cancel_result["cancelledOrders"][0]["orderHash"], accepted_order["orderHash"])
+            self.assertEqual(cancel_result["cancelledOrders"][0]["status"], "cancelled")
+            self.assertEqual(cancel_result["cancelledOrders"][0]["remainingAmount"], "0")
+            self.assertEqual(cancel_result["cancelledOrders"][0]["nonceCancellation"], "not-implied-matcher-local-only")
+
+            book_after_cancel = client.orderbook.get("QI-QUAI")
+            self.assertEqual(book_after_cancel["asks"], [])
+
     def test_python_sdk_preserves_market_ioc_as_signed_ioc_limit_order_with_slippage_bounds(self):
         order = create_mock_signed_order(
             side="sell",

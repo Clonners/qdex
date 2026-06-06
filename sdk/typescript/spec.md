@@ -48,6 +48,7 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 - `OrderSubmissionResult` is the API response shape: it contains order state plus zero or more `IndexedFillProjection` rows projected from confirmed/mock-confirmed settlement.
 - OrderSubmissionResult.fills are public IndexedFillProjection rows and each row must carry `projectionType: 'IndexedFillProjection'` plus `sourceEventId`.
 - `submitSignedOrder` must not expose the matcher/relayer `FillPacket` handoff object as its public return type.
+- `orders.cancelAll({ marketId })` calls `POST /v1/orders/cancel-all`; in local mock mode it cancels only matcher-open quantity, carries `CANCEL_ALL`, `CANCEL_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`, and does not cancel on-chain NonceManager nonces without a separate owner-signed flow.
 
 ## Delegate/API key safety
 

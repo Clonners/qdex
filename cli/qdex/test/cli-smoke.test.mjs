@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createApiServer } from '../../../services/api/src/server.js';
+import { QDexClient, createMockSignedOrder } from '../../../sdk/typescript/src/client.js';
 import { runQdexCli } from '../src/cli.js';
 
 const withServer = async (callback) => {
@@ -100,6 +101,34 @@ test('qdex contracts command prints local-only registry metadata without wallet 
       'NO_ADMIN',
     ]);
     assert.equal(result.safety.approvalGate, 'explicit-approval-required-before-deploy-or-transaction');
+  });
+});
+
+test('qdex cancel --all removes mock resting orders without nonce or withdrawal authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+    const acceptedOrder = await client.orders.submitSignedOrder(createMockSignedOrder({
+      side: 'sell',
+      amount: '100',
+      price: '5',
+      nonce: '1201',
+      owner: '0x1111111111111111111111111111111111111111',
+    }));
+    assert.equal(acceptedOrder.status, 'open');
+
+    const result = await runCliJson(['--base-url', baseUrl, 'cancel', '--all']);
+
+    assert.equal(result.command, 'cancel all');
+    assert.equal(result.cancelled, true);
+    assert.equal(result.cancelledCount, 1);
+    assert.equal(result.cancelledOrders[0].orderHash, acceptedOrder.orderHash);
+    assert.equal(result.cancelledOrders[0].status, 'cancelled');
+    assert.deepEqual(result.permissions, ['CANCEL_ALL', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+    assert.match(result.message, /does not cancel the on-chain nonce/i);
+
+    const bookAfterCancel = await client.orderbook.get('QI-QUAI');
+    assert.deepEqual(bookAfterCancel.asks, []);
   });
 });
 

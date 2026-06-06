@@ -56,11 +56,13 @@ export const handlePrivateRoute = (context) => {
 
   const orderHash = pathValue(pathname, '/v1/orders/');
   if (method === 'DELETE' && orderHash !== null) {
-    return notImplemented(context, 'wire_order_cancellation_to_nonce_manager_and_matching_engine');
+    const result = context.state.cancelOrder(orderHash);
+    return jsonResult(result.statusCode, result.body);
   }
 
   if (method === 'POST' && pathname === '/v1/orders/cancel-all') {
-    return notImplemented(context, 'wire_cancel_all_to_delegate_safe_nonce_flow');
+    const result = context.state.cancelAll(context.body ?? {});
+    return jsonResult(result.statusCode, result.body);
   }
 
   if (method === 'GET' && pathname === '/v1/fills') {

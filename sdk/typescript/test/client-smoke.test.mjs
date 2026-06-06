@@ -113,6 +113,36 @@ test('TypeScript SDK exposes local-only contract registry metadata without walle
   });
 });
 
+test('TypeScript SDK cancelAll cancels mock resting orders without nonce or withdrawal authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const restingSell = createMockSignedOrder({
+      side: 'sell',
+      amount: '100',
+      price: '5',
+      nonce: '906',
+      owner: '0x1111111111111111111111111111111111111111',
+    });
+    const acceptedOrder = await client.orders.submitSignedOrder(restingSell);
+    assert.equal(acceptedOrder.status, 'open');
+
+    const cancelResult = await client.orders.cancelAll({ marketId: 'QI-QUAI' });
+    assert.equal(cancelResult.cancelled, true);
+    assert.equal(cancelResult.cancelledCount, 1);
+    assert.deepEqual(cancelResult.permissions, ['CANCEL_ALL', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(cancelResult.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+    assert.match(cancelResult.message, /does not cancel the on-chain nonce/i);
+    assert.equal(cancelResult.cancelledOrders[0].orderHash, acceptedOrder.orderHash);
+    assert.equal(cancelResult.cancelledOrders[0].status, 'cancelled');
+    assert.equal(cancelResult.cancelledOrders[0].remainingAmount, '0');
+    assert.equal(cancelResult.cancelledOrders[0].nonceCancellation, 'not-implied-matcher-local-only');
+
+    const bookAfterCancel = await client.orderbook.get('QI-QUAI');
+    assert.deepEqual(bookAfterCancel.asks, []);
+  });
+});
+
 test('TypeScript SDK consumes private fills stream over local WebSocket with live fanout', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

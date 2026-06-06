@@ -114,8 +114,12 @@ class _OrdersApi:
     def submit_signed_order(self, order):
         return self._client._request_ok("/v1/orders", method="POST", body={"order": order})
 
-    def cancel_all(self):
-        return self._client._request("/v1/orders/cancel-all", method="POST")
+    def cancel(self, order_hash):
+        return self._client._request_ok(f"/v1/orders/{_encode_path_value(order_hash)}", method="DELETE")
+
+    def cancel_all(self, *, market_id=None, owner=None):
+        body = {key: value for key, value in {"marketId": market_id, "owner": owner}.items() if value is not None}
+        return self._client._request_ok("/v1/orders/cancel-all", method="POST", body=body or None)
 
 
 class _FillsApi:

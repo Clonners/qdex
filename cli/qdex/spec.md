@@ -26,6 +26,7 @@ qdex api create-key bot-mm-1 --scope trade --expires 7d
 - `--slippage-bps` maps to signed slippage protection, not unlimited market execution.
 - `stream fills --limit N` consumes local WebSocket snapshots from `/v1/ws?channel=fills` and keeps private stream permissions read-only: `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`.
 - Fills stream from confirmed/mock-confirmed projections; proofs use `GET /v1/proofs/trades/:tradeId`.
+- `qdex cancel --all` calls `POST /v1/orders/cancel-all`; in local mock mode it cancels only matcher-open quantity, keeps `CANCEL_ALL`, `CANCEL_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN` visible, and does not cancel on-chain NonceManager nonces without a separate owner-signed flow.
 - `qdex contracts` calls `GET /v1/contracts` and prints `local-only-not-deployed` metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no wallet/deploy/transaction authority.
 
 ## API/delegate key scopes

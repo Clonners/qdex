@@ -207,6 +207,132 @@ test('private routes expose order and fill placeholders without withdrawal autho
   });
 });
 
+test('mock order cancellation removes only matcher-open quantity without nonce or withdrawal authority', async () => {
+  await withServer(async (baseUrl) => {
+    const firstRestingSell = mockOrder({
+      side: 'sell',
+      amount: '100',
+      price: '5',
+      nonce: '301',
+      owner: '0x1111111111111111111111111111111111111111',
+    });
+    const secondRestingSell = mockOrder({
+      side: 'sell',
+      amount: '200',
+      price: '6',
+      nonce: '302',
+      owner: '0x2222222222222222222222222222222222222222',
+    });
+
+    const firstOrder = await requestJson(baseUrl, '/v1/orders', {
+      method: 'POST',
+      body: JSON.stringify({ order: firstRestingSell }),
+    });
+    const secondOrder = await requestJson(baseUrl, '/v1/orders', {
+      method: 'POST',
+      body: JSON.stringify({ order: secondRestingSell }),
+    });
+    assert.equal(firstOrder.status, 201);
+    assert.equal(secondOrder.status, 201);
+
+    const bookBeforeCancel = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    assert.deepEqual(bookBeforeCancel.body.asks.map((order) => order.orderHash), [
+      firstOrder.body.orderHash,
+      secondOrder.body.orderHash,
+    ]);
+
+    const cancelOne = await requestJson(baseUrl, `/v1/orders/${encodeURIComponent(firstOrder.body.orderHash)}`, {
+      method: 'DELETE',
+    });
+    assert.equal(cancelOne.status, 200);
+    assert.equal(cancelOne.body.cancelled, true);
+    assert.equal(cancelOne.body.cancelledCount, 1);
+    assert.equal(cancelOne.body.orderHash, firstOrder.body.orderHash);
+    assert.equal(cancelOne.body.source, 'mock-matching-engine');
+    assert.equal(cancelOne.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.equal(cancelOne.body.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+    assert.deepEqual(cancelOne.body.permissions, ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.match(cancelOne.body.message, /does not cancel the on-chain nonce/i);
+    assert.deepEqual(cancelOne.body.cancelledOrders, [
+      {
+        orderHash: firstOrder.body.orderHash,
+        marketId: 'QI-QUAI',
+        owner: firstRestingSell.owner,
+        delegate: ZERO_DELEGATE,
+        side: 'sell',
+        type: 'limit',
+        amount: '100',
+        price: '5',
+        filledAmount: '0',
+        remainingAmount: '0',
+        status: 'cancelled',
+        custody: 'non-custodial-no-withdrawal-authority',
+        cancelledAmount: '100',
+        cancelReason: 'cancel_order',
+        nonceCancellation: 'not-implied-matcher-local-only',
+      },
+    ]);
+
+    const missingCancel = await requestJson(baseUrl, '/v1/orders/0xmissing', {
+      method: 'DELETE',
+    });
+    assert.equal(missingCancel.status, 404);
+    assert.equal(missingCancel.body.error, 'order_not_found');
+    assert.equal(missingCancel.body.custody, 'non-custodial-no-withdrawal-authority');
+
+    const bookAfterSingleCancel = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    assert.deepEqual(bookAfterSingleCancel.body.asks.map((order) => order.orderHash), [secondOrder.body.orderHash]);
+
+    const cancelAll = await requestJson(baseUrl, '/v1/orders/cancel-all', {
+      method: 'POST',
+      body: JSON.stringify({ marketId: 'QI-QUAI' }),
+    });
+    assert.equal(cancelAll.status, 200);
+    assert.equal(cancelAll.body.cancelled, true);
+    assert.equal(cancelAll.body.cancelledCount, 1);
+    assert.equal(cancelAll.body.source, 'mock-matching-engine');
+    assert.equal(cancelAll.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.equal(cancelAll.body.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+    assert.deepEqual(cancelAll.body.permissions, ['CANCEL_ALL', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(cancelAll.body.filters, { marketId: 'QI-QUAI', owner: null });
+    assert.match(cancelAll.body.message, /does not cancel the on-chain nonce/i);
+    assert.deepEqual(cancelAll.body.cancelledOrders, [
+      {
+        orderHash: secondOrder.body.orderHash,
+        marketId: 'QI-QUAI',
+        owner: secondRestingSell.owner,
+        delegate: ZERO_DELEGATE,
+        side: 'sell',
+        type: 'limit',
+        amount: '200',
+        price: '6',
+        filledAmount: '0',
+        remainingAmount: '0',
+        status: 'cancelled',
+        custody: 'non-custodial-no-withdrawal-authority',
+        cancelledAmount: '200',
+        cancelReason: 'cancel_all',
+        nonceCancellation: 'not-implied-matcher-local-only',
+      },
+    ]);
+
+    const bookAfterCancelAll = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    assert.deepEqual(bookAfterCancelAll.body.asks, []);
+
+    const orders = await requestJson(baseUrl, '/v1/orders');
+    assert.deepEqual(orders.body.orders.map((order) => order.status), ['cancelled', 'cancelled']);
+
+    const emptyCancelAll = await requestJson(baseUrl, '/v1/orders/cancel-all', {
+      method: 'POST',
+      body: JSON.stringify({ marketId: 'QI-QUAI' }),
+    });
+    assert.equal(emptyCancelAll.status, 200);
+    assert.equal(emptyCancelAll.body.cancelled, false);
+    assert.equal(emptyCancelAll.body.cancelledCount, 0);
+    assert.deepEqual(emptyCancelAll.body.cancelledOrders, []);
+  });
+});
+
 test('POST /v1/orders crosses mock orders into confirmed fills and proof projection', async () => {
   await withServer(async (baseUrl) => {
     const restingSell = mockOrder({
