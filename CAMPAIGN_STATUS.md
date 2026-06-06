@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: terminal UI trade/proof view complete -> relayer state machine spec
+- Current phase: relayer state machine spec complete -> indexer projection model
 
 ## Current repo baseline
 
@@ -37,9 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Specify relayer state machine.
-2. Define indexer projection model for fills/proofs.
-3. Add proof-service/indexer route contract refinements.
+1. Define indexer projection model for fills/proofs.
+2. Add proof-service/indexer route contract refinements.
+3. Add SDK/CLI bot contract specs.
 
 ## Cron runner
 
@@ -64,3 +64,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 03:43 -03: Defined matching-engine command/event boundary in `services/matching-engine/spec.md` and `events.md`, added doc ratchet test coverage wired into `pnpm check`; verified RED `node --test tests/matching-engine-spec.test.mjs`, GREEN `pnpm check`, and secret scan; slice commit `e6e71d4`; next slice: first mock vertical slice order -> match -> mock settlement -> proof.
 - 2026-06-06 04:07 -03: Added in-memory mock vertical API slice for `POST /v1/orders` -> deterministic cross -> `FillPacket` -> mock settlement confirmation -> fill/trade/proof projection; verified RED `pnpm --filter @qdex/api test`, GREEN `pnpm check`, and secret scan; slice commit `a037e0a`; next slice: terminal UI trade/proof panel backed by the mock vertical fixture.
 - 2026-06-06 04:24 -03: Added terminal-native mock trade/proof panel in `web/terminal-ui`, backed by deterministic `trade-000001`/`fill-000001` fixture with explicit `settlementMode: mock` and no real Quai tx/explorer claim; verified RED/GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm check`, and secret scan no matches; slice commit `26e3a51`; next slice: relayer state machine spec.
+- 2026-06-06 04:43 -03: Defined relayer state machine in `services/relayer/spec.md` with `FillPacket` idempotency, mock-vs-Quai settlement states, private status visibility, and confirmed-only proof projection; verified RED `node --test tests/relayer-spec.test.mjs`, GREEN `pnpm check`, and secret scan no matches; slice commit `7e374b5`; next slice: indexer projection model for fills/proofs.
