@@ -11,7 +11,8 @@ interface IERC20VaultTokenMinimal {
 /// @notice Local-first non-custodial trading vault implementation.
 /// @dev TV-01 covers caller deposits. TV-02 covers caller-owned available withdrawals.
 ///      TV-03 hardens the admin/operator custody boundary by keeping withdrawals caller-owned only.
-///      TV-04 introduces the first local settlement-authority lock path; unlock/settle stay gated for later ratchets.
+///      TV-04 introduced settlement-authority locking. TV-05 gates all settlement hooks and adds
+///      local-only unlock/settle accounting without any admin/operator withdrawal surface.
 contract TradingVault is ITradingVault {
     mapping(address => mapping(address => uint256)) private availableBalances;
     mapping(address => mapping(address => uint256)) private lockedBalances;
@@ -65,9 +66,7 @@ contract TradingVault is ITradingVault {
     }
 
     function lockForSettlement(address user, address token, uint256 amount, bytes32 orderHash) external onlySettlementAuthority {
-        require(user != address(0), "TV_USER_ZERO");
-        require(token != address(0), "TV_TOKEN_ZERO");
-        require(amount > 0, "TV_AMOUNT_ZERO");
+        _requireUserTokenAmount(user, token, amount);
         require(orderHash != bytes32(0), "TV_ORDER_HASH_ZERO");
         require(availableBalances[user][token] >= amount, "TV_AVAILABLE_LOW");
 
@@ -77,11 +76,40 @@ contract TradingVault is ITradingVault {
         emit BalanceLocked(user, token, amount);
     }
 
-    function unlockFromSettlement(address, address, uint256, bytes32) external pure {
-        revert("TV_SETTLEMENT_HOOK_NOT_READY");
+    function unlockFromSettlement(address user, address token, uint256 amount, bytes32 orderHash)
+        external
+        onlySettlementAuthority
+    {
+        _requireUserTokenAmount(user, token, amount);
+        require(orderHash != bytes32(0), "TV_ORDER_HASH_ZERO");
+        require(lockedBalances[user][token] >= amount, "TV_LOCKED_LOW");
+
+        lockedBalances[user][token] -= amount;
+        availableBalances[user][token] += amount;
+
+        emit BalanceUnlocked(user, token, amount);
     }
 
-    function settleLockedBalance(address, address, address, uint256, bytes32) external pure {
-        revert("TV_SETTLEMENT_HOOK_NOT_READY");
+    function settleLockedBalance(address debitUser, address creditUser, address token, uint256 amount, bytes32 fillId)
+        external
+        onlySettlementAuthority
+    {
+        require(debitUser != address(0), "TV_DEBIT_USER_ZERO");
+        require(creditUser != address(0), "TV_CREDIT_USER_ZERO");
+        require(token != address(0), "TV_TOKEN_ZERO");
+        require(amount > 0, "TV_AMOUNT_ZERO");
+        require(fillId != bytes32(0), "TV_FILL_ID_ZERO");
+        require(lockedBalances[debitUser][token] >= amount, "TV_LOCKED_LOW");
+
+        lockedBalances[debitUser][token] -= amount;
+        availableBalances[creditUser][token] += amount;
+
+        emit SettlementBalanceMoved(debitUser, creditUser, token, amount, fillId);
+    }
+
+    function _requireUserTokenAmount(address user, address token, uint256 amount) private pure {
+        require(user != address(0), "TV_USER_ZERO");
+        require(token != address(0), "TV_TOKEN_ZERO");
+        require(amount > 0, "TV_AMOUNT_ZERO");
     }
 }

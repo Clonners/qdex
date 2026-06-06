@@ -24,7 +24,8 @@ Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-
 2. `TV-02`: callers can withdraw only their own available balance.
 3. `TV-03`: deployer/operator-like accounts cannot withdraw or drain a user's deposited balance, and admin/operator withdrawal selectors remain absent.
 4. `TV-04`: settlement-authority locks move funds from available to locked, and normal user withdrawals cannot move the locked portion.
+5. `TV-05`: settlement-only lock/unlock/move hooks reject non-authority callers; authorized hook calls validate trace IDs and balance limits before emitting `BalanceLocked`, `BalanceUnlocked`, or `SettlementBalanceMoved`.
 
-Recommended next slice: start the `TV-05` settlement-hook authorization ratchet locally, without adding RPC URLs, deploy scripts, real wallets, or any admin/operator withdrawal surface.
+Recommended next slice: add the `TV-06` pause/withdrawal-freeze boundary ratchet locally, without adding RPC URLs, deploy scripts, real wallets, or any admin/operator withdrawal surface.
 
 Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.
