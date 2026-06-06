@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: local `Settlement` `NM-02` NonceManager wiring green -> next local `Settlement` dependency wiring for `MarketRegistry` or `FeeManager`
+- Current phase: local `Settlement` `MR-02` MarketRegistry wiring green -> next local `Settlement` `FM-02` FeeManager wiring
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Wire `MarketRegistry` or `FeeManager` into local `Settlement` while preserving `DK-02` delegate-signing validation, `NM-02` external nonce truth, and no custody/admin withdrawal authority.
-2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
+1. Wire `FeeManager` into local `Settlement` while preserving `DK-02` delegate-signing validation, `NM-02` external nonce truth, `MR-02` external market truth, and no custody/admin withdrawal authority.
+2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
@@ -101,3 +101,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 16:11 -03: Added local `DelegateKeyRegistry` `DK-01` dependency extraction: owner-registered delegate keys with expiry, single-market hash, max-notional cap, explicit `NO_WITHDRAW`/`NO_ADMIN`, revocation, permission query, and source/ABI guards against custody/owner/role/external-call surfaces; verified RED focused `DelegateKeyRegistry DK-01` failed on missing contract plus interface/doc ratchets failed on missing coverage, GREEN focused tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `2ee0d14`; next slice: local `Settlement` dependency wiring or delegate-signing validation boundary.
 - 2026-06-06 16:26 -03: Added local `Settlement` `DK-02` delegate-signing validation: active owner-scoped delegates can sign fills only with matching market/notional plus `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`; invalid delegates reject before nonce/accounting/vault movement, and owner nonce semantics remain intact; verified RED focused `Settlement DK-02` failed on missing `delegateKeyRegistry`, GREEN focused tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `9363d7e`; next slice: wire `NonceManager`, `MarketRegistry`, or `FeeManager` into local `Settlement` while preserving `DK-02` boundaries.
 - 2026-06-06 16:46 -03: Wired local `Settlement` `NM-02` to a settlement-scoped `NonceManager`: user cancellations now live on `NonceManager`, full fills emit dependency `NonceUsed` events, and `Settlement.isNonceUsed` mirrors external nonce truth while preserving DK-02 delegate safety; verified RED focused `Settlement NM-02` failed on missing `nonceManager`, GREEN focused tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `520f23e`; next slice: wire `MarketRegistry` or `FeeManager` into local `Settlement`.
+- 2026-06-06 17:13 -03: Wired local `Settlement` `MR-02` to a market-authority-scoped `MarketRegistry`: fills now require enabled base/quote metadata, disabled/unknown/token-mismatched markets reject before nonce/accounting/vault/proof mutation, and existing ST/DK/NM settlement ratchets use registry-derived market IDs; verified RED focused `Settlement MR-02` failed on missing `marketRegistry`, GREEN focused tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `0f31888`; next slice: wire `FeeManager` into local `Settlement` (`FM-02`).
