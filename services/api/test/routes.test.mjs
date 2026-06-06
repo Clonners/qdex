@@ -129,6 +129,55 @@ test('public routes expose mock market data with non-custodial settlement metada
   });
 });
 
+test('GET /v1/contracts exposes local-only dependency registry without deploy or custody claims', async () => {
+  await withServer(async (baseUrl) => {
+    const response = await requestJson(baseUrl, '/v1/contracts');
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.chain, 'quai-single-zone-mvp');
+    assert.equal(response.body.settlementMode, 'mock');
+    assert.equal(response.body.deploymentStatus, 'local-only-not-deployed');
+    assert.equal(response.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.equal(response.body.realQuaiTransactions, false);
+    assert.equal(response.body.walletRequired, false);
+    assert.match(response.body.nativeQiCaveat, /UTXO/);
+
+    assert.deepEqual(Object.keys(response.body.contracts).sort(), [
+      'delegateKeyRegistry',
+      'feeManager',
+      'marketRegistry',
+      'nonceManager',
+      'settlement',
+      'tradingVault',
+    ]);
+
+    assert.equal(response.body.contracts.tradingVault.address, null);
+    assert.equal(response.body.contracts.tradingVault.contractName, 'TradingVault');
+    assert.equal(response.body.contracts.tradingVault.interface, 'ITradingVault');
+    assert.equal(response.body.contracts.tradingVault.operatorWithdrawalAuthority, false);
+
+    assert.equal(response.body.contracts.settlement.address, null);
+    assert.equal(response.body.contracts.settlement.contractName, 'Settlement');
+    assert.equal(response.body.contracts.settlement.proofTrigger, 'TradeSettled');
+    assert.deepEqual(response.body.contracts.settlement.dependencies, [
+      'TradingVault',
+      'NonceManager',
+      'MarketRegistry',
+      'FeeManager',
+      'DelegateKeyRegistry',
+    ]);
+
+    assert.equal(response.body.contracts.nonceManager.nonceTruth, 'external-nonce-manager');
+    assert.equal(response.body.contracts.marketRegistry.marketTruth, 'external-market-registry');
+    assert.equal(response.body.contracts.feeManager.feeTruth, 'external-fee-manager');
+    assert.deepEqual(response.body.contracts.delegateKeyRegistry.requiredPermissions, [
+      'PLACE_ORDER',
+      'NO_WITHDRAW',
+      'NO_ADMIN',
+    ]);
+  });
+});
+
 test('private routes expose order and fill placeholders without withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const orders = await requestJson(baseUrl, '/v1/orders');

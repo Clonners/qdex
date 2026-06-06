@@ -95,9 +95,14 @@ paths:
     get:
       tags: [public]
       summary: Contract addresses and verification links
+      description: No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts.
       responses:
         "200":
           description: Contract registry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContractRegistry"
   /v1/auth/challenge:
     post:
       tags: [private]
@@ -226,6 +231,117 @@ paths:
                 $ref: "#/components/schemas/TradeProofNotFound"
 components:
   schemas:
+    ContractRegistry:
+      type: object
+      description: Contract address and dependency metadata. No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts.
+      required:
+        - chain
+        - settlementMode
+        - deploymentStatus
+        - custody
+        - realQuaiTransactions
+        - walletRequired
+        - nativeQiCaveat
+        - contracts
+        - safety
+      properties:
+        chain:
+          type: string
+          example: quai-single-zone-mvp
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        deploymentStatus:
+          type: string
+          enum: [local-only-not-deployed, deployed]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        realQuaiTransactions:
+          type: boolean
+          description: False for autonomous/local metadata until explicit deployment approval exists.
+        walletRequired:
+          type: boolean
+          description: False for local metadata; real wallet activity requires explicit approval.
+        nativeQiCaveat:
+          type: string
+          description: Native Qi remains UTXO-model and requires a wrapper/adapter/conversion design before real vault settlement claims.
+        docs:
+          type: array
+          items: { type: string }
+        contracts:
+          type: object
+          required: [tradingVault, settlement, nonceManager, marketRegistry, feeManager, delegateKeyRegistry]
+          properties:
+            tradingVault:
+              $ref: "#/components/schemas/ContractMetadata"
+            settlement:
+              $ref: "#/components/schemas/ContractMetadata"
+            nonceManager:
+              $ref: "#/components/schemas/ContractMetadata"
+            marketRegistry:
+              $ref: "#/components/schemas/ContractMetadata"
+            feeManager:
+              $ref: "#/components/schemas/ContractMetadata"
+            delegateKeyRegistry:
+              $ref: "#/components/schemas/ContractMetadata"
+        safety:
+          $ref: "#/components/schemas/ContractSafety"
+    ContractMetadata:
+      type: object
+      required: [key, contractName, address, deploymentStatus, operatorWithdrawalAuthority]
+      properties:
+        key: { type: string }
+        contractName: { type: string }
+        interface: { type: string }
+        address:
+          type: [string, "null"]
+          description: Null while local-only and not deployed.
+        deploymentStatus:
+          type: string
+          enum: [local-only-not-deployed, deployed]
+        sourcePath: { type: string }
+        interfacePath: { type: string }
+        custodyRole: { type: string }
+        operatorWithdrawalAuthority:
+          type: boolean
+          description: Must remain false for non-custodial MVP metadata.
+        proofTrigger:
+          type: string
+          enum: [TradeSettled]
+        dependencies:
+          type: array
+          items:
+            type: string
+            enum: [TradingVault, NonceManager, MarketRegistry, FeeManager, DelegateKeyRegistry]
+        nonceTruth:
+          type: string
+          example: external-nonce-manager
+        marketTruth:
+          type: string
+          example: external-market-registry
+        feeTruth:
+          type: string
+          example: external-fee-manager
+        requiredPermissions:
+          type: array
+          items:
+            type: string
+            enum: [PLACE_ORDER, NO_WITHDRAW, NO_ADMIN]
+    ContractSafety:
+      type: object
+      required: [nonCustodial, operatorWithdrawalAuthority, realQuaiTransactions, walletRequired, approvalGate, notice]
+      properties:
+        nonCustodial: { type: boolean }
+        operatorWithdrawalAuthority: { type: boolean }
+        realQuaiTransactions: { type: boolean }
+        walletRequired: { type: boolean }
+        approvalGate:
+          type: string
+          example: explicit-approval-required-before-deploy-or-transaction
+        notice:
+          type: string
+          example: No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts.
     OrderSide:
       type: string
       enum: [buy, sell]

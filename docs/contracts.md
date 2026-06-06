@@ -16,6 +16,22 @@ Implementation matrix: [`docs/contract-implementation-test-matrix.md`](./contrac
 
 Local harness: [`contracts/hardhat.config.cjs`](../contracts/hardhat.config.cjs) and [`contracts/scripts/guard-local-only-hardhat-config.mjs`](../contracts/scripts/guard-local-only-hardhat-config.mjs) define a dependency-light Hardhat scaffold that only exposes the in-memory `hardhat` network during autonomous runs. It intentionally has no external network entries, no deploy scripts, and no account loading.
 
+## Contract address/API metadata alignment
+
+`GET /v1/contracts` is the public metadata surface for the current contract plane. During autonomous local work every contract entry must stay `local-only-not-deployed` with `address: null`; the endpoint is documentation/projection metadata, not deployment truth.
+
+No autonomous deployment, transaction, wallet, external RPC, or real-funds activity is implied by `/v1/contracts`. Real Quai addresses can only replace `null` after explicit approval, deployment evidence, verified source links, and event-truth indexing are available.
+
+The local dependency shape is now:
+
+```text
+Settlement -> TradingVault, NonceManager, MarketRegistry, FeeManager, and DelegateKeyRegistry
+```
+
+The endpoint should list `TradingVault`, `NonceManager`, `MarketRegistry`, `FeeManager`, and `DelegateKeyRegistry` as local-only dependencies.
+
+`TradeSettled` remains the only public proof trigger for contract-backed trade proofs. `NonceManager` is external nonce truth, `MarketRegistry` is external market truth, and `FeeManager` is external fee truth for local Settlement wiring. Delegate metadata must keep `NO_WITHDRAW` and `NO_ADMIN` explicit, with no positive withdrawal/admin permission. Native Qi remains a UTXO-model caveat until a wrapper/adapter/conversion design is proven.
+
 ## TradingVault
 
 Responsible for non-custodial user balances.

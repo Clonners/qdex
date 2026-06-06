@@ -1,3 +1,4 @@
+import { createContractRegistryResponse } from '../contract-registry.js';
 import { jsonResult } from '../http.js';
 
 const MARKET_ID = 'QI-QUAI';
@@ -99,19 +100,7 @@ export const handlePublicRoute = (context) => {
   }
 
   if (method === 'GET' && pathname === '/v1/contracts') {
-    return jsonResult(200, {
-      chain: 'quai-single-zone-mvp',
-      settlementMode: 'mock',
-      contracts: {
-        tradingVault: null,
-        settlement: null,
-        nonceManager: null,
-        marketRegistry: null,
-        feeManager: null,
-        delegateKeyRegistry: null,
-      },
-      source: 'docs/quai-tooling.md',
-    });
+    return jsonResult(200, createContractRegistryResponse());
   }
 
   return null;
