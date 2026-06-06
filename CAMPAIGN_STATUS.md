@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: browser mock order trigger/smoke complete -> contract interface custody invariant ratchets
+- Current phase: contract custody interface ratchets complete -> contract implementation/test-harness planning without deploy/tx
 
 ## Current repo baseline
 
@@ -37,9 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add local/static contract interface custody invariant ratchets for TradingVault/Settlement/admin-withdrawal boundaries before real Quai settlement code.
-2. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
-3. Keep contract/admin custody invariants explicit before any real settlement implementation.
+1. Add an implementation-oriented contract spec/test matrix for TradingVault + Settlement access control, event truth, and fee/nonce/market dependencies without deploys or wallet use.
+2. Prepare real Quai/Hardhat contract tests only after explicit tooling/deploy approval.
+3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
 
@@ -79,3 +79,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 08:46 -03: Added TypeScript SDK `fills.openStream()`/`fills.stream()` and `qdex stream fills --limit N` consumers for local `/v1/ws?channel=fills`, preserving private `READ_ONLY` + `NO_WITHDRAW`/`NO_ADMIN` stream safety; verified RED/GREEN focused SDK/CLI tests, `pnpm check`, and secret-pattern scan no matches; next slice: terminal UI live stream consumer/binding against the local WebSocket transport.
 - 2026-06-06 09:09 -03: Added terminal UI live `fills` WebSocket binding plus proof-service fetch/render path, live stream safety panel, and local API JSON CORS headers for browser proof fetches; verified RED/GREEN terminal UI/API tests, `pnpm check`, and secret-pattern scan no matches; slice commit `abf9d63`; next slice: terminal UI mock order trigger/browser smoke to create the crossed fill from the UI.
 - 2026-06-06 09:26 -03: Added terminal UI mock order trigger/browser smoke: browser button posts deterministic local/dev GTC sell plus `market_ioc` IOC buy, verifies proof-service mock proof, and keeps no-real-Quai/no-funds safety copy; verified RED/GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, and secret-pattern scan no matches; slice commit `9159357`; next slice: contract interface custody invariant ratchets (local/static, no deploy/tx).
+- 2026-06-06 09:45 -03: Added static contract custody interface ratchets plus expanded Solidity interfaces for vault, settlement, nonce, market, fee, and delegate-key safety; pinned interfaces to Solidity `0.8.20`, forbade admin/operator withdrawal selectors, and preserved `NO_WITHDRAW`/`NO_ADMIN`; verified RED `node --test tests/contract-interface-invariants.test.mjs`, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `4a6de5d`; next slice: implementation-oriented contract spec/test matrix without deploys or wallet use.
