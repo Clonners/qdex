@@ -1,54 +1,52 @@
 import http from 'node:http';
+import { pathToFileURL } from 'node:url';
+
+import { notFound, sendJson } from './http.js';
+import { handlePrivateRoute } from './routes/private.js';
+import { handleProofRoute } from './routes/proofs.js';
+import { handlePublicRoute } from './routes/public.js';
 
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
+const ROUTE_HANDLERS = [handlePublicRoute, handlePrivateRoute, handleProofRoute];
 
-const json = (response, statusCode, body) => {
-  const payload = JSON.stringify(body, null, 2);
-  response.writeHead(statusCode, {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-store',
-  });
-  response.end(`${payload}\n`);
+export const handleApiRequest = (request) => {
+  const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+  const context = {
+    method: request.method ?? 'GET',
+    pathname: url.pathname,
+    searchParams: url.searchParams,
+    headers: request.headers,
+  };
+
+  for (const handleRoute of ROUTE_HANDLERS) {
+    const result = handleRoute(context, request);
+    if (result !== null) {
+      return result;
+    }
+  }
+
+  return notFound(context);
 };
 
-const notImplemented = (response, route) => json(response, 501, {
-  error: 'not_implemented',
-  route,
-  message: 'Architecture scaffold only. Wire this route to the matching/indexer/proof services next.',
-});
-
-const server = http.createServer((request, response) => {
-  const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
-
-  if (request.method === 'GET' && url.pathname === '/v1/health') {
-    json(response, 200, {
-      ok: true,
-      service: '@qdex/api',
-      mode: 'scaffold',
-      custody: 'non-custodial',
-      settlement: 'on-chain',
+export const createApiServer = () => http.createServer((request, response) => {
+  try {
+    sendJson(response, handleApiRequest(request));
+  } catch (error) {
+    sendJson(response, {
+      statusCode: 500,
+      body: {
+        error: 'internal_error',
+        message: error instanceof Error ? error.message : 'Unknown API error',
+      },
     });
-    return;
   }
-
-  if (request.method === 'GET' && url.pathname === '/v1/markets') {
-    json(response, 200, {
-      markets: [
-        {
-          id: 'QI-QUAI',
-          base: 'QI',
-          quote: 'QUAI',
-          status: 'planned',
-          zone: 'single-zone-mvp',
-        },
-      ],
-    });
-    return;
-  }
-
-  notImplemented(response, `${request.method} ${url.pathname}`);
 });
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`@qdex/api listening on http://127.0.0.1:${PORT}`);
-});
+const shouldListen = () => process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (shouldListen()) {
+  const server = createApiServer();
+  server.listen(PORT, '127.0.0.1', () => {
+    console.log(`@qdex/api listening on http://127.0.0.1:${PORT}`);
+  });
+}
