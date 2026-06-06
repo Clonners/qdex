@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: TradingVault `TV-02` local caller-owned withdraw behavior green -> next `TV-03` admin/operator cannot withdraw user funds test without deploy/RPC/wallet use
+- Current phase: TradingVault `TV-03` local admin/operator custody boundary green -> next `TV-04` locked-balance withdrawal ratchet without deploy/RPC/wallet use
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Write the RED `TV-03` TradingVault admin/operator custody test on the local Hardhat harness: a non-owner/admin-like account cannot withdraw or drain a user's deposited balance.
-2. Keep the public withdrawal surface caller-owned only; do not add `withdrawFrom`, `adminWithdraw`, operator drain, deploy scripts, wallets, or RPC/testnet activity.
+1. Write the RED `TV-04` TradingVault locked-balance withdrawal ratchet on the local Hardhat harness: locked balance cannot leave via normal user `withdraw` until an authorized unlock/settle path exists.
+2. Define the smallest local settlement-authority boundary before making lock/unlock hooks operational; keep unauthorized hooks reverting and no admin/operator drain paths.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
@@ -84,3 +84,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 10:24 -03: Added local-only `@qdex/contracts` Hardhat harness scaffold plus guard ratchet: workspace package, `hardhat`-only config, dependency-light guard script, and docs for starting `TV-01`; verified RED/GREEN `node --test tests/contract-local-harness-guard.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `89fdb94`; next slice: RED `TV-01` TradingVault deposit test on the local harness, then minimal deposit/balance implementation.
 - 2026-06-06 10:46 -03: Added local Hardhat `TV-01` TradingVault deposit test plus minimal `TradingVault` deposit/balance implementation and local mock ERC-20 fixture; withdraw/settlement hooks remain intentionally unimplemented until their own RED tests; verified RED `pnpm --filter @qdex/contracts exec hardhat test --network hardhat --grep "TradingVault TV-01"` failed on missing `LocalMockERC20`, GREEN focused local test, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `758d4db`; next slice: RED `TV-02` caller-owned withdraw test and minimal implementation.
 - 2026-06-06 11:03 -03: Added local Hardhat `TV-02` TradingVault withdraw test plus minimal caller-owned `withdraw(token, amount)` implementation; verified RED focused test failed on `TV_WITHDRAW_NOT_READY`, GREEN focused test, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `df9a56b`; next slice: RED `TV-03` admin/operator cannot withdraw user funds test.
+- 2026-06-06 11:22 -03: Added local Hardhat `TV-03` admin/operator custody ratchet: deployer/operator-like accounts cannot withdraw a user's vault balance, banned withdrawal selectors stay absent, and local harness docs now track TV-01..TV-03 coverage; verified focused `TV-03`, `node --test tests/contract-local-harness-guard.test.mjs`, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `fb51fdf`; next slice: RED `TV-04` locked-balance withdrawal ratchet.
