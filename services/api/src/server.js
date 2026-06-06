@@ -6,6 +6,7 @@ import { createMockDexState } from './mock-dex.js';
 import { handlePrivateRoute } from './routes/private.js';
 import { handleProofRoute } from './routes/proofs.js';
 import { handlePublicRoute } from './routes/public.js';
+import { attachStreamWebSocketUpgrade } from './websocket.js';
 
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
 const ROUTE_HANDLERS = [handlePublicRoute, handlePrivateRoute, handleProofRoute];
@@ -81,25 +82,29 @@ export const handleApiRequest = (request, state = createMockDexState(), body = n
   return notFound(context);
 };
 
-export const createApiServer = ({ state = createMockDexState() } = {}) => http.createServer(async (request, response) => {
-  try {
-    const bodyResult = await readJsonBody(request);
-    if (bodyResult.error !== undefined) {
-      sendJson(response, bodyResult.error);
-      return;
-    }
+export const createApiServer = ({ state = createMockDexState() } = {}) => {
+  const server = http.createServer(async (request, response) => {
+    try {
+      const bodyResult = await readJsonBody(request);
+      if (bodyResult.error !== undefined) {
+        sendJson(response, bodyResult.error);
+        return;
+      }
 
-    sendJson(response, handleApiRequest(request, state, bodyResult.body));
-  } catch (error) {
-    sendJson(response, {
-      statusCode: 500,
-      body: {
-        error: 'internal_error',
-        message: error instanceof Error ? error.message : 'Unknown API error',
-      },
-    });
-  }
-});
+      sendJson(response, handleApiRequest(request, state, bodyResult.body));
+    } catch (error) {
+      sendJson(response, {
+        statusCode: 500,
+        body: {
+          error: 'internal_error',
+          message: error instanceof Error ? error.message : 'Unknown API error',
+        },
+      });
+    }
+  });
+
+  return attachStreamWebSocketUpgrade(server, { state });
+};
 
 const shouldListen = () => process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
