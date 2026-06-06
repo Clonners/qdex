@@ -1,6 +1,8 @@
 # Relayer Service
 
-Submits valid matched fills to the Quai settlement contracts.
+Submits valid matched fills to mock settlement first and, later, to Quai settlement contracts.
+
+See `spec.md` for the state machine and settlement/proof projection contract.
 
 Responsibilities:
 
