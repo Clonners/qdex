@@ -485,9 +485,9 @@ components:
           example: "1000000000000000000"
         fills:
           type: array
-          description: Adapter-shaped fills projected from confirmed settlement events; empty while the order rests.
+          description: Public IndexedFillProjection rows projected from confirmed settlement events; empty while the order rests.
           items:
-            $ref: "#/components/schemas/FillPacket"
+            $ref: "#/components/schemas/IndexedFillProjection"
         source:
           type: string
           enum: [mock-matching-engine]
@@ -497,11 +497,14 @@ components:
         settlement:
           type: string
           enum: [awaiting-cross, mock-settlement-confirmed]
-    FillPacket:
+    IndexedFillProjection:
       type: object
-      description: Adapter-shaped indexed fill projection from confirmed settlement events; not matcher-local truth.
-      required: [fillId, tradeId, marketId, makerOrderHash, takerOrderHash, price, amount, settlementMode, settlementStatus, sourceEventId]
+      description: Public indexed fill projection from confirmed settlement events; not matcher-local truth.
+      required: [projectionType, fillId, tradeId, marketId, makerOrderHash, takerOrderHash, price, amount, settlementMode, settlementStatus, sourceEventId]
       properties:
+        projectionType:
+          type: string
+          enum: [IndexedFillProjection]
         fillId: { type: string, example: fill-000001 }
         tradeId: { type: string, example: trade-000001 }
         marketId: { type: string, example: QI-QUAI }
@@ -543,7 +546,7 @@ components:
         fills:
           type: array
           items:
-            $ref: "#/components/schemas/FillPacket"
+            $ref: "#/components/schemas/IndexedFillProjection"
     Market:
       type: object
       required: [id, base, quote, status]

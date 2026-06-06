@@ -158,6 +158,7 @@ test('TradeSettled maps to SETTLEMENT_CONFIRMED and then creates the public proo
     tradeId: TRADE_ID,
   });
   assert.deepEqual(indexer.listFills(), [{
+    projectionType: 'IndexedFillProjection',
     fillId: FILL_ID,
     tradeId: TRADE_ID,
     marketId: MARKET_ID,

@@ -49,6 +49,7 @@ test('in-memory indexer projects confirmed mock settlement into fill trade and p
 
   assert.deepEqual(indexer.listFills(), [
     {
+      projectionType: 'IndexedFillProjection',
       fillId: 'fill-000001',
       tradeId: 'trade-000001',
       marketId: 'QI-QUAI',

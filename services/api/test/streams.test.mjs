@@ -134,6 +134,7 @@ test('stream snapshots expose public depth/trades and private fills from indexed
   assert.equal(privateFills.source, 'in-memory-indexer-projection');
   assert.equal(privateFills.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
   assert.deepEqual(privateFills.data.fills, [buy.body.fills[0]]);
+  assert.equal(privateFills.data.fills[0].projectionType, 'IndexedFillProjection');
   assert.equal(privateFills.data.fills[0].sourceEventId, 'event-000001');
   assert.equal(privateFills.data.fills[0].settlementMode, 'mock');
   assert.equal(privateFills.data.fills[0].settlementStatus, 'confirmed');

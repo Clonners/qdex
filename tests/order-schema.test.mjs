@@ -27,13 +27,14 @@ test('signed order schema doc defines replay-safe partial-fill order model', asy
     'expiresAt',
     'Market orders are IOC limit orders with slippage bounds',
     'FillPacket',
+    'IndexedFillProjection',
     'NO_WITHDRAW',
   ]) {
     assert.ok(doc.includes(requiredText), `docs/order-schema.md should include ${requiredText}`);
   }
 });
 
-test('OpenAPI exposes SignedOrder request and FillPacket proof components', async () => {
+test('OpenAPI exposes SignedOrder requests and public IndexedFillProjection components', async () => {
   const spec = await readText('docs/api-openapi.yaml');
 
   for (const requiredText of [
@@ -44,7 +45,7 @@ test('OpenAPI exposes SignedOrder request and FillPacket proof components', asyn
     'OrderSignature:',
     'OrderRequest:',
     'OrderAccepted:',
-    'FillPacket:',
+    'IndexedFillProjection:',
     'OrderStatus:',
     'maxSlippageBps:',
     'chainId:',
@@ -55,37 +56,46 @@ test('OpenAPI exposes SignedOrder request and FillPacket proof components', asyn
   ]) {
     assert.ok(spec.includes(requiredText), `docs/api-openapi.yaml should include ${requiredText}`);
   }
+
+  assert.equal(
+    spec.includes('    FillPacket:'),
+    false,
+    'public OpenAPI components must not expose internal matcher/relayer FillPacket as an API schema',
+  );
 });
 
-test('OpenAPI FillPacket schema is adapter-shaped indexer projection', async () => {
+test('OpenAPI IndexedFillProjection schema is the public adapter-shaped indexer projection', async () => {
   const spec = await readText('docs/api-openapi.yaml');
-  const fillPacket = sectionBetween(spec, '    FillPacket:', '    Market:');
+  const indexedFillProjection = sectionBetween(spec, '    IndexedFillProjection:', '    Market:');
 
   for (const requiredText of [
-    'description: Adapter-shaped indexed fill projection',
+    'description: Public indexed fill projection',
     'not matcher-local truth',
-    'required: [fillId, tradeId, marketId, makerOrderHash, takerOrderHash, price, amount, settlementMode, settlementStatus, sourceEventId]',
+    'required: [projectionType, fillId, tradeId, marketId, makerOrderHash, takerOrderHash, price, amount, settlementMode, settlementStatus, sourceEventId]',
+    'projectionType:',
+    'enum: [IndexedFillProjection]',
     'tradeId:',
     'settlementStatus:',
     'enum: [confirmed]',
     'sourceEventId:',
     'source settlement event',
   ]) {
-    assert.ok(fillPacket.includes(requiredText), `FillPacket schema should include ${requiredText}`);
+    assert.ok(indexedFillProjection.includes(requiredText), `IndexedFillProjection schema should include ${requiredText}`);
   }
 
-  assert.equal(fillPacket.includes('createdAt'), false, 'FillPacket schema must not expose matcher-local createdAt');
+  assert.equal(indexedFillProjection.includes('createdAt'), false, 'IndexedFillProjection schema must not expose matcher-local createdAt');
+  assert.equal(indexedFillProjection.includes('FillPacket'), false, 'IndexedFillProjection schema must not reuse the internal FillPacket name');
 });
 
 test('OpenAPI fill routes expose projection envelopes around adapter-shaped fills', async () => {
   const spec = await readText('docs/api-openapi.yaml');
-  const orderAccepted = sectionBetween(spec, '    OrderAccepted:', '    FillPacket:');
+  const orderAccepted = sectionBetween(spec, '    OrderAccepted:', '    IndexedFillProjection:');
   const fillsRoute = sectionBetween(spec, '  /v1/fills:', '  /v1/delegate-keys:');
   const fillList = sectionBetween(spec, '    FillListResponse:', '    Market:');
 
   for (const requiredText of [
     'fills:',
-    '$ref: "#/components/schemas/FillPacket"',
+    '$ref: "#/components/schemas/IndexedFillProjection"',
     'source:',
     'custody:',
   ]) {
@@ -105,25 +115,30 @@ test('OpenAPI fill routes expose projection envelopes around adapter-shaped fill
     'source:',
     'enum: [in-memory-indexer-projection]',
     'fills:',
-    '$ref: "#/components/schemas/FillPacket"',
+    '$ref: "#/components/schemas/IndexedFillProjection"',
   ]) {
     assert.ok(fillList.includes(requiredText), `FillListResponse schema should include ${requiredText}`);
   }
+
+  assert.equal(orderAccepted.includes('FillPacket'), false, 'OrderAccepted public fills must not be typed as FillPacket');
+  assert.equal(fillList.includes('FillPacket'), false, 'FillListResponse public fills must not be typed as FillPacket');
 });
 
-test('order schema FillPacket example uses adapter source event instead of matcher timestamp', async () => {
+test('order schema splits internal FillPacket from public IndexedFillProjection rows', async () => {
   const doc = await readText('docs/order-schema.md');
-  const fillPacketSection = sectionBetween(doc, '## FillPacket', '## API usage');
+  const projectionSection = sectionBetween(doc, '## IndexedFillProjection', '## API usage');
 
   for (const requiredText of [
-    'adapter-shaped indexed fill projection',
+    'Public API and WebSocket rows use `IndexedFillProjection`',
+    'FillPacket remains the internal matcher/relayer handoff',
+    '"projectionType": "IndexedFillProjection"',
     'settlementStatus',
     'sourceEventId',
     'source settlement event',
     'not matcher-local truth',
   ]) {
-    assert.ok(fillPacketSection.includes(requiredText), `FillPacket doc should include ${requiredText}`);
+    assert.ok(projectionSection.includes(requiredText), `IndexedFillProjection doc should include ${requiredText}`);
   }
 
-  assert.equal(fillPacketSection.includes('createdAt'), false, 'FillPacket doc must not use matcher-local createdAt');
+  assert.equal(projectionSection.includes('createdAt'), false, 'IndexedFillProjection doc must not use matcher-local createdAt');
 });

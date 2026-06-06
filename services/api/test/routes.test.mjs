@@ -260,6 +260,7 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     assert.equal(buy.body.fills.length, 1);
 
     const [fill] = buy.body.fills;
+    assert.equal(fill.projectionType, 'IndexedFillProjection');
     assert.equal(fill.fillId, 'fill-000001');
     assert.equal(fill.tradeId, 'trade-000001');
     assert.equal(fill.marketId, 'QI-QUAI');

@@ -184,6 +184,7 @@ test('WebSocket transport sends private fill snapshots without withdrawal author
     assert.deepEqual(message.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
     assert.equal(message.snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
     assert.deepEqual(message.snapshot.data.fills, [buy.body.fills[0]]);
+    assert.equal(message.snapshot.data.fills[0].projectionType, 'IndexedFillProjection');
     assert.equal(message.snapshot.data.fills[0].sourceEventId, 'event-000001');
     assert.equal(Object.hasOwn(message.snapshot.data.fills[0], 'createdAt'), false);
   }, { state });
@@ -268,6 +269,7 @@ test('WebSocket transport fanouts live snapshots after mock orderbook and fill m
       assert.equal(matchedFills.snapshot.source, 'in-memory-indexer-projection');
       assert.deepEqual(matchedFills.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
       assert.deepEqual(matchedFills.snapshot.data.fills, [buy.body.fills[0]]);
+      assert.equal(matchedFills.snapshot.data.fills[0].projectionType, 'IndexedFillProjection');
       assert.equal(matchedFills.snapshot.data.fills[0].sourceEventId, 'event-000001');
       assert.equal(Object.hasOwn(matchedFills.snapshot.data.fills[0], 'createdAt'), false);
     } finally {

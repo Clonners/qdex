@@ -108,6 +108,7 @@ const rawProofEvent = (event) => ({
 });
 
 const projectFill = (event) => ({
+  projectionType: 'IndexedFillProjection',
   fillId: event.fillId,
   tradeId: event.tradeId,
   marketId: event.market,

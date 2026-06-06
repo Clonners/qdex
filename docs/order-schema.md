@@ -104,10 +104,17 @@ For example, a buy-side market IOC signs a maximum quote paid. A sell-side marke
 
 ## FillPacket
 
-A deterministic match produces a `FillPacket` for relayer/mock settlement. Once settlement is confirmed, the API exposes the adapter-shaped indexed fill projection below. This public fill is not matcher-local truth; `sourceEventId` points back to the source settlement event that the indexer accepted.
+A deterministic match produces a `FillPacket` for relayer/mock settlement. `FillPacket` remains the internal matcher/relayer handoff, not a public API/SDK order response type. It proves the matched maker/taker orders, replay domain, price/amount constraints, fees, and cumulative fill accounting before settlement can be marked final.
+
+The relayer marks the packet `confirmed` only after mock or contract settlement. The indexer then projects the source settlement event into public fills and trade proofs. Later, the same settlement truth boundary should map to real Quai settlement events.
+
+## IndexedFillProjection
+
+Public API and WebSocket rows use `IndexedFillProjection`. FillPacket remains the internal matcher/relayer handoff; the public projection below is adapter-shaped indexer truth after confirmed settlement. This public fill is not matcher-local truth; `sourceEventId` points back to the source settlement event that the indexer accepted.
 
 ```json
 {
+  "projectionType": "IndexedFillProjection",
   "fillId": "fill-000001",
   "tradeId": "trade-000001",
   "marketId": "QI-QUAI",
@@ -125,11 +132,9 @@ A deterministic match produces a `FillPacket` for relayer/mock settlement. Once 
 }
 ```
 
-The relayer marks the packet `confirmed` only after mock or contract settlement. The indexer then projects the source settlement event into fills and trade proofs. Later, the same settlement truth boundary should map to real Quai settlement events.
-
 ## API usage
 
-`POST /v1/orders` accepts an `OrderRequest` containing the `SignedOrder`. Successful acceptance returns an `OrderAccepted` payload with `orderHash`, `status`, and projection fields. A confirmed fill must be retrievable through `GET /v1/fills` and `GET /v1/proofs/trades/{tradeId}`.
+`POST /v1/orders` accepts an `OrderRequest` containing the `SignedOrder`. Successful acceptance returns an `OrderAccepted` payload with `orderHash`, `status`, and projection fields. A confirmed `IndexedFillProjection` must be retrievable through `GET /v1/fills` and `GET /v1/proofs/trades/{tradeId}`.
 
 ## Invariants
 
