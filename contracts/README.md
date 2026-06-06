@@ -36,7 +36,8 @@ Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-
 14. `NM-01`: local NonceManager keeps cancellation user-owned, bounds range cancellation, and restricts `markNonceUsed` to the configured settlement authority.
 15. `MR-01`: local MarketRegistry keeps market metadata stable, enabled/disabled status explicit, and market-authority changes dependency-scoped before Settlement wiring.
 16. `FM-01`: local FeeManager keeps maker/taker fee updates fee-authority gated, hard-capped by `maxFeeBps()`, and evented for indexer replay.
+17. `DK-01`: local DelegateKeyRegistry keeps delegate keys owner-registered, expiry/market/notional scoped, and explicitly `NO_WITHDRAW`/`NO_ADMIN` before bot signing integration.
 
-Recommended next slice: add local `DelegateKeyRegistry DK-01` `NO_WITHDRAW`/`NO_ADMIN` permission ratchet before bot/delegate signing integration.
+Recommended next slice: wire dependency contracts into local Settlement or add delegate-signing validation without introducing withdrawal authority.
 
 Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.

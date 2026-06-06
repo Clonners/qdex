@@ -29,4 +29,5 @@ interface IDelegateKeyRegistry {
     function registerDelegateKey(DelegateKey calldata delegateKey) external;
     function revokeDelegateKey(address delegate) external;
     function isDelegateKeyActive(address owner, address delegate, bytes32 marketId, uint256 notional) external view returns (bool);
+    function hasPermission(address owner, address delegate, Permission permission) external view returns (bool);
 }
