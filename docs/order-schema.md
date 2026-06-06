@@ -104,11 +104,12 @@ For example, a buy-side market IOC signs a maximum quote paid. A sell-side marke
 
 ## FillPacket
 
-A deterministic match produces a `FillPacket` for relayer/mock settlement:
+A deterministic match produces a `FillPacket` for relayer/mock settlement. Once settlement is confirmed, the API exposes the adapter-shaped indexed fill projection below. This public fill is not matcher-local truth; `sourceEventId` points back to the source settlement event that the indexer accepted.
 
 ```json
 {
   "fillId": "fill-000001",
+  "tradeId": "trade-000001",
   "marketId": "QI-QUAI",
   "makerOrderHash": "0xmaker",
   "takerOrderHash": "0xtaker",
@@ -119,11 +120,12 @@ A deterministic match produces a `FillPacket` for relayer/mock settlement:
   "makerFee": "0",
   "takerFee": "0",
   "settlementMode": "mock",
-  "createdAt": 1780000001
+  "settlementStatus": "confirmed",
+  "sourceEventId": "event-000001"
 }
 ```
 
-The relayer then marks the packet `confirmed` after mock settlement. The indexer projects it into fills and trade proofs. Later, the same packet shape should map to real Quai settlement events.
+The relayer marks the packet `confirmed` only after mock or contract settlement. The indexer then projects the source settlement event into fills and trade proofs. Later, the same settlement truth boundary should map to real Quai settlement events.
 
 ## API usage
 

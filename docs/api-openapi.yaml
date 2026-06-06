@@ -177,10 +177,14 @@ paths:
   /v1/fills:
     get:
       tags: [private]
-      summary: User fills
+      summary: User indexed fills from confirmed settlement projections
       responses:
         "200":
-          description: Fill list
+          description: Adapter-shaped fill projection list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FillListResponse"
   /v1/delegate-keys:
     get:
       tags: [private]
@@ -479,11 +483,27 @@ components:
           type: string
           pattern: "^[0-9]+$"
           example: "1000000000000000000"
+        fills:
+          type: array
+          description: Adapter-shaped fills projected from confirmed settlement events; empty while the order rests.
+          items:
+            $ref: "#/components/schemas/FillPacket"
+        source:
+          type: string
+          enum: [mock-matching-engine]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        settlement:
+          type: string
+          enum: [awaiting-cross, mock-settlement-confirmed]
     FillPacket:
       type: object
-      required: [fillId, marketId, makerOrderHash, takerOrderHash, price, amount, settlementMode, createdAt]
+      description: Adapter-shaped indexed fill projection from confirmed settlement events; not matcher-local truth.
+      required: [fillId, tradeId, marketId, makerOrderHash, takerOrderHash, price, amount, settlementMode, settlementStatus, sourceEventId]
       properties:
         fillId: { type: string, example: fill-000001 }
+        tradeId: { type: string, example: trade-000001 }
         marketId: { type: string, example: QI-QUAI }
         makerOrderHash: { type: string }
         takerOrderHash: { type: string }
@@ -504,9 +524,26 @@ components:
         settlementMode:
           type: string
           enum: [mock, quai_contract]
-        createdAt:
-          type: integer
-          format: int64
+        settlementStatus:
+          type: string
+          enum: [confirmed]
+          description: Public fills are projected only after mock or contract settlement confirmation.
+        sourceEventId:
+          type: string
+          description: Identifier of the source settlement event that produced this fill projection.
+          example: event-000001
+    FillListResponse:
+      type: object
+      description: Private fill list from the in-memory indexer projection.
+      required: [source, fills]
+      properties:
+        source:
+          type: string
+          enum: [in-memory-indexer-projection]
+        fills:
+          type: array
+          items:
+            $ref: "#/components/schemas/FillPacket"
     Market:
       type: object
       required: [id, base, quote, status]
