@@ -190,6 +190,9 @@ export const createMockDexState = () => {
 
     const fillId = paddedId('fill', state.fillSequence);
     const tradeId = paddedId('trade', state.tradeSequence);
+    const eventId = paddedId('event', state.fillSequence);
+    const eventIndex = state.fillSequence - 1;
+    const mockSettlementReference = `mock-settlement-${fillId}`;
     const fill = {
       fillId,
       tradeId,
@@ -219,21 +222,38 @@ export const createMockDexState = () => {
 
     const proof = {
       tradeId,
+      fillId,
       orderHashes: [maker.orderHash, taker.orderHash],
-      settlementTx: `mock-settlement-${fillId}`,
-      blockNumber: 0,
-      eventIndex: state.fillSequence - 1,
+      settlementMode: 'mock',
+      mockSettlementReference,
+      settlementTx: null,
+      blockNumber: null,
+      blockHash: null,
+      eventIndex,
+      maker: maker.owner,
+      taker: taker.owner,
       market: MARKET_ID,
       price,
       amount,
-      makerFee: '0',
-      takerFee: '0',
+      fees: {
+        maker: '0',
+        taker: '0',
+      },
       explorerUrl: null,
+      safetyNotice: 'Mock proof only: no real Quai transaction, no explorer URL, no funds moved.',
       rawEvent: {
-        type: 'MockSettlementConfirmed',
+        eventId,
+        type: 'SETTLEMENT_CONFIRMED',
+        source: 'mock-settlement',
         fillId,
         settlementMode: 'mock',
+        mockSettlementReference,
+        settlementTx: null,
+        blockNumber: null,
+        blockHash: null,
+        eventIndex,
       },
+      createdFromEventId: eventId,
     };
 
     state.fills.push(fill);

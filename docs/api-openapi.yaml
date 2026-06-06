@@ -214,6 +214,16 @@ paths:
       responses:
         "200":
           description: Trade proof
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeProofResponse"
+        "404":
+          description: Indexed proof not found yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeProofNotFound"
 components:
   schemas:
     OrderSide:
@@ -389,20 +399,96 @@ components:
         base: { type: string, example: QI }
         quote: { type: string, example: QUAI }
         status: { type: string, enum: [enabled, disabled] }
-    TradeProof:
+    TradeProofResponse:
       type: object
-      required: [tradeId, settlementTx, blockNumber, eventIndex, market, price, amount]
+      required: [tradeId, proof, source, custody]
       properties:
         tradeId: { type: string }
+        proof:
+          $ref: "#/components/schemas/TradeProof"
+        source:
+          type: string
+          enum: [proof-service-indexer-projection]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+    TradeProofNotFound:
+      type: object
+      required: [error, tradeId, proof, source, custody, message]
+      properties:
+        error:
+          type: string
+          enum: [proof_not_found]
+        tradeId: { type: string }
+        proof:
+          type: "null"
+        source:
+          type: string
+          enum: [proof-service-indexer-projection]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        message: { type: string }
+    TradeProof:
+      type: object
+      description: Mock proofs must keep settlementTx, blockNumber, blockHash, and explorerUrl null. Real Quai proofs require settlementTx, blockNumber, eventIndex, and explorerUrl.
+      required:
+        - tradeId
+        - fillId
+        - orderHashes
+        - settlementMode
+        - settlementTx
+        - blockNumber
+        - blockHash
+        - eventIndex
+        - market
+        - price
+        - amount
+        - fees
+        - explorerUrl
+        - rawEvent
+        - createdFromEventId
+      properties:
+        tradeId: { type: string }
+        fillId: { type: string }
         orderHashes:
           type: array
           items: { type: string }
-        settlementTx: { type: string }
-        blockNumber: { type: integer }
-        eventIndex: { type: integer }
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        mockSettlementReference:
+          type: [string, "null"]
+          description: Internal deterministic reference for mock settlement; not a Quai transaction hash.
+        settlementTx:
+          type: [string, "null"]
+          description: Null for mock proofs; required transaction hash for quai_contract proofs.
+        blockNumber:
+          type: [integer, "null"]
+          description: Null for mock proofs; required indexed block number for quai_contract proofs.
+        blockHash:
+          type: [string, "null"]
+          description: Null for mock proofs; required for reorg-aware real Quai proofs.
+        eventIndex:
+          type: integer
+        maker: { type: string }
+        taker: { type: string }
         market: { type: string }
         price: { type: string }
         amount: { type: string }
-        makerFee: { type: string }
-        takerFee: { type: string }
-        explorerUrl: { type: string }
+        fees:
+          type: object
+          required: [maker, taker]
+          properties:
+            maker: { type: string }
+            taker: { type: string }
+        explorerUrl:
+          type: [string, "null"]
+          description: Null for mock proofs; required explorer link for quai_contract proofs.
+        safetyNotice:
+          type: string
+          description: Mock proof copy must say no real Quai transaction, no explorer URL, and no funds moved.
+        rawEvent:
+          type: object
+          additionalProperties: true
+        createdFromEventId: { type: string }

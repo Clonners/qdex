@@ -24,6 +24,9 @@ const renderOrderbookSide = (orders, emptyLabel) => {
 export const renderTradeProofPanel = (fixture) => {
   const { market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
+  const proofSettlementTx = proof.settlementTx ?? 'null (mock)';
+  const proofBlockNumber = proof.blockNumber ?? 'null (mock)';
+  const proofSettlementMode = proof.settlementMode ?? proof.rawEvent.settlementMode;
 
   return `
     <section class="terminal-shell" aria-label="Quai Terminal DEX mock vertical slice">
@@ -81,10 +84,11 @@ export const renderTradeProofPanel = (fixture) => {
           <h2>proof projection</h2>
           <p class="warning">Mock proof only: no real Quai transaction, no explorer URL, no funds moved.</p>
           <dl class="kv">
-            <div><dt>settlement tx</dt><dd><code>${escapeHtml(proof.settlementTx)}</code></dd></div>
-            <div><dt>block</dt><dd>${escapeHtml(proof.blockNumber)}</dd></div>
+            <div><dt>settlement tx</dt><dd><code>${escapeHtml(proofSettlementTx)}</code></dd></div>
+            <div><dt>mock reference</dt><dd><code>${escapeHtml(proof.mockSettlementReference)}</code></dd></div>
+            <div><dt>block</dt><dd>${escapeHtml(proofBlockNumber)}</dd></div>
             <div><dt>event index</dt><dd>${escapeHtml(proof.eventIndex)}</dd></div>
-            <div><dt>settlementMode</dt><dd>${escapeHtml(proof.rawEvent.settlementMode)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(proofSettlementMode)}</dd></div>
             <div><dt>maker order</dt><dd><code>${escapeHtml(shortHash(fill.makerOrderHash))}</code></dd></div>
             <div><dt>taker order</dt><dd><code>${escapeHtml(shortHash(fill.takerOrderHash))}</code></dd></div>
           </dl>
@@ -109,7 +113,7 @@ export const renderTradeProofPanel = (fixture) => {
 &gt; order signed locally
 &gt; crossing buy accepted: ${escapeHtml(shortHash(fill.takerOrderHash))}
 &gt; fill packet created: ${escapeHtml(fill.fillId)}
-&gt; mock settlement confirmed: ${escapeHtml(proof.settlementTx)}
+&gt; mock settlement reference: ${escapeHtml(proof.mockSettlementReference)}
 &gt; proof projected: ${escapeHtml(trade.proofUrl)}</pre>
         </article>
       </section>

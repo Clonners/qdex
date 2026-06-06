@@ -225,24 +225,42 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
 
     const proof = await requestJson(baseUrl, '/v1/proofs/trades/trade-000001');
     assert.equal(proof.status, 200);
-    assert.equal(proof.body.source, 'mock-proof-projection');
+    assert.equal(proof.body.source, 'proof-service-indexer-projection');
+    assert.equal(proof.body.custody, 'non-custodial-no-withdrawal-authority');
     assert.deepEqual(proof.body.proof, {
       tradeId: 'trade-000001',
+      fillId: 'fill-000001',
       orderHashes: [sell.body.orderHash, buy.body.orderHash],
-      settlementTx: 'mock-settlement-fill-000001',
-      blockNumber: 0,
+      settlementMode: 'mock',
+      mockSettlementReference: 'mock-settlement-fill-000001',
+      settlementTx: null,
+      blockNumber: null,
+      blockHash: null,
       eventIndex: 0,
+      maker: restingSell.owner,
+      taker: takerBuy.owner,
       market: 'QI-QUAI',
       price: '5',
       amount: '100',
-      makerFee: '0',
-      takerFee: '0',
+      fees: {
+        maker: '0',
+        taker: '0',
+      },
       explorerUrl: null,
+      safetyNotice: 'Mock proof only: no real Quai transaction, no explorer URL, no funds moved.',
       rawEvent: {
-        type: 'MockSettlementConfirmed',
+        eventId: 'event-000001',
+        type: 'SETTLEMENT_CONFIRMED',
+        source: 'mock-settlement',
         fillId: 'fill-000001',
         settlementMode: 'mock',
+        mockSettlementReference: 'mock-settlement-fill-000001',
+        settlementTx: null,
+        blockNumber: null,
+        blockHash: null,
+        eventIndex: 0,
       },
+      createdFromEventId: 'event-000001',
     });
 
     const bookAfterMatch = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
@@ -261,7 +279,8 @@ test('proof routes return deterministic projection-shaped not-found responses', 
       error: 'proof_not_found',
       tradeId: 'mock-trade-0001',
       proof: null,
-      source: 'mock-proof-projection',
+      source: 'proof-service-indexer-projection',
+      custody: 'non-custodial-no-withdrawal-authority',
       message: 'No indexed settlement proof exists for this trade yet.',
     });
   });

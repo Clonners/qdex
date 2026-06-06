@@ -15,6 +15,10 @@ test('renderTradeProofPanel shows the confirmed mock trade and proof without imp
   assert.match(html, /\/v1\/proofs\/trades\/trade-000001/);
   assert.match(html, /settlementMode[^<]*mock/i);
   assert.match(html, /mock settlement confirmed/i);
+  assert.match(html, /mock reference/i);
+  assert.match(html, /mock-settlement-fill-000001/);
+  assert.match(html, /settlement tx[\s\S]*null \(mock\)/i);
+  assert.doesNotMatch(html, /settlement tx<\/dt><dd><code>mock-settlement-fill-000001<\/code>/i);
   assert.match(html, /no real Quai transaction/i);
   assert.match(html, /non-custodial-no-withdrawal-authority/);
   assert.doesNotMatch(html, /explorer\.quai/i);
@@ -29,5 +33,5 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /:buy QI-QUAI 100 @ 5/);
   assert.match(html, /:proof trade-000001/);
   assert.match(html, /&gt; order signed locally/);
-  assert.match(html, /&gt; mock settlement confirmed: mock-settlement-fill-000001/);
+  assert.match(html, /&gt; mock settlement reference: mock-settlement-fill-000001/);
 });

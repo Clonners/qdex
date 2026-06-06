@@ -1,4 +1,7 @@
 import { jsonResult } from '../http.js';
+import { CUSTODY_NOTE } from '../mock-dex.js';
+
+const PROOF_SOURCE = 'proof-service-indexer-projection';
 
 const tradeProofId = (pathname) => {
   const prefix = '/v1/proofs/trades/';
@@ -19,7 +22,8 @@ export const handleProofRoute = ({ method, pathname, state }) => {
       return jsonResult(200, {
         tradeId,
         proof,
-        source: 'mock-proof-projection',
+        source: PROOF_SOURCE,
+        custody: CUSTODY_NOTE,
       });
     }
 
@@ -27,7 +31,8 @@ export const handleProofRoute = ({ method, pathname, state }) => {
       error: 'proof_not_found',
       tradeId,
       proof: null,
-      source: 'mock-proof-projection',
+      source: PROOF_SOURCE,
+      custody: CUSTODY_NOTE,
       message: 'No indexed settlement proof exists for this trade yet.',
     });
   }
