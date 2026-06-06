@@ -2,11 +2,11 @@
 
 ## State
 
-- Status: ready for autonomous builder cron
+- Status: active autonomous builder cron; current repo checks green
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: indexer projection model complete -> proof-service/indexer route contract refinements
+- Current phase: SDK/CLI bot contract specs complete -> minimal proof-service/indexer in-memory adapter
 
 ## Current repo baseline
 
@@ -37,9 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add proof-service/indexer route contract refinements.
-2. Add SDK/CLI bot contract specs.
-3. Start minimal indexer/proof-service in-memory adapter after route contracts are pinned.
+1. Start minimal proof-service/indexer in-memory adapter with ratchet tests.
+2. Wire proof adapter into API/terminal fixtures only after adapter tests are green.
+3. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
 
 ## Cron runner
 
@@ -67,3 +67,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 04:43 -03: Defined relayer state machine in `services/relayer/spec.md` with `FillPacket` idempotency, mock-vs-Quai settlement states, private status visibility, and confirmed-only proof projection; verified RED `node --test tests/relayer-spec.test.mjs`, GREEN `pnpm check`, and secret scan no matches; slice commit `7e374b5`; next slice: indexer projection model for fills/proofs.
 - 2026-06-06 05:03 -03: Defined indexer projection schema in `services/indexer/schema.md` with event tables, confirmed-only fill/proof projection, reorg-safe `blockHash`/`finalityDepth`, and `replayFromBlock(startBlock)` behavior; verified RED `node --test tests/indexer-schema.test.mjs`, GREEN `pnpm check`, and secret scan no matches; slice commit `566fa75`; next slice: proof-service/indexer route contract refinements.
 - 2026-06-06 05:27 -03: Refined proof-service/indexer route contract in OpenAPI, API proof responses, proof-service spec, and terminal mock proof panel; mock proofs now use `mockSettlementReference` with null `settlementTx`/block/explorer and explicit no-funds safety copy; verified RED doc/API/UI tests, GREEN `pnpm check`, and secret scan no matches; slice commit `57b4cea`; next slice: SDK/CLI bot contract specs.
+- 2026-06-06 05:42 -03: Completed SDK/CLI bot contract slice by adding TypeScript/Python/qdex specs plus ratchet test coverage for bot flow, `market_ioc` slippage bounds, and `NO_WITHDRAW`/`NO_ADMIN` delegate keys; verified RED `node --test tests/sdk-cli-contract.test.mjs` failed on missing specs, GREEN `pnpm check` pass, and secret-pattern scan no matches; slice commit `4a7538f`; next slice: proof-service/indexer in-memory adapter.
