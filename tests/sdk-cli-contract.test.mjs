@@ -1,0 +1,123 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+const repoRoot = new URL('../', import.meta.url);
+
+const readText = (relativePath) => readFile(new URL(relativePath, repoRoot), 'utf8');
+
+const assertIncludesAll = (text, requiredTexts, label) => {
+  for (const requiredText of requiredTexts) {
+    assert.ok(text.includes(requiredText), `${label} should include ${requiredText}`);
+  }
+};
+
+test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', async () => {
+  const spec = await readText('sdk/typescript/spec.md');
+
+  assertIncludesAll(
+    spec,
+    [
+      '# TypeScript SDK Bot Contract',
+      'QDexClient',
+      'markets.list()',
+      'orderbook.get(marketId)',
+      'orders.createLimitOrder',
+      'orders.createMarketIocOrder',
+      'orders.submitSignedOrder',
+      'fills.stream()',
+      'proofs.trade(tradeId)',
+      'orders.cancelAll',
+      'SignedOrder',
+      'FillPacket',
+      'TradeProof',
+      'POST /v1/orders',
+      'GET /v1/proofs/trades/:tradeId',
+      'market_ioc',
+      'IOC limit order',
+      'maxSlippageBps',
+      'Delegate keys default to NO_WITHDRAW',
+      'cannot withdraw funds',
+      'NO_ADMIN',
+      'allowedMarkets',
+      'maxNotional',
+      'expiresAt',
+      'main wallet',
+      'API state is projection/cache',
+      'settlementMode: mock',
+    ],
+    'sdk/typescript/spec.md',
+  );
+});
+
+test('Python SDK spec mirrors bot flow without creating withdrawal authority', async () => {
+  const spec = await readText('sdk/python/spec.md');
+
+  assertIncludesAll(
+    spec,
+    [
+      '# Python SDK Bot Contract',
+      'QDexClient',
+      'markets.list()',
+      'orderbook.get(market_id)',
+      'orders.create_limit_order',
+      'orders.create_market_ioc_order',
+      'orders.submit_signed_order',
+      'fills.stream()',
+      'proofs.trade(trade_id)',
+      'orders.cancel_all',
+      'SignedOrder',
+      'FillPacket',
+      'TradeProof',
+      'POST /v1/orders',
+      'GET /v1/proofs/trades/:tradeId',
+      'market_ioc',
+      'IOC limit order',
+      'max_slippage_bps',
+      'Delegate keys default to NO_WITHDRAW',
+      'cannot withdraw funds',
+      'NO_ADMIN',
+      'allowed_markets',
+      'max_notional',
+      'expires_at',
+      'main wallet',
+      'API state is projection/cache',
+      'settlementMode: mock',
+    ],
+    'sdk/python/spec.md',
+  );
+});
+
+test('qdex CLI spec defines terminal bot commands and safe API key scopes', async () => {
+  const spec = await readText('cli/qdex/spec.md');
+
+  assertIncludesAll(
+    spec,
+    [
+      '# qdex CLI Bot Contract',
+      'qdex markets',
+      'qdex ticker QI-QUAI',
+      'qdex book QI-QUAI',
+      'qdex balance',
+      'qdex order buy QI-QUAI --amount 1000 --price 0.123',
+      'qdex order sell QI-QUAI --quote-amount 100 --market --slippage-bps 50',
+      'qdex cancel --all',
+      'qdex stream fills',
+      'qdex proof trade <trade-id>',
+      'qdex api create-key bot-mm-1 --scope trade --expires 7d',
+      'READ_ONLY',
+      'PLACE_ORDER',
+      'CANCEL_ORDER',
+      'CANCEL_ALL',
+      'NO_WITHDRAW',
+      'NO_ADMIN',
+      'no withdraw command is available for delegate/API keys',
+      'market orders are market_ioc IOC limit orders',
+      'signed price/slippage bounds',
+      'mockSettlementReference',
+      'no real Quai transaction',
+      'no funds moved',
+    ],
+    'cli/qdex/spec.md',
+  );
+});
