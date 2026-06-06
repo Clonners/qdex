@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: contract-address API alignment green -> next read-only SDK/CLI contract registry exposure
+- Current phase: read-only TypeScript SDK/CLI contract registry exposure green -> next Python SDK contract registry exposure
 
 ## Current repo baseline
 
@@ -104,3 +104,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 17:13 -03: Wired local `Settlement` `MR-02` to a market-authority-scoped `MarketRegistry`: fills now require enabled base/quote metadata, disabled/unknown/token-mismatched markets reject before nonce/accounting/vault/proof mutation, and existing ST/DK/NM settlement ratchets use registry-derived market IDs; verified RED focused `Settlement MR-02` failed on missing `marketRegistry`, GREEN focused tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `0f31888`; next slice: wire `FeeManager` into local `Settlement` (`FM-02`).
 - 2026-06-06 17:27 -03: Wired local `Settlement` `FM-02` to a fee-authority-scoped `FeeManager`: nonzero fees now require manager recipient truth plus signed and market-schedule caps before nonce/accounting/vault/proof mutation; verified RED focused `Settlement FM-02` failed on missing `feeManager`, GREEN focused tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `f796000`; next slice: contract dependency cleanup / contract-address API alignment.
 - 2026-06-06 17:46 -03: Aligned `/v1/contracts` with local-only contract dependency metadata: API now exposes null addresses, `local-only-not-deployed`, `TradeSettled` proof trigger, Settlement dependencies, external nonce/market/fee truth, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety; verified RED/GREEN API + docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: read-only SDK/CLI contract registry exposure.
+- 2026-06-06 18:05 -03: Added read-only TypeScript SDK `contracts.get()` plus `qdex contracts` CLI exposure for `/v1/contracts`, preserving local-only null addresses, no wallet/deploy/tx claims, `TradeSettled`, and `NO_WITHDRAW`/`NO_ADMIN` safety; verified RED focused SDK/CLI/doc tests, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `70c498e`; next slice: Python SDK read-only contract registry exposure.
