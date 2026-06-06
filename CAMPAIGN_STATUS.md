@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: scaffold -> first vertical slice
+- Current phase: contract tooling documented -> signed order schema
 
 ## Current repo baseline
 
@@ -37,11 +37,10 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Research and document Quai contract tooling in `docs/quai-tooling.md`.
-2. Define canonical signed order schema in `docs/order-schema.md` and OpenAPI components.
-3. Add API route modules and tests for health/markets/order/proof placeholders.
-4. Specify matching-engine command/event boundary.
-5. Implement first mock vertical slice: order -> match -> mock settlement -> proof.
+1. Define canonical signed order schema in `docs/order-schema.md` and OpenAPI components.
+2. Add API route modules and tests for health/markets/order/proof placeholders.
+3. Specify matching-engine command/event boundary.
+4. Implement first mock vertical slice: order -> match -> mock settlement -> proof.
 
 ## Cron runner
 
@@ -60,3 +59,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06: Autonomous cron runner `bd3c1b71af75` created and scheduled for bounded builder slices.
 - 2026-06-06: Cron cadence updated to every 20 minutes during active window (`*/20 8-22 * * *`), repeat budget raised to 180 runs.
 - 2026-06-06: Cron cadence updated to every 20 minutes 24/7 (`*/20 * * * *`), repeat changed to forever.
+- 2026-06-06: Documented Quai contract tooling in `docs/quai-tooling.md` and linked contract assumptions in `docs/contracts.md`; verified docs check, `pnpm check`, and secret scan; commit `db04a47`; next slice: signed order schema + OpenAPI components.
