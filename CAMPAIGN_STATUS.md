@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: mock order cancellation flow green -> next OpenAPI cancellation response schema alignment
+- Current phase: OpenAPI cancellation response schema alignment green -> next WebSocket cancellation fanout/order stream ratchet
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Align OpenAPI/docs/API schemas for mock cancellation responses (`CancellationResult`/errors), preserving matcher-local nonce wording and `NO_WITHDRAW`/`NO_ADMIN`.
+1. Add WebSocket/API stream cancellation fanout ratchet for order/depth updates when matcher-open orders are cancelled, preserving matcher-local nonce wording and `NO_WITHDRAW`/`NO_ADMIN`.
 2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
@@ -112,3 +112,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 19:48 -03: Split public fill projection naming in OpenAPI/API: public routes now reference `IndexedFillProjection`, indexed fill rows carry `projectionType: IndexedFillProjection`, and internal `FillPacket` stays reserved for matcher/relayer/contract handoff docs; verified RED focused OpenAPI/indexer/API tests failed on missing split, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `aa98a4f`; next slice: SDK/CLI/terminal UI `projectionType` fixture/spec alignment.
 - 2026-06-06 20:06 -03: Aligned SDK/CLI/Python/terminal UI consumers with public `IndexedFillProjection.projectionType`: docs/spec ratchets, SDK/CLI smoke assertions, terminal fixture/rendering, and live-fill validation now require `projectionType: IndexedFillProjection` while keeping `FillPacket` internal-only; verified RED focused docs/UI tests failed on missing projectionType, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `eca5583`; next slice: mock cancel-all/order cancellation flow.
 - 2026-06-06 20:33 -03: Added mock order cancellation flow: `DELETE /v1/orders/:orderHash` and `POST /v1/orders/cancel-all` now remove matcher-open quantity only, SDK/Python/CLI expose cancellation helpers, and responses preserve nonce-manager wording plus `CANCEL_ORDER`/`CANCEL_ALL` with `NO_WITHDRAW`/`NO_ADMIN`; verified focused API/SDK/CLI/Python tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: OpenAPI cancellation response schema alignment.
+- 2026-06-06 20:45 -03: Aligned OpenAPI/docs/API cancellation response schemas: `CancellationResult`, `CancelledOrder`, and `CancellationError` now pin matcher-local cancellation semantics, `NO_WITHDRAW`/`NO_ADMIN`, and no on-chain NonceManager nonce mutation; verified RED `node --test tests/order-schema.test.mjs` and RED focused API cancellation test, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `8d6b490`; next slice: WebSocket cancellation fanout/order stream ratchet.
