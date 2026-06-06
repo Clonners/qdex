@@ -279,6 +279,21 @@ test('mock order cancellation removes only matcher-open quantity without nonce o
     assert.equal(missingCancel.status, 404);
     assert.equal(missingCancel.body.error, 'order_not_found');
     assert.equal(missingCancel.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.equal(missingCancel.body.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+    assert.deepEqual(missingCancel.body.permissions, ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.match(missingCancel.body.message, /No mock matcher order exists/);
+
+    const alreadyCancelled = await requestJson(baseUrl, `/v1/orders/${encodeURIComponent(firstOrder.body.orderHash)}`, {
+      method: 'DELETE',
+    });
+    assert.equal(alreadyCancelled.status, 409);
+    assert.equal(alreadyCancelled.body.error, 'order_not_open');
+    assert.equal(alreadyCancelled.body.orderHash, firstOrder.body.orderHash);
+    assert.equal(alreadyCancelled.body.status, 'cancelled');
+    assert.equal(alreadyCancelled.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.equal(alreadyCancelled.body.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+    assert.deepEqual(alreadyCancelled.body.permissions, ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.match(alreadyCancelled.body.message, /Only remaining matcher-open quantity/);
 
     const bookAfterSingleCancel = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
     assert.deepEqual(bookAfterSingleCancel.body.asks.map((order) => order.orderHash), [secondOrder.body.orderHash]);

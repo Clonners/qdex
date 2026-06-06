@@ -297,6 +297,17 @@ export const createMockDexState = ({
     message: CANCELLATION_MESSAGE,
   });
 
+  const cancellationErrorBody = ({ error, orderHash, status, message }) => ({
+    error,
+    orderHash,
+    ...(status === undefined ? {} : { status }),
+    source: 'mock-matching-engine',
+    custody: CUSTODY_NOTE,
+    nonceManager: CANCELLATION_NONCE_NOTE,
+    permissions: CANCEL_ORDER_PERMISSIONS,
+    message,
+  });
+
   const matchOrder = (incoming) => {
     const fills = [];
     const oppositeSide = incoming.side === 'buy' ? 'sell' : 'buy';
@@ -389,28 +400,23 @@ export const createMockDexState = ({
       if (order === undefined) {
         return {
           statusCode: 404,
-          body: {
+          body: cancellationErrorBody({
             error: 'order_not_found',
             orderHash,
-            source: 'mock-matching-engine',
-            custody: CUSTODY_NOTE,
             message: 'No mock matcher order exists for this orderHash.',
-          },
+          }),
         };
       }
 
       if (!hasOpenQuantity(order)) {
         return {
           statusCode: 409,
-          body: {
+          body: cancellationErrorBody({
             error: 'order_not_open',
             orderHash,
             status: order.status,
-            source: 'mock-matching-engine',
-            custody: CUSTODY_NOTE,
-            nonceManager: CANCELLATION_NONCE_NOTE,
             message: 'Only remaining matcher-open quantity can be cancelled.',
-          },
+          }),
         };
       }
 

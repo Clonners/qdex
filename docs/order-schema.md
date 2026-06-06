@@ -132,6 +132,36 @@ Public API and WebSocket rows use `IndexedFillProjection`. FillPacket remains th
 }
 ```
 
+## Order cancellation
+
+`DELETE /v1/orders/{orderHash}` and `POST /v1/orders/cancel-all` return `CancellationResult` payloads in the local mock loop. They remove matcher-open quantity only: a successful mock cancellation does not cancel on-chain NonceManager nonces, does not mutate vault balances, and does not grant withdrawal authority.
+
+A cancelled order row uses `nonceCancellation: "not-implied-matcher-local-only"` so bot/SDK consumers cannot confuse matcher-local book cleanup with an owner-signed NonceManager cancellation. The cancellation permission surface is trade-only:
+
+```json
+{
+  "cancelled": true,
+  "cancelledCount": 1,
+  "cancelledOrders": [
+    {
+      "orderHash": "0xorder",
+      "status": "cancelled",
+      "remainingAmount": "0",
+      "cancelledAmount": "100",
+      "cancelReason": "cancel_order",
+      "nonceCancellation": "not-implied-matcher-local-only"
+    }
+  ],
+  "source": "mock-matching-engine",
+  "custody": "non-custodial-no-withdrawal-authority",
+  "nonceManager": "matcher-local-cancel-only-on-chain-nonce-unchanged",
+  "permissions": ["CANCEL_ORDER", "NO_WITHDRAW", "NO_ADMIN"],
+  "message": "Mock cancellation removes only matcher-open quantity and does not cancel the on-chain nonce; user nonce cancellation must be signed through NonceManager later."
+}
+```
+
+`POST /v1/orders/cancel-all` may add `CANCEL_ALL` to the permissions list and may echo `filters.marketId`/`filters.owner`, but it still cancels matcher-open quantity only and does not cancel on-chain NonceManager nonces. `CancellationError` payloads such as `order_not_found` and `order_not_open` carry the same custody, `nonceManager`, `NO_WITHDRAW`, and `NO_ADMIN` safety fields.
+
 ## API usage
 
 `POST /v1/orders` accepts an `OrderRequest` containing the `SignedOrder`. Successful acceptance returns an `OrderAccepted` payload with `orderHash`, `status`, and projection fields. A confirmed `IndexedFillProjection` must be retrievable through `GET /v1/fills` and `GET /v1/proofs/trades/{tradeId}`.

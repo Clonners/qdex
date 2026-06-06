@@ -159,6 +159,7 @@ paths:
     delete:
       tags: [private]
       summary: Cancel order
+      description: Cancels matcher-open quantity only. This mock cancellation does not cancel on-chain NonceManager nonces or grant withdrawal authority.
       parameters:
         - name: orderHash
           in: path
@@ -166,14 +167,48 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: Cancel request accepted
+          description: Matcher-local cancel request accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancellationResult"
+        "404":
+          description: Order hash not found in the mock matcher; no on-chain nonce state changes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancellationError"
+        "409":
+          description: Order has no matcher-open quantity to cancel; no on-chain nonce state changes.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancellationError"
   /v1/orders/cancel-all:
     post:
       tags: [private]
       summary: Cancel all orders for user/market
+      description: Cancels matcher-open quantity only for optional marketId/owner filters. This mock cancellation does not cancel on-chain NonceManager nonces or grant withdrawal authority.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                marketId:
+                  type: string
+                  example: QI-QUAI
+                owner:
+                  type: string
+                  description: Optional owner-wallet filter; does not grant withdrawal authority.
       responses:
         "200":
-          description: Cancel-all accepted
+          description: Matcher-local cancel-all accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CancellationResult"
   /v1/fills:
     get:
       tags: [private]
@@ -497,6 +532,125 @@ components:
         settlement:
           type: string
           enum: [awaiting-cross, mock-settlement-confirmed]
+    CancellationResult:
+      type: object
+      description: Matcher-local cancellation result; removes matcher-open quantity only and does not cancel on-chain NonceManager nonces.
+      required: [cancelled, cancelledCount, cancelledOrders, source, custody, nonceManager, permissions, message]
+      properties:
+        cancelled:
+          type: boolean
+          description: True when at least one matcher-open order quantity was removed.
+        cancelledCount:
+          type: integer
+          minimum: 0
+        orderHash:
+          type: string
+          description: Present for DELETE /v1/orders/{orderHash}.
+        cancelledOrders:
+          type: array
+          items:
+            $ref: "#/components/schemas/CancelledOrder"
+        filters:
+          type: object
+          description: Optional cancel-all filters applied by the mock matcher.
+          properties:
+            marketId:
+              type: [string, "null"]
+              example: QI-QUAI
+            owner:
+              type: [string, "null"]
+              description: Owner-wallet filter; not withdrawal authority.
+        source:
+          type: string
+          enum: [mock-matching-engine]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        nonceManager:
+          type: string
+          enum: [matcher-local-cancel-only-on-chain-nonce-unchanged]
+          description: Mock matcher cancellation only; does not cancel on-chain NonceManager nonces.
+        permissions:
+          type: array
+          description: Cancellation scopes required; delegate scopes still include NO_WITHDRAW and NO_ADMIN.
+          items:
+            type: string
+            enum: [CANCEL_ORDER, CANCEL_ALL, NO_WITHDRAW, NO_ADMIN]
+        message:
+          type: string
+          example: Mock cancellation removes only matcher-open quantity and does not cancel the on-chain nonce; user nonce cancellation must be signed through NonceManager later.
+    CancelledOrder:
+      type: object
+      description: Cancelled matcher-local order projection. NonceManager nonce cancellation is not implied.
+      required: [orderHash, marketId, owner, side, type, amount, price, filledAmount, remainingAmount, status, custody, cancelledAmount, cancelReason, nonceCancellation]
+      properties:
+        orderHash: { type: string }
+        marketId: { type: string, example: QI-QUAI }
+        owner: { type: string }
+        delegate: { type: string }
+        side:
+          $ref: "#/components/schemas/OrderSide"
+        type:
+          $ref: "#/components/schemas/OrderType"
+        amount:
+          type: string
+          pattern: "^[0-9]+$"
+        price:
+          type: string
+          pattern: "^[0-9]+$"
+        filledAmount:
+          type: string
+          pattern: "^[0-9]+$"
+        remainingAmount:
+          type: string
+          pattern: "^[0-9]+$"
+        status:
+          type: string
+          enum: [cancelled]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        cancelledAmount:
+          type: string
+          pattern: "^[0-9]+$"
+        cancelReason:
+          type: string
+          enum: [cancel_order, cancel_all]
+        nonceCancellation:
+          type: string
+          enum: [not-implied-matcher-local-only]
+    CancellationError:
+      type: object
+      description: Matcher-local cancellation error; no matcher-open quantity was removed and no on-chain nonce state changed.
+      required: [error, orderHash, source, custody, nonceManager, permissions, message]
+      properties:
+        error:
+          type: string
+          enum: [order_not_found, order_not_open]
+        orderHash: { type: string }
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        source:
+          type: string
+          enum: [mock-matching-engine]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        nonceManager:
+          type: string
+          enum: [matcher-local-cancel-only-on-chain-nonce-unchanged]
+          description: Mock matcher cancellation errors do not cancel on-chain NonceManager nonces.
+        permissions:
+          type: array
+          description: Error responses still reflect the trade-only cancellation scope; NO_WITHDRAW and NO_ADMIN remain required.
+          items:
+            type: string
+            enum: [CANCEL_ORDER, NO_WITHDRAW, NO_ADMIN]
+        nonceCancellation:
+          type: string
+          enum: [not-implied-matcher-local-only]
+          description: If a matching order row is returned elsewhere, nonce cancellation remains not-implied-matcher-local-only.
+        message: { type: string }
     IndexedFillProjection:
       type: object
       description: Public indexed fill projection from confirmed settlement events; not matcher-local truth.

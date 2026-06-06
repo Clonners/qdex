@@ -124,6 +124,75 @@ test('OpenAPI fill routes expose projection envelopes around adapter-shaped fill
   assert.equal(fillList.includes('FillPacket'), false, 'FillListResponse public fills must not be typed as FillPacket');
 });
 
+test('OpenAPI and order docs expose matcher-local cancellation response schemas', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const doc = await readText('docs/order-schema.md');
+  const cancelOneRoute = sectionBetween(spec, '  /v1/orders/{orderHash}:', '  /v1/orders/cancel-all:');
+  const cancelAllRoute = sectionBetween(spec, '  /v1/orders/cancel-all:', '  /v1/fills:');
+  const cancellationResult = sectionBetween(spec, '    CancellationResult:', '    CancellationError:');
+  const cancellationError = sectionBetween(spec, '    CancellationError:', '    IndexedFillProjection:');
+  const cancellationDoc = sectionBetween(doc, '## Order cancellation', '## API usage');
+
+  for (const requiredText of [
+    '$ref: "#/components/schemas/CancellationResult"',
+    '$ref: "#/components/schemas/CancellationError"',
+    'matcher-open quantity only',
+    'does not cancel on-chain NonceManager nonces',
+  ]) {
+    assert.ok(cancelOneRoute.includes(requiredText), `/v1/orders/{orderHash} route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '$ref: "#/components/schemas/CancellationResult"',
+    'marketId:',
+    'owner:',
+    'matcher-open quantity only',
+  ]) {
+    assert.ok(cancelAllRoute.includes(requiredText), `/v1/orders/cancel-all route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [cancelled, cancelledCount, cancelledOrders, source, custody, nonceManager, permissions, message]',
+    'cancelledOrders:',
+    '$ref: "#/components/schemas/CancelledOrder"',
+    'matcher-local-cancel-only-on-chain-nonce-unchanged',
+    'CANCEL_ORDER',
+    'CANCEL_ALL',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'not cancel on-chain NonceManager nonces',
+  ]) {
+    assert.ok(cancellationResult.includes(requiredText), `CancellationResult schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [error, orderHash, source, custody, nonceManager, permissions, message]',
+    'enum: [order_not_found, order_not_open]',
+    'matcher-local-cancel-only-on-chain-nonce-unchanged',
+    'CANCEL_ORDER',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'not-implied-matcher-local-only',
+  ]) {
+    assert.ok(cancellationError.includes(requiredText), `CancellationError schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '## Order cancellation',
+    'CancellationResult',
+    'CancellationError',
+    'matcher-open quantity only',
+    'does not cancel on-chain NonceManager nonces',
+    'not-implied-matcher-local-only',
+    'CANCEL_ORDER',
+    'CANCEL_ALL',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+  ]) {
+    assert.ok(cancellationDoc.includes(requiredText), `docs/order-schema.md cancellation section should include ${requiredText}`);
+  }
+});
+
 test('order schema splits internal FillPacket from public IndexedFillProjection rows', async () => {
   const doc = await readText('docs/order-schema.md');
   const projectionSection = sectionBetween(doc, '## IndexedFillProjection', '## API usage');
