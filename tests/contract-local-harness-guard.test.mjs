@@ -75,7 +75,8 @@ test('local harness documentation tracks current local TradingVault coverage', a
     '`ST-01`: local Settlement validates signed fill replay fields, moves vault balances exactly once, marks nonces, and emits `TradeSettled` proof truth.',
     '`ST-02`: local Settlement rejects reused or cancelled maker/taker nonces before vault movement, including single nonce and bounded range cancellation.',
     '`ST-03`: local Settlement rejects expired fills and replay-domain mismatches before nonce consumption or vault movement.',
-    'Recommended next slice: add local `ST-04` invalid price/amount/fill-constraint rejection coverage before external MarketRegistry/FeeManager wiring.',
+    '`ST-04`: local Settlement rejects disabled local markets, invalid price/amount arithmetic, unsupported fees, and fill-accounting mismatches before nonce consumption or vault movement.',
+    'Recommended next slice: add local `ST-05` partial fill accounting ratchet so fills cannot exceed signed order amounts before external MarketRegistry/FeeManager wiring.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);

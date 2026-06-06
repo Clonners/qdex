@@ -7,7 +7,7 @@ import {TradingVault} from "./TradingVault.sol";
 
 /// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, and proof-event truth.
 /// @dev This is intentionally minimal: fee movement, external nonce/market/fee managers, and real Quai proof wiring
-///      remain future ratchets. ST-03 keeps expiry and replay-domain rejects ahead of nonce consumption and vault
+///      remain future ratchets. ST-04 keeps local market and fill-constraint rejects ahead of nonce consumption and vault
 ///      movement without adding deploy scripts, RPC URLs, wallets, or admin withdrawal paths.
 contract Settlement is ISettlement {
     uint256 private constant MAX_CANCEL_RANGE_SIZE = 256;
@@ -134,6 +134,7 @@ contract Settlement is ISettlement {
     function _validateFillBoundary(FillPacket calldata fill) private view {
         require(fill.fillId != bytes32(0), "ST_FILL_ID_ZERO");
         require(fill.marketId != bytes32(0), "ST_MARKET_ID_ZERO");
+        require(fill.marketId == _localMarketId(), "ST_MARKET_DISABLED");
         require(fill.makerOrderHash != bytes32(0), "ST_MAKER_ORDER_HASH_ZERO");
         require(fill.takerOrderHash != bytes32(0), "ST_TAKER_ORDER_HASH_ZERO");
         require(fill.maker != address(0), "ST_MAKER_ZERO");
@@ -145,6 +146,7 @@ contract Settlement is ISettlement {
         require(fill.price > 0, "ST_PRICE_ZERO");
         require(fill.baseAmount > 0, "ST_BASE_AMOUNT_ZERO");
         require(fill.quoteAmount > 0, "ST_QUOTE_AMOUNT_ZERO");
+        require(fill.quoteAmount == fill.baseAmount * fill.price, "ST_PRICE_AMOUNT_MISMATCH");
         require(fill.makerFee == 0 && fill.takerFee == 0, "ST_FEES_NOT_READY");
         require(fill.makerNonce != fill.takerNonce || fill.maker != fill.taker, "ST_NONCE_PAIR_INVALID");
         require(fill.expiresAt > block.timestamp, "ST_EXPIRED");
@@ -152,6 +154,10 @@ contract Settlement is ISettlement {
         require(fill.settlementContract == address(this), "ST_SETTLEMENT_CONTRACT_MISMATCH");
         require(fill.makerFilledAmount == fill.baseAmount, "ST_MAKER_FILL_AMOUNT_MISMATCH");
         require(fill.takerFilledAmount == fill.baseAmount, "ST_TAKER_FILL_AMOUNT_MISMATCH");
+    }
+
+    function _localMarketId() private pure returns (bytes32) {
+        return keccak256(bytes("LOCAL-BASE-QUOTE"));
     }
 
     function _tradeId(FillPacket calldata fill) private view returns (bytes32) {
