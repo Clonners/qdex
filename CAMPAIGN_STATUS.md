@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: terminal UI live fill binding complete -> browser mock order trigger/smoke
+- Current phase: browser mock order trigger/smoke complete -> contract interface custody invariant ratchets
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add a terminal UI mock order trigger/browser smoke so the UI can create the crossed fill it now streams.
+1. Add local/static contract interface custody invariant ratchets for TradingVault/Settlement/admin-withdrawal boundaries before real Quai settlement code.
 2. Prepare real Quai contract interface tests once tooling/deploy approval is explicit.
 3. Keep contract/admin custody invariants explicit before any real settlement implementation.
 
@@ -78,3 +78,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 08:26 -03: Added live WebSocket fanout for open `/v1/ws` clients on mock orderbook/fill mutations, with stream-event metadata and private fill snapshots preserving `NO_WITHDRAW`/`NO_ADMIN` plus adapter-shaped `sourceEventId`; verified RED `pnpm --filter @qdex/api test` timed out waiting for fanout, GREEN `pnpm --filter @qdex/api test`, `pnpm --filter @qdex/api check`, `pnpm check`, and secret-pattern scan no matches; slice commit `edf2971`; next slice: SDK/CLI stream consumers against the local WebSocket transport.
 - 2026-06-06 08:46 -03: Added TypeScript SDK `fills.openStream()`/`fills.stream()` and `qdex stream fills --limit N` consumers for local `/v1/ws?channel=fills`, preserving private `READ_ONLY` + `NO_WITHDRAW`/`NO_ADMIN` stream safety; verified RED/GREEN focused SDK/CLI tests, `pnpm check`, and secret-pattern scan no matches; next slice: terminal UI live stream consumer/binding against the local WebSocket transport.
 - 2026-06-06 09:09 -03: Added terminal UI live `fills` WebSocket binding plus proof-service fetch/render path, live stream safety panel, and local API JSON CORS headers for browser proof fetches; verified RED/GREEN terminal UI/API tests, `pnpm check`, and secret-pattern scan no matches; slice commit `abf9d63`; next slice: terminal UI mock order trigger/browser smoke to create the crossed fill from the UI.
+- 2026-06-06 09:26 -03: Added terminal UI mock order trigger/browser smoke: browser button posts deterministic local/dev GTC sell plus `market_ioc` IOC buy, verifies proof-service mock proof, and keeps no-real-Quai/no-funds safety copy; verified RED/GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, and secret-pattern scan no matches; slice commit `9159357`; next slice: contract interface custody invariant ratchets (local/static, no deploy/tx).
