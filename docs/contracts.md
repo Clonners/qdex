@@ -70,6 +70,8 @@ Must verify:
 
 The local `ISettlement.FillPacket` surface already carries `fillId`, order hashes, maker/taker, tokens, price, amounts, fees, maker/taker nonces, expiration, `chainId`, `settlementContract`, `feeRecipient`, `maxFeeBps`, signed maker/taker order amount caps, and cumulative fill accounting fields. `TradeSettled` exposes `fillId`, `marketId`, price, amounts, fees and fee recipient so the indexer/proof service can project final event truth.
 
+Current local delegate-signing boundary: `Settlement` exposes a local `delegateKeyRegistry()` for tests and accepts a delegate signature only when the recovered signer is active for the fill owner, market, and quote notional and has `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. Delegate signatures consume the owner nonce namespace and cannot grant withdrawal or admin authority.
+
 ## NonceManager
 
 Replay protection and cancellation.

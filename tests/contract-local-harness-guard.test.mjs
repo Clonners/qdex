@@ -83,7 +83,8 @@ test('local harness documentation tracks current local contract coverage', async
     '`MR-01`: local MarketRegistry keeps market metadata stable, enabled/disabled status explicit, and market-authority changes dependency-scoped before Settlement wiring.',
     '`FM-01`: local FeeManager keeps maker/taker fee updates fee-authority gated, hard-capped by `maxFeeBps()`, and evented for indexer replay.',
     '`DK-01`: local DelegateKeyRegistry keeps delegate keys owner-registered, expiry/market/notional scoped, and explicitly `NO_WITHDRAW`/`NO_ADMIN` before bot signing integration.',
-    'Recommended next slice: wire dependency contracts into local Settlement or add delegate-signing validation without introducing withdrawal authority.',
+    '`DK-02`: local Settlement accepts owner-scoped delegate signatures only when the delegate is active for the fill market/notional and has `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`; invalid delegates reject before nonce/accounting/vault movement.',
+    'Recommended next slice: wire `NonceManager`, `MarketRegistry`, or `FeeManager` into local Settlement while preserving DK-02 delegate signing and custody boundaries.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);

@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
+import {IDelegateKeyRegistry} from "./IDelegateKeyRegistry.sol";
+import {DelegateKeyRegistry} from "./DelegateKeyRegistry.sol";
 import {TradingVault} from "./TradingVault.sol";
 
 /// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, fee policy, and proof-event truth.
@@ -15,6 +17,7 @@ contract Settlement is ISettlement {
     uint256 public constant LOCAL_MAX_FEE_BPS = 1_000;
 
     ITradingVault public immutable vault;
+    IDelegateKeyRegistry public immutable delegateKeyRegistry;
     address public immutable configuredFeeRecipient;
 
     mapping(address => mapping(uint256 => bool)) private usedNonces;
@@ -26,6 +29,7 @@ contract Settlement is ISettlement {
 
     constructor() {
         vault = ITradingVault(address(new TradingVault()));
+        delegateKeyRegistry = IDelegateKeyRegistry(address(new DelegateKeyRegistry()));
         configuredFeeRecipient = msg.sender;
     }
 
@@ -111,8 +115,10 @@ contract Settlement is ISettlement {
         _validatePartialFillAccounting(fill);
 
         bytes32 fillHash = hashFill(fill);
-        require(_recoverEthSignedMessage(fillHash, makerSignature) == fill.maker, "ST_MAKER_SIGNATURE_INVALID");
-        require(_recoverEthSignedMessage(fillHash, takerSignature) == fill.taker, "ST_TAKER_SIGNATURE_INVALID");
+        address makerSigner = _recoverEthSignedMessage(fillHash, makerSignature);
+        address takerSigner = _recoverEthSignedMessage(fillHash, takerSignature);
+        require(_isAuthorizedFillSigner(fill.maker, makerSigner, fill), "ST_MAKER_SIGNER_UNAUTHORIZED");
+        require(_isAuthorizedFillSigner(fill.taker, takerSigner, fill), "ST_TAKER_SIGNER_UNAUTHORIZED");
 
         _recordPartialFillAccounting(fill);
         _advanceNonceLifecycle(fill.maker, fill.makerNonce, fill.makerOrderHash, fill.makerFilledAmount, fill.makerOrderAmount);
@@ -216,6 +222,22 @@ contract Settlement is ISettlement {
 
     function _feeCap(uint256 grossAmount, uint256 maxFeeBps) private pure returns (uint256) {
         return (grossAmount * maxFeeBps) / BPS_DENOMINATOR;
+    }
+
+    function _isAuthorizedFillSigner(address owner, address signer, FillPacket calldata fill) private view returns (bool) {
+        if (signer == owner) {
+            return true;
+        }
+
+        if (signer == address(0)) {
+            return false;
+        }
+
+        uint256 notional = fill.quoteAmount;
+        return delegateKeyRegistry.isDelegateKeyActive(owner, signer, fill.marketId, notional)
+            && delegateKeyRegistry.hasPermission(owner, signer, IDelegateKeyRegistry.Permission.PLACE_ORDER)
+            && delegateKeyRegistry.hasPermission(owner, signer, IDelegateKeyRegistry.Permission.NO_WITHDRAW)
+            && delegateKeyRegistry.hasPermission(owner, signer, IDelegateKeyRegistry.Permission.NO_ADMIN);
     }
 
     function _validateNonceAvailableForOrder(
