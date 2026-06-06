@@ -26,6 +26,8 @@ test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', asy
       'orders.createLimitOrder',
       'orders.createMarketIocOrder',
       'orders.submitSignedOrder',
+      'OrderSubmissionResult',
+      'IndexedFillProjection',
       'fills.stream()',
       'proofs.trade(tradeId)',
       'orders.cancelAll',
@@ -51,6 +53,12 @@ test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', asy
     ],
     'sdk/typescript/spec.md',
   );
+
+  assert.doesNotMatch(
+    spec,
+    /FillPacket\s*=\s*await\s+dex\.orders\.submitSignedOrder|submitSignedOrder\([^\n]+\)[^\n]*FillPacket/,
+    'sdk/typescript/spec.md must not label POST /v1/orders responses as matcher/relayer FillPacket handoff objects',
+  );
 });
 
 test('Python SDK spec mirrors bot flow without creating withdrawal authority', async () => {
@@ -67,6 +75,8 @@ test('Python SDK spec mirrors bot flow without creating withdrawal authority', a
       'orders.create_limit_order',
       'orders.create_market_ioc_order',
       'orders.submit_signed_order',
+      'OrderSubmissionResult',
+      'IndexedFillProjection',
       'fills.stream()',
       'proofs.trade(trade_id)',
       'orders.cancel_all',
@@ -91,6 +101,12 @@ test('Python SDK spec mirrors bot flow without creating withdrawal authority', a
       'settlementMode: mock',
     ],
     'sdk/python/spec.md',
+  );
+
+  assert.doesNotMatch(
+    spec,
+    /FillPacket\s*=\s*dex\.orders\.submit_signed_order|submit_signed_order\([^\n]+\)[^\n]*FillPacket/,
+    'sdk/python/spec.md must not label POST /v1/orders responses as matcher/relayer FillPacket handoff objects',
   );
 });
 
@@ -121,6 +137,7 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
       'no withdraw command is available for delegate/API keys',
       'market orders are market_ioc IOC limit orders',
       'signed price/slippage bounds',
+      'order responses contain order state plus indexed-fill projections, not matcher/relayer FillPacket handoffs',
       'mockSettlementReference',
       'local-only-not-deployed',
       'GET /v1/contracts',

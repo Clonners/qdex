@@ -25,7 +25,8 @@ const marketOrder: SignedOrder = await dex.orders.createMarketIocOrder({
   maxSlippageBps: 50,
 });
 
-const fillPacket: FillPacket = await dex.orders.submitSignedOrder(limitOrder); // POST /v1/orders
+const orderResult: OrderSubmissionResult = await dex.orders.submitSignedOrder(limitOrder); // POST /v1/orders
+const fillProjection: IndexedFillProjection | undefined = orderResult.fills[0];
 const fillsStream = dex.fills.openStream({ timeoutMs: 2000 }); // /v1/ws?channel=fills
 const fillsSnapshot = await fillsStream.next();
 await fillsStream.close();
@@ -43,6 +44,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 - `createMarketIocOrder` creates a `market_ioc` IOC limit order, not an unbounded market order.
 - Every `market_ioc` order carries signed price/slippage bounds through `maxSlippageBps`.
 - `submitSignedOrder` sends the exact signed payload to `POST /v1/orders`; the SDK must not rewrite price, amount, nonce, owner, delegate, chain, or settlement contract fields after signing.
+- `OrderSubmissionResult` is the API response shape: it contains order state plus zero or more `IndexedFillProjection` rows projected from confirmed/mock-confirmed settlement.
+- `submitSignedOrder` must not expose the matcher/relayer `FillPacket` handoff object as its public return type.
 
 ## Delegate/API key safety
 
@@ -68,6 +71,7 @@ Delegate keys cannot withdraw funds. Withdrawals require the main wallet or a se
 
 The SDK consumes `TradeProof` as a read-only projection:
 
-- `FillPacket` is a matcher/relayer handoff object.
+- `FillPacket` is an internal matcher/relayer handoff object, not a public SDK/API order response.
+- `IndexedFillProjection` rows are public only after confirmed settlement/indexer truth and must carry `sourceEventId`.
 - `TradeProof` is final only when backed by confirmed settlement/indexer truth.
 - In local mock mode, proof responses keep `settlementMode: mock`, include a mock reference, and must not claim a real Quai transaction or moved funds.
