@@ -5,6 +5,10 @@ function digest(label) {
   return ethers.keccak256(ethers.toUtf8Bytes(label));
 }
 
+function marketIdFor(base, quote) {
+  return ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'address'], [base, quote]));
+}
+
 function parseEvents(receipt, contract, eventName) {
   return receipt.logs
     .map((log) => {
@@ -44,6 +48,8 @@ async function deploySettlementHarness() {
   const configuredFeeRecipient = await settlement.configuredFeeRecipient();
   assert.equal(configuredFeeRecipient, feeRecipient.address, 'ST-06 local settlement should expose the configured fee recipient');
 
+  const marketRegistryAddress = await settlement.marketRegistry();
+  const marketRegistry = await ethers.getContractAt('MarketRegistry', marketRegistryAddress);
   const vaultAddress = await settlement.vault();
   const vault = await ethers.getContractAt('TradingVault', vaultAddress);
   const baseToken = await deployToken('Local Mock Base', 'LMB');
@@ -62,6 +68,8 @@ async function deploySettlementHarness() {
     user: taker,
     amount: takerQuoteDeposit,
   });
+  const marketId = marketIdFor(baseTokenAddress, quoteTokenAddress);
+  await marketRegistry.connect(feeRecipient).addMarket(baseTokenAddress, quoteTokenAddress, 1, 1, 1n);
   const block = await ethers.provider.getBlock('latest');
   const network = await ethers.provider.getNetwork();
 
@@ -72,7 +80,7 @@ async function deploySettlementHarness() {
 
     return {
       fillId: digest(`${label}-fill`),
-      marketId: digest('LOCAL-BASE-QUOTE'),
+      marketId,
       makerOrderHash: digest(`${label}-maker-order`),
       takerOrderHash: digest(`${label}-taker-order`),
       maker: maker.address,

@@ -72,6 +72,8 @@ The local `ISettlement.FillPacket` surface already carries `fillId`, order hashe
 
 Current local delegate-signing boundary: `Settlement` exposes a local `delegateKeyRegistry()` for tests and accepts a delegate signature only when the recovered signer is active for the fill owner, market, and quote notional and has `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. Delegate signatures consume the owner nonce namespace and cannot grant withdrawal or admin authority.
 
+Current local market boundary: `Settlement` exposes a local `marketRegistry()` dependency whose market authority is the settlement deployer in the in-memory harness. A fill must reference an enabled MarketRegistry row whose base/quote token metadata matches the fill tokens and whose `minAmount` is satisfied; disabled, unknown, or token-mismatched markets reject before nonce consumption, cumulative fill accounting, vault movement, or `TradeSettled` proof emission.
+
 ## NonceManager
 
 Replay protection and cancellation.

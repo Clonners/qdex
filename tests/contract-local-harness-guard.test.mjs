@@ -85,7 +85,8 @@ test('local harness documentation tracks current local contract coverage', async
     '`DK-01`: local DelegateKeyRegistry keeps delegate keys owner-registered, expiry/market/notional scoped, and explicitly `NO_WITHDRAW`/`NO_ADMIN` before bot signing integration.',
     '`DK-02`: local Settlement accepts owner-scoped delegate signatures only when the delegate is active for the fill market/notional and has `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`; invalid delegates reject before nonce/accounting/vault movement.',
     '`NM-02`: local Settlement delegates nonce truth to a settlement-scoped `NonceManager`; user cancellations live on `NonceManager`, full fills emit `NonceUsed`, and DK-02 delegate safety remains intact.',
-    'Recommended next slice: wire `MarketRegistry` or `FeeManager` into local Settlement while preserving DK-02 delegate signing, NM-02 nonce truth, and custody boundaries.',
+    '`MR-02`: local Settlement delegates market truth to a market-authority-scoped `MarketRegistry`; fills require enabled base/quote metadata and disabled or token-mismatched markets reject before nonce/accounting/vault/proof mutation.',
+    'Recommended next slice: wire `FeeManager` into local Settlement while preserving DK-02 delegate signing, NM-02 nonce truth, MR-02 market truth, and custody boundaries.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);

@@ -18,6 +18,10 @@ function digest(label) {
   return ethers.keccak256(ethers.toUtf8Bytes(label));
 }
 
+function marketIdFor(base, quote) {
+  return ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'address'], [base, quote]));
+}
+
 function allowedMarketsHashFor(marketId) {
   return ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['bytes32'], [marketId]));
 }
@@ -62,7 +66,6 @@ async function deploySettlementDelegateHarness() {
   const [maker, taker, makerDelegate, takerDelegate, relayer] = await ethers.getSigners();
   const makerBaseDeposit = 1000n;
   const takerQuoteDeposit = 2000n;
-  const localMarketId = digest('LOCAL-BASE-QUOTE');
   const baseAmount = 100n;
   const price = 2n;
   const quoteAmount = baseAmount * price;
@@ -74,6 +77,8 @@ async function deploySettlementDelegateHarness() {
   const settlementAddress = await settlement.getAddress();
   const delegateKeyRegistryAddress = await settlement.delegateKeyRegistry();
   const delegateKeyRegistry = await ethers.getContractAt('DelegateKeyRegistry', delegateKeyRegistryAddress);
+  const marketRegistryAddress = await settlement.marketRegistry();
+  const marketRegistry = await ethers.getContractAt('MarketRegistry', marketRegistryAddress);
   const vaultAddress = await settlement.vault();
   const vault = await ethers.getContractAt('TradingVault', vaultAddress);
   const baseToken = await deployToken('Local Mock Base', 'LMB');
@@ -92,6 +97,8 @@ async function deploySettlementDelegateHarness() {
     user: taker,
     amount: takerQuoteDeposit,
   });
+  const localMarketId = marketIdFor(baseTokenAddress, quoteTokenAddress);
+  await marketRegistry.connect(maker).addMarket(baseTokenAddress, quoteTokenAddress, 1, 1, 1n);
   const block = await ethers.provider.getBlock('latest');
   const network = await ethers.provider.getNetwork();
 

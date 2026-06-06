@@ -30,7 +30,7 @@ test('contract implementation test matrix pins local-only custody and proof inva
     '| ST-07 | TradeSettled event is the only public proof trigger |',
     '## Dependency contract matrix',
     '| NonceManager | `NM-01`: `cancelNonce`, `cancelNonceRange`, `markNonceUsed` |',
-    '| MarketRegistry | `MR-01`: enabled market metadata and precision/minimums |',
+    '| MarketRegistry | `MR-01`: enabled market metadata and precision/minimums; `MR-02`: Settlement dependency wiring |',
     '| FeeManager | `FM-01`: hard `maxFeeBps()` cap plus fee-update events |',
     '| DelegateKeyRegistry | `READ_ONLY`, trading/cancel permissions, `NO_WITHDRAW`, `NO_ADMIN` |',
     '## Approval gates before real Quai activity',

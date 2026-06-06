@@ -4,21 +4,24 @@ pragma solidity 0.8.20;
 import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
 import {IDelegateKeyRegistry} from "./IDelegateKeyRegistry.sol";
+import {IMarketRegistry} from "./IMarketRegistry.sol";
 import {INonceManager} from "./INonceManager.sol";
 import {DelegateKeyRegistry} from "./DelegateKeyRegistry.sol";
+import {MarketRegistry} from "./MarketRegistry.sol";
 import {NonceManager} from "./NonceManager.sol";
 import {TradingVault} from "./TradingVault.sol";
 
 /// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, fee policy, and proof-event truth.
-/// @dev This is intentionally minimal: MarketRegistry/FeeManager dependencies and real Quai proof wiring remain future
-///      ratchets. NM-02 wires nonce truth through a local NonceManager without adding deploy scripts, RPC URLs,
-///      wallets, cancellation wrappers, or admin withdrawal paths.
+/// @dev This is intentionally minimal: FeeManager dependency and real Quai proof wiring remain future ratchets. MR-02/NM-02
+///      wire market and nonce truth through local dependency contracts without adding deploy scripts, RPC URLs, wallets,
+///      cancellation wrappers, or admin withdrawal paths.
 contract Settlement is ISettlement {
     uint256 private constant BPS_DENOMINATOR = 10_000;
     uint256 public constant LOCAL_MAX_FEE_BPS = 1_000;
 
     ITradingVault public immutable vault;
     INonceManager public immutable nonceManager;
+    IMarketRegistry public immutable marketRegistry;
     IDelegateKeyRegistry public immutable delegateKeyRegistry;
     address public immutable configuredFeeRecipient;
 
@@ -28,6 +31,7 @@ contract Settlement is ISettlement {
     constructor() {
         vault = ITradingVault(address(new TradingVault()));
         nonceManager = INonceManager(address(new NonceManager(address(this))));
+        marketRegistry = IMarketRegistry(address(new MarketRegistry(msg.sender)));
         delegateKeyRegistry = IDelegateKeyRegistry(address(new DelegateKeyRegistry()));
         configuredFeeRecipient = msg.sender;
     }
@@ -158,7 +162,6 @@ contract Settlement is ISettlement {
     function _validateFillBoundary(FillPacket calldata fill) private view {
         require(fill.fillId != bytes32(0), "ST_FILL_ID_ZERO");
         require(fill.marketId != bytes32(0), "ST_MARKET_ID_ZERO");
-        require(fill.marketId == _localMarketId(), "ST_MARKET_DISABLED");
         require(fill.makerOrderHash != bytes32(0), "ST_MAKER_ORDER_HASH_ZERO");
         require(fill.takerOrderHash != bytes32(0), "ST_TAKER_ORDER_HASH_ZERO");
         require(fill.maker != address(0), "ST_MAKER_ZERO");
@@ -170,6 +173,7 @@ contract Settlement is ISettlement {
         require(fill.price > 0, "ST_PRICE_ZERO");
         require(fill.baseAmount > 0, "ST_BASE_AMOUNT_ZERO");
         require(fill.quoteAmount > 0, "ST_QUOTE_AMOUNT_ZERO");
+        _validateMarketPolicy(fill);
         require(fill.quoteAmount == fill.baseAmount * fill.price, "ST_PRICE_AMOUNT_MISMATCH");
         _validateFeePolicy(fill);
         require(fill.makerOrderAmount > 0, "ST_MAKER_ORDER_AMOUNT_ZERO");
@@ -178,6 +182,13 @@ contract Settlement is ISettlement {
         require(fill.expiresAt > block.timestamp, "ST_EXPIRED");
         require(fill.chainId == block.chainid, "ST_CHAIN_ID_MISMATCH");
         require(fill.settlementContract == address(this), "ST_SETTLEMENT_CONTRACT_MISMATCH");
+    }
+
+    function _validateMarketPolicy(FillPacket calldata fill) private view {
+        IMarketRegistry.MarketInfo memory market = marketRegistry.marketInfo(fill.marketId);
+        require(market.enabled, "ST_MARKET_DISABLED");
+        require(market.base == fill.baseToken && market.quote == fill.quoteToken, "ST_MARKET_TOKEN_MISMATCH");
+        require(fill.baseAmount >= market.minAmount, "ST_MARKET_MIN_AMOUNT");
     }
 
     function _validateFeePolicy(FillPacket calldata fill) private view {
@@ -278,10 +289,6 @@ contract Settlement is ISettlement {
         }
 
         activeOrderHashByNonce[user][nonce] = orderHash;
-    }
-
-    function _localMarketId() private pure returns (bytes32) {
-        return keccak256(bytes("LOCAL-BASE-QUOTE"));
     }
 
     function _tradeId(FillPacket calldata fill) private view returns (bytes32) {

@@ -5,6 +5,10 @@ function digest(label) {
   return ethers.keccak256(ethers.toUtf8Bytes(label));
 }
 
+function marketIdFor(base, quote) {
+  return ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(['address', 'address'], [base, quote]));
+}
+
 function parseEvents(receipt, contract, eventName) {
   return receipt.logs
     .map((log) => {
@@ -47,6 +51,8 @@ describe('Settlement ST-01 valid signed fill skeleton', function () {
     await settlement.waitForDeployment();
 
     const settlementAddress = await settlement.getAddress();
+    const marketRegistryAddress = await settlement.marketRegistry();
+    const marketRegistry = await ethers.getContractAt('MarketRegistry', marketRegistryAddress);
     const vaultAddress = await settlement.vault();
     const vault = await ethers.getContractAt('TradingVault', vaultAddress);
     const baseToken = await deployToken('Local Mock Base', 'LMB');
@@ -65,12 +71,14 @@ describe('Settlement ST-01 valid signed fill skeleton', function () {
       user: taker,
       amount: takerQuoteDeposit,
     });
+    const marketId = marketIdFor(baseTokenAddress, quoteTokenAddress);
+    await marketRegistry.connect(maker).addMarket(baseTokenAddress, quoteTokenAddress, 1, 1, 1n);
 
     const block = await ethers.provider.getBlock('latest');
     const network = await ethers.provider.getNetwork();
     const fill = {
       fillId: digest('st01-fill'),
-      marketId: digest('LOCAL-BASE-QUOTE'),
+      marketId,
       makerOrderHash: digest('st01-maker-order'),
       takerOrderHash: digest('st01-taker-order'),
       maker: maker.address,
