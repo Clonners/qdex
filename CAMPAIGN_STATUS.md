@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: SDK/Python/CLI bot docs response/projection terminology cleanup green -> next OpenAPI/API public fill naming split (`IndexedFillProjection` vs internal `FillPacket`)
+- Current phase: OpenAPI/API public fill naming split green -> next SDK/CLI/terminal UI `projectionType` fixture/spec alignment for `IndexedFillProjection`
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Split public fill projection naming in OpenAPI/API/SDK docs by introducing `IndexedFillProjection` for confirmed API/stream rows while reserving internal `FillPacket` for matching-engine/relayer handoff examples.
+1. Align SDK/CLI/terminal UI fixtures/specs with the new public `IndexedFillProjection.projectionType` field while keeping internal `FillPacket` only in matcher/relayer/contract handoff docs.
 2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
@@ -109,3 +109,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 18:44 -03: Aligned OpenAPI/order-schema fill projection docs with adapter-shaped indexed fills: `FillPacket` now carries `tradeId`, `settlementStatus`, and `sourceEventId`, `/v1/fills` has a `FillListResponse`, and matcher-local `createdAt` is guarded out of public fill docs; verified RED/GREEN `node --test tests/order-schema.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `bb66b1c`; next slice: clean matching-engine/relayer FillPacket examples.
 - 2026-06-06 19:03 -03: Cleaned matching-engine/relayer FillPacket handoff docs so pending settlement examples no longer carry matcher-local `createdAt`; added ratchets separating matcher event/private lifecycle timestamps from settlement/indexer `sourceEventId`; verified RED/GREEN `node --test tests/matching-engine-spec.test.mjs tests/relayer-spec.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `70ad615`; next slice: SDK/Python/CLI bot docs response/projection terminology cleanup.
 - 2026-06-06 19:23 -03: Cleaned SDK/Python/CLI bot docs so `submitSignedOrder`/`submit_signed_order` examples return `OrderSubmissionResult` with `IndexedFillProjection` rows instead of public `FillPacket` handoff objects; verified RED `node --test tests/sdk-cli-contract.test.mjs` failed on missing projection terms, GREEN focused test, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `589e738`; next slice: OpenAPI/API public fill naming split (`IndexedFillProjection` vs internal `FillPacket`).
+- 2026-06-06 19:48 -03: Split public fill projection naming in OpenAPI/API: public routes now reference `IndexedFillProjection`, indexed fill rows carry `projectionType: IndexedFillProjection`, and internal `FillPacket` stays reserved for matcher/relayer/contract handoff docs; verified RED focused OpenAPI/indexer/API tests failed on missing split, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `aa98a4f`; next slice: SDK/CLI/terminal UI `projectionType` fixture/spec alignment.
