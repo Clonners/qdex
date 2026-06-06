@@ -29,7 +29,7 @@ test('contract implementation test matrix pins local-only custody and proof inva
     '| ST-06 | Fee cap and fee recipient are enforced before balance movement |',
     '| ST-07 | TradeSettled event is the only public proof trigger |',
     '## Dependency contract matrix',
-    '| NonceManager | `cancelNonce`, `cancelNonceRange`, `markNonceUsed` |',
+    '| NonceManager | `NM-01`: `cancelNonce`, `cancelNonceRange`, `markNonceUsed` |',
     '| MarketRegistry | enabled market metadata and precision/minimums |',
     '| FeeManager | hard `maxFeeBps()` cap plus fee-update events |',
     '| DelegateKeyRegistry | `READ_ONLY`, trading/cancel permissions, `NO_WITHDRAW`, `NO_ADMIN` |',

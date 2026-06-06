@@ -56,7 +56,7 @@ test('Hardhat harness config cannot point at external Quai networks autonomously
   }
 });
 
-test('local harness documentation tracks current local TradingVault coverage', async () => {
+test('local harness documentation tracks current local contract coverage', async () => {
   const readme = await readRepoFile('contracts/README.md');
 
   for (const requiredText of [
@@ -79,7 +79,8 @@ test('local harness documentation tracks current local TradingVault coverage', a
     '`ST-05`: local Settlement tracks cumulative partial-fill amounts by order hash and rejects fills that would exceed signed maker/taker order amounts.',
     '`ST-06`: local Settlement enforces signed/hard fee caps, configured fee recipient, and fee-split accounting before proof-event emission.',
     '`ST-07`: contract proof adapter pins `TradeSettled` as the only public proof trigger, suppresses matcher/non-TradeSettled events, and requires real Quai event evidence before public projection.',
-    'Recommended next slice: add local `NonceManager NM-01` user-owned cancellation and settlement-only mark-used ratchet before replacing the embedded nonce state.',
+    '`NM-01`: local NonceManager keeps cancellation user-owned, bounds range cancellation, and restricts `markNonceUsed` to the configured settlement authority.',
+    'Recommended next slice: add local `MarketRegistry MR-01` enabled/disabled market metadata ratchet before Settlement wiring.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);
