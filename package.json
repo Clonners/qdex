@@ -1,0 +1,17 @@
+{
+  "name": "quai-terminal-dex",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Terminal-native, API-first, non-custodial orderbook DEX for Quai.",
+  "type": "module",
+  "scripts": {
+    "check": "pnpm -r --if-present check",
+    "test": "pnpm -r --if-present test",
+    "dev:api": "pnpm --filter @qdex/api dev"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "license": "UNLICENSED"
+}

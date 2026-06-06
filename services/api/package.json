@@ -1,0 +1,11 @@
+{
+  "name": "@qdex/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js",
+    "check": "node --check src/server.js",
+    "test": "node --test"
+  }
+}

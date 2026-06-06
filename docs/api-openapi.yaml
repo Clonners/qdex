@@ -1,0 +1,233 @@
+openapi: 3.1.0
+info:
+  title: Quai Terminal DEX API
+  version: 0.0.0
+  description: API-first non-custodial orderbook DEX for Quai.
+servers:
+  - url: http://localhost:8787
+    description: local development
+tags:
+  - name: public
+  - name: private
+  - name: proofs
+paths:
+  /v1/health:
+    get:
+      tags: [public]
+      summary: Health check
+      responses:
+        "200":
+          description: Service is healthy
+  /v1/markets:
+    get:
+      tags: [public]
+      summary: List enabled markets
+      responses:
+        "200":
+          description: Market list
+  /v1/tickers:
+    get:
+      tags: [public]
+      summary: List tickers
+      responses:
+        "200":
+          description: Ticker list
+  /v1/tickers/{market}:
+    get:
+      tags: [public]
+      summary: Get ticker for a market
+      parameters:
+        - name: market
+          in: path
+          required: true
+          schema: { type: string, example: QI-QUAI }
+      responses:
+        "200":
+          description: Market ticker
+  /v1/orderbook/{market}:
+    get:
+      tags: [public]
+      summary: Get orderbook depth
+      parameters:
+        - name: market
+          in: path
+          required: true
+          schema: { type: string, example: QI-QUAI }
+      responses:
+        "200":
+          description: Orderbook depth
+  /v1/trades/{market}:
+    get:
+      tags: [public]
+      summary: Recent public trades
+      parameters:
+        - name: market
+          in: path
+          required: true
+          schema: { type: string, example: QI-QUAI }
+      responses:
+        "200":
+          description: Trade list
+  /v1/klines/{market}:
+    get:
+      tags: [public]
+      summary: Market candles
+      parameters:
+        - name: market
+          in: path
+          required: true
+          schema: { type: string, example: QI-QUAI }
+        - name: interval
+          in: query
+          required: false
+          schema: { type: string, enum: [1m, 5m, 15m, 1h, 4h, 1d, 1w], default: 15m }
+      responses:
+        "200":
+          description: Candle list
+  /v1/fees:
+    get:
+      tags: [public]
+      summary: Fee schedule
+      responses:
+        "200":
+          description: Fee table
+  /v1/contracts:
+    get:
+      tags: [public]
+      summary: Contract addresses and verification links
+      responses:
+        "200":
+          description: Contract registry
+  /v1/auth/challenge:
+    post:
+      tags: [private]
+      summary: Create wallet auth challenge
+      responses:
+        "200":
+          description: Challenge payload to sign
+  /v1/auth/session:
+    post:
+      tags: [private]
+      summary: Exchange signed challenge for API session
+      responses:
+        "200":
+          description: Session token
+  /v1/account:
+    get:
+      tags: [private]
+      summary: Current account profile
+      responses:
+        "200":
+          description: Account data
+  /v1/account/balances:
+    get:
+      tags: [private]
+      summary: Indexed vault balances
+      responses:
+        "200":
+          description: Balances
+  /v1/orders:
+    get:
+      tags: [private]
+      summary: List user orders
+      responses:
+        "200":
+          description: Order list
+    post:
+      tags: [private]
+      summary: Submit signed order
+      description: Market orders must be modeled as IOC limit orders with slippage bounds.
+      responses:
+        "201":
+          description: Order accepted
+  /v1/orders/{orderHash}:
+    delete:
+      tags: [private]
+      summary: Cancel order
+      parameters:
+        - name: orderHash
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Cancel request accepted
+  /v1/orders/cancel-all:
+    post:
+      tags: [private]
+      summary: Cancel all orders for user/market
+      responses:
+        "200":
+          description: Cancel-all accepted
+  /v1/fills:
+    get:
+      tags: [private]
+      summary: User fills
+      responses:
+        "200":
+          description: Fill list
+  /v1/delegate-keys:
+    get:
+      tags: [private]
+      summary: List delegate/API keys
+      responses:
+        "200":
+          description: Delegate key list
+    post:
+      tags: [private]
+      summary: Create delegate/API key
+      description: Delegate keys default to NO_WITHDRAW.
+      responses:
+        "201":
+          description: Delegate key created
+  /v1/delegate-keys/{keyId}:
+    delete:
+      tags: [private]
+      summary: Revoke delegate/API key
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Delegate key revoked
+  /v1/proofs/trades/{tradeId}:
+    get:
+      tags: [proofs]
+      summary: Get on-chain proof for a trade
+      parameters:
+        - name: tradeId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Trade proof
+components:
+  schemas:
+    Market:
+      type: object
+      required: [id, base, quote, status]
+      properties:
+        id: { type: string, example: QI-QUAI }
+        base: { type: string, example: QI }
+        quote: { type: string, example: QUAI }
+        status: { type: string, enum: [enabled, disabled] }
+    TradeProof:
+      type: object
+      required: [tradeId, settlementTx, blockNumber, eventIndex, market, price, amount]
+      properties:
+        tradeId: { type: string }
+        orderHashes:
+          type: array
+          items: { type: string }
+        settlementTx: { type: string }
+        blockNumber: { type: integer }
+        eventIndex: { type: integer }
+        market: { type: string }
+        price: { type: string }
+        amount: { type: string }
+        makerFee: { type: string }
+        takerFee: { type: string }
+        explorerUrl: { type: string }
