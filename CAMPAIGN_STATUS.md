@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: nonce-cancel proof/indexer projection green -> next relayer real-Quai approval gate tests
+- Current phase: relayer real-Quai approval gate green -> next read-only API/OpenAPI gate metadata
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add relayer real-Quai approval gate tests/documentation so `quai_contract` submission mode cannot activate without explicit approval and complete event-truth inputs.
+1. Expose relayer real-Quai approval-gate status through read-only API/OpenAPI metadata so operators can see `quai_contract` blocked/ready fields without wallets, RPC, broadcasts, or tx behavior.
 2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired; keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
@@ -121,3 +121,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 23:05 -03: Added `POST /v1/nonces/cancel` owner-signed NonceManager cancellation API/OpenAPI placeholder with precise prepare-only `501`, explicit `NO_WITHDRAW`/`NO_ADMIN`, no wallet/broadcast/tx authority, and order-schema docs separating it from matcher-local cancellation; verified RED focused API/doc tests failed on 404/missing route, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `a221d98`; next slice: SDK/CLI nonce-cancel prepare-only clients.
 - 2026-06-06 23:34 -03: Exposed owner-signed nonce-cancel prepare-only clients across TypeScript SDK, Python SDK, and `qdex nonces cancel --prepare`; helpers expect the intentional `501` placeholder without wallet loading, signing, broadcast, relayer submission, txs, or on-chain nonce mutation; verified focused SDK/Python/CLI/doc tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: future nonce-cancel proof/indexer projection boundary.
 - 2026-06-06 23:49 -03: Added proof-service/indexer nonce-cancel projection boundary for future `NonceCancelled` / `NonceRangeCancelled` contract events, with matcher-local cancellation suppression and `NO_WITHDRAW`/`NO_ADMIN` proof rows; verified RED/GREEN focused adapter/docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `d9266f2`; next slice: relayer real-Quai approval gate tests.
+- 2026-06-07 00:04 -03: Added relayer real-Quai approval gate: dependency-light `evaluateRelayerSettlementModeGate()` blocks `quai_contract` without explicit Clonners approval and event-truth readiness, documents no wallet/sign/broadcast/RPC behavior, and keeps `realQuaiTransactions: false` / `walletRequired: false`; verified RED module-missing test, GREEN focused test, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `0402fff`; next slice: read-only API/OpenAPI exposure for relayer gate status.
