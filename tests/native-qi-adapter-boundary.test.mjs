@@ -39,10 +39,12 @@ const requiredPlanText = [
   '`NO_WITHDRAW`',
   '`NO_ADMIN`',
   'Delegate/API keys cannot wrap, unwrap, redeem, or withdraw native Qi.',
-  '## Next implementation tasks',
-  'Task 1: Add read-only native Qi status metadata to `/v1/contracts`',
-  'Task 2: Add OpenAPI/docs ratchets for `nativeQiStatus`',
+  '## Completed metadata tasks',
+  'Completed: `/v1/contracts` exposes read-only `nativeQiStatus: design-required` metadata.',
+  'Completed: OpenAPI, API, SDK, CLI, and docs ratchets keep `QI-QUAI` mock-only and local-only.',
+  '## Remaining approval-gated task',
   'Task 3: Add local-only interface ratchets for the selected adapter path after approval',
+  'No selected path exists yet; do not add an adapter interface until Clonners approves one path with external evidence.',
   'No deploys, RPC URLs, wallet loading, signing, broadcasts, transaction submissions, or real funds are introduced by this plan.',
 ];
 

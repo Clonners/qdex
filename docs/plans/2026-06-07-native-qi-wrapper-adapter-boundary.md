@@ -82,91 +82,37 @@ NO_ADMIN
 
 Delegate/API keys cannot wrap, unwrap, redeem, or withdraw native Qi. Any owner action for native Qi exit must be a separate main-wallet flow with explicit user approval and proof-service/indexer visibility.
 
-## Next implementation tasks
+## Completed metadata tasks
 
-### Task 1: Add read-only native Qi status metadata to `/v1/contracts`
+### Completed Task 1: Add read-only native Qi status metadata to `/v1/contracts`
 
 **Objective:** Expose that native Qi support is design-required and still blocked in local MVP mode.
 
-**Files:**
-- Test: `services/api/test/routes.test.mjs`
-- Modify: `services/api/src/routes/public.js`
-- Modify: `services/api/src/contracts-registry.js` if the registry is split there
+Completed: `/v1/contracts` exposes read-only `nativeQiStatus: design-required` metadata.
 
-**Step 1: Write failing API test**
+Result:
 
-```js
-assert.equal(body.nativeQiStatus, 'design-required');
-assert.equal(body.realQuaiTransactions, false);
-assert.equal(body.walletRequired, false);
-assert.match(body.nativeQiSafety, /mock.*QI-QUAI.*mock-only/i);
-```
+- The contract registry response keeps `deploymentStatus: local-only-not-deployed`, null addresses, `realQuaiTransactions: false`, and `walletRequired: false`.
+- `nativeQiStatus` states `currentTreatment: mock-only`, `nativeQiModel: UTXO-model`, accepted future paths, and `selectedPath: null`.
+- No wallets, RPC URLs, signing, broadcasts, deploy scripts, tx helpers, or real contract addresses were added.
 
-**Step 2: Run test to verify failure**
-
-Run: `pnpm --filter @qdex/api test -- --test-name-pattern "contracts"`
-Expected: FAIL because `nativeQiStatus` is missing.
-
-**Step 3: Write minimal implementation**
-
-Add only static read-only metadata to the existing local contract registry response. Do not add wallets, RPC URLs, signing, broadcasts, deploy scripts, tx helpers, or real contract addresses.
-
-**Step 4: Run test to verify pass**
-
-Run: `pnpm --filter @qdex/api test -- --test-name-pattern "contracts"`
-Expected: PASS.
-
-**Step 5: Commit**
-
-```bash
-git add services/api/test/routes.test.mjs services/api/src
-
-git commit -m "feat: expose native qi design status metadata"
-```
-
-### Task 2: Add OpenAPI/docs ratchets for `nativeQiStatus`
+### Completed Task 2: Add OpenAPI/docs ratchets for `nativeQiStatus`
 
 **Objective:** Keep API docs, SDK docs, and CLI copy from claiming real native Qi settlement before the design exists.
 
-**Files:**
-- Test: `tests/contract-address-api-alignment.test.mjs`
-- Modify: `docs/api-openapi.yaml`
-- Modify: `docs/contracts.md`
-- Modify: `sdk/typescript/spec.md`
-- Modify: `sdk/python/spec.md`
-- Modify: `cli/qdex/spec.md`
+Completed: OpenAPI, API, SDK, CLI, and docs ratchets keep `QI-QUAI` mock-only and local-only.
 
-**Step 1: Write failing doc test**
+Result:
 
-```js
-assert.ok(openapi.includes('nativeQiStatus'));
-assert.ok(openapi.includes('design-required'));
-assert.ok(openapi.includes('mock `QI-QUAI` stays mock-only'));
-```
+- `docs/api-openapi.yaml`, `docs/contracts.md`, SDK specs/READMEs, and `qdex contracts` docs all expose the same read-only native Qi design boundary.
+- Consumer docs preserve `NO_WITHDRAW`, `NO_ADMIN`, null-address, no-wallet, no-broadcast, no-RPC, and no-real-Quai-transaction safety language.
+- The current repo remains in mock/native-Qi-design-required mode until explicit approval and external evidence select one future path.
 
-**Step 2: Run test to verify failure**
-
-Run: `node --test tests/contract-address-api-alignment.test.mjs`
-Expected: FAIL until the schema/docs include the field and warning copy.
-
-**Step 3: Write minimal docs/schema update**
-
-Add the field to contract metadata response examples and consumer docs. Do not add runtime behavior.
-
-**Step 4: Run verification**
-
-Run: `pnpm check`
-Expected: PASS.
-
-**Step 5: Commit**
-
-```bash
-git add tests/contract-address-api-alignment.test.mjs docs/api-openapi.yaml docs/contracts.md sdk cli
-
-git commit -m "docs: pin native qi status contract metadata"
-```
+## Remaining approval-gated task
 
 ### Task 3: Add local-only interface ratchets for the selected adapter path after approval
+
+No selected path exists yet; do not add an adapter interface until Clonners approves one path with external evidence.
 
 **Objective:** Prevent implementation from inventing a native Qi custody path without a written accepted design.
 
