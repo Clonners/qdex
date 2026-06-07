@@ -187,12 +187,19 @@ const parseNonceCancelOptions = (args) => {
 const parseListingRequestOptions = (args) => {
   const request = {};
   let prepare = false;
+  let localReviewQueue = false;
 
   for (let index = 0; index < args.length;) {
     const arg = args[index];
 
     if (arg === '--prepare') {
       prepare = true;
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--local-review-queue') {
+      localReviewQueue = true;
       index += 1;
       continue;
     }
@@ -248,8 +255,12 @@ const parseListingRequestOptions = (args) => {
     throw new Error(`unknown listings request option: ${arg}`);
   }
 
-  if (!prepare) {
-    throw new Error('listings request requires --prepare; this CLI does not submit listings or mutate MarketRegistry.');
+  if (prepare && localReviewQueue) {
+    throw new Error('listings request accepts either --prepare or --local-review-queue, not both.');
+  }
+
+  if (!prepare && !localReviewQueue) {
+    throw new Error('listings request requires --prepare or --local-review-queue; this CLI does not submit listings or mutate MarketRegistry.');
   }
 
   for (const requiredField of [
@@ -262,11 +273,18 @@ const parseListingRequestOptions = (args) => {
     'minAmount',
   ]) {
     if (request[requiredField] === undefined) {
-      throw new Error(`listings request --prepare requires ${requiredField}.`);
+      throw new Error(`listings request requires ${requiredField}.`);
     }
   }
 
-  return request;
+  if (localReviewQueue) {
+    return {
+      mode: 'local-review-queue',
+      request: { ...request, requestMode: 'local_review_queue' },
+    };
+  }
+
+  return { mode: 'prepare', request };
 };
 
 const usage = () => `Usage:
@@ -275,7 +293,9 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 contracts
   qdex --base-url http://127.0.0.1:8787 listings policy
   qdex --base-url http://127.0.0.1:8787 listings review-flow
+  qdex --base-url http://127.0.0.1:8787 listings requests
   qdex --base-url http://127.0.0.1:8787 listings request --prepare --base-symbol COMMUNITY --quote-symbol WQUAI --token-model erc20-style-vault-token --market-id COMMUNITY-WQUAI --price-precision 8 --amount-precision 8 --min-amount 1
+  qdex --base-url http://127.0.0.1:8787 listings request --local-review-queue --base-symbol COMMUNITY --quote-symbol WQI --token-model erc20-style-vault-token --market-id COMMUNITY-WQI --price-precision 8 --amount-precision 8 --min-amount 1
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
@@ -340,8 +360,30 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       return 0;
     }
 
+    if (command === 'listings' && rest[0] === 'requests') {
+      writeJson(stdout, {
+        command: 'listings requests',
+        baseUrl,
+        ...(await client.listings.requests.listLocalReviewQueue()),
+      });
+      return 0;
+    }
+
     if (command === 'listings' && rest[0] === 'request') {
-      const request = parseListingRequestOptions(rest.slice(1));
+      const { mode, request } = parseListingRequestOptions(rest.slice(1));
+      if (mode === 'local-review-queue') {
+        const result = await client.listings.requests.enqueueLocalReview(request);
+        writeJson(stdout, {
+          command: 'listings request local-review-queue',
+          baseUrl,
+          httpStatus: result.status,
+          metadataStatus: result.body.status,
+          ...result.body,
+          status: result.status,
+        });
+        return 0;
+      }
+
       const result = await client.listings.requests.prepareSubmit(request);
       writeJson(stdout, {
         command: 'listings request prepare',

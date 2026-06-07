@@ -69,6 +69,21 @@ class ApiServer:
                 pipe.close()
 
 
+def local_listing_review_request(**overrides):
+    request = {
+        "baseSymbol": "COMMUNITY",
+        "quoteSymbol": "WQI",
+        "tokenModel": "erc20-style-vault-token",
+        "requestedMarketId": "COMMUNITY-WQI",
+        "pricePrecision": 8,
+        "amountPrecision": 8,
+        "minAmount": "1",
+        "reviewNotes": "metadata-only local queue request from Python SDK",
+    }
+    request.update(overrides)
+    return request
+
+
 class QDexPythonSdkSmokeTest(unittest.TestCase):
     def test_python_sdk_exposes_local_only_contract_registry_metadata_without_wallet_or_deploy_authority(self):
         with ApiServer() as server:
@@ -235,6 +250,57 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 "approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority",
                 review_flow["safety"]["notice"],
             )
+
+    def test_python_sdk_queues_and_inspects_local_listing_review_requests_without_marketregistry_mutation_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            empty_queue = client.listings.requests.list_local_review_queue()
+            self.assertEqual(empty_queue["source"], "listed-asset-marketregistry-review-flow")
+            self.assertEqual(empty_queue["status"], "design-only-local-metadata")
+            self.assertEqual(empty_queue["phase"], "clonners-managed-local-review-before-dao")
+            self.assertEqual(empty_queue["queueStatus"], "local-in-memory-review-queue")
+            self.assertEqual(empty_queue["persistence"], "in-memory-local-server-only")
+            self.assertEqual(empty_queue["count"], 0)
+            self.assertEqual(empty_queue["requests"], [])
+            self.assertEqual(empty_queue["safety"]["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(empty_queue["safety"]["marketRegistryMutation"])
+            self.assertFalse(empty_queue["safety"]["realQuaiTransactions"])
+            self.assertFalse(empty_queue["safety"]["walletRequired"])
+
+            queued_result = client.listings.requests.enqueue_local_review(local_listing_review_request())
+            self.assertEqual(queued_result["status"], 202)
+
+            queued = queued_result["body"]
+            self.assertEqual(queued["source"], "listed-asset-marketregistry-review-flow")
+            self.assertEqual(queued["status"], "design-only-local-metadata")
+            self.assertEqual(queued["requestStatus"], "queued-local-review")
+            self.assertEqual(queued["phase"], "clonners-managed-local-review-before-dao")
+            self.assertEqual(queued["requestMode"], "local_review_queue")
+            self.assertEqual(queued["reviewStage"], "metadata_intake")
+            self.assertEqual(queued["reviewDecision"], "pending-local-review")
+            self.assertFalse(queued["marketRegistry"]["marketRegistryMutation"])
+            self.assertFalse(queued["marketRegistry"]["canMoveTradingVaultBalances"])
+            self.assertFalse(queued["marketRegistry"]["canGrantWithdrawalAuthority"])
+            self.assertEqual(queued["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(queued["realQuaiTransactions"])
+            self.assertFalse(queued["walletRequired"])
+            self.assertTrue(queued["safety"]["noWalletLoading"])
+            self.assertTrue(queued["safety"]["noRpcUrlAccess"])
+            self.assertTrue(queued["safety"]["noSigning"])
+            self.assertTrue(queued["safety"]["noBroadcast"])
+            self.assertTrue(queued["safety"]["noDeploys"])
+            self.assertTrue(queued["safety"]["noTransactionSubmission"])
+            self.assertTrue(queued["safety"]["noListingAdminKeys"])
+            self.assertTrue(queued["safety"]["noRealTokenAddresses"])
+            self.assertTrue(queued["safety"]["noFundsMovement"])
+            self.assertIn("in-memory local review queue", queued["message"])
+            self.assertIn("does not mutate MarketRegistry", queued["message"])
+            self.assertEqual(queued["request"], local_listing_review_request())
+
+            queue = client.listings.requests.list_local_review_queue()
+            self.assertEqual(queue["count"], 1)
+            self.assertEqual(queue["requests"], [queued])
 
     def test_python_sdk_exposes_prepare_only_listing_request_placeholder_without_treating_501_as_submission_success(self):
         with ApiServer() as server:

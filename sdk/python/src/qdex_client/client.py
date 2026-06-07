@@ -132,6 +132,18 @@ class _ListingRequestsApi:
             body=request,
         )
 
+    def list_local_review_queue(self):
+        return self._client._request_ok("/v1/listings/requests")
+
+    def enqueue_local_review(self, request):
+        body = {**request, "requestMode": "local_review_queue"}
+        return self._client._request_expected_status(
+            "/v1/listings/requests",
+            expected_status=202,
+            method="POST",
+            body=body,
+        )
+
 
 class _ListingsApi:
     def __init__(self, client):

@@ -11,7 +11,9 @@ qdex book QI-QUAI
 qdex contracts
 qdex listings policy
 qdex listings review-flow
+qdex listings requests
 qdex listings request --prepare --base-symbol COMMUNITY --quote-symbol WQUAI --token-model erc20-style-vault-token --market-id COMMUNITY-WQUAI --price-precision 8 --amount-precision 8 --min-amount 1
+qdex listings request --local-review-queue --base-symbol COMMUNITY --quote-symbol WQI --token-model erc20-style-vault-token --market-id COMMUNITY-WQI --price-precision 8 --amount-precision 8 --min-amount 1
 qdex relayer gate
 qdex nonces cancel --prepare --owner 0xowner --nonce 42 --chain-id 0 --nonce-manager-contract 0xnonce-manager --expires-at 1780003600 --signature 0xowner-signature
 qdex balance
@@ -40,6 +42,7 @@ qdex api create-key bot-mm-1 --scope trade --expires 7d
 - `qdex listings policy` calls `GET /v1/listings/policy` and prints `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI primary quote assets, `community-created-erc20-style-token` metadata, and `MarketRegistry-enabled-pair-metadata` truth labels. It is read-only local metadata only: `NO_WITHDRAW`/`NO_ADMIN`, no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. It must not submit listings, load listing-admin keys, claim real token addresses, or imply MarketRegistry metadata can move balances or grant withdrawal/admin power.
 - `qdex listings review-flow` calls `GET /v1/listings/review-flow` and prints read-only `listed-asset-marketregistry-review-flow`, `design-only-local-metadata`, `clonners-managed-local-review-before-dao`, and local statuses such as `approved-local-metadata-only` / `rejected-local-metadata-only`. It preserves `NO_WITHDRAW`/`NO_ADMIN`, has no wallets/RPC/signing/broadcast/deploy/tx/funds behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 - `qdex listings request --prepare` calls `POST /v1/listings/requests` and prints the prepare-only 501 placeholder body (`listing_request_not_implemented`, `not-implemented-approval-required`, `listed-asset-marketregistry-policy`, `design-only-local-metadata`) for WQUAI/WQI `community-created-erc20-style-token` metadata. It treats the intentional 501 as a boundary response, not a generic transport failure and not proof of submission: `NO_WITHDRAW`/`NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and does not prove a listing request was submitted on-chain.
+- `qdex listings requests` calls `GET /v1/listings/requests`, and `qdex listings request --local-review-queue` calls `POST /v1/listings/requests with requestMode: local_review_queue`. These local queue commands print `listed-asset-marketregistry-review-flow`, `local-in-memory-review-queue`, `in-memory-local-server-only`, `queued-local-review`, and `pending-local-review` metadata only. They preserve `NO_WITHDRAW`/`NO_ADMIN`, have no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 - `qdex relayer gate` calls `GET /v1/relayer/settlement-mode-gate` and prints read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 ## API/delegate key scopes

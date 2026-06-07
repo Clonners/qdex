@@ -104,15 +104,16 @@ test('campaign status records approved local listing review queue boundary', asy
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
-    '- Status: active autonomous builder cron; local runtime listing review queue implemented; listing submission and MarketRegistry admin mutation remain approval-gated',
-    '- Current phase: Clonners-managed local in-memory listing request review queue before DAO handoff; no wallets/RPC/deploys/txs are approved',
+    '- Status: blocked pending explicit Clonners approval; local runtime listing review queue and TypeScript/Python/qdex queue clients are complete; listing submission and MarketRegistry admin mutation remain approval-gated',
+    '- Current phase: local listing review queue intake/inspection clients complete; no wallets/RPC/deploys/txs are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
-    'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, TypeScript/Python/qdex review-flow clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
-    'Implemented: Clonners approved and the campaign added a local runtime listing review queue only; listing submission and MarketRegistry admin mutation still require separate explicit approval.',
-    'Next bounded slice: expose TypeScript/Python/qdex clients for the local listing review queue',
+    'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
+    'Implemented: Clonners approved and the campaign added a local runtime listing review queue plus TypeScript/Python/qdex queue clients; listing submission and MarketRegistry admin mutation still require separate explicit approval.',
+    'Approval required: local review decision/approval runtime behavior beyond queue intake, runtime listing submission, or MarketRegistry admin mutation.',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
     'Clonners approved the next local-only runtime listing review queue slice.',
     'Implemented the approved local in-memory listing review queue:',
+    'Added TypeScript/Python SDK and `qdex` CLI clients for the local in-memory listing review queue',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
@@ -148,7 +149,7 @@ test('listing docs point future work to the post-listing policy approval gate', 
       text.includes('Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation'),
       `${label} should pin the runtime listing/admin approval gate`,
     );
-  }
+    assert.doesNotMatch(
       text,
       staleApprovalGateCopy,
       `${label} must not describe completed listing surfaces as a future/next autonomous planning boundary`,

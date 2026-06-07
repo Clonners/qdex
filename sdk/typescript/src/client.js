@@ -211,6 +211,12 @@ export class QDexClient {
           body: request,
           expectedStatus: 501,
         }),
+        listLocalReviewQueue: async () => this.#requestOk('/v1/listings/requests'),
+        enqueueLocalReview: async (request) => this.#requestExpectedStatus('/v1/listings/requests', {
+          method: 'POST',
+          body: { ...request, requestMode: 'local_review_queue' },
+          expectedStatus: 202,
+        }),
       },
     };
 

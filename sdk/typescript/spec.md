@@ -21,6 +21,16 @@ await dex.listings.requests.prepareSubmit({
   amountPrecision: 8,
   minAmount: '1',
 }); // POST /v1/listings/requests -> listing_request_not_implemented / not-implemented-approval-required while prepare-only
+await dex.listings.requests.listLocalReviewQueue(); // GET /v1/listings/requests
+await dex.listings.requests.enqueueLocalReview({
+  baseSymbol: 'COMMUNITY',
+  quoteSymbol: 'WQI',
+  tokenModel: 'erc20-style-vault-token',
+  requestedMarketId: 'COMMUNITY-WQI',
+  pricePrecision: 8,
+  amountPrecision: 8,
+  minAmount: '1',
+}); // POST /v1/listings/requests with requestMode: local_review_queue -> queued-local-review / pending-local-review
 await dex.relayer.settlementModeGate.get(); // GET /v1/relayer/settlement-mode-gate
 await dex.nonces.prepareCancel({
   action: 'cancelNonce',
@@ -72,6 +82,8 @@ The contract registry also exposes `listedAssetStatus`: `status: wrapped-token-l
 `listings.reviewFlow.get()` is a read-only local review state-machine client for `GET /v1/listings/review-flow`. It returns `source: listed-asset-marketregistry-review-flow`, `status: design-only-local-metadata`, `phase: clonners-managed-local-review-before-dao`, local statuses such as `approved-local-metadata-only` / `rejected-local-metadata-only`, and `marketRegistryMutation: false`. It preserves `NO_WITHDRAW`/`NO_ADMIN`, has no wallets/RPC/signing/broadcast/deploy/tx/funds behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 
 `listings.requests.prepareSubmit()` is a prepare-only client for `POST /v1/listings/requests`. It intentionally returns the API placeholder response `listing_request_not_implemented` with `requestStatus: not-implemented-approval-required`, `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI quote framing, `community-created-erc20-style-token`, `NO_WITHDRAW`, and `NO_ADMIN`. The client must treat the intentional 501 as a boundary response, not a generic transport failure and not proof of submission; it preserves no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior and does not prove a listing request was submitted on-chain.
+
+`listings.requests.listLocalReviewQueue()` and `listings.requests.enqueueLocalReview()` expose the approved local listing review queue only. `listLocalReviewQueue()` calls `GET /v1/listings/requests`; `enqueueLocalReview()` calls `POST /v1/listings/requests with requestMode: local_review_queue` and returns `local-in-memory-review-queue`, `in-memory-local-server-only`, `queued-local-review`, and `pending-local-review` metadata from `listed-asset-marketregistry-review-flow`. These clients preserve `NO_WITHDRAW`/`NO_ADMIN`, have no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 
 `relayer.settlementModeGate.get()` is read-only relayer gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

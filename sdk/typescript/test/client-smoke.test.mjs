@@ -20,6 +20,18 @@ const withServer = async (callback) => {
   }
 };
 
+const localListingReviewRequest = (overrides = {}) => ({
+  baseSymbol: 'COMMUNITY',
+  quoteSymbol: 'WQI',
+  tokenModel: 'erc20-style-vault-token',
+  requestedMarketId: 'COMMUNITY-WQI',
+  pricePrecision: 8,
+  amountPrecision: 8,
+  minAmount: '1',
+  reviewNotes: 'metadata-only local queue request from TypeScript SDK',
+  ...overrides,
+});
+
 test('TypeScript SDK smoke drives mock API order -> fill -> proof loop without custody shortcuts', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });
@@ -230,6 +242,59 @@ test('TypeScript SDK exposes read-only listing review-flow metadata without Mark
       reviewFlow.safety.notice,
       /approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal\/admin authority/i,
     );
+  });
+});
+
+test('TypeScript SDK queues and inspects local listing review requests without MarketRegistry mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const emptyQueue = await client.listings.requests.listLocalReviewQueue();
+    assert.equal(emptyQueue.source, 'listed-asset-marketregistry-review-flow');
+    assert.equal(emptyQueue.status, 'design-only-local-metadata');
+    assert.equal(emptyQueue.phase, 'clonners-managed-local-review-before-dao');
+    assert.equal(emptyQueue.queueStatus, 'local-in-memory-review-queue');
+    assert.equal(emptyQueue.persistence, 'in-memory-local-server-only');
+    assert.equal(emptyQueue.count, 0);
+    assert.deepEqual(emptyQueue.requests, []);
+    assert.deepEqual(emptyQueue.safety.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(emptyQueue.safety.marketRegistryMutation, false);
+    assert.equal(emptyQueue.safety.realQuaiTransactions, false);
+    assert.equal(emptyQueue.safety.walletRequired, false);
+
+    const queuedResult = await client.listings.requests.enqueueLocalReview(localListingReviewRequest());
+    assert.equal(queuedResult.status, 202);
+
+    const queued = queuedResult.body;
+    assert.equal(queued.source, 'listed-asset-marketregistry-review-flow');
+    assert.equal(queued.status, 'design-only-local-metadata');
+    assert.equal(queued.requestStatus, 'queued-local-review');
+    assert.equal(queued.phase, 'clonners-managed-local-review-before-dao');
+    assert.equal(queued.requestMode, 'local_review_queue');
+    assert.equal(queued.reviewStage, 'metadata_intake');
+    assert.equal(queued.reviewDecision, 'pending-local-review');
+    assert.equal(queued.marketRegistry.marketRegistryMutation, false);
+    assert.equal(queued.marketRegistry.canMoveTradingVaultBalances, false);
+    assert.equal(queued.marketRegistry.canGrantWithdrawalAuthority, false);
+    assert.deepEqual(queued.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(queued.realQuaiTransactions, false);
+    assert.equal(queued.walletRequired, false);
+    assert.equal(queued.safety.noWalletLoading, true);
+    assert.equal(queued.safety.noRpcUrlAccess, true);
+    assert.equal(queued.safety.noSigning, true);
+    assert.equal(queued.safety.noBroadcast, true);
+    assert.equal(queued.safety.noDeploys, true);
+    assert.equal(queued.safety.noTransactionSubmission, true);
+    assert.equal(queued.safety.noListingAdminKeys, true);
+    assert.equal(queued.safety.noRealTokenAddresses, true);
+    assert.equal(queued.safety.noFundsMovement, true);
+    assert.match(queued.message, /in-memory local review queue/i);
+    assert.match(queued.message, /does not mutate MarketRegistry/i);
+    assert.deepEqual(queued.request, localListingReviewRequest());
+
+    const queue = await client.listings.requests.listLocalReviewQueue();
+    assert.equal(queue.count, 1);
+    assert.deepEqual(queue.requests, [queued]);
   });
 });
 
