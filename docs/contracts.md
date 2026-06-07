@@ -48,7 +48,7 @@ realQuaiTransactions: false
 walletRequired: false
 ```
 
-Native Qi direct settlement is not an MVP blocker anymore; the Qi-facing DEX surface is `WQI`. The token listing and MarketRegistry metadata flow can enable/disable listed token pairs without introducing custody, wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. `GET /v1/listings/policy` and [`docs/listing-policy.md`](./listing-policy.md) expose that flow as read-only local metadata before any runtime listing behavior, while prepare-only `POST /v1/listings/requests` preserves the approval gate without MarketRegistry mutation. Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`. Approval required: runtime listing submission or MarketRegistry admin mutation. The post-listing-policy MarketRegistry admin boundary is documented in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md); no further runtime listing submission or MarketRegistry admin behavior should start until explicit Clonners approval.
+Native Qi direct settlement is not an MVP blocker anymore; the Qi-facing DEX surface is `WQI`. The token listing and MarketRegistry metadata flow can enable/disable listed token pairs without introducing custody, wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. `GET /v1/listings/policy` and [`docs/listing-policy.md`](./listing-policy.md) expose that flow as read-only local metadata before any runtime listing behavior, while prepare-only `POST /v1/listings/requests` preserves the approval gate without MarketRegistry mutation. Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`. The local authority model starts Clonners-managed and can later transfer to DAO/multisig governance through `MarketRegistry.proposeMarketAuthority` and `MarketRegistry.acceptMarketAuthority`, without custody power. Approval required: runtime listing submission or MarketRegistry admin mutation. The post-listing-policy MarketRegistry admin boundary is documented in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md); no wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, real network mutations, or funds movement are approved.
 
 ## TradingVault
 
@@ -131,7 +131,11 @@ On-chain market metadata.
 addMarket(base, quote, pricePrecision, amountPrecision, minAmount)
 disableMarket(marketId)
 marketInfo(marketId)
+proposeMarketAuthority(nextAuthority)
+acceptMarketAuthority()
 ```
+
+Current local listing authority starts Clonners-managed. `proposeMarketAuthority(nextAuthority)` plus `acceptMarketAuthority()` provide the future DAO/multisig handoff path, with `MarketAuthorityHandoffProposed` and `MarketAuthorityHandoffAccepted` as event truth. The old authority loses listing power after the proposed DAO/multisig accepts.
 
 Admin functions should use timelock/multisig before production.
 

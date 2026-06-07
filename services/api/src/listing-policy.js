@@ -62,6 +62,25 @@ export const createTokenListingPolicyResponse = () => ({
     operatorWithdrawalAuthority: false,
     notes: 'MarketRegistry listing metadata can enable or disable token pairs, but it cannot move TradingVault balances or grant withdrawal/admin power.',
   },
+  listingAuthority: {
+    currentPhase: 'clonners-operator-managed',
+    initialAuthority: 'Clonners-controlled MarketRegistry authority',
+    futureAuthority: 'dao-governance',
+    handoffPattern: 'MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority',
+    authorityCan: ['addMarket', 'disableMarket', 'proposeMarketAuthority'],
+    authorityCannot: ['moveTradingVaultBalances', 'withdrawUserFunds', 'grantDelegateAdmin', 'loadWallets', 'broadcastTransactions'],
+    daoMigration: {
+      status: 'supported-by-two-step-handoff',
+      acceptanceRequired: true,
+      eventTruth: ['MarketAuthorityHandoffProposed', 'MarketAuthorityHandoffAccepted'],
+    },
+    safety: {
+      custodyAuthority: false,
+      balanceMovement: false,
+      delegateWithdrawalAuthority: false,
+      delegateAdminAuthority: false,
+    },
+  },
   safety: {
     realQuaiTransactions: false,
     walletRequired: false,

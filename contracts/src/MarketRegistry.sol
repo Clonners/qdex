@@ -4,9 +4,10 @@ pragma solidity 0.8.20;
 import {IMarketRegistry} from "./IMarketRegistry.sol";
 
 /// @notice Local-only source of truth for enabled spot markets and precision/minimum constraints.
-/// @dev MR-01 keeps metadata stable and dependency-scoped; production authority hardening remains approval-gated.
+/// @dev MR-03 starts Clonners-managed and can later hand listing authority to a DAO/multisig without custody power.
 contract MarketRegistry is IMarketRegistry {
-    address public immutable marketAuthority;
+    address public marketAuthority;
+    address public pendingMarketAuthority;
 
     mapping(bytes32 => MarketInfo) private markets;
 
@@ -18,6 +19,26 @@ contract MarketRegistry is IMarketRegistry {
     modifier onlyMarketAuthority() {
         require(msg.sender == marketAuthority, "MR_MARKET_AUTHORITY_ONLY");
         _;
+    }
+
+    function proposeMarketAuthority(address nextAuthority) external onlyMarketAuthority {
+        require(nextAuthority != address(0), "MR_PENDING_AUTHORITY_ZERO");
+        require(nextAuthority != marketAuthority, "MR_PENDING_AUTHORITY_SAME");
+
+        pendingMarketAuthority = nextAuthority;
+
+        emit MarketAuthorityHandoffProposed(marketAuthority, nextAuthority);
+    }
+
+    function acceptMarketAuthority() external {
+        address nextAuthority = pendingMarketAuthority;
+        require(msg.sender == nextAuthority, "MR_PENDING_AUTHORITY_ONLY");
+
+        address previousAuthority = marketAuthority;
+        marketAuthority = nextAuthority;
+        pendingMarketAuthority = address(0);
+
+        emit MarketAuthorityHandoffAccepted(previousAuthority, nextAuthority);
     }
 
     function addMarket(address base, address quote, uint8 pricePrecision, uint8 amountPrecision, uint256 minAmount)

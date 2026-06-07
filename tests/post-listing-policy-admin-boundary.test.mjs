@@ -50,6 +50,11 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
     '`MarketRegistry.disableMarket` retains metadata for indexer replay',
     'cannot move `TradingVault` balances',
     'cannot grant withdrawal/admin power',
+    '## Approved local authority handoff',
+    'Clonners approved a useful listing authority path that starts operator-managed and can later delegate to a DAO/multisig',
+    'MarketRegistry.proposeMarketAuthority(nextAuthority) -> MarketRegistry.acceptMarketAuthority()',
+    'MarketAuthorityHandoffProposed, MarketAuthorityHandoffAccepted',
+    'old Clonners-managed authority loses `addMarket`/`disableMarket` power',
     '## Delegates and listing-admin separation',
     '`NO_WITHDRAW`',
     '`NO_ADMIN`',
@@ -90,22 +95,23 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   );
 });
 
-test('campaign status is pinned to the listing/admin approval gate before more autonomous runtime work', async () => {
+test('campaign status records approval for Clonners-managed listing authority with DAO handoff', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
-    '- Status: blocked pending explicit Clonners approval; current repo checks green',
-    '- Current phase: no autonomous runtime listing/admin slice remains; existing safe surfaces are `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`',
-    '✋ DECISIÓN: explicit Clonners approval is required before runtime listing submission or MarketRegistry admin mutation.',
-    'Existing safe listing surfaces remain `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.',
+    '- Status: active autonomous builder cron; listing authority boundary approved by Clonners; current repo checks green',
+    '- Current phase: Clonners-managed MarketRegistry listing authority with future DAO handoff; no wallets/RPC/deploys/txs are approved',
+    'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
+    'Existing safe listing surfaces remain `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests` while contract-level authority handoff is local-only.',
+    'Next bounded slice: expose local listing request review/approval flow for Clonners-managed metadata before DAO governance wiring.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
 
   assert.doesNotMatch(
     status,
-    /- Status: active autonomous builder cron/,
-    'campaign status should not look active when the next boundary requires approval',
+    /- Status: blocked pending explicit Clonners approval/,
+    'campaign status should not remain blocked after explicit listing-authority approval',
   );
 });
 

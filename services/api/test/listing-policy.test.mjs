@@ -99,6 +99,26 @@ test('GET /v1/listings/policy returns read-only token listing and MarketRegistry
       notes: 'MarketRegistry listing metadata can enable or disable token pairs, but it cannot move TradingVault balances or grant withdrawal/admin power.',
     });
 
+    assert.deepEqual(response.body.listingAuthority, {
+      currentPhase: 'clonners-operator-managed',
+      initialAuthority: 'Clonners-controlled MarketRegistry authority',
+      futureAuthority: 'dao-governance',
+      handoffPattern: 'MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority',
+      authorityCan: ['addMarket', 'disableMarket', 'proposeMarketAuthority'],
+      authorityCannot: ['moveTradingVaultBalances', 'withdrawUserFunds', 'grantDelegateAdmin', 'loadWallets', 'broadcastTransactions'],
+      daoMigration: {
+        status: 'supported-by-two-step-handoff',
+        acceptanceRequired: true,
+        eventTruth: ['MarketAuthorityHandoffProposed', 'MarketAuthorityHandoffAccepted'],
+      },
+      safety: {
+        custodyAuthority: false,
+        balanceMovement: false,
+        delegateWithdrawalAuthority: false,
+        delegateAdminAuthority: false,
+      },
+    });
+
     assert.deepEqual(response.body.safety, {
       realQuaiTransactions: false,
       walletRequired: false,

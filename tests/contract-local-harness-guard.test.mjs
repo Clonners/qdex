@@ -87,6 +87,7 @@ test('local harness documentation tracks current local contract coverage', async
     '`NM-02`: local Settlement delegates nonce truth to a settlement-scoped `NonceManager`; user cancellations live on `NonceManager`, full fills emit `NonceUsed`, and DK-02 delegate safety remains intact.',
     '`MR-02`: local Settlement delegates market truth to a market-authority-scoped `MarketRegistry`; fills require enabled base/quote metadata and disabled or token-mismatched markets reject before nonce/accounting/vault/proof mutation.',
     '`FM-02`: local Settlement delegates fee truth to a fee-authority-scoped `FeeManager`; nonzero fees require manager recipient truth plus signed and manager schedule caps before vault/proof mutation.',
+    '`MR-03`: local MarketRegistry starts with Clonners-managed listing authority and supports a two-step DAO handoff via `proposeMarketAuthority` and `acceptMarketAuthority` without custody power.',
     'Current metadata/listing slices expose read-only `listedAssetStatus` plus `GET /v1/listings/policy`, `POST /v1/listings/requests` prepare-only metadata, and SDK/CLI clients',
     'Next approval boundary: post-listing-policy MarketRegistry admin boundary in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](../docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md).',
     'Approval required: runtime listing submission or MarketRegistry admin mutation.',

@@ -80,6 +80,21 @@ can grant delegate withdrawal/admin power: no
 
 `MarketRegistry` cannot move `TradingVault` balances and cannot grant withdrawal/admin power. `TradingVault` remains the only balance surface, and `Settlement`/`TradeSettled` remains the public fill/proof truth.
 
+## Approved local authority handoff
+
+Clonners approved a useful listing authority path that starts operator-managed and can later delegate to a DAO/multisig. The local-only contract ratchet is:
+
+```text
+current authority: Clonners-managed MarketRegistry authority
+future authority: DAO/multisig governance
+handoff: MarketRegistry.proposeMarketAuthority(nextAuthority) -> MarketRegistry.acceptMarketAuthority()
+events: MarketAuthorityHandoffProposed, MarketAuthorityHandoffAccepted
+```
+
+Only the current authority can propose the next authority. Only the proposed DAO/multisig can accept. Once accepted, the old Clonners-managed authority loses `addMarket`/`disableMarket` power. This is metadata authority only: no custody, no withdrawal, no delegate-admin power, no wallet loading, no RPC URL, no signing, no broadcast, no deploy, no real token-address claims, and no funds movement.
+
+The next bounded runtime-facing slice should stay local/metadata-first: expose a review/approval flow for listing requests that Clonners can operate before DAO governance wiring. Real network mutations still require a separate approval/evidence gate.
+
 ## Delegates and listing-admin separation
 
 Delegate/API keys remain trading-only. Delegate/API keys cannot become listing-admin authority, cannot mutate `MarketRegistry`, and cannot call owner/admin listing flows.

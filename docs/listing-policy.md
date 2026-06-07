@@ -35,6 +35,22 @@ Contract surfaces:
 - `disableMarket` disables an existing market without erasing metadata required for indexer replay.
 - `marketInfo` is read-only market metadata for API, SDK, CLI, and indexer projections.
 
+## Listing authority and DAO handoff
+
+The approved local authority model starts Clonners-managed and keeps a clean migration path to DAO governance:
+
+```text
+currentPhase: clonners-operator-managed
+initialAuthority: Clonners-controlled MarketRegistry authority
+futureAuthority: dao-governance
+handoffPattern: MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority
+eventTruth: MarketAuthorityHandoffProposed, MarketAuthorityHandoffAccepted
+```
+
+Authority can list/disable market metadata and propose the next authority. It cannot move `TradingVault` balances, withdraw user funds, grant delegate admin power, load wallets, or broadcast transactions.
+
+DAO migration is two-step: the current Clonners-managed authority proposes the DAO/multisig, and that proposed DAO/multisig must accept before it gets listing authority. The old authority loses listing power after acceptance.
+
 ## Non-custodial invariants
 
 - Listing/admin metadata cannot move user balances.

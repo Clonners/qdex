@@ -160,7 +160,15 @@ describe('MarketRegistry MR-01 enabled/disabled market metadata boundary', funct
       .map((fragment) => fragment.name)
       .sort();
 
-    assert.deepEqual(abiFunctionNames, ['addMarket', 'disableMarket', 'marketAuthority', 'marketInfo']);
+    assert.deepEqual(abiFunctionNames, [
+      'acceptMarketAuthority',
+      'addMarket',
+      'disableMarket',
+      'marketAuthority',
+      'marketInfo',
+      'pendingMarketAuthority',
+      'proposeMarketAuthority',
+    ]);
 
     for (const forbiddenPattern of [
       /withdraw/iu,

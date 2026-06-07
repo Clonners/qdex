@@ -432,7 +432,7 @@ components:
     TokenListingPolicy:
       type: object
       description: Read-only token listing and MarketRegistry metadata policy. It does not submit listings, load wallets, sign, broadcast, read RPC URLs, deploy, or move real funds.
-      required: [source, status, assetModel, primaryQuoteAssets, supportedAssets, exampleMarkets, listingLifecycle, marketRegistry, safety]
+      required: [source, status, assetModel, primaryQuoteAssets, supportedAssets, exampleMarkets, listingLifecycle, marketRegistry, listingAuthority, safety]
       properties:
         source:
           type: string
@@ -480,6 +480,8 @@ components:
             enum: [submit-token-metadata, review-token-safety, define-precision-and-minimums, marketRegistry.addMarket-after-approval, marketRegistry.disableMarket-if-needed]
         marketRegistry:
           $ref: "#/components/schemas/TokenListingMarketRegistry"
+        listingAuthority:
+          $ref: "#/components/schemas/TokenListingAuthority"
         safety:
           $ref: "#/components/schemas/TokenListingSafety"
     TokenListingAsset:
@@ -531,6 +533,64 @@ components:
         notes:
           type: string
           example: MarketRegistry listing metadata can enable or disable token pairs, but it cannot move TradingVault balances or grant withdrawal/admin power.
+    TokenListingAuthority:
+      type: object
+      description: Local-only listing authority metadata. The initial authority is Clonners-managed and can be handed to DAO governance through a two-step MarketRegistry authority transfer without custody power.
+      required: [currentPhase, initialAuthority, futureAuthority, handoffPattern, authorityCan, authorityCannot, daoMigration, safety]
+      properties:
+        currentPhase:
+          type: string
+          enum: [clonners-operator-managed]
+        initialAuthority:
+          type: string
+          example: Clonners-controlled MarketRegistry authority
+        futureAuthority:
+          type: string
+          enum: [dao-governance]
+        handoffPattern:
+          type: string
+          example: MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority
+        authorityCan:
+          type: array
+          items:
+            type: string
+            enum: [addMarket, disableMarket, proposeMarketAuthority]
+        authorityCannot:
+          type: array
+          items:
+            type: string
+            enum: [moveTradingVaultBalances, withdrawUserFunds, grantDelegateAdmin, loadWallets, broadcastTransactions]
+        daoMigration:
+          type: object
+          required: [status, acceptanceRequired, eventTruth]
+          properties:
+            status:
+              type: string
+              enum: [supported-by-two-step-handoff]
+            acceptanceRequired:
+              type: boolean
+              enum: [true]
+            eventTruth:
+              type: array
+              items:
+                type: string
+                enum: [MarketAuthorityHandoffProposed, MarketAuthorityHandoffAccepted]
+        safety:
+          type: object
+          required: [custodyAuthority, balanceMovement, delegateWithdrawalAuthority, delegateAdminAuthority]
+          properties:
+            custodyAuthority:
+              type: boolean
+              enum: [false]
+            balanceMovement:
+              type: boolean
+              enum: [false]
+            delegateWithdrawalAuthority:
+              type: boolean
+              enum: [false]
+            delegateAdminAuthority:
+              type: boolean
+              enum: [false]
     TokenListingSafety:
       type: object
       description: Read-only listing-policy safety metadata; all real Quai activity remains approval-gated.

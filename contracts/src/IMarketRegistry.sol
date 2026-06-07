@@ -15,7 +15,11 @@ interface IMarketRegistry {
 
     event MarketAdded(bytes32 indexed marketId, address indexed base, address indexed quote, uint8 pricePrecision, uint8 amountPrecision, uint256 minAmount);
     event MarketDisabled(bytes32 indexed marketId);
+    event MarketAuthorityHandoffProposed(address indexed currentAuthority, address indexed pendingAuthority);
+    event MarketAuthorityHandoffAccepted(address indexed previousAuthority, address indexed newAuthority);
 
+    function proposeMarketAuthority(address nextAuthority) external;
+    function acceptMarketAuthority() external;
     function addMarket(address base, address quote, uint8 pricePrecision, uint8 amountPrecision, uint256 minAmount) external returns (bytes32 marketId);
     function disableMarket(bytes32 marketId) external;
     function marketInfo(bytes32 marketId) external view returns (MarketInfo memory);

@@ -25,6 +25,11 @@ test('token listing policy doc pins MarketRegistry metadata flow without custody
     '`TradingVault` remains the only vault-balance surface',
     '`addMarket`',
     '`disableMarket`',
+    '`marketInfo`',
+    'clonners-operator-managed',
+    'futureAuthority: dao-governance',
+    'MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority',
+    'MarketAuthorityHandoffProposed, MarketAuthorityHandoffAccepted',
     'cannot move user balances',
     '`NO_WITHDRAW`',
     '`NO_ADMIN`',
@@ -47,7 +52,8 @@ test('OpenAPI exposes read-only token listing policy route and schema', async ()
   const route = sectionBetween(spec, '  /v1/listings/policy:', '  /v1/listings/requests:');
   const tokenListingPolicy = sectionBetween(spec, '    TokenListingPolicy:', '    TokenListingAsset:');
   const tokenListingAsset = sectionBetween(spec, '    TokenListingAsset:', '    TokenListingMarketRegistry:');
-  const marketRegistry = sectionBetween(spec, '    TokenListingMarketRegistry:', '    TokenListingSafety:');
+  const marketRegistry = sectionBetween(spec, '    TokenListingMarketRegistry:', '    TokenListingAuthority:');
+  const listingAuthority = sectionBetween(spec, '    TokenListingAuthority:', '    TokenListingSafety:');
   const safety = sectionBetween(spec, '    TokenListingSafety:', '    ListingRequestPrepare:');
 
   for (const requiredText of [
@@ -59,7 +65,7 @@ test('OpenAPI exposes read-only token listing policy route and schema', async ()
   }
 
   for (const requiredText of [
-    'required: [source, status, assetModel, primaryQuoteAssets, supportedAssets, exampleMarkets, listingLifecycle, marketRegistry, safety]',
+    'required: [source, status, assetModel, primaryQuoteAssets, supportedAssets, exampleMarkets, listingLifecycle, marketRegistry, listingAuthority, safety]',
     'enum: [listed-asset-marketregistry-policy]',
     'enum: [design-only-local-metadata]',
     'enum: [erc20-style-vault-token]',
@@ -67,6 +73,7 @@ test('OpenAPI exposes read-only token listing policy route and schema', async ()
     'supportedAssets:',
     'exampleMarkets:',
     'listingLifecycle:',
+    'listingAuthority:',
   ]) {
     assert.ok(tokenListingPolicy.includes(requiredText), `TokenListingPolicy schema should include ${requiredText}`);
   }
@@ -95,6 +102,25 @@ test('OpenAPI exposes read-only token listing policy route and schema', async ()
     'enum: [false]',
   ]) {
     assert.ok(marketRegistry.includes(requiredText), `TokenListingMarketRegistry schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'currentPhase:',
+    'enum: [clonners-operator-managed]',
+    'futureAuthority:',
+    'enum: [dao-governance]',
+    'handoffPattern:',
+    'MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority',
+    'authorityCan:',
+    'enum: [addMarket, disableMarket, proposeMarketAuthority]',
+    'authorityCannot:',
+    'enum: [moveTradingVaultBalances, withdrawUserFunds, grantDelegateAdmin, loadWallets, broadcastTransactions]',
+    'MarketAuthorityHandoffProposed',
+    'MarketAuthorityHandoffAccepted',
+    'delegateWithdrawalAuthority:',
+    'delegateAdminAuthority:',
+  ]) {
+    assert.ok(listingAuthority.includes(requiredText), `TokenListingAuthority schema should include ${requiredText}`);
   }
 
   for (const requiredText of [
