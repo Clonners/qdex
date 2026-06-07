@@ -48,7 +48,7 @@ realQuaiTransactions: false
 walletRequired: false
 ```
 
-Native Qi direct settlement is not an MVP blocker anymore; the Qi-facing DEX surface is `WQI`. The next safe contract/API slice is a token listing and MarketRegistry metadata flow that can enable/disable listed token pairs without introducing custody, wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. `GET /v1/listings/policy` and [`docs/listing-policy.md`](./listing-policy.md) expose that flow as read-only local metadata before any runtime listing behavior.
+Native Qi direct settlement is not an MVP blocker anymore; the Qi-facing DEX surface is `WQI`. The token listing and MarketRegistry metadata flow can enable/disable listed token pairs without introducing custody, wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. `GET /v1/listings/policy` and [`docs/listing-policy.md`](./listing-policy.md) expose that flow as read-only local metadata before any runtime listing behavior. The next design-only planning boundary is the post-listing-policy MarketRegistry admin boundary in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md).
 
 ## TradingVault
 

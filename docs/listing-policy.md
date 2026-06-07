@@ -66,3 +66,9 @@ This surface performs no wallet loading, signing, broadcast, RPC URL access, tra
 - Wallet/key loading or order/admin signing.
 - RPC URL reads, broadcasts, deploys, or transaction submission.
 - Any listing path that can sweep, rescue, withdraw, unlock, or settle user funds.
+
+## Next approval-gated boundary
+
+The next safe planning boundary is the post-listing-policy MarketRegistry admin boundary in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md).
+
+That plan keeps future listing submission and MarketRegistry admin metadata design-only until explicit approval. It preserves the current read-only policy endpoint and repeats that listing/admin metadata cannot move `TradingVault` balances, cannot grant withdrawal/admin authority, and cannot add wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin runtime behavior, or funds movement.

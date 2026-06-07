@@ -1,0 +1,165 @@
+# Post-Listing-Policy MarketRegistry Admin Boundary Implementation Plan
+
+> **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
+
+**Goal:** Plan the future token listing submission and MarketRegistry admin metadata boundary without adding runtime listing behavior.
+
+**Architecture:** Keep `GET /v1/listings/policy` as the only executable listing surface for now. Future listing submission should be introduced first as a prepare-only/docs/OpenAPI boundary, then only become runtime behavior after explicit Clonners approval and local contract/admin ratchets. `MarketRegistry` remains enabled-pair metadata truth; `TradingVault` remains balance truth.
+
+**Tech Stack:** Markdown plan/spec ratchets, Node `node:test` doc guards, existing OpenAPI/API/SDK/CLI docs, and local-only Solidity `MarketRegistry` concepts. No wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin keys, listing-admin runtime behavior, or funds movement are introduced by this plan.
+
+---
+
+## Current completed boundary
+
+The current listing surface is read-only local metadata:
+
+It preserves `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `realQuaiTransactions: false`, and `walletRequired: false`.
+
+```text
+GET /v1/listings/policy
+source: listed-asset-marketregistry-policy
+status: design-only-local-metadata
+assetModel: erc20-style-vault-token
+primaryQuoteAssets: WQUAI, WQI
+realQuaiTransactions: false
+walletRequired: false
+```
+
+This boundary describes WQUAI, WQI, and community-created ERC-20-style vault tokens. It does not accept listing requests, mutate `MarketRegistry`, load wallets, load RPC URLs, sign messages, submit transactions, deploy contracts, publish token addresses, or move real funds.
+
+## Future listing submission boundary
+
+Future listing submission is approval-gated before implementation. The first safe runtime-adjacent slice should still be metadata intake only and should return a non-implemented/prepare-only response until Clonners explicitly approves listing submission behavior.
+
+Minimum future request fields, if approved for a placeholder:
+
+```json
+{
+  "baseSymbol": "COMMUNITY",
+  "quoteSymbol": "WQUAI",
+  "tokenModel": "erc20-style-vault-token",
+  "requestedMarketId": "COMMUNITY-WQUAI",
+  "pricePrecision": 8,
+  "amountPrecision": 8,
+  "minAmount": "1",
+  "reviewNotes": "metadata-only local request"
+}
+```
+
+Placeholder response invariants:
+
+```text
+source: listing-submission-approval-gate
+status: not-implemented-approval-required
+custody: non-custodial
+realQuaiTransactions: false
+walletRequired: false
+marketRegistryMutation: false
+tradingVaultBalanceMovement: false
+```
+
+There is no runtime listing submission in this slice. Do not add a persistent queue, listing admin account, wallet/signing path, RPC path, contract call, deploy helper, address registry, or token verification claim until approval and external evidence exist.
+
+## MarketRegistry admin metadata boundary
+
+`MarketRegistry.addMarket` is enabled-pair metadata only. It can only mark an approved base/quote token pair as available for matching/settlement policy after all review gates pass.
+
+`MarketRegistry.disableMarket` retains metadata for indexer replay. Disable must not erase market history or hide prior event/proof truth.
+
+MarketRegistry admin metadata:
+
+```text
+can create market metadata: yes, after approval
+can disable market metadata: yes, after approval
+can move TradingVault balances: no
+can unlock locked balances: no
+can settle fills: no
+can grant delegate withdrawal/admin power: no
+```
+
+`MarketRegistry` cannot move `TradingVault` balances and cannot grant withdrawal/admin power. `TradingVault` remains the only balance surface, and `Settlement`/`TradeSettled` remains the public fill/proof truth.
+
+## Delegates and listing-admin separation
+
+Delegate/API keys remain trading-only. Delegate/API keys cannot become listing-admin authority, cannot mutate `MarketRegistry`, and cannot call owner/admin listing flows.
+
+Required delegate safety copy stays explicit:
+
+```text
+PLACE_ORDER
+CANCEL_ORDER
+CANCEL_ALL
+NO_WITHDRAW
+NO_ADMIN
+```
+
+Future listing-admin approval, if any, must be a separate high-trust operator/governance plane and must still have no custody over user balances.
+
+## Disallowed autonomous work
+
+Autonomous cron slices must not add:
+
+```text
+no wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin runtime behavior, or funds movement
+```
+
+Also do not add listing submission persistence, listing-admin keys, generated deployment manifests, address claims, token verification claims, fee/economics policy, or any claim that `MarketRegistry` metadata can move `TradingVault` balances.
+
+## Next bounded slice
+
+The next safe bounded slice is docs/OpenAPI placeholder for a prepare-only listing submission endpoint. It should return an intentional non-implemented boundary until Clonners approves runtime behavior.
+
+Recommended future TDD steps:
+
+### Task 1: Add docs/OpenAPI ratchet for prepare-only listing submission
+
+**Objective:** Pin the endpoint contract without enabling runtime listing behavior.
+
+**Files:**
+- Modify: `docs/api-openapi.yaml`
+- Modify: `docs/listing-policy.md`
+- Test: `tests/token-listing-boundary.test.mjs` or a focused listing-submission placeholder test
+
+**Step 1: Write failing test**
+
+Assert that OpenAPI documents `POST /v1/listings/requests` as prepare-only/not-implemented and includes `realQuaiTransactions: false`, `walletRequired: false`, `marketRegistryMutation: false`, `NO_WITHDRAW`, and `NO_ADMIN`.
+
+**Step 2: Run test to verify failure**
+
+Run: `node --test tests/token-listing-boundary.test.mjs`
+Expected: FAIL on missing route/schema text.
+
+**Step 3: Write minimal docs/OpenAPI placeholder**
+
+Add schema-only endpoint docs; do not add API route behavior yet.
+
+**Step 4: Run test to verify pass**
+
+Run: `node --test tests/token-listing-boundary.test.mjs`
+Expected: PASS.
+
+### Task 2: Add API placeholder only after OpenAPI/docs are green
+
+**Objective:** Return a precise not-implemented approval boundary without listing runtime behavior.
+
+**Files:**
+- Modify: `services/api/src/routes/public.js` or the existing listing route module
+- Test: `services/api/test/listing-policy.test.mjs`
+
+**Guardrails:** The response must not mutate `MarketRegistry`, must not load wallets, must not read RPC URLs, must not sign/broadcast/deploy, and must not persist listing submissions unless a separate approval explicitly allows it.
+
+### Task 3: Expose read-only clients only after API placeholder is green
+
+**Objective:** Let bots inspect the approval gate without submitting listings as active behavior.
+
+**Files:**
+- Modify: `sdk/typescript/spec.md`
+- Modify: `sdk/python/spec.md`
+- Modify: `cli/qdex/spec.md`
+
+**Guardrails:** Clients may call the placeholder and return the not-implemented envelope. They must not expose listing-admin runtime helpers, transaction helpers, real token addresses, wallet loading, signing, broadcasts, deploys, or funds movement.
+
+---
+
+This plan is design-only and approval-gated. It preserves `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, WQUAI/WQI/community-token framing, and the invariant that MarketRegistry metadata cannot move TradingVault balances or grant withdrawal/admin authority.
