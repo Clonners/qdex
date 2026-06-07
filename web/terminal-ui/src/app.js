@@ -1,6 +1,5 @@
+import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
-import { bindLiveOrderStream } from './live-orders.js';
-import { bindMockCancelTrigger } from './mock-cancel-trigger.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
@@ -30,20 +29,30 @@ if (mount) {
   }
 
   try {
-    bindMockCancelTrigger({
+    bindMockCancelTriggerWithOrderStream({
       mount,
       baseUrl,
-      onError: (error) => {
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onCancelError: (error) => {
         mount.dataset.qdxMockCancelTrigger = 'error';
         console.warn('QDEX mock cancel trigger failed; no on-chain nonce cancellation or real Quai transaction was attempted.', error);
       },
       onCancel: () => {
         mount.dataset.qdxMockCancelTrigger = 'cancelled';
       },
+      onStreamError: (error) => {
+        mount.dataset.qdxLiveOrdersStream = 'error';
+        console.warn('QDEX live orders stream unavailable; keeping static mock fixture.', error);
+      },
+      onStreamUpdate: () => {
+        mount.dataset.qdxLiveOrdersStream = 'orders';
+      },
     });
   } catch (error) {
     mount.dataset.qdxMockCancelTrigger = 'disabled';
-    console.warn('QDEX mock cancel trigger disabled.', error);
+    mount.dataset.qdxLiveOrdersStream = 'disabled';
+    console.warn('QDEX local cancel/order-stream smoke disabled.', error);
   }
 
   try {
@@ -63,24 +72,5 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxLiveStream = 'disabled';
     console.warn('QDEX live fills stream disabled; keeping static mock fixture.', error);
-  }
-
-  try {
-    bindLiveOrderStream({
-      mount,
-      baseUrl,
-      baseFixture: mockVerticalSliceFixture,
-      render: renderTradeProofPanel,
-      onError: (error) => {
-        mount.dataset.qdxLiveOrdersStream = 'error';
-        console.warn('QDEX live orders stream unavailable; keeping static mock fixture.', error);
-      },
-      onUpdate: () => {
-        mount.dataset.qdxLiveOrdersStream = 'orders';
-      },
-    });
-  } catch (error) {
-    mount.dataset.qdxLiveOrdersStream = 'disabled';
-    console.warn('QDEX live orders stream disabled; keeping static mock fixture.', error);
   }
 }
