@@ -85,189 +85,81 @@ Do not cross any gate autonomously:
 - Quais SDK relayer mode requires an approved signing/broadcast design and must not use cron-held wallet material.
 - Native Qi wrapper/adapter work must be designed and reviewed before any real `QI-QUAI` settlement claim.
 
-## Next implementation tasks
+## Completed post-mock readiness tasks
 
-### Task 1: Add owner-signed nonce-cancel API/OpenAPI placeholder
+### Completed Task 1: Owner-signed nonce-cancel API/OpenAPI placeholder
 
 **Objective:** Make matcher-local cancellation and contract nonce cancellation unambiguous at the API boundary.
 
-**Files:**
-- Modify: `docs/api-openapi.yaml`
-- Modify: `docs/order-schema.md`
-- Modify: `services/api/src/routes/private.js`
-- Test: `services/api/test/routes.test.mjs`
+Completed: `POST /v1/nonces/cancel` returns a prepare-only `501` boundary with `owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and explicit wording that matcher-local cancellation does not mutate on-chain `NonceManager` nonces.
 
-**Step 1: Write failing test**
+Result:
 
-Add a focused route test asserting `POST /v1/nonces/cancel` returns status `501` with:
+- API/OpenAPI/order-schema surfaces do not load wallets, sign, broadcast, submit to the relayer, or claim on-chain status.
+- The route is discovery/prepare-only until a separate owner-signed main-wallet flow is approved.
 
-```json
-{
-  "error": "owner_signed_nonce_cancel_not_implemented",
-  "source": "owner-signed-nonce-cancel-placeholder",
-  "custody": "non-custodial",
-  "nonceManager": "owner-signed-required",
-  "permissions": ["NO_WITHDRAW", "NO_ADMIN"],
-  "message": "Matcher-local cancellation does not mutate on-chain NonceManager nonces."
-}
-```
-
-**Step 2: Run test to verify failure**
-
-Run: `pnpm --filter @qdex/api test -- --test-name-pattern nonce`
-Expected: FAIL — route is missing or returns `404`.
-
-**Step 3: Write minimal implementation**
-
-Add only the placeholder route and OpenAPI/docs text. Do not add wallet loading, broadcast code, relayer submission, or contract calls.
-
-**Step 4: Run test to verify pass**
-
-Run: `pnpm --filter @qdex/api test -- --test-name-pattern nonce`
-Expected: PASS.
-
-**Step 5: Commit**
-
-```bash
-git add docs/api-openapi.yaml docs/order-schema.md services/api/src/routes/private.js services/api/test/routes.test.mjs
-git commit -m "feat: add owner-signed nonce-cancel API placeholder"
-```
-
-### Task 2: Add SDK/CLI nonce-cancel prepare-only clients
+### Completed Task 2: SDK/CLI nonce-cancel prepare-only clients
 
 **Objective:** Let bot clients discover the safe nonce-cancel boundary without creating transaction authority.
 
-**Files:**
-- Modify: `sdk/typescript/spec.md`
-- Modify: `sdk/typescript/src/client.js`
-- Modify: `sdk/typescript/test/client-smoke.test.mjs`
-- Modify: `sdk/python/spec.md`
-- Modify: `sdk/python/qdex_client.py`
-- Modify: `sdk/python/test/test_client_smoke.py`
-- Modify: `cli/qdex/spec.md`
-- Modify: `cli/qdex/src/index.js`
-- Modify: `cli/qdex/test/cli-smoke.test.mjs`
+Completed: TypeScript SDK, Python SDK, and `qdex nonces cancel --prepare` call the placeholder without treating it as a generic failure.
 
-**Step 1: Write failing tests**
+Result:
 
-Assert TypeScript, Python, and CLI helpers expose prepare/placeholder behavior and preserve `NO_WITHDRAW`/`NO_ADMIN`.
+- Clients return the intentional `501 owner_signed_nonce_cancel_not_implemented` envelope.
+- No wallet loading, signing, broadcast behavior, relayer submission, transaction helpers, or on-chain status claims were added.
 
-**Step 2: Run tests to verify failure**
-
-Run: `pnpm --filter @qdex/sdk-typescript test && pnpm --filter @qdex/sdk-python test && pnpm --filter @qdex/cli test`
-Expected: FAIL — helpers/commands are missing.
-
-**Step 3: Write minimal implementation**
-
-Call the API placeholder and print the safety message. Keep streams bounded and do not add signing or broadcast behavior.
-
-**Step 4: Run tests to verify pass**
-
-Run the same focused commands and then `pnpm check`.
-
-**Step 5: Commit**
-
-```bash
-git add sdk/typescript sdk/python cli/qdex
-git commit -m "feat: expose safe nonce-cancel prepare clients"
-```
-
-### Task 3: Add proof-service/indexer projection for NonceCancelled events
+### Completed Task 3: Nonce-cancel proof/indexer projection boundary
 
 **Objective:** Define how future contract nonce-cancel events become API/proof rows.
 
-**Files:**
-- Modify: `services/indexer/schema.md`
-- Modify: `services/proof-service/spec.md`
-- Modify: `services/proof-service/src/contract-proof-event-adapter.js`
-- Test: `tests/contract-proof-event-adapter.test.mjs`
+Completed: future `NonceCancelled` and `NonceRangeCancelled` event projections are separated from matcher-local cancellation events.
 
-**Step 1: Write failing test**
+Result:
 
-Assert only `NonceCancelled` and `NonceRangeCancelled` contract events can project nonce-cancel proof rows; matcher-local cancellation events must be suppressed.
+- Nonce-cancel proofs are not trade settlements and do not imply withdrawal or admin authority.
+- Matcher-local cancellation stream events are suppressed from on-chain nonce proof projection.
+- Real Quai nonce proof rows require event truth such as tx hash, block number, block hash, event index, and explorer URL.
 
-**Step 2: Run test to verify failure**
-
-Run: `node --test tests/contract-proof-event-adapter.test.mjs`
-Expected: FAIL — nonce-cancel projection does not exist.
-
-**Step 3: Write minimal implementation**
-
-Add event adapter logic only. Keep real Quai proofs blocked unless tx/block/event evidence is complete.
-
-**Step 4: Run test to verify pass**
-
-Run focused test, then `pnpm check`.
-
-**Step 5: Commit**
-
-```bash
-git add services/indexer services/proof-service tests/contract-proof-event-adapter.test.mjs
-git commit -m "feat: define nonce-cancel proof projection"
-```
-
-### Task 4: Add relayer real-Quai approval gate tests
+### Completed Task 4: Relayer real-Quai approval gate
 
 **Objective:** Ensure real relayer mode cannot activate without explicit approval and complete event-truth inputs.
 
-**Files:**
-- Modify: `services/relayer/spec.md`
-- Create or modify: `tests/relayer-approval-gate.test.mjs`
+Completed: `quai_contract` mode is blocked unless explicit Clonners approval and event-truth readiness metadata are present.
 
-**Step 1: Write failing test**
+Result:
 
-Assert docs/specs require approval before any `quai_contract` submission mode and keep mock confirmation explicit.
+- `evaluateRelayerSettlementModeGate()` is metadata/readiness-only and keeps `realQuaiTransactions: false` plus `walletRequired: false`.
+- API/SDK/CLI clients can read the gate state, but no wallet loading, signing, broadcast, RPC access, relayer submission, or transaction behavior was added.
 
-**Step 2: Run test to verify failure**
-
-Run: `node --test tests/relayer-approval-gate.test.mjs`
-Expected: FAIL — approval gate ratchet is missing.
-
-**Step 3: Write minimal implementation**
-
-Document the gate and add local-only guard surfaces. Do not add Quais SDK runtime code yet.
-
-**Step 4: Run test to verify pass**
-
-Run focused test, then `pnpm check`.
-
-**Step 5: Commit**
-
-```bash
-git add services/relayer/spec.md tests/relayer-approval-gate.test.mjs
-git commit -m "test: pin relayer real-quai approval gate"
-```
-
-### Task 5: Write native Qi wrapper/adapter design before real QI-QUAI settlement
+### Completed Task 5: Native Qi wrapper/adapter boundary plan
 
 **Objective:** Prevent accidental ERC-20 assumptions for native Qi before contract settlement claims become real.
 
-**Files:**
-- Create: `docs/native-qi-wrapper-adapter.md`
-- Modify: `docs/contracts.md`
-- Modify: `docs/architecture.md`
-- Test: `tests/native-qi-wrapper-adapter.test.mjs`
+Completed: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./2026-06-07-native-qi-wrapper-adapter-boundary.md) keeps mock `QI-QUAI` mock-only and limits future paths.
 
-**Step 1: Write failing test**
+Result:
 
-Assert the design doc states native Qi is UTXO-model, cannot be treated as an ERC-20 vault token, and needs an explicit wrapper/adapter/conversion proof before real `QI-QUAI` settlement.
+- Native Qi remains documented as UTXO-model and not safe to treat as an ERC-20-style vault token.
+- `/v1/contracts`, SDKs, CLI, and docs expose read-only `nativeQiStatus: design-required` metadata.
+- No native Qi adapter interface, runtime behavior, wallet loading, signing, broadcast, deployment, transaction submission, or real settlement claim was added.
 
-**Step 2: Run test to verify failure**
+## Remaining approval-gated decision
 
-Run: `node --test tests/native-qi-wrapper-adapter.test.mjs`
-Expected: FAIL — design doc is missing.
+Choose exactly one native Qi path only after explicit Clonners approval and external evidence.
 
-**Step 3: Write minimal implementation**
+Accepted future paths remain limited to:
 
-Document the adapter options, event/proof requirements, and approval gates. Do not implement contracts or transactions.
+1. `wrapped_qi_receipt_token`
+2. `contract_native_qi_adapter`
+3. `conversion_settlement_flow`
 
-**Step 4: Run test to verify pass**
+Required evidence before any selected-path interface or runtime work:
 
-Run focused test, then `pnpm check`.
+- reserve or conversion event truth,
+- redemption/unwrap proof path,
+- solvency invariant,
+- `TradeSettled` trade-proof truth,
+- selected path design reviewed and approved.
 
-**Step 5: Commit**
-
-```bash
-git add docs/native-qi-wrapper-adapter.md docs/contracts.md docs/architecture.md tests/native-qi-wrapper-adapter.test.mjs
-git commit -m "docs: plan native qi wrapper adapter"
-```
+Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real Qi settlement claims until the path is selected.

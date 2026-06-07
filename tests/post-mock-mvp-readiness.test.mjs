@@ -42,15 +42,25 @@ test('post-mock MVP readiness plan pins owner-signed nonce-cancel and approval g
     'event-truth indexing',
     'Quais SDK relayer mode',
     'explicit Clonners approval',
-    '## Next implementation tasks',
-    'Task 1: Add owner-signed nonce-cancel API/OpenAPI placeholder',
-    'Task 2: Add SDK/CLI nonce-cancel prepare-only clients',
-    'Task 3: Add proof-service/indexer projection for NonceCancelled events',
-    'Task 4: Add relayer real-Quai approval gate tests',
-    'Task 5: Write native Qi wrapper/adapter design before real QI-QUAI settlement',
+    '## Completed post-mock readiness tasks',
+    '### Completed Task 1: Owner-signed nonce-cancel API/OpenAPI placeholder',
+    'Completed: `POST /v1/nonces/cancel` returns a prepare-only `501` boundary',
+    '### Completed Task 2: SDK/CLI nonce-cancel prepare-only clients',
+    'Completed: TypeScript SDK, Python SDK, and `qdex nonces cancel --prepare` call the placeholder without treating it as a generic failure.',
+    '### Completed Task 3: Nonce-cancel proof/indexer projection boundary',
+    'Completed: future `NonceCancelled` and `NonceRangeCancelled` event projections are separated from matcher-local cancellation events.',
+    '### Completed Task 4: Relayer real-Quai approval gate',
+    'Completed: `quai_contract` mode is blocked unless explicit Clonners approval and event-truth readiness metadata are present.',
+    '### Completed Task 5: Native Qi wrapper/adapter boundary plan',
+    'Completed: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./2026-06-07-native-qi-wrapper-adapter-boundary.md) keeps mock `QI-QUAI` mock-only and limits future paths.',
+    '## Remaining approval-gated decision',
+    'Choose exactly one native Qi path only after explicit Clonners approval and external evidence.',
+    'Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real Qi settlement claims until the path is selected.',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }
+
+  assert.doesNotMatch(plan, /## Next implementation tasks/, 'post-mock plan should not advertise completed tasks as next work');
 
   const forbiddenRuntimeDetails = new RegExp(['process\\.env', 'RPC_URL', 'mnemo' + 'nic', 'seed' + ' phrase'].join('|'));
   assert.doesNotMatch(plan, forbiddenRuntimeDetails, 'plan must not add env, wallet-material, or secret-bearing implementation details');
