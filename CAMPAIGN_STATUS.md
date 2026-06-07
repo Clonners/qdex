@@ -2,11 +2,11 @@
 
 ## State
 
-- Status: blocked pending explicit Clonners approval; local runtime listing review queue and TypeScript/Python/qdex queue clients are complete; listing submission and MarketRegistry admin mutation remain approval-gated
+- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: local listing review queue intake/inspection clients complete; no wallets/RPC/deploys/txs are approved
+- Current phase: local listing review queue intake/inspection clients complete; next autonomous slice is local in-memory review decision workflow with no real network mutation; no wallets/RPC/deploys/txs are approved
 
 ## Current repo baseline
 
@@ -39,9 +39,10 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 1. Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.
 2. Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.
-3. Implemented: Clonners approved and the campaign added a local runtime listing review queue plus TypeScript/Python/qdex queue clients; listing submission and MarketRegistry admin mutation still require separate explicit approval.
-4. Approval required: local review decision/approval runtime behavior beyond queue intake, runtime listing submission, or MarketRegistry admin mutation.
-5. Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, or funds movement.
+3. Implemented: Clonners approved and the campaign added a local runtime listing review queue plus TypeScript/Python/qdex queue clients.
+4. Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.
+5. Next autonomous slice: local in-memory listing review decisions (`approve`/`reject` metadata workflow) without listing submission, real token addresses, or `MarketRegistry` mutation.
+6. Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
 ## Cron runner
 
@@ -153,3 +154,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 18:36 -03: Clonners approved the next local-only runtime listing review queue slice. Scope is limited to an in-memory/local review queue and inspection surface; listing submission, `MarketRegistry` admin mutation, wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, real token addresses, and funds movement remain blocked pending separate explicit approval. Next slice: implement the local runtime listing review queue with tests.
 - 2026-06-07 18:54 -03: Implemented the approved local in-memory listing review queue: `GET /v1/listings/requests` inspects queue state and `POST /v1/listings/requests` with `requestMode: local_review_queue` returns `202` queued metadata-only records; prepare-only fallback still returns intentional `501`. Added queue validation/rejection for live authority fields, OpenAPI/docs/status ratchets, and focused API/doc/SDK/CLI tests; verified `node --test tests/token-listing-boundary.test.mjs`, `pnpm --filter @qdex/api check`, and full `pnpm check` green. No wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, real token addresses, `MarketRegistry` mutation, or funds movement are approved. Next slice: SDK/Python/qdex clients for the queue.
 - 2026-06-07 19:18 -03: Added TypeScript/Python SDK and `qdex` CLI clients for the local in-memory listing review queue: `listLocalReviewQueue()` / `list_local_review_queue()`, `enqueueLocalReview()` / `enqueue_local_review()`, `qdex listings requests`, and `qdex listings request --local-review-queue` consume the existing metadata-only queue while preserving `NO_WITHDRAW`/`NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and no `MarketRegistry` mutation/funds behavior. Verified focused SDK/Python/CLI/doc tests, full `pnpm check`, `git diff --check`, and secret-pattern scan no matches. Status is now blocked pending explicit Clonners approval for local review decisions beyond queue intake, runtime listing submission, or MarketRegistry admin mutation.
+- 2026-06-07 19:50 -03: Clonners asked the campaign to keep going until the DEX is completed. Campaign is unblocked for bounded local/source-only development and local in-memory/runtime/harness slices inside this repo. External side effects remain approval-gated: no wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement. Next slice: local in-memory listing review decision workflow after queue intake.

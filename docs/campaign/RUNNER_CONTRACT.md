@@ -30,6 +30,12 @@ mock market
 docs/plans/2026-06-06-quai-terminal-dex-mvp.md
 ```
 
+## Completion-mode direction
+
+Clonners asked the autonomous campaign to keep advancing until the DEX is completed. Treat that as approval for bounded local/source-only development inside this repo, including local in-memory runtime behavior and local contract-harness logic, while preserving the external side-effect gates below.
+
+The runner should keep choosing the next smallest safe slice from `CAMPAIGN_STATUS.md` instead of stopping at completed metadata/client surfaces. If the next useful step would require external wallets/RPC/deploys/txs/funds/public servers/remote pushes or real-network `MarketRegistry` mutation, stop and ask for the exact approval instead of treating this completion-mode direction as blanket permission.
+
 ## Autonomous boundaries
 
 Allowed autonomously:
@@ -38,6 +44,7 @@ Allowed autonomously:
 - create tests/docs/specs/source code
 - run local tests/checks/lints/builds
 - research public docs for Quai/tooling
+- implement local in-memory runtime behavior and local contract-harness logic
 - commit local changes to this repo
 - append compact checkpoints to `CAMPAIGN_STATUS.md`
 
