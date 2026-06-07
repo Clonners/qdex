@@ -199,6 +199,8 @@ ${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
           <div class="mock-trigger">
             <button type="button" data-qdx-trigger-cross>submit mock cross</button>
             <p class="muted" data-qdx-trigger-status>Posts a local/dev GTC sell plus IOC buy with signed slippage bounds; no real Quai tx/explorer/funds.</p>
+            <button type="button" data-qdx-trigger-cancel>create + cancel mock order</button>
+            <p class="muted" data-qdx-cancel-status>Posts one local/dev resting order, then matcher-local cancellation does not cancel on-chain nonce; no real Quai tx/explorer/funds.</p>
           </div>
         </article>
 

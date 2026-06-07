@@ -47,8 +47,12 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /data-qdx-trigger-cross/);
   assert.match(html, /submit mock cross/i);
   assert.match(html, /market_ioc slippage=50bps/i);
+  assert.match(html, /data-qdx-trigger-cancel/);
+  assert.match(html, /create \+ cancel mock order/i);
+  assert.match(html, /matcher-local cancellation does not cancel on-chain nonce/i);
   assert.match(html, /no real Quai tx\/explorer\/funds/i);
   assert.match(html, /data-qdx-trigger-status/);
+  assert.match(html, /data-qdx-cancel-status/);
   assert.match(html, /&gt; order signed locally/);
   assert.match(html, /&gt; mock settlement reference: mock-settlement-fill-000001/);
 });

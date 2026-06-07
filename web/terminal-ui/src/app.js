@@ -1,5 +1,6 @@
 import { bindLiveFillStream } from './live-fills.js';
 import { bindLiveOrderStream } from './live-orders.js';
+import { bindMockCancelTrigger } from './mock-cancel-trigger.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
@@ -26,6 +27,23 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxMockOrderTrigger = 'disabled';
     console.warn('QDEX mock order trigger disabled.', error);
+  }
+
+  try {
+    bindMockCancelTrigger({
+      mount,
+      baseUrl,
+      onError: (error) => {
+        mount.dataset.qdxMockCancelTrigger = 'error';
+        console.warn('QDEX mock cancel trigger failed; no on-chain nonce cancellation or real Quai transaction was attempted.', error);
+      },
+      onCancel: () => {
+        mount.dataset.qdxMockCancelTrigger = 'cancelled';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxMockCancelTrigger = 'disabled';
+    console.warn('QDEX mock cancel trigger disabled.', error);
   }
 
   try {
