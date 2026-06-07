@@ -274,6 +274,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
   qdex --base-url http://127.0.0.1:8787 contracts
   qdex --base-url http://127.0.0.1:8787 listings policy
+  qdex --base-url http://127.0.0.1:8787 listings review-flow
   qdex --base-url http://127.0.0.1:8787 listings request --prepare --base-symbol COMMUNITY --quote-symbol WQUAI --token-model erc20-style-vault-token --market-id COMMUNITY-WQUAI --price-precision 8 --amount-precision 8 --min-amount 1
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
@@ -326,6 +327,15 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         command: 'listings policy',
         baseUrl,
         ...(await client.listings.policy.get()),
+      });
+      return 0;
+    }
+
+    if (command === 'listings' && rest[0] === 'review-flow') {
+      writeJson(stdout, {
+        command: 'listings review-flow',
+        baseUrl,
+        ...(await client.listings.reviewFlow.get()),
       });
       return 0;
     }

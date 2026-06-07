@@ -191,6 +191,48 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 policy["marketRegistry"]["notes"],
             )
 
+    def test_python_sdk_exposes_read_only_listing_review_flow_metadata_without_marketregistry_mutation_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            review_flow = client.listings.review_flow.get()
+
+            self.assertEqual(review_flow["source"], "listed-asset-marketregistry-review-flow")
+            self.assertEqual(review_flow["status"], "design-only-local-metadata")
+            self.assertEqual(review_flow["phase"], "clonners-managed-local-review-before-dao")
+            self.assertEqual(review_flow["requestSurface"], "prepare-only POST /v1/listings/requests")
+            self.assertEqual(
+                [stage["id"] for stage in review_flow["stages"]],
+                [
+                    "metadata_intake",
+                    "token_safety_review",
+                    "market_parameter_review",
+                    "clonners_local_approval",
+                    "marketregistry_admin_gate",
+                ],
+            )
+            self.assertEqual(review_flow["approvalOutcome"]["approvedStatus"], "approved-local-metadata-only")
+            self.assertEqual(review_flow["approvalOutcome"]["rejectedStatus"], "rejected-local-metadata-only")
+            self.assertFalse(review_flow["approvalOutcome"]["marketRegistryMutation"])
+            self.assertFalse(review_flow["approvalOutcome"]["realQuaiTransactions"])
+            self.assertEqual(review_flow["safety"]["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(review_flow["safety"]["marketRegistryMutation"])
+            self.assertFalse(review_flow["safety"]["realQuaiTransactions"])
+            self.assertFalse(review_flow["safety"]["walletRequired"])
+            self.assertTrue(review_flow["safety"]["noWalletLoading"])
+            self.assertTrue(review_flow["safety"]["noRpcUrlAccess"])
+            self.assertTrue(review_flow["safety"]["noSigning"])
+            self.assertTrue(review_flow["safety"]["noBroadcast"])
+            self.assertTrue(review_flow["safety"]["noDeploys"])
+            self.assertTrue(review_flow["safety"]["noTransactionSubmission"])
+            self.assertTrue(review_flow["safety"]["noListingAdminKeys"])
+            self.assertTrue(review_flow["safety"]["noRealTokenAddresses"])
+            self.assertTrue(review_flow["safety"]["noFundsMovement"])
+            self.assertIn(
+                "does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority",
+                review_flow["safety"]["notice"],
+            )
+
     def test_python_sdk_exposes_prepare_only_listing_request_placeholder_without_treating_501_as_submission_success(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

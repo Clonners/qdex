@@ -11,6 +11,7 @@ markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
 listing_policy = dex.listings.policy.get()  # GET /v1/listings/policy
+listing_review_flow = dex.listings.review_flow.get()  # GET /v1/listings/review-flow
 listing_request_prepare = dex.listings.requests.prepare_submit({
     'baseSymbol': 'COMMUNITY',
     'quoteSymbol': 'WQUAI',
@@ -77,6 +78,10 @@ The Python SDK must not load wallets, send transactions, read RPC URLs, infer re
 ## Listing policy
 
 `listings.policy.get()` is a read-only listing-policy client for `GET /v1/listings/policy`. It returns `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI primary quote assets, `community-created-erc20-style-token` metadata, and `MarketRegistry-enabled-pair-metadata` truth labels. The policy client must preserve `NO_WITHDRAW`/`NO_ADMIN` delegate safety, must not expose listing submission or listing-admin runtime helpers, and must say there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. MarketRegistry metadata can enable/disable approved pairs only; it cannot move TradingVault balances or grant withdrawal/admin power.
+
+## Listing review flow
+
+`listings.review_flow.get()` is a read-only local review state-machine client for `GET /v1/listings/review-flow`. It returns `source: listed-asset-marketregistry-review-flow`, `status: design-only-local-metadata`, `phase: clonners-managed-local-review-before-dao`, local statuses such as `approved-local-metadata-only` / `rejected-local-metadata-only`, and `marketRegistryMutation: false`. It preserves `NO_WITHDRAW`/`NO_ADMIN`, has no wallets/RPC/signing/broadcast/deploy/tx/funds behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 
 ## Listing request placeholder
 

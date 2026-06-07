@@ -112,6 +112,14 @@ class _ListingPolicyApi:
         return self._client._request_ok("/v1/listings/policy")
 
 
+class _ListingReviewFlowApi:
+    def __init__(self, client):
+        self._client = client
+
+    def get(self):
+        return self._client._request_ok("/v1/listings/review-flow")
+
+
 class _ListingRequestsApi:
     def __init__(self, client):
         self._client = client
@@ -128,6 +136,7 @@ class _ListingRequestsApi:
 class _ListingsApi:
     def __init__(self, client):
         self.policy = _ListingPolicyApi(client)
+        self.review_flow = _ListingReviewFlowApi(client)
         self.requests = _ListingRequestsApi(client)
 
 

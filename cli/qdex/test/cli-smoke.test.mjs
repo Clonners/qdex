@@ -199,6 +199,46 @@ test('qdex listings policy command prints read-only token listing and MarketRegi
   });
 });
 
+test('qdex listings review-flow command prints read-only local review metadata without mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'listings', 'review-flow']);
+
+    assert.equal(result.command, 'listings review-flow');
+    assert.equal(result.source, 'listed-asset-marketregistry-review-flow');
+    assert.equal(result.status, 'design-only-local-metadata');
+    assert.equal(result.phase, 'clonners-managed-local-review-before-dao');
+    assert.equal(result.requestSurface, 'prepare-only POST /v1/listings/requests');
+    assert.deepEqual(result.stages.map((stage) => stage.id), [
+      'metadata_intake',
+      'token_safety_review',
+      'market_parameter_review',
+      'clonners_local_approval',
+      'marketregistry_admin_gate',
+    ]);
+    assert.equal(result.approvalOutcome.approvedStatus, 'approved-local-metadata-only');
+    assert.equal(result.approvalOutcome.rejectedStatus, 'rejected-local-metadata-only');
+    assert.equal(result.approvalOutcome.marketRegistryMutation, false);
+    assert.equal(result.approvalOutcome.realQuaiTransactions, false);
+    assert.deepEqual(result.safety.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.safety.marketRegistryMutation, false);
+    assert.equal(result.safety.realQuaiTransactions, false);
+    assert.equal(result.safety.walletRequired, false);
+    assert.equal(result.safety.noWalletLoading, true);
+    assert.equal(result.safety.noRpcUrlAccess, true);
+    assert.equal(result.safety.noSigning, true);
+    assert.equal(result.safety.noBroadcast, true);
+    assert.equal(result.safety.noDeploys, true);
+    assert.equal(result.safety.noTransactionSubmission, true);
+    assert.equal(result.safety.noListingAdminKeys, true);
+    assert.equal(result.safety.noRealTokenAddresses, true);
+    assert.equal(result.safety.noFundsMovement, true);
+    assert.match(
+      result.safety.notice,
+      /does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal\/admin authority/i,
+    );
+  });
+});
+
 test('qdex listings request --prepare prints prepare-only placeholder without treating 501 as submission success', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson([

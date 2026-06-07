@@ -192,6 +192,47 @@ test('TypeScript SDK exposes read-only listing policy metadata without listing-a
   });
 });
 
+test('TypeScript SDK exposes read-only listing review-flow metadata without MarketRegistry mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const reviewFlow = await client.listings.reviewFlow.get();
+
+    assert.equal(reviewFlow.source, 'listed-asset-marketregistry-review-flow');
+    assert.equal(reviewFlow.status, 'design-only-local-metadata');
+    assert.equal(reviewFlow.phase, 'clonners-managed-local-review-before-dao');
+    assert.equal(reviewFlow.requestSurface, 'prepare-only POST /v1/listings/requests');
+    assert.deepEqual(reviewFlow.stages.map((stage) => stage.id), [
+      'metadata_intake',
+      'token_safety_review',
+      'market_parameter_review',
+      'clonners_local_approval',
+      'marketregistry_admin_gate',
+    ]);
+    assert.equal(reviewFlow.approvalOutcome.approvedStatus, 'approved-local-metadata-only');
+    assert.equal(reviewFlow.approvalOutcome.rejectedStatus, 'rejected-local-metadata-only');
+    assert.equal(reviewFlow.approvalOutcome.marketRegistryMutation, false);
+    assert.equal(reviewFlow.approvalOutcome.realQuaiTransactions, false);
+    assert.deepEqual(reviewFlow.safety.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(reviewFlow.safety.marketRegistryMutation, false);
+    assert.equal(reviewFlow.safety.realQuaiTransactions, false);
+    assert.equal(reviewFlow.safety.walletRequired, false);
+    assert.equal(reviewFlow.safety.noWalletLoading, true);
+    assert.equal(reviewFlow.safety.noRpcUrlAccess, true);
+    assert.equal(reviewFlow.safety.noSigning, true);
+    assert.equal(reviewFlow.safety.noBroadcast, true);
+    assert.equal(reviewFlow.safety.noDeploys, true);
+    assert.equal(reviewFlow.safety.noTransactionSubmission, true);
+    assert.equal(reviewFlow.safety.noListingAdminKeys, true);
+    assert.equal(reviewFlow.safety.noRealTokenAddresses, true);
+    assert.equal(reviewFlow.safety.noFundsMovement, true);
+    assert.match(
+      reviewFlow.safety.notice,
+      /does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal\/admin authority/i,
+    );
+  });
+});
+
 test('TypeScript SDK exposes prepare-only listing request placeholder without treating 501 as submission success', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

@@ -14,6 +14,7 @@ markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
 contracts = dex.contracts.get()
 listing_policy = dex.listings.policy.get()
+listing_review_flow = dex.listings.review_flow.get()
 listing_request_prepare = dex.listings.requests.prepare_submit({
     "baseSymbol": "COMMUNITY",
     "quoteSymbol": "WQUAI",
@@ -33,6 +34,12 @@ assert listing_policy["status"] == "design-only-local-metadata"
 assert listing_policy["supportedAssets"][2]["symbol"] == "community-created-erc20-style-token"
 assert listing_policy["marketRegistry"]["truthSource"] == "MarketRegistry-enabled-pair-metadata"
 assert listing_policy["safety"]["delegatePermissions"] == ["NO_WITHDRAW", "NO_ADMIN"]
+assert listing_review_flow["source"] == "listed-asset-marketregistry-review-flow"
+assert listing_review_flow["status"] == "design-only-local-metadata"
+assert listing_review_flow["phase"] == "clonners-managed-local-review-before-dao"
+assert listing_review_flow["approvalOutcome"]["approvedStatus"] == "approved-local-metadata-only"
+assert listing_review_flow["approvalOutcome"]["rejectedStatus"] == "rejected-local-metadata-only"
+assert listing_review_flow["safety"]["permissions"] == ["NO_WITHDRAW", "NO_ADMIN"]
 assert listing_request_prepare["status"] == 501
 assert listing_request_prepare["body"]["error"] == "listing_request_not_implemented"
 assert listing_request_prepare["body"]["requestStatus"] == "not-implemented-approval-required"
@@ -62,6 +69,8 @@ proof = smoke["proof"]
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `listedAssetStatus`: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and native Qi direct settlement out of scope in favor of WQI. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `dex.listings.policy.get()` calls `GET /v1/listings/policy` and returns read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
+
+`dex.listings.review_flow.get()` calls `GET /v1/listings/review-flow` and returns read-only `listed-asset-marketregistry-review-flow` / `design-only-local-metadata` for `phase: clonners-managed-local-review-before-dao`. It exposes local-only review statuses like `approved-local-metadata-only` and `rejected-local-metadata-only`, keeps `NO_WITHDRAW` and `NO_ADMIN`, has no wallets/RPC/signing/broadcast/deploy/tx/funds behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 
 `dex.listings.requests.prepare_submit()` calls `POST /v1/listings/requests` and returns the prepare-only 501 placeholder body (`listing_request_not_implemented`, `not-implemented-approval-required`, `listed-asset-marketregistry-policy`, `design-only-local-metadata`) for WQUAI/WQI `community-created-erc20-style-token` metadata. It treats the intentional 501 as a boundary response, not as a generic transport failure and not as proof of submission: it preserves `NO_WITHDRAW`/`NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and does not prove a listing request was submitted on-chain.
 

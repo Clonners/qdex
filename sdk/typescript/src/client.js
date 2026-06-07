@@ -202,6 +202,9 @@ export class QDexClient {
       policy: {
         get: async () => this.#requestOk('/v1/listings/policy'),
       },
+      reviewFlow: {
+        get: async () => this.#requestOk('/v1/listings/review-flow'),
+      },
       requests: {
         prepareSubmit: async (request) => this.#requestExpectedStatus('/v1/listings/requests', {
           method: 'POST',
