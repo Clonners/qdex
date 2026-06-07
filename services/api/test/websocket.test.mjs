@@ -278,3 +278,86 @@ test('WebSocket transport fanouts live snapshots after mock orderbook and fill m
     }
   });
 });
+
+test('WebSocket transport fanouts matcher-local cancellation snapshots to depth and orders streams', async () => {
+  await withServer(async (baseUrl) => {
+    const httpBaseUrl = baseUrl.replace('ws://', 'http://');
+    const depthWs = new WebSocket(`${baseUrl}/v1/ws?channel=${encodeURIComponent('market.QI-QUAI.depth')}`);
+    const ordersWs = new WebSocket(`${baseUrl}/v1/ws?channel=orders`);
+
+    try {
+      const initialDepth = await nextWebSocketMessage(depthWs, 'initial depth snapshot before cancellation');
+      assert.equal(initialDepth.type, 'snapshot');
+      assert.deepEqual(initialDepth.snapshot.data.asks, []);
+
+      const initialOrders = await nextWebSocketMessage(ordersWs, 'initial orders snapshot before cancellation');
+      assert.equal(initialOrders.type, 'snapshot');
+      assert.equal(initialOrders.snapshot.visibility, 'private');
+      assert.deepEqual(initialOrders.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(initialOrders.snapshot.data.orders, []);
+
+      const depthAfterRestingOrder = nextWebSocketMessage(depthWs, 'depth update after resting order before cancellation');
+      const ordersAfterRestingOrder = nextWebSocketMessage(ordersWs, 'orders update after resting order before cancellation');
+      const sell = await requestJson(httpBaseUrl, '/v1/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          order: mockOrder({
+            side: 'sell',
+            amount: '100',
+            price: '5',
+            nonce: '601',
+            owner: '0x1111111111111111111111111111111111111111',
+          }),
+        }),
+      });
+      assert.equal(sell.status, 201);
+
+      const [restingDepth, restingOrders] = await Promise.all([
+        depthAfterRestingOrder,
+        ordersAfterRestingOrder,
+      ]);
+      assert.equal(restingDepth.streamEvent.reason, 'orderbook_changed');
+      assert.deepEqual(restingDepth.snapshot.data.asks.map((order) => order.orderHash), [sell.body.orderHash]);
+      assert.equal(restingOrders.streamEvent.reason, 'orderbook_changed');
+      assert.deepEqual(restingOrders.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(restingOrders.snapshot.data.orders.map((order) => order.orderHash), [sell.body.orderHash]);
+
+      const depthAfterCancel = nextWebSocketMessage(depthWs, 'depth update after matcher-local cancellation');
+      const ordersAfterCancel = nextWebSocketMessage(ordersWs, 'orders update after matcher-local cancellation');
+      const cancel = await requestJson(httpBaseUrl, `/v1/orders/${encodeURIComponent(sell.body.orderHash)}`, {
+        method: 'DELETE',
+      });
+      assert.equal(cancel.status, 200);
+      assert.equal(cancel.body.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+      assert.deepEqual(cancel.body.permissions, ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+
+      const [cancelledDepth, cancelledOrders] = await Promise.all([
+        depthAfterCancel,
+        ordersAfterCancel,
+      ]);
+
+      for (const message of [cancelledDepth, cancelledOrders]) {
+        assert.equal(message.streamEvent.reason, 'matcher_local_order_cancelled');
+        assert.deepEqual(message.streamEvent.channels, ['market.QI-QUAI.depth', 'orders']);
+        assert.equal(message.streamEvent.source, 'mock-matching-engine');
+        assert.equal(message.streamEvent.custody, 'non-custodial-no-withdrawal-authority');
+        assert.equal(message.streamEvent.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
+        assert.deepEqual(message.streamEvent.permissions, ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
+        assert.deepEqual(message.streamEvent.cancelledOrderHashes, [sell.body.orderHash]);
+        assert.match(message.streamEvent.message, /does not cancel the on-chain nonce/i);
+      }
+
+      assert.deepEqual(cancelledDepth.snapshot.data.asks, []);
+      assert.deepEqual(cancelledDepth.snapshot.data.bids, []);
+      assert.deepEqual(cancelledOrders.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(cancelledOrders.snapshot.data.orders[0].orderHash, sell.body.orderHash);
+      assert.equal(cancelledOrders.snapshot.data.orders[0].status, 'cancelled');
+      assert.equal(cancelledOrders.snapshot.data.orders[0].remainingAmount, '0');
+      assert.equal(cancelledOrders.snapshot.data.orders[0].nonceCancellation, 'not-implied-matcher-local-only');
+      assert.equal(Object.hasOwn(cancelledOrders.snapshot.data.orders[0], 'createdAt'), false);
+    } finally {
+      depthWs.close();
+      ordersWs.close();
+    }
+  });
+});

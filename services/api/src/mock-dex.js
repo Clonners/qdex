@@ -64,6 +64,7 @@ const streamChannelsForMutation = (fills) => {
   }
   return channels;
 };
+const streamChannelsForCancellation = () => [`market.${MARKET_ID}.depth`, 'orders'];
 
 const compareRestingOrders = (side) => (left, right) => {
   const leftPrice = BigInt(left.price);
@@ -195,11 +196,12 @@ export const createMockDexState = ({
   };
   const streamListeners = new Set();
 
-  const emitStreamUpdate = ({ fills }) => {
+  const emitStreamUpdate = ({ fills = [], reason, channels, ...metadata }) => {
     const streamEvent = {
-      reason: fills.length > 0 ? 'mock_settlement_confirmed' : 'orderbook_changed',
+      reason: reason ?? (fills.length > 0 ? 'mock_settlement_confirmed' : 'orderbook_changed'),
       marketId: MARKET_ID,
-      channels: streamChannelsForMutation(fills),
+      channels: channels ?? streamChannelsForMutation(fills),
+      ...metadata,
     };
 
     for (const listener of streamListeners) {
@@ -306,6 +308,19 @@ export const createMockDexState = ({
     nonceManager: CANCELLATION_NONCE_NOTE,
     permissions: CANCEL_ORDER_PERMISSIONS,
     message,
+  });
+
+  const cancellationStreamUpdate = ({ cancelledOrders, permissions, reason, filters }) => ({
+    fills: [],
+    reason,
+    channels: streamChannelsForCancellation(),
+    source: 'mock-matching-engine',
+    custody: CUSTODY_NOTE,
+    nonceManager: CANCELLATION_NONCE_NOTE,
+    permissions,
+    cancelledOrderHashes: cancelledOrders.map((order) => order.orderHash),
+    ...(filters === undefined ? {} : { filters }),
+    message: CANCELLATION_MESSAGE,
   });
 
   const matchOrder = (incoming) => {
@@ -421,7 +436,11 @@ export const createMockDexState = ({
       }
 
       const cancelledOrders = [cancelProjectedOrder(order, 'cancel_order')];
-      emitStreamUpdate({ fills: [] });
+      emitStreamUpdate(cancellationStreamUpdate({
+        cancelledOrders,
+        permissions: CANCEL_ORDER_PERMISSIONS,
+        reason: 'matcher_local_order_cancelled',
+      }));
 
       return {
         statusCode: 200,
@@ -456,7 +475,12 @@ export const createMockDexState = ({
 
       const cancelledOrders = candidates.map((order) => cancelProjectedOrder(order, 'cancel_all'));
       if (cancelledOrders.length > 0) {
-        emitStreamUpdate({ fills: [] });
+        emitStreamUpdate(cancellationStreamUpdate({
+          cancelledOrders,
+          permissions: CANCEL_ALL_PERMISSIONS,
+          reason: 'matcher_local_orders_cancelled',
+          filters,
+        }));
       }
 
       return {
