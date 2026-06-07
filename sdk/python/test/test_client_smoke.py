@@ -105,6 +105,40 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 "explicit-approval-required-before-deploy-or-transaction",
             )
 
+    def test_python_sdk_exposes_read_only_relayer_settlement_mode_gate_metadata_without_wallet_or_tx_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            gate = client.relayer.settlement_mode_gate.get()
+
+            self.assertEqual(gate["source"], "relayer-approval-gate")
+            self.assertEqual(gate["currentSettlementMode"], "mock")
+            self.assertEqual(gate["custody"], "non-custodial-relayer-gate")
+            self.assertFalse(gate["realQuaiTransactions"])
+            self.assertFalse(gate["walletRequired"])
+            self.assertEqual(
+                gate["requiredEventTruthFields"],
+                [
+                    "settlementTx",
+                    "blockNumber",
+                    "blockHash",
+                    "eventIndex",
+                    "explorerUrl",
+                ],
+            )
+            self.assertTrue(gate["modes"]["mock"]["allowed"])
+            self.assertEqual(gate["modes"]["mock"]["reason"], "mock_mode_local_only")
+            self.assertFalse(gate["modes"]["quai_contract"]["allowed"])
+            self.assertEqual(gate["modes"]["quai_contract"]["reason"], "real_quai_approval_gate_blocked")
+            self.assertIn("approval.explicitApproval", gate["modes"]["quai_contract"]["missingFields"])
+            self.assertIn("eventTruth.requiredFields.settlementTx", gate["modes"]["quai_contract"]["missingFields"])
+            self.assertTrue(gate["safety"]["noWalletLoading"])
+            self.assertTrue(gate["safety"]["noSigning"])
+            self.assertTrue(gate["safety"]["noBroadcast"])
+            self.assertTrue(gate["safety"]["noRpcUrlAccess"])
+            self.assertTrue(gate["safety"]["noTransactionSubmission"])
+            self.assertEqual(gate["safety"]["proofTrigger"], "TradeSettled")
+
     def test_python_sdk_exposes_owner_signed_nonce_cancel_prepare_placeholder_without_wallet_or_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

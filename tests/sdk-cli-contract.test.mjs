@@ -82,6 +82,7 @@ test('Python SDK spec mirrors bot flow without creating withdrawal authority', a
       'markets.list()',
       'orderbook.get(market_id)',
       'contracts.get()',
+      'relayer.settlement_mode_gate.get()',
       'nonces.prepare_cancel()',
       'orders.create_limit_order',
       'orders.create_market_ioc_order',
@@ -97,6 +98,9 @@ test('Python SDK spec mirrors bot flow without creating withdrawal authority', a
       'POST /v1/orders',
       'GET /v1/proofs/trades/:tradeId',
       'GET /v1/contracts',
+      'GET /v1/relayer/settlement-mode-gate',
+      'relayer-approval-gate',
+      'real_quai_approval_gate_blocked',
       'POST /v1/nonces/cancel',
       'owner_signed_nonce_cancel_not_implemented',
       'owner-signed-required',
@@ -277,12 +281,23 @@ test('SDK and CLI README docs expose owner-signed nonce-cancel prepare-only clie
   }
 });
 
-test('TypeScript SDK and CLI README docs expose read-only relayer gate clients', async () => {
+test('SDK and CLI README docs expose read-only relayer gate clients', async () => {
   const docs = [
     {
       path: 'sdk/typescript/README.md',
       terms: [
         'dex.relayer.settlementModeGate.get',
+        'GET /v1/relayer/settlement-mode-gate',
+        'relayer-approval-gate',
+        'currentSettlementMode: mock',
+        'real_quai_approval_gate_blocked',
+        'no wallet loading, signing, broadcast, RPC URL access, or transaction submission',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.relayer.settlement_mode_gate.get',
         'GET /v1/relayer/settlement-mode-gate',
         'relayer-approval-gate',
         'currentSettlementMode: mock',

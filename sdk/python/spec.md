@@ -10,6 +10,7 @@ dex = QDexClient(base_url=base_url, wallet=wallet, delegate_key=delegate_key)
 markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
+relayer_gate = dex.relayer.settlement_mode_gate.get()  # GET /v1/relayer/settlement-mode-gate
 nonce_cancel_prepare = dex.nonces.prepare_cancel({
     'action': 'cancelNonce',
     'owner': '0xowner',
@@ -60,6 +61,10 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
 
 The Python SDK must not load wallets, send transactions, read RPC URLs, infer real contract addresses, or imply deploy authority from this metadata. Native Qi remains UTXO-model and requires a wrapper/adapter/conversion design before any real `QI-QUAI` vault settlement claim.
+
+## Relayer settlement-mode gate
+
+`relayer.settlement_mode_gate.get()` is read-only relayer approval-gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so Python bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 ## Owner-signed nonce cancellation
 
