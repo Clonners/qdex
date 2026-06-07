@@ -95,16 +95,18 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   );
 });
 
-test('campaign status records local listing review-flow clients and approval-gated runtime boundary', async () => {
+test('campaign status records approved local listing review queue boundary', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
-    '- Status: blocked pending explicit Clonners approval for runtime listing review/submission or MarketRegistry admin mutation; listing review-flow clients green',
-    '- Current phase: Clonners-managed local listing request review/approval metadata with future DAO handoff; no wallets/RPC/deploys/txs are approved',
+    '- Status: active autonomous builder cron; Clonners approved a local runtime listing review queue; listing submission and MarketRegistry admin mutation remain approval-gated',
+    '- Current phase: Clonners-managed local listing request review queue approved before DAO handoff; no wallets/RPC/deploys/txs are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
     'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, TypeScript/Python/qdex review-flow clients, and prepare-only `POST /v1/listings/requests`; contract-level authority handoff remains local-only.',
-    'Approval required: runtime listing review queue, listing submission, or MarketRegistry admin mutation.',
+    'Approval received: Clonners approved implementing a local runtime listing review queue only; listing submission and MarketRegistry admin mutation still require separate explicit approval.',
+    'Next bounded slice: implement an in-memory local listing review queue for `POST /v1/listings/requests` / listing-request inspection',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
+    'Clonners approved the next local-only runtime listing review queue slice.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
