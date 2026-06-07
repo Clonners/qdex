@@ -46,6 +46,61 @@ const renderLiveStreamPanel = (liveStream) => {
   `;
 };
 
+const renderOrderRows = (orders = []) => {
+  if (orders.length === 0) {
+    return '<li class="muted">no private order updates yet</li>';
+  }
+
+  return orders.map((order) => `
+    <li>
+      <span>${escapeHtml(order.status)}</span>
+      <span>${escapeHtml(order.remainingAmount)}</span>
+      <code>${escapeHtml(shortHash(order.orderHash))}</code>
+    </li>
+  `).join('');
+};
+
+const renderOrderStreamPanel = (orderStream, orders = []) => {
+  if (orderStream === undefined || orderStream === null) {
+    return '';
+  }
+
+  const permissions = (orderStream.permissions ?? []).join(', ');
+  const cancellationPermissions = (orderStream.cancellationPermissions ?? []).join(', ') || 'none';
+  const streamReason = orderStream.streamEvent?.reason ?? 'initial_snapshot';
+  const streamMarket = orderStream.streamEvent?.marketId ?? 'all-markets';
+  const cancelledHashes = (orderStream.cancelledOrderHashes ?? [])
+    .map((hash) => shortHash(hash))
+    .join(', ') || 'none';
+  const nonceManager = orderStream.nonceManager ?? 'none';
+  const nonceCancellation = orders
+    .map((order) => order.nonceCancellation)
+    .filter((value) => value !== undefined && value !== null)
+    .join(', ') || 'none';
+
+  return `
+        <article class="panel stream-panel">
+          <h2>live orders stream</h2>
+          <p class="warning">${escapeHtml(orderStream.safetyNotice)}</p>
+          <dl class="kv">
+            <div><dt>channel</dt><dd>${escapeHtml(orderStream.channel)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(orderStream.source)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(orderStream.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>cancel perms</dt><dd>${escapeHtml(cancellationPermissions)}</dd></div>
+            <div><dt>last event</dt><dd>${escapeHtml(streamReason)}</dd></div>
+            <div><dt>market</dt><dd>${escapeHtml(streamMarket)}</dd></div>
+            <div><dt>nonce manager</dt><dd>${escapeHtml(nonceManager)}</dd></div>
+            <div><dt>cancelled</dt><dd>${escapeHtml(cancelledHashes)}</dd></div>
+            <div><dt>nonce status</dt><dd>${escapeHtml(nonceCancellation)}</dd></div>
+          </dl>
+          ${orderStream.message === null || orderStream.message === undefined ? '' : `<p class="warning">${escapeHtml(orderStream.message)}</p>`}
+          <h3>private order projection</h3>
+          <ul>${renderOrderRows(orders)}</ul>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -131,6 +186,8 @@ export const renderTradeProofPanel = (fixture) => {
         </article>
 
 ${renderLiveStreamPanel(fixture.liveStream)}
+
+${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
 
         <article class="panel command-panel">
           <h2>keyboard</h2>

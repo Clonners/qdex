@@ -76,3 +76,49 @@ test('renderTradeProofPanel surfaces live fills stream safety when present', () 
   assert.match(html, /no real Quai transaction/i);
   assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
 });
+
+test('renderTradeProofPanel surfaces live orders stream matcher-local cancellation safety when present', () => {
+  const html = renderTradeProofPanel({
+    ...mockVerticalSliceFixture,
+    orders: [
+      {
+        orderHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        marketId: 'QI-QUAI',
+        side: 'sell',
+        price: '5',
+        amount: '100',
+        remainingAmount: '0',
+        status: 'cancelled',
+        nonceCancellation: 'not-implied-matcher-local-only',
+      },
+    ],
+    orderStream: {
+      channel: 'orders',
+      source: 'mock-order-projection',
+      custody: 'non-custodial-no-withdrawal-authority',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+      cancellationPermissions: ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'],
+      safetyNotice: 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.',
+      nonceManager: 'matcher-local-cancel-only-on-chain-nonce-unchanged',
+      cancelledOrderHashes: ['0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'],
+      message: 'Mock cancellation removes only matcher-open quantity and does not cancel the on-chain nonce; user nonce cancellation must be signed through NonceManager later.',
+      streamEvent: {
+        reason: 'matcher_local_order_cancelled',
+        marketId: 'QI-QUAI',
+      },
+    },
+  });
+
+  assert.match(html, /live orders stream/i);
+  assert.match(html, /channel[\s\S]*orders/i);
+  assert.match(html, /mock-order-projection/);
+  assert.match(html, /READ_ONLY, NO_WITHDRAW, NO_ADMIN/);
+  assert.match(html, /CANCEL_ORDER, NO_WITHDRAW, NO_ADMIN/);
+  assert.match(html, /matcher_local_order_cancelled/);
+  assert.match(html, /matcher-local-cancel-only-on-chain-nonce-unchanged/);
+  assert.match(html, /not-implied-matcher-local-only/);
+  assert.match(html, /does not cancel the on-chain nonce/i);
+  assert.match(html, /cancelled/i);
+  assert.match(html, /no real Quai transaction/i);
+  assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
+});

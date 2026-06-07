@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check src/mock-vertical-fixture.js && node --check src/render.js && node --check src/live-fills.js && node --check src/mock-order-trigger.js && node --check src/app.js && node --test test/*.test.mjs",
+    "check": "node --check src/mock-vertical-fixture.js && node --check src/render.js && node --check src/live-fills.js && node --check src/live-orders.js && node --check src/mock-order-trigger.js && node --check src/app.js && node --test test/*.test.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }
