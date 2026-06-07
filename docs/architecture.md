@@ -69,3 +69,9 @@ The current mock loop is a local executable MVP, not real Quai settlement. Post-
 Matcher-local cancellation is not on-chain nonce cancellation. The former removes open matcher quantity for bots/UI; the latter needs a separate owner-signed NonceManager flow before any claim that signed order replay has been invalidated on-chain. Delegate/API keys remain `NO_WITHDRAW`/`NO_ADMIN` and cannot submit that owner flow by default.
 
 See [`docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md`](./plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md) for the approval-gated replacement map.
+
+## Native Qi wrapper/adapter boundary
+
+Native Qi is UTXO-model, so real `QI-QUAI` settlement remains blocked until a wrapper, contract-native adapter, or explicit conversion settlement flow is proven by event truth and approved. The mock `QI-QUAI` stays mock-only: mock fills/proofs, matcher-local balances, and local-only contract metadata cannot be presented as native Qi vault settlement.
+
+See [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) for the next read-only metadata and design-gate tasks.

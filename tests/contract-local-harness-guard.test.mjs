@@ -87,7 +87,7 @@ test('local harness documentation tracks current local contract coverage', async
     '`NM-02`: local Settlement delegates nonce truth to a settlement-scoped `NonceManager`; user cancellations live on `NonceManager`, full fills emit `NonceUsed`, and DK-02 delegate safety remains intact.',
     '`MR-02`: local Settlement delegates market truth to a market-authority-scoped `MarketRegistry`; fills require enabled base/quote metadata and disabled or token-mismatched markets reject before nonce/accounting/vault/proof mutation.',
     '`FM-02`: local Settlement delegates fee truth to a fee-authority-scoped `FeeManager`; nonzero fees require manager recipient truth plus signed and manager schedule caps before vault/proof mutation.',
-    'Recommended next slice: wire external dependency cleanup or FeeManager/MarketRegistry docs/API contract alignment while preserving DK-02 delegate signing, NM-02 nonce truth, MR-02 market truth, FM-02 fee truth, and custody boundaries.',
+    'Recommended next slice: add read-only `nativeQiStatus` metadata to `/v1/contracts` and consumer docs so API/SDK/CLI surfaces state that real native-Qi-backed `QI-QUAI` settlement remains design-required and mock-only until an approved wrapper/adapter/conversion path is proven.',
     'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);

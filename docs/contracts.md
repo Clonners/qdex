@@ -8,7 +8,7 @@ Contract implementation should start from the single-zone Hardhat + Quais SDK de
 
 Important current risk: Quai docs/examples disagree on the exact maximum Solidity compiler (`0.8.19` reference page vs `0.8.20` deployment guide/example). The current local interface ratchet pins Solidity `0.8.20` as the Hardhat candidate from `docs/quai-tooling.md`; verify locally/testnet before value-bearing deployment.
 
-Token assumption: native QUAI is account-model and contract-friendly; native Qi is UTXO-model and must not be treated as an ERC-20-style vault token until a wrapper/adapter/conversion primitive is confirmed.
+Token assumption: native QUAI is account-model and contract-friendly; native Qi is UTXO-model and must not be treated as an ERC-20-style vault token until a wrapper/adapter/conversion primitive is confirmed. Native Qi wrapper/adapter plan: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) keeps mock `QI-QUAI` mock-only and requires future metadata such as `nativeQiStatus: design-required` while the design is unproven.
 
 Static ratchet: `tests/contract-interface-invariants.test.mjs` must stay green before adding implementation code. It guards compiler drift, no admin/operator withdrawal selectors, replay-domain fields, fee-cap fields, and `NO_WITHDRAW`/`NO_ADMIN` delegate semantics.
 
