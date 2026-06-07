@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add terminal UI consumer/binding for private `orders` WebSocket cancellation updates, preserving matcher-local nonce wording and `NO_WITHDRAW`/`NO_ADMIN`.
+1. Add terminal UI matcher-local cancel trigger/browser smoke so the UI can create/cancel a resting mock order and display the private `orders` stream update without implying on-chain nonce cancellation.
 2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
