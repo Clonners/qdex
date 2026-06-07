@@ -188,6 +188,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 markets
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
   qdex --base-url http://127.0.0.1:8787 contracts
+  qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
   qdex --base-url http://127.0.0.1:8787 cancel --all
@@ -229,6 +230,15 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         command: 'contracts',
         baseUrl,
         ...(await client.contracts.get()),
+      });
+      return 0;
+    }
+
+    if (command === 'relayer' && rest[0] === 'gate') {
+      writeJson(stdout, {
+        command: 'relayer gate',
+        baseUrl,
+        ...(await client.relayer.settlementModeGate.get()),
       });
       return 0;
     }

@@ -122,6 +122,38 @@ test('qdex contracts command prints local-only registry metadata without wallet 
   });
 });
 
+test('qdex relayer gate command prints read-only settlement-mode approval gate metadata', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'relayer', 'gate']);
+
+    assert.equal(result.command, 'relayer gate');
+    assert.equal(result.source, 'relayer-approval-gate');
+    assert.equal(result.currentSettlementMode, 'mock');
+    assert.equal(result.custody, 'non-custodial-relayer-gate');
+    assert.equal(result.realQuaiTransactions, false);
+    assert.equal(result.walletRequired, false);
+    assert.deepEqual(result.requiredEventTruthFields, [
+      'settlementTx',
+      'blockNumber',
+      'blockHash',
+      'eventIndex',
+      'explorerUrl',
+    ]);
+    assert.equal(result.modes.mock.allowed, true);
+    assert.equal(result.modes.mock.reason, 'mock_mode_local_only');
+    assert.equal(result.modes.quai_contract.allowed, false);
+    assert.equal(result.modes.quai_contract.reason, 'real_quai_approval_gate_blocked');
+    assert.ok(result.modes.quai_contract.missingFields.includes('approval.explicitApproval'));
+    assert.ok(result.modes.quai_contract.missingFields.includes('eventTruth.requiredFields.settlementTx'));
+    assert.equal(result.safety.noWalletLoading, true);
+    assert.equal(result.safety.noSigning, true);
+    assert.equal(result.safety.noBroadcast, true);
+    assert.equal(result.safety.noRpcUrlAccess, true);
+    assert.equal(result.safety.noTransactionSubmission, true);
+    assert.equal(result.safety.proofTrigger, 'TradeSettled');
+  });
+});
+
 test('qdex nonces cancel --prepare prints owner-signed placeholder without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson([

@@ -113,6 +113,39 @@ test('TypeScript SDK exposes local-only contract registry metadata without walle
   });
 });
 
+test('TypeScript SDK exposes read-only relayer settlement-mode gate metadata without wallet or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const gate = await client.relayer.settlementModeGate.get();
+
+    assert.equal(gate.source, 'relayer-approval-gate');
+    assert.equal(gate.currentSettlementMode, 'mock');
+    assert.equal(gate.custody, 'non-custodial-relayer-gate');
+    assert.equal(gate.realQuaiTransactions, false);
+    assert.equal(gate.walletRequired, false);
+    assert.deepEqual(gate.requiredEventTruthFields, [
+      'settlementTx',
+      'blockNumber',
+      'blockHash',
+      'eventIndex',
+      'explorerUrl',
+    ]);
+    assert.equal(gate.modes.mock.allowed, true);
+    assert.equal(gate.modes.mock.reason, 'mock_mode_local_only');
+    assert.equal(gate.modes.quai_contract.allowed, false);
+    assert.equal(gate.modes.quai_contract.reason, 'real_quai_approval_gate_blocked');
+    assert.ok(gate.modes.quai_contract.missingFields.includes('approval.explicitApproval'));
+    assert.ok(gate.modes.quai_contract.missingFields.includes('eventTruth.requiredFields.settlementTx'));
+    assert.equal(gate.safety.noWalletLoading, true);
+    assert.equal(gate.safety.noSigning, true);
+    assert.equal(gate.safety.noBroadcast, true);
+    assert.equal(gate.safety.noRpcUrlAccess, true);
+    assert.equal(gate.safety.noTransactionSubmission, true);
+    assert.equal(gate.safety.proofTrigger, 'TradeSettled');
+  });
+});
+
 test('TypeScript SDK exposes owner-signed nonce-cancel prepare placeholder without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

@@ -23,6 +23,7 @@ test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', asy
       'markets.list()',
       'orderbook.get(marketId)',
       'contracts.get()',
+      'relayer.settlementModeGate.get()',
       'nonces.prepareCancel()',
       'orders.createLimitOrder',
       'orders.createMarketIocOrder',
@@ -39,7 +40,10 @@ test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', asy
       'POST /v1/orders',
       'GET /v1/proofs/trades/:tradeId',
       'GET /v1/contracts',
+      'GET /v1/relayer/settlement-mode-gate',
       'POST /v1/nonces/cancel',
+      'relayer-approval-gate',
+      'real_quai_approval_gate_blocked',
       'owner_signed_nonce_cancel_not_implemented',
       'owner-signed-required',
       'local-only-not-deployed',
@@ -132,6 +136,7 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
       'qdex ticker QI-QUAI',
       'qdex book QI-QUAI',
       'qdex contracts',
+      'qdex relayer gate',
       'qdex nonces cancel --prepare',
       'qdex balance',
       'qdex order buy QI-QUAI --amount 1000 --price 0.123',
@@ -154,6 +159,9 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
       'mockSettlementReference',
       'local-only-not-deployed',
       'GET /v1/contracts',
+      'GET /v1/relayer/settlement-mode-gate',
+      'relayer-approval-gate',
+      'real_quai_approval_gate_blocked',
       'POST /v1/nonces/cancel',
       'owner_signed_nonce_cancel_not_implemented',
       'owner-signed-required',
@@ -259,6 +267,38 @@ test('SDK and CLI README docs expose owner-signed nonce-cancel prepare-only clie
         'NO_WITHDRAW',
         'NO_ADMIN',
         'no wallet loading, signing, broadcast, or relayer submission',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
+test('TypeScript SDK and CLI README docs expose read-only relayer gate clients', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'dex.relayer.settlementModeGate.get',
+        'GET /v1/relayer/settlement-mode-gate',
+        'relayer-approval-gate',
+        'currentSettlementMode: mock',
+        'real_quai_approval_gate_blocked',
+        'no wallet loading, signing, broadcast, RPC URL access, or transaction submission',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'qdex relayer gate',
+        'GET /v1/relayer/settlement-mode-gate',
+        'relayer-approval-gate',
+        'currentSettlementMode: mock',
+        'real_quai_approval_gate_blocked',
+        'no wallet loading, signing, broadcast, RPC URL access, or transaction submission',
       ],
     },
   ];

@@ -198,6 +198,12 @@ export class QDexClient {
       get: async () => this.#requestOk('/v1/contracts'),
     };
 
+    this.relayer = {
+      settlementModeGate: {
+        get: async () => this.#requestOk('/v1/relayer/settlement-mode-gate'),
+      },
+    };
+
     this.nonces = {
       prepareCancel: async (request) => this.#requestExpectedStatus('/v1/nonces/cancel', {
         method: 'POST',

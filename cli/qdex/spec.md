@@ -9,6 +9,7 @@ qdex markets
 qdex ticker QI-QUAI
 qdex book QI-QUAI
 qdex contracts
+qdex relayer gate
 qdex nonces cancel --prepare --owner 0xowner --nonce 42 --chain-id 0 --nonce-manager-contract 0xnonce-manager --expires-at 1780003600 --signature 0xowner-signature
 qdex balance
 qdex order buy QI-QUAI --amount 1000 --price 0.123
@@ -33,6 +34,7 @@ qdex api create-key bot-mm-1 --scope trade --expires 7d
 - `qdex cancel --all` calls `POST /v1/orders/cancel-all`; in local mock mode it cancels only matcher-open quantity, keeps `CANCEL_ALL`, `CANCEL_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN` visible, and does not cancel on-chain NonceManager nonces without a separate owner-signed flow.
 - `qdex nonces cancel --prepare` calls `POST /v1/nonces/cancel` and prints the prepare-only placeholder `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local order cancellation.
 - `qdex contracts` calls `GET /v1/contracts` and prints `local-only-not-deployed` metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no wallet/deploy/transaction authority.
+- `qdex relayer gate` calls `GET /v1/relayer/settlement-mode-gate` and prints read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 ## API/delegate key scopes
 

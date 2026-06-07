@@ -9,6 +9,7 @@ import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-
 
 const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
 const contractRegistry = await dex.contracts.get();
+const relayerGate = await dex.relayer.settlementModeGate.get();
 const nonceCancelPrepare = await dex.nonces.prepareCancel({
   action: 'cancelNonce',
   owner: '0x1111111111111111111111111111111111111111',
@@ -31,6 +32,9 @@ const result = await runMockCrossSmoke(dex, {
 });
 
 console.log(contractRegistry.deploymentStatus); // local-only-not-deployed
+console.log(relayerGate.source); // relayer-approval-gate
+console.log(relayerGate.currentSettlementMode); // currentSettlementMode: mock
+console.log(relayerGate.modes.quai_contract.reason); // real_quai_approval_gate_blocked
 console.log(nonceCancelPrepare.status); // 501
 console.log(nonceCancelPrepare.body.error); // owner_signed_nonce_cancel_not_implemented
 console.log(nonceCancelPrepare.body.nonceManager); // owner-signed-required
@@ -43,6 +47,8 @@ console.log(result.proof.settlementMode); // mock
 ```
 
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects.
+
+`dex.relayer.settlementModeGate.get()` calls `GET /v1/relayer/settlement-mode-gate` and returns read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 `dex.nonces.prepareCancel()` calls `POST /v1/nonces/cancel` and returns the prepare-only 501 placeholder body (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
 
