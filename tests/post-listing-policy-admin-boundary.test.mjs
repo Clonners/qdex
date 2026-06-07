@@ -90,6 +90,25 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   );
 });
 
+test('campaign status is pinned to the listing/admin approval gate before more autonomous runtime work', async () => {
+  const status = await readText('CAMPAIGN_STATUS.md');
+
+  for (const requiredText of [
+    '- Status: blocked pending explicit Clonners approval; current repo checks green',
+    '- Current phase: no autonomous runtime listing/admin slice remains; existing safe surfaces are `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`',
+    '✋ DECISIÓN: explicit Clonners approval is required before runtime listing submission or MarketRegistry admin mutation.',
+    'Existing safe listing surfaces remain `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.',
+  ]) {
+    assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
+  }
+
+  assert.doesNotMatch(
+    status,
+    /- Status: active autonomous builder cron/,
+    'campaign status should not look active when the next boundary requires approval',
+  );
+});
+
 test('listing docs point future work to the post-listing policy approval gate', async () => {
   const listingPolicy = await readText('docs/listing-policy.md');
   const contracts = await readText('docs/contracts.md');

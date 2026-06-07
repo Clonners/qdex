@@ -2,11 +2,11 @@
 
 ## State
 
-- Status: active autonomous builder cron; current repo checks green
+- Status: blocked pending explicit Clonners approval; current repo checks green
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: listing-request prepare clients pinned -> explicit approval required before any runtime listing submission or MarketRegistry admin behavior
+- Current phase: no autonomous runtime listing/admin slice remains; existing safe surfaces are `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`
 
 ## Current repo baseline
 
@@ -37,9 +37,10 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Pause before runtime listing submission / MarketRegistry admin behavior unless Clonners explicitly approves the next trust boundary.
-2. If approved later, keep listing/admin flow design-only or prepare-only first: no listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, MarketRegistry mutation, or funds movement until a separate approval-gated implementation slice.
-3. Preserve `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`/`NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin power.
+1. ✋ DECISIÓN: explicit Clonners approval is required before runtime listing submission or MarketRegistry admin mutation.
+2. Existing safe listing surfaces remain `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.
+3. If approved later, keep listing/admin flow design-only or prepare-only first: no listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, MarketRegistry mutation, or funds movement until a separate approval-gated implementation slice.
+4. Preserve `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`/`NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin power.
 
 ## Cron runner
 
