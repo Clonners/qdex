@@ -23,6 +23,7 @@ test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', asy
       'markets.list()',
       'orderbook.get(marketId)',
       'contracts.get()',
+      'nonces.prepareCancel()',
       'orders.createLimitOrder',
       'orders.createMarketIocOrder',
       'orders.submitSignedOrder',
@@ -38,6 +39,9 @@ test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', asy
       'POST /v1/orders',
       'GET /v1/proofs/trades/:tradeId',
       'GET /v1/contracts',
+      'POST /v1/nonces/cancel',
+      'owner_signed_nonce_cancel_not_implemented',
+      'owner-signed-required',
       'local-only-not-deployed',
       'market_ioc',
       'IOC limit order',
@@ -51,6 +55,7 @@ test('TypeScript SDK spec pins bot flow and custody-safe delegate contract', asy
       'main wallet',
       'API state is projection/cache',
       'settlementMode: mock',
+      'no wallet loading, signing, broadcast, or relayer submission',
     ],
     'sdk/typescript/spec.md',
   );
@@ -73,6 +78,7 @@ test('Python SDK spec mirrors bot flow without creating withdrawal authority', a
       'markets.list()',
       'orderbook.get(market_id)',
       'contracts.get()',
+      'nonces.prepare_cancel()',
       'orders.create_limit_order',
       'orders.create_market_ioc_order',
       'orders.submit_signed_order',
@@ -87,6 +93,9 @@ test('Python SDK spec mirrors bot flow without creating withdrawal authority', a
       'POST /v1/orders',
       'GET /v1/proofs/trades/:tradeId',
       'GET /v1/contracts',
+      'POST /v1/nonces/cancel',
+      'owner_signed_nonce_cancel_not_implemented',
+      'owner-signed-required',
       'local-only-not-deployed',
       'market_ioc',
       'IOC limit order',
@@ -100,6 +109,7 @@ test('Python SDK spec mirrors bot flow without creating withdrawal authority', a
       'main wallet',
       'API state is projection/cache',
       'settlementMode: mock',
+      'no wallet loading, signing, broadcast, or relayer submission',
     ],
     'sdk/python/spec.md',
   );
@@ -122,6 +132,7 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
       'qdex ticker QI-QUAI',
       'qdex book QI-QUAI',
       'qdex contracts',
+      'qdex nonces cancel --prepare',
       'qdex balance',
       'qdex order buy QI-QUAI --amount 1000 --price 0.123',
       'qdex order sell QI-QUAI --quote-amount 100 --market --slippage-bps 50',
@@ -143,6 +154,9 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
       'mockSettlementReference',
       'local-only-not-deployed',
       'GET /v1/contracts',
+      'POST /v1/nonces/cancel',
+      'owner_signed_nonce_cancel_not_implemented',
+      'owner-signed-required',
       'no real Quai transaction',
       'no funds moved',
     ],
@@ -199,6 +213,52 @@ test('SDK, CLI, and terminal consumer docs pin IndexedFillProjection projectionT
       terms: [
         'projectionType: IndexedFillProjection',
         'not a matcher-local FillPacket',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
+test('SDK and CLI README docs expose owner-signed nonce-cancel prepare-only clients', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'dex.nonces.prepareCancel',
+        'POST /v1/nonces/cancel',
+        'owner_signed_nonce_cancel_not_implemented',
+        'owner-signed-required',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'no wallet loading, signing, broadcast, or relayer submission',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.nonces.prepare_cancel',
+        'POST /v1/nonces/cancel',
+        'owner_signed_nonce_cancel_not_implemented',
+        'owner-signed-required',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'no wallet loading, signing, broadcast, or relayer submission',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'qdex nonces cancel --prepare',
+        'POST /v1/nonces/cancel',
+        'owner_signed_nonce_cancel_not_implemented',
+        'owner-signed-required',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'no wallet loading, signing, broadcast, or relayer submission',
       ],
     },
   ];

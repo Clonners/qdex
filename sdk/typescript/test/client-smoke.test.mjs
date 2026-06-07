@@ -113,6 +113,34 @@ test('TypeScript SDK exposes local-only contract registry metadata without walle
   });
 });
 
+test('TypeScript SDK exposes owner-signed nonce-cancel prepare placeholder without wallet or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const result = await client.nonces.prepareCancel({
+      action: 'cancelNonce',
+      owner: '0x1111111111111111111111111111111111111111',
+      nonce: '77',
+      chainId: 0,
+      nonceManagerContract: '0x0000000000000000000000000000000000000000',
+      expiresAt: 1780003600,
+      signature: '0xowner-signed-placeholder',
+    });
+
+    assert.equal(result.status, 501);
+    assert.equal(result.body.error, 'owner_signed_nonce_cancel_not_implemented');
+    assert.equal(result.body.source, 'owner-signed-nonce-cancel-placeholder');
+    assert.equal(result.body.custody, 'non-custodial');
+    assert.equal(result.body.nonceManager, 'owner-signed-required');
+    assert.deepEqual(result.body.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.body.permissions.includes('CANCEL_ORDER'), false);
+    assert.match(result.body.message, /Matcher-local cancellation does not mutate on-chain NonceManager nonces/);
+    assert.equal(result.body.realQuaiTransactions, false);
+    assert.equal(result.body.walletRequired, false);
+    assert.equal(result.body.approvalGate, 'explicit-approval-required-before-wallet-signing-or-quai-broadcast');
+  });
+});
+
 test('TypeScript SDK cancelAll cancels mock resting orders without nonce or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

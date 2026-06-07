@@ -9,6 +9,15 @@ import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-
 
 const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
 const contractRegistry = await dex.contracts.get();
+const nonceCancelPrepare = await dex.nonces.prepareCancel({
+  action: 'cancelNonce',
+  owner: '0x1111111111111111111111111111111111111111',
+  nonce: '77',
+  chainId: 0,
+  nonceManagerContract: '0x0000000000000000000000000000000000000000',
+  expiresAt: 1780003600,
+  signature: '0xowner-signed-placeholder',
+});
 const fillsStream = dex.fills.openStream({ timeoutMs: 2000 });
 const initialFillsSnapshot = await fillsStream.next();
 await fillsStream.close();
@@ -22,6 +31,10 @@ const result = await runMockCrossSmoke(dex, {
 });
 
 console.log(contractRegistry.deploymentStatus); // local-only-not-deployed
+console.log(nonceCancelPrepare.status); // 501
+console.log(nonceCancelPrepare.body.error); // owner_signed_nonce_cancel_not_implemented
+console.log(nonceCancelPrepare.body.nonceManager); // owner-signed-required
+console.log(nonceCancelPrepare.body.permissions); // NO_WITHDRAW, NO_ADMIN
 console.log(initialFillsSnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
 console.log(initialOrdersSnapshot.snapshot.channel); // orders
 console.log(result.fill.projectionType); // IndexedFillProjection
@@ -30,6 +43,8 @@ console.log(result.proof.settlementMode); // mock
 ```
 
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects.
+
+`dex.nonces.prepareCancel()` calls `POST /v1/nonces/cancel` and returns the prepare-only 501 placeholder body (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
 
 `fills.openStream()` consumes the local `/v1/ws?channel=fills` WebSocket transport. Private stream snapshots remain read-only and carry `NO_WITHDRAW`/`NO_ADMIN` permissions.
 

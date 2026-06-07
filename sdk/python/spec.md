@@ -10,6 +10,15 @@ dex = QDexClient(base_url=base_url, wallet=wallet, delegate_key=delegate_key)
 markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
+nonce_cancel_prepare = dex.nonces.prepare_cancel({
+    'action': 'cancelNonce',
+    'owner': '0xowner',
+    'nonce': '42',
+    'chainId': 0,
+    'nonceManagerContract': '0xnonce-manager',
+    'expiresAt': 1780003600,
+    'signature': '0xowner-signature',
+})  # POST /v1/nonces/cancel -> owner_signed_nonce_cancel_not_implemented while prepare-only
 
 limit_order: SignedOrder = dex.orders.create_limit_order(
     market_id='QI-QUAI',
@@ -51,6 +60,10 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
 
 The Python SDK must not load wallets, send transactions, read RPC URLs, infer real contract addresses, or imply deploy authority from this metadata. Native Qi remains UTXO-model and requires a wrapper/adapter/conversion design before any real `QI-QUAI` vault settlement claim.
+
+## Owner-signed nonce cancellation
+
+`nonces.prepare_cancel()` is a prepare-only client for `POST /v1/nonces/cancel`. It intentionally surfaces the API placeholder response `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local `orders.cancel_all`.
 
 ## Delegate/API key safety
 

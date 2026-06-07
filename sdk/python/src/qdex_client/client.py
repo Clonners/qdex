@@ -104,6 +104,19 @@ class _ContractsApi:
         return self._client._request_ok("/v1/contracts")
 
 
+class _NoncesApi:
+    def __init__(self, client):
+        self._client = client
+
+    def prepare_cancel(self, request):
+        return self._client._request_expected_status(
+            "/v1/nonces/cancel",
+            expected_status=501,
+            method="POST",
+            body=request,
+        )
+
+
 class _OrdersApi:
     def __init__(self, client):
         self._client = client
@@ -162,6 +175,7 @@ class QDexClient:
         self.tickers = _TickersApi(self)
         self.orderbook = _OrderbookApi(self)
         self.contracts = _ContractsApi(self)
+        self.nonces = _NoncesApi(self)
         self.orders = _OrdersApi(self)
         self.fills = _FillsApi(self)
         self.trades = _TradesApi(self)
@@ -178,6 +192,17 @@ class QDexClient:
                 body=response["body"],
             )
         return response["body"]
+
+    def _request_expected_status(self, path, *, expected_status, method="GET", body=None):
+        response = self._request(path, method=method, body=body)
+        status = response["status"]
+        if status != expected_status:
+            raise QDexHttpError(
+                f"QDex API request for {path} returned HTTP {status}, expected HTTP {expected_status}",
+                status=status,
+                body=response["body"],
+            )
+        return response
 
     def _request(self, path, *, method="GET", body=None):
         data = None

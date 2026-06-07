@@ -122,6 +122,43 @@ test('qdex contracts command prints local-only registry metadata without wallet 
   });
 });
 
+test('qdex nonces cancel --prepare prints owner-signed placeholder without wallet or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'nonces',
+      'cancel',
+      '--prepare',
+      '--owner',
+      '0x1111111111111111111111111111111111111111',
+      '--nonce',
+      '77',
+      '--chain-id',
+      '0',
+      '--nonce-manager-contract',
+      '0x0000000000000000000000000000000000000000',
+      '--expires-at',
+      '1780003600',
+      '--signature',
+      '0xowner-signed-placeholder',
+    ]);
+
+    assert.equal(result.command, 'nonces cancel prepare');
+    assert.equal(result.status, 501);
+    assert.equal(result.error, 'owner_signed_nonce_cancel_not_implemented');
+    assert.equal(result.source, 'owner-signed-nonce-cancel-placeholder');
+    assert.equal(result.custody, 'non-custodial');
+    assert.equal(result.nonceManager, 'owner-signed-required');
+    assert.deepEqual(result.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.permissions.includes('CANCEL_ORDER'), false);
+    assert.match(result.message, /Matcher-local cancellation does not mutate on-chain NonceManager nonces/);
+    assert.equal(result.realQuaiTransactions, false);
+    assert.equal(result.walletRequired, false);
+    assert.equal(result.approvalGate, 'explicit-approval-required-before-wallet-signing-or-quai-broadcast');
+  });
+});
+
 test('qdex cancel --all removes mock resting orders without nonce or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

@@ -64,6 +64,9 @@ class ApiServer:
             except subprocess.TimeoutExpired:
                 self.process.kill()
                 self.process.wait(timeout=3)
+        for pipe in (self.process.stdout, self.process.stderr):
+            if pipe is not None and not pipe.closed:
+                pipe.close()
 
 
 class QDexPythonSdkSmokeTest(unittest.TestCase):
@@ -100,6 +103,38 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(
                 registry["safety"]["approvalGate"],
                 "explicit-approval-required-before-deploy-or-transaction",
+            )
+
+    def test_python_sdk_exposes_owner_signed_nonce_cancel_prepare_placeholder_without_wallet_or_tx_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            result = client.nonces.prepare_cancel(
+                {
+                    "action": "cancelNonce",
+                    "owner": "0x1111111111111111111111111111111111111111",
+                    "nonce": "77",
+                    "chainId": 0,
+                    "nonceManagerContract": "0x0000000000000000000000000000000000000000",
+                    "expiresAt": 1780003600,
+                    "signature": "0xowner-signed-placeholder",
+                }
+            )
+
+            self.assertEqual(result["status"], 501)
+            body = result["body"]
+            self.assertEqual(body["error"], "owner_signed_nonce_cancel_not_implemented")
+            self.assertEqual(body["source"], "owner-signed-nonce-cancel-placeholder")
+            self.assertEqual(body["custody"], "non-custodial")
+            self.assertEqual(body["nonceManager"], "owner-signed-required")
+            self.assertEqual(body["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertNotIn("CANCEL_ORDER", body["permissions"])
+            self.assertIn("Matcher-local cancellation does not mutate on-chain NonceManager nonces", body["message"])
+            self.assertFalse(body["realQuaiTransactions"])
+            self.assertFalse(body["walletRequired"])
+            self.assertEqual(
+                body["approvalGate"],
+                "explicit-approval-required-before-wallet-signing-or-quai-broadcast",
             )
 
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):

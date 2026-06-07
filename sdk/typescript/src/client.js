@@ -198,6 +198,14 @@ export class QDexClient {
       get: async () => this.#requestOk('/v1/contracts'),
     };
 
+    this.nonces = {
+      prepareCancel: async (request) => this.#requestExpectedStatus('/v1/nonces/cancel', {
+        method: 'POST',
+        body: request,
+        expectedStatus: 501,
+      }),
+    };
+
     this.orders = {
       list: async () => this.#requestOk('/v1/orders'),
       submitSignedOrder: async (order) => this.#requestOk('/v1/orders', {
@@ -279,6 +287,15 @@ export class QDexClient {
 
   async #requestOk(path, options = {}) {
     return assertOk(await this.#request(path, options), path);
+  }
+
+  async #requestExpectedStatus(path, { expectedStatus, ...options }) {
+    const response = await this.#request(path, options);
+    if (response.status !== expectedStatus) {
+      throw new QDexHttpError(`QDex API request for ${path} returned HTTP ${response.status}, expected HTTP ${expectedStatus}`, response);
+    }
+
+    return response;
   }
 
   async #request(path, { method = 'GET', body } = {}) {
