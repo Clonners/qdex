@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: post-mock MVP readiness / owner-signed nonce-cancel plan green -> next owner-signed nonce-cancel API/OpenAPI placeholder
+- Current phase: owner-signed nonce-cancel API/OpenAPI placeholder green -> next SDK/CLI nonce-cancel prepare-only clients
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add `POST /v1/nonces/cancel` owner-signed nonce-cancel API/OpenAPI placeholder with precise `501`/prepare-only semantics, explicit `NO_WITHDRAW`/`NO_ADMIN`, and clear wording that matcher-local cancellation does not mutate on-chain `NonceManager` nonces.
-2. Then expose the same prepare-only nonce-cancel boundary through SDK/CLI without signing, broadcast, wallets, deploys, RPC URLs, or txs.
+1. Expose the same `POST /v1/nonces/cancel` prepare-only nonce-cancel boundary through TypeScript SDK, Python SDK, and `qdex` CLI without signing, broadcast, wallets, deploys, RPC URLs, or txs.
+2. Then add proof-service/indexer projection for future `NonceCancelled` / `NonceRangeCancelled` events while suppressing matcher-local cancellation events.
 3. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired; keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
 ## Cron runner
@@ -119,3 +119,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 22:06 -03: Added terminal UI matcher-local cancel trigger/browser smoke: browser button creates one resting local/dev order, sends `DELETE /v1/orders/:orderHash`, validates cancellation-only `CANCEL_ORDER` + `NO_WITHDRAW`/`NO_ADMIN`, and keeps on-chain nonce-unchanged/no-real-Quai/no-funds copy visible; verified RED focused terminal UI test failed on missing module/panel, GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `909f8c7`; next slice: local API + terminal UI cancel/stream integration smoke.
 - 2026-06-06 22:25 -03: Added local API + terminal UI cancel/stream integration smoke: `createApiServer()` + browser cancel trigger + private `orders` WebSocket now prove `POST resting order -> DELETE matcher-local cancel -> rendered cancellation panel`, preserving nonce-unchanged/NO_WITHDRAW/NO_ADMIN/no-funds/no-real-Quai safety; verified RED missing integration seam, GREEN focused terminal UI test, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `b93354d`; next slice: post-mock MVP readiness / owner-signed nonce-cancel planning.
 - 2026-06-06 22:44 -03: Added post-mock MVP readiness / owner-signed nonce-cancel implementation plan plus doc ratchets and contracts/architecture links; maps mock surfaces to approval-gated Quai replacement, separates matcher-local cancel from on-chain `NonceManager` cancellation, and preserves native Qi caveat; verified RED `node --test tests/post-mock-mvp-readiness.test.mjs` failed on missing plan/link, GREEN focused test, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `a051e20`; next slice: `POST /v1/nonces/cancel` owner-signed nonce-cancel API/OpenAPI placeholder.
+- 2026-06-06 23:05 -03: Added `POST /v1/nonces/cancel` owner-signed NonceManager cancellation API/OpenAPI placeholder with precise prepare-only `501`, explicit `NO_WITHDRAW`/`NO_ADMIN`, no wallet/broadcast/tx authority, and order-schema docs separating it from matcher-local cancellation; verified RED focused API/doc tests failed on 404/missing route, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `a221d98`; next slice: SDK/CLI nonce-cancel prepare-only clients.
