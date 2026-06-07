@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: listing-policy SDK/CLI clients exposed -> next post-listing-policy approval-gated listing submission boundary plan
+- Current phase: post-listing-policy MarketRegistry admin boundary plan pinned -> next docs/OpenAPI prepare-only listing submission placeholder
 
 ## Current repo baseline
 
@@ -37,9 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Write a post-listing-policy docs/spec ratchet for future listing submission + MarketRegistry admin metadata, keeping it approval-gated and design-only unless Clonners explicitly approves runtime behavior.
-2. Keep current token listing and MarketRegistry metadata read-only: no wallet loading, RPC URLs, signing, broadcasts, deploys, tx submission, token addresses, or listing-admin runtime behavior.
-3. Preserve `NO_WITHDRAW`/`NO_ADMIN`, null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that MarketRegistry metadata cannot move TradingVault balances or grant withdrawal/admin power until explicit deploy/tx approval exists.
+1. Add docs/OpenAPI ratchets for a prepare-only `POST /v1/listings/requests` placeholder that returns an intentional non-implemented approval boundary.
+2. Keep listing submission design-only until explicit approval: no runtime listing queue, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, or funds movement.
+3. Preserve `NO_WITHDRAW`/`NO_ADMIN`, null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that MarketRegistry metadata cannot move TradingVault balances or grant withdrawal/admin power.
 
 ## Cron runner
 
@@ -133,3 +133,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 06:51 -03: Corrected QDEX asset direction per Clonners: MVP uses WQUAI, WQI, and listed community-created ERC-20-style vault tokens; native Qi direct settlement is out of scope and no longer blocks the campaign. Replaced `nativeQiStatus`/adapter-decision metadata with `listedAssetStatus`, updated API/OpenAPI/SDK/CLI/docs/tests/status, and set next slice to token listing + MarketRegistry metadata flow; verified focused docs/API/SDK/CLI tests, full `pnpm check`, `git diff --check`, and high-confidence secret scan no findings; next slice: token listing and MarketRegistry metadata flow with no custody/withdraw/admin power.
 - 2026-06-07 07:07 -03: Added read-only token listing and MarketRegistry metadata policy: `docs/listing-policy.md`, OpenAPI `TokenListingPolicy`, and `GET /v1/listings/policy` expose WQUAI/WQI/community-token listing flow without custody, withdrawal/admin power, wallet/RPC/sign/broadcast/deploy/tx behavior; verified RED focused docs/API tests, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `f6a12a9`; next slice: TypeScript/Python SDK and `qdex` CLI clients for the listing policy endpoint.
 - 2026-06-07 07:33 -03: Exposed read-only listing policy through TypeScript SDK `listings.policy.get()`, Python SDK `listings.policy.get()`, and `qdex listings policy`, preserving `listed-asset-marketregistry-policy`, `design-only-local-metadata`, `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`/`NO_ADMIN`, and no wallet/RPC/sign/broadcast/deploy/tx/funds behavior; verified focused SDK/Python/CLI/docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `c025bbd`; next slice: post-listing-policy approval-gated listing submission / MarketRegistry admin boundary plan (docs/spec only, no runtime behavior).
+- 2026-06-07 07:45 -03: Added post-listing-policy MarketRegistry admin boundary plan plus doc ratchet: future listing submission remains approval-gated/design-only, MarketRegistry admin metadata cannot move TradingVault balances or grant withdrawal/admin power, and stale listing-policy-client next-slice wording now points to prepare-only placeholder planning; verified RED `node --test tests/post-listing-policy-admin-boundary.test.mjs`, focused native/listing doc tests, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `82926d4`; next slice: docs/OpenAPI prepare-only `POST /v1/listings/requests` placeholder boundary.
