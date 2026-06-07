@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: token listing policy metadata exposed -> next SDK/Python/CLI listing-policy clients
+- Current phase: listing-policy SDK/CLI clients exposed -> next post-listing-policy approval-gated listing submission boundary plan
 
 ## Current repo baseline
 
@@ -37,9 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Expose `GET /v1/listings/policy` through TypeScript SDK, Python SDK, and `qdex` CLI read-only clients.
-2. Keep token listing and MarketRegistry metadata read-only: no wallet loading, RPC URLs, signing, broadcasts, deploys, tx submission, or listing-admin runtime behavior.
-3. Preserve `NO_WITHDRAW`/`NO_ADMIN`, null addresses, `realQuaiTransactions: false`, and `walletRequired: false` until explicit deploy/tx approval exists.
+1. Write a post-listing-policy docs/spec ratchet for future listing submission + MarketRegistry admin metadata, keeping it approval-gated and design-only unless Clonners explicitly approves runtime behavior.
+2. Keep current token listing and MarketRegistry metadata read-only: no wallet loading, RPC URLs, signing, broadcasts, deploys, tx submission, token addresses, or listing-admin runtime behavior.
+3. Preserve `NO_WITHDRAW`/`NO_ADMIN`, null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that MarketRegistry metadata cannot move TradingVault balances or grant withdrawal/admin power until explicit deploy/tx approval exists.
 
 ## Cron runner
 
@@ -132,3 +132,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 06:23 -03: Cleaned stale post-mock readiness plan wording so completed nonce-cancel/gate/native-Qi tasks are marked complete and only the approval-gated native Qi path decision remains; verified RED `node --test tests/post-mock-mvp-readiness.test.mjs` failed on missing completed-task wording, GREEN focused test, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `640375f`; next slice: explicit Clonners approval plus external evidence before choosing a native Qi path.
 - 2026-06-07 06:51 -03: Corrected QDEX asset direction per Clonners: MVP uses WQUAI, WQI, and listed community-created ERC-20-style vault tokens; native Qi direct settlement is out of scope and no longer blocks the campaign. Replaced `nativeQiStatus`/adapter-decision metadata with `listedAssetStatus`, updated API/OpenAPI/SDK/CLI/docs/tests/status, and set next slice to token listing + MarketRegistry metadata flow; verified focused docs/API/SDK/CLI tests, full `pnpm check`, `git diff --check`, and high-confidence secret scan no findings; next slice: token listing and MarketRegistry metadata flow with no custody/withdraw/admin power.
 - 2026-06-07 07:07 -03: Added read-only token listing and MarketRegistry metadata policy: `docs/listing-policy.md`, OpenAPI `TokenListingPolicy`, and `GET /v1/listings/policy` expose WQUAI/WQI/community-token listing flow without custody, withdrawal/admin power, wallet/RPC/sign/broadcast/deploy/tx behavior; verified RED focused docs/API tests, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `f6a12a9`; next slice: TypeScript/Python SDK and `qdex` CLI clients for the listing policy endpoint.
+- 2026-06-07 07:33 -03: Exposed read-only listing policy through TypeScript SDK `listings.policy.get()`, Python SDK `listings.policy.get()`, and `qdex listings policy`, preserving `listed-asset-marketregistry-policy`, `design-only-local-metadata`, `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`/`NO_ADMIN`, and no wallet/RPC/sign/broadcast/deploy/tx/funds behavior; verified focused SDK/Python/CLI/docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `c025bbd`; next slice: post-listing-policy approval-gated listing submission / MarketRegistry admin boundary plan (docs/spec only, no runtime behavior).
