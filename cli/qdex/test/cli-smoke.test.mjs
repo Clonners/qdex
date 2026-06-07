@@ -103,6 +103,18 @@ test('qdex contracts command prints local-only registry metadata without wallet 
     assert.equal(result.realQuaiTransactions, false);
     assert.equal(result.walletRequired, false);
     assert.match(result.nativeQiCaveat, /UTXO-model/);
+    assert.equal(result.nativeQiStatus.status, 'design-required');
+    assert.equal(result.nativeQiStatus.marketId, 'QI-QUAI');
+    assert.equal(result.nativeQiStatus.currentTreatment, 'mock-only');
+    assert.deepEqual(result.nativeQiStatus.acceptedFuturePaths, [
+      'wrapped_qi_receipt_token',
+      'contract_native_qi_adapter',
+      'conversion_settlement_flow',
+    ]);
+    assert.equal(result.nativeQiStatus.selectedPath, null);
+    assert.equal(result.nativeQiStatus.realQuaiTransactions, false);
+    assert.equal(result.nativeQiStatus.walletRequired, false);
+    assert.match(result.nativeQiStatus.safetyNotice, /no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim/i);
     assert.equal(result.contracts.tradingVault.address, null);
     assert.equal(result.contracts.tradingVault.operatorWithdrawalAuthority, false);
     assert.equal(result.contracts.settlement.proofTrigger, 'TradeSettled');

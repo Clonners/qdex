@@ -8,7 +8,7 @@ Contract implementation should start from the single-zone Hardhat + Quais SDK de
 
 Important current risk: Quai docs/examples disagree on the exact maximum Solidity compiler (`0.8.19` reference page vs `0.8.20` deployment guide/example). The current local interface ratchet pins Solidity `0.8.20` as the Hardhat candidate from `docs/quai-tooling.md`; verify locally/testnet before value-bearing deployment.
 
-Token assumption: native QUAI is account-model and contract-friendly; native Qi is UTXO-model and must not be treated as an ERC-20-style vault token until a wrapper/adapter/conversion primitive is confirmed. Native Qi wrapper/adapter plan: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) keeps mock `QI-QUAI` mock-only and requires future metadata such as `nativeQiStatus: design-required` while the design is unproven.
+Token assumption: native QUAI is account-model and contract-friendly; native Qi is UTXO-model and must not be treated as an ERC-20-style vault token until a wrapper/adapter/conversion primitive is confirmed. Native Qi wrapper/adapter plan: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) keeps mock `QI-QUAI` mock-only; `/v1/contracts` now exposes read-only `nativeQiStatus: design-required` while the design is unproven.
 
 Static ratchet: `tests/contract-interface-invariants.test.mjs` must stay green before adding implementation code. It guards compiler drift, no admin/operator withdrawal selectors, replay-domain fields, fee-cap fields, and `NO_WITHDRAW`/`NO_ADMIN` delegate semantics.
 
@@ -33,6 +33,20 @@ Settlement -> TradingVault, NonceManager, MarketRegistry, FeeManager, and Delega
 The endpoint should list `TradingVault`, `NonceManager`, `MarketRegistry`, `FeeManager`, and `DelegateKeyRegistry` as local-only dependencies.
 
 `TradeSettled` remains the only public proof trigger for contract-backed trade proofs. `NonceManager` is external nonce truth, `MarketRegistry` is external market truth, and `FeeManager` is external fee truth for local Settlement wiring. Delegate metadata must keep `NO_WITHDRAW` and `NO_ADMIN` explicit, with no positive withdrawal/admin permission. Native Qi remains a UTXO-model caveat until a wrapper/adapter/conversion design is proven.
+
+Structured native Qi metadata in `/v1/contracts`:
+
+```text
+nativeQiStatus.status: design-required
+nativeQiStatus.currentTreatment: mock-only
+nativeQiStatus.nativeQiModel: UTXO-model
+acceptedFuturePaths: wrapped_qi_receipt_token, contract_native_qi_adapter, conversion_settlement_flow
+selectedPath: null
+realQuaiTransactions: false
+walletRequired: false
+```
+
+Real native-Qi-backed `QI-QUAI` settlement remains blocked until reserve/conversion event truth, redemption/unwrap proof path, a solvency invariant, `TradeSettled` trade-proof truth, and explicit Clonners approval exist. The metadata is read-only and introduces no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.
 
 ## TradingVault
 

@@ -311,6 +311,7 @@ components:
         - realQuaiTransactions
         - walletRequired
         - nativeQiCaveat
+        - nativeQiStatus
         - contracts
         - safety
       properties:
@@ -335,6 +336,8 @@ components:
         nativeQiCaveat:
           type: string
           description: Native Qi remains UTXO-model and requires a wrapper/adapter/conversion design before real vault settlement claims.
+        nativeQiStatus:
+          $ref: "#/components/schemas/NativeQiStatus"
         docs:
           type: array
           items: { type: string }
@@ -356,6 +359,48 @@ components:
               $ref: "#/components/schemas/ContractMetadata"
         safety:
           $ref: "#/components/schemas/ContractSafety"
+    NativeQiStatus:
+      type: object
+      description: Read-only native Qi boundary metadata. It states that real native-Qi-backed QI-QUAI settlement is design-required and mock-only until an approved wrapper, adapter, or conversion path is proven.
+      required: [status, marketId, currentTreatment, nativeQiModel, acceptedFuturePaths, selectedPath, evidenceRequired, approvalRequired, realQuaiTransactions, walletRequired, safetyNotice]
+      properties:
+        status:
+          type: string
+          enum: [design-required]
+        marketId:
+          type: string
+          enum: [QI-QUAI]
+        currentTreatment:
+          type: string
+          enum: [mock-only]
+        nativeQiModel:
+          type: string
+          enum: [UTXO-model]
+        acceptedFuturePaths:
+          type: array
+          items:
+            type: string
+            enum: [wrapped_qi_receipt_token, contract_native_qi_adapter, conversion_settlement_flow]
+        selectedPath:
+          type: [string, "null"]
+          description: Null until Clonners explicitly approves one native Qi design path.
+        evidenceRequired:
+          type: array
+          items:
+            type: string
+            enum: [reserve/conversion event truth, redemption/unwrap proof path, solvency invariant, TradeSettled trade-proof truth, explicit Clonners approval]
+        approvalRequired:
+          type: boolean
+          enum: [true]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          example: "Read-only native Qi status metadata only: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim."
     ContractMetadata:
       type: object
       required: [key, contractName, address, deploymentStatus, operatorWithdrawalAuthority]

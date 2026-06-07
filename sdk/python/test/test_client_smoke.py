@@ -80,6 +80,25 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(registry["realQuaiTransactions"])
             self.assertFalse(registry["walletRequired"])
             self.assertIn("UTXO-model", registry["nativeQiCaveat"])
+            self.assertEqual(registry["nativeQiStatus"]["status"], "design-required")
+            self.assertEqual(registry["nativeQiStatus"]["marketId"], "QI-QUAI")
+            self.assertEqual(registry["nativeQiStatus"]["currentTreatment"], "mock-only")
+            self.assertEqual(registry["nativeQiStatus"]["nativeQiModel"], "UTXO-model")
+            self.assertEqual(
+                registry["nativeQiStatus"]["acceptedFuturePaths"],
+                [
+                    "wrapped_qi_receipt_token",
+                    "contract_native_qi_adapter",
+                    "conversion_settlement_flow",
+                ],
+            )
+            self.assertIsNone(registry["nativeQiStatus"]["selectedPath"])
+            self.assertFalse(registry["nativeQiStatus"]["realQuaiTransactions"])
+            self.assertFalse(registry["nativeQiStatus"]["walletRequired"])
+            self.assertIn(
+                "no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim",
+                registry["nativeQiStatus"]["safetyNotice"],
+            )
             self.assertIsNone(registry["contracts"]["tradingVault"]["address"])
             self.assertFalse(registry["contracts"]["tradingVault"]["operatorWithdrawalAuthority"])
             self.assertEqual(registry["contracts"]["settlement"]["proofTrigger"], "TradeSettled")

@@ -60,6 +60,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
 
+The registry includes `nativeQiStatus` for `QI-QUAI`: `status: design-required`, `currentTreatment: mock-only`, and `nativeQiModel: UTXO-model`. Accepted future paths are limited to `wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow`; no selected path exists before explicit approval and evidence. The status is read-only metadata and its safety notice must say there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.
+
 The Python SDK must not load wallets, send transactions, read RPC URLs, infer real contract addresses, or imply deploy authority from this metadata. Native Qi remains UTXO-model and requires a wrapper/adapter/conversion design before any real `QI-QUAI` vault settlement claim.
 
 ## Relayer settlement-mode gate

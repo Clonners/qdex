@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: native Qi wrapper/adapter boundary plan green -> next `/v1/contracts` `nativeQiStatus` metadata ratchet
+- Current phase: native Qi `nativeQiStatus` metadata green -> next approval-gated native Qi path decision only after external evidence
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add read-only `nativeQiStatus: design-required` metadata to `/v1/contracts`, OpenAPI, SDK/CLI docs, and consumer tests so real native-Qi-backed `QI-QUAI` settlement remains visibly blocked.
-2. After explicit approval and external evidence, choose exactly one native Qi path (`wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow`) before writing any adapter interface or runtime behavior.
+1. After explicit approval and external evidence, choose exactly one native Qi path (`wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow`) before writing any adapter interface or runtime behavior.
+2. Keep `QI-QUAI` mock-only and `nativeQiStatus: design-required` visible in API/SDK/CLI until the chosen path has reserve/conversion truth, redemption/unwrap proof path, solvency invariant, and `TradeSettled` proof truth.
 
 ## Cron runner
 
@@ -126,3 +126,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 00:47 -03: Added read-only TypeScript SDK `relayer.settlementModeGate.get()` and `qdex relayer gate` client surfaces for `/v1/relayer/settlement-mode-gate`, preserving blocked `quai_contract` metadata plus no wallet/sign/broadcast/RPC/tx behavior; verified RED SDK missing client, GREEN focused SDK/CLI/doc tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `ce4b431`; next slice: Python SDK relayer gate metadata client.
 - 2026-06-07 01:03 -03: Added Python SDK `relayer.settlement_mode_gate.get()` read-only client for `/v1/relayer/settlement-mode-gate`, plus Python README/spec ratchets, preserving `mock` mode, blocked `quai_contract`, `TradeSettled`, and no wallet/sign/broadcast/RPC/tx behavior; verified RED focused Python/doc tests, GREEN `pnpm --filter @qdex/sdk-python test`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `940573f`; next slice: stale contract-harness next-slice cleanup / native Qi adapter planning.
 - 2026-06-07 01:25 -03: Added native Qi wrapper/adapter boundary plan and ratchets: mock `QI-QUAI` stays mock-only, accepted paths are limited to wrapped receipt, contract-native adapter, or explicit conversion settlement flow, and stale contract-harness next-slice wording now points to `nativeQiStatus`; verified RED `node --test tests/native-qi-adapter-boundary.test.mjs`, GREEN focused docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `da70460`; next slice: add read-only `nativeQiStatus: design-required` metadata to `/v1/contracts` + OpenAPI/SDK/CLI docs.
+- 2026-06-07 01:52 -03: Added read-only `nativeQiStatus: design-required` metadata to `/v1/contracts`, OpenAPI, TypeScript/Python SDK docs/tests, and `qdex contracts` docs/tests; real native-Qi-backed `QI-QUAI` remains mock-only with null addresses, `realQuaiTransactions: false`, and `walletRequired: false`; verified RED API/SDK/CLI/doc ratchets, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: approval-gated native Qi path decision only after external evidence.

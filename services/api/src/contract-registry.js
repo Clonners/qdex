@@ -14,6 +14,31 @@ const dependencyNames = [
   'DelegateKeyRegistry',
 ];
 
+const nativeQiStatus = {
+  status: 'design-required',
+  marketId: 'QI-QUAI',
+  currentTreatment: 'mock-only',
+  nativeQiModel: 'UTXO-model',
+  acceptedFuturePaths: [
+    'wrapped_qi_receipt_token',
+    'contract_native_qi_adapter',
+    'conversion_settlement_flow',
+  ],
+  selectedPath: null,
+  evidenceRequired: [
+    'reserve/conversion event truth',
+    'redemption/unwrap proof path',
+    'solvency invariant',
+    'TradeSettled trade-proof truth',
+    'explicit Clonners approval',
+  ],
+  approvalRequired: true,
+  realQuaiTransactions: false,
+  walletRequired: false,
+  safetyNotice:
+    'Read-only native Qi status metadata only: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.',
+};
+
 export const createContractRegistryResponse = () => ({
   chain: 'quai-single-zone-mvp',
   settlementMode: 'mock',
@@ -25,6 +50,11 @@ export const createContractRegistryResponse = () => ({
   docs: ['docs/contracts.md', 'docs/quai-tooling.md', 'contracts/README.md'],
   nativeQiCaveat:
     'Native Qi remains UTXO-model and is not treated as an ERC-20 vault token until a wrapper/adapter/conversion design is proven.',
+  nativeQiStatus: {
+    ...nativeQiStatus,
+    acceptedFuturePaths: [...nativeQiStatus.acceptedFuturePaths],
+    evidenceRequired: [...nativeQiStatus.evidenceRequired],
+  },
   contracts: {
     tradingVault: localContract({
       key: 'tradingVault',

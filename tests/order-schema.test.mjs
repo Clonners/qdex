@@ -64,6 +64,43 @@ test('OpenAPI exposes SignedOrder requests and public IndexedFillProjection comp
   );
 });
 
+test('OpenAPI ContractRegistry exposes read-only nativeQiStatus design boundary', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const contractRegistry = sectionBetween(spec, '    ContractRegistry:', '    NativeQiStatus:');
+  const nativeQiStatus = sectionBetween(spec, '    NativeQiStatus:', '    ContractMetadata:');
+
+  for (const requiredText of [
+    '- nativeQiStatus',
+    'nativeQiStatus:',
+    '$ref: "#/components/schemas/NativeQiStatus"',
+  ]) {
+    assert.ok(contractRegistry.includes(requiredText), `ContractRegistry schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'description: Read-only native Qi boundary metadata',
+    'required: [status, marketId, currentTreatment, nativeQiModel, acceptedFuturePaths, selectedPath, evidenceRequired, approvalRequired, realQuaiTransactions, walletRequired, safetyNotice]',
+    'enum: [design-required]',
+    'enum: [QI-QUAI]',
+    'enum: [mock-only]',
+    'enum: [UTXO-model]',
+    'wrapped_qi_receipt_token',
+    'contract_native_qi_adapter',
+    'conversion_settlement_flow',
+    'reserve/conversion event truth',
+    'redemption/unwrap proof path',
+    'solvency invariant',
+    'TradeSettled trade-proof truth',
+    'explicit Clonners approval',
+    'realQuaiTransactions:',
+    'enum: [false]',
+    'walletRequired:',
+    'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+  ]) {
+    assert.ok(nativeQiStatus.includes(requiredText), `NativeQiStatus schema should include ${requiredText}`);
+  }
+});
+
 test('OpenAPI IndexedFillProjection schema is the public adapter-shaped indexer projection', async () => {
   const spec = await readText('docs/api-openapi.yaml');
   const indexedFillProjection = sectionBetween(spec, '    IndexedFillProjection:', '    Market:');

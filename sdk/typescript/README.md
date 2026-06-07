@@ -32,6 +32,10 @@ const result = await runMockCrossSmoke(dex, {
 });
 
 console.log(contractRegistry.deploymentStatus); // local-only-not-deployed
+console.log(contractRegistry.nativeQiStatus.status); // design-required
+console.log(contractRegistry.nativeQiStatus.currentTreatment); // mock-only
+console.log(contractRegistry.nativeQiStatus.nativeQiModel); // UTXO-model
+console.log(contractRegistry.nativeQiStatus.acceptedFuturePaths); // wrapped_qi_receipt_token, contract_native_qi_adapter, conversion_settlement_flow
 console.log(relayerGate.source); // relayer-approval-gate
 console.log(relayerGate.currentSettlementMode); // currentSettlementMode: mock
 console.log(relayerGate.modes.quai_contract.reason); // real_quai_approval_gate_blocked
@@ -46,7 +50,7 @@ console.log(result.fill.sourceEventId);
 console.log(result.proof.settlementMode); // mock
 ```
 
-`contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects.
+`contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects. `contractRegistry.nativeQiStatus.status` stays `design-required`; native Qi remains `UTXO-model`, `QI-QUAI` is `mock-only`, and accepted future paths are limited to `wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow`. The safety notice preserves: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.
 
 `dex.relayer.settlementModeGate.get()` calls `GET /v1/relayer/settlement-mode-gate` and returns read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

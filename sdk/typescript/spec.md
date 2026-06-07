@@ -54,6 +54,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 
 `contracts.get()` is read-only contract-registry metadata from `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety; it must not load wallets, send transactions, or imply deployment authority.
 
+The contract registry also exposes `nativeQiStatus` for `QI-QUAI`: `status: design-required`, `currentTreatment: mock-only`, and `nativeQiModel: UTXO-model`. Accepted future paths are limited to `wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow`, with no selected path until explicit approval and evidence. The `nativeQiStatus.safetyNotice` must say there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.
+
 `relayer.settlementModeGate.get()` is read-only relayer gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 `nonces.prepareCancel()` is a prepare-only client for `POST /v1/nonces/cancel`. It intentionally surfaces the API placeholder response `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local `orders.cancelAll`.

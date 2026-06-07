@@ -235,6 +235,100 @@ test('SDK, CLI, and terminal consumer docs pin IndexedFillProjection projectionT
   }
 });
 
+test('SDK and CLI README docs expose read-only nativeQiStatus metadata boundary', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/spec.md',
+      terms: [
+        'nativeQiStatus',
+        'status: design-required',
+        'currentTreatment: mock-only',
+        'nativeQiModel: UTXO-model',
+        'wrapped_qi_receipt_token',
+        'contract_native_qi_adapter',
+        'conversion_settlement_flow',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+      ],
+    },
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'contractRegistry.nativeQiStatus.status',
+        'design-required',
+        'mock-only',
+        'UTXO-model',
+        'wrapped_qi_receipt_token',
+        'contract_native_qi_adapter',
+        'conversion_settlement_flow',
+        'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+      ],
+    },
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        'nativeQiStatus',
+        'status: design-required',
+        'currentTreatment: mock-only',
+        'nativeQiModel: UTXO-model',
+        'wrapped_qi_receipt_token',
+        'contract_native_qi_adapter',
+        'conversion_settlement_flow',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'contracts["nativeQiStatus"]["status"]',
+        'design-required',
+        'mock-only',
+        'UTXO-model',
+        'wrapped_qi_receipt_token',
+        'contract_native_qi_adapter',
+        'conversion_settlement_flow',
+        'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+      ],
+    },
+    {
+      path: 'cli/qdex/spec.md',
+      terms: [
+        'nativeQiStatus',
+        'status: design-required',
+        'currentTreatment: mock-only',
+        'nativeQiModel: UTXO-model',
+        'wrapped_qi_receipt_token',
+        'contract_native_qi_adapter',
+        'conversion_settlement_flow',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'nativeQiStatus',
+        'design-required',
+        'mock-only',
+        'UTXO-model',
+        'wrapped_qi_receipt_token',
+        'contract_native_qi_adapter',
+        'conversion_settlement_flow',
+        'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
 test('SDK and CLI README docs expose owner-signed nonce-cancel prepare-only clients', async () => {
   const docs = [
     {

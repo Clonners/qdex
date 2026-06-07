@@ -75,10 +75,11 @@ test('contract and architecture docs link native Qi boundary and clear stale nex
   assert.ok(architectureDoc.includes('real `QI-QUAI` settlement remains blocked'));
   assert.ok(architectureDoc.includes('mock `QI-QUAI` stays mock-only'));
 
-  assert.ok(contractsReadme.includes('Recommended next slice: add read-only `nativeQiStatus` metadata'));
+  assert.ok(contractsReadme.includes('Current metadata slice: `/v1/contracts` exposes read-only `nativeQiStatus`'));
+  assert.ok(contractsReadme.includes('Recommended next slice: choose exactly one native Qi path only after explicit approval'));
   assert.doesNotMatch(
     contractsReadme,
-    /Recommended next slice: wire external dependency cleanup or FeeManager\/MarketRegistry docs\/API contract alignment/,
-    'contracts README should not point at stale completed dependency/API alignment work',
+    /Recommended next slice: (wire external dependency cleanup|add read-only `nativeQiStatus` metadata)/,
+    'contracts README should not point at stale completed dependency/API/nativeQiStatus work',
   );
 });
