@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: TypeScript SDK/CLI relayer gate clients green -> next Python SDK gate metadata client
+- Current phase: Python SDK relayer gate client green -> next stale contract-harness next-slice cleanup / native Qi adapter planning
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add a read-only Python SDK relayer approval-gate client mirroring the TypeScript/CLI surfaces so Python bots can inspect `mock` vs blocked `quai_contract` metadata without wallets, RPC, broadcasts, or tx behavior.
-2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired; keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
+1. Clean stale contract-harness / status next-slice wording now that `/v1/contracts`, SDK/CLI registry clients, relayer gate API, TypeScript/CLI clients, and Python relayer gate client are green.
+2. Plan the native Qi wrapper/adapter boundary before any real `QI-QUAI` vault settlement claim; keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green.
 
 ## Cron runner
 
@@ -124,3 +124,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 00:04 -03: Added relayer real-Quai approval gate: dependency-light `evaluateRelayerSettlementModeGate()` blocks `quai_contract` without explicit Clonners approval and event-truth readiness, documents no wallet/sign/broadcast/RPC behavior, and keeps `realQuaiTransactions: false` / `walletRequired: false`; verified RED module-missing test, GREEN focused test, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `0402fff`; next slice: read-only API/OpenAPI exposure for relayer gate status.
 - 2026-06-07 00:25 -03: Exposed read-only `GET /v1/relayer/settlement-mode-gate` API/OpenAPI status for mock mode plus blocked `quai_contract` approval gate, preserving no wallet/sign/broadcast/RPC/tx behavior; verified RED API 404 + OpenAPI missing path, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `fb5cc44`; next slice: read-only TypeScript SDK/`qdex` CLI relayer gate clients.
 - 2026-06-07 00:47 -03: Added read-only TypeScript SDK `relayer.settlementModeGate.get()` and `qdex relayer gate` client surfaces for `/v1/relayer/settlement-mode-gate`, preserving blocked `quai_contract` metadata plus no wallet/sign/broadcast/RPC/tx behavior; verified RED SDK missing client, GREEN focused SDK/CLI/doc tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `ce4b431`; next slice: Python SDK relayer gate metadata client.
+- 2026-06-07 01:03 -03: Added Python SDK `relayer.settlement_mode_gate.get()` read-only client for `/v1/relayer/settlement-mode-gate`, plus Python README/spec ratchets, preserving `mock` mode, blocked `quai_contract`, `TradeSettled`, and no wallet/sign/broadcast/RPC/tx behavior; verified RED focused Python/doc tests, GREEN `pnpm --filter @qdex/sdk-python test`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `940573f`; next slice: stale contract-harness next-slice cleanup / native Qi adapter planning.
