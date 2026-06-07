@@ -90,7 +90,7 @@ test('local harness documentation tracks current local contract coverage', async
     '`MR-03`: local MarketRegistry starts with Clonners-managed listing authority and supports a two-step DAO handoff via `proposeMarketAuthority` and `acceptMarketAuthority` without custody power.',
     'Current metadata/listing slices expose read-only `listedAssetStatus` plus `GET /v1/listings/policy`, `POST /v1/listings/requests` prepare-only metadata, and SDK/CLI clients',
     'Next approval boundary: post-listing-policy MarketRegistry admin boundary in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](../docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md).',
-    'Approval required: runtime listing submission or MarketRegistry admin mutation.',
+    'Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation.',
     'The listing plane may enable/disable token-pair metadata only after approval, but it must not move user balances or grant withdrawal/admin power.',
     'Native Qi direct settlement remains out of scope for the MVP unless Clonners explicitly reopens it; WQI is the Qi-facing listed token surface.',
   ]) {

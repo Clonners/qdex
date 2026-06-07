@@ -148,19 +148,19 @@ Result:
 
 **Objective:** Complete the design-only listed-asset / MarketRegistry metadata surfaces without adding runtime listing authority.
 
-Completed: `GET /v1/listings/policy` exposes the read-only listing policy and `POST /v1/listings/requests` exposes only an intentional prepare-only `501` boundary.
+Completed: `GET /v1/listings/policy` exposes the read-only listing policy, `POST /v1/listings/requests` preserves an intentional prepare-only `501` fallback, and approved `requestMode: local_review_queue` writes only to the local in-memory review queue.
 
 Result:
 
-- TypeScript SDK, Python SDK, and `qdex listings request --prepare` clients return the prepare-only envelope without treating it as an on-chain listing submission.
+- TypeScript SDK, Python SDK, and `qdex listings request --prepare` clients return the prepare-only envelope without treating it as an on-chain listing submission; queue clients remain a separate local-only slice.
 - `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false` stay pinned.
 - No runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, MarketRegistry mutation, funds movement, or TradingVault balance authority was added.
 
 ## Remaining implementation direction
 
-Existing safe surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.
+Existing safe surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.
 
-Next boundary: explicit Clonners approval before runtime listing submission or MarketRegistry admin mutation.
+Next boundary: explicit Clonners approval before runtime listing submission beyond local queue state or MarketRegistry admin mutation.
 
 Required boundary before runtime listing behavior:
 

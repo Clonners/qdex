@@ -109,11 +109,11 @@ Completed: prepare-only listing request clients expose `POST /v1/listings/reques
 
 Token listing and MarketRegistry metadata flow clients are now complete as read-only/prepare-only surfaces.
 
-Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.
+Existing safe listing surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.
 
 post-listing-policy MarketRegistry admin boundary: [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./2026-06-07-post-listing-policy-marketregistry-admin-boundary.md).
 
-Approval required: runtime listing submission or MarketRegistry admin mutation. Do not add runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, or claims that MarketRegistry metadata can move TradingVault balances.
+Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation. Do not add runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, or claims that MarketRegistry metadata can move TradingVault balances.
 
 ---
 

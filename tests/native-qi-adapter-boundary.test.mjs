@@ -32,10 +32,10 @@ const requiredPlanText = [
   '## Completed metadata correction',
   'Completed: the campaign direction has been corrected away from a native Qi adapter selection blocker.',
   '## Existing safe listing surfaces and approval boundary',
-  'Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.',
+  'Existing safe listing surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.',
   'Completed: TypeScript SDK, Python SDK, and `qdex` CLI clients expose the read-only listing policy',
   'Completed: prepare-only listing request clients expose `POST /v1/listings/requests` without listing-admin runtime behavior.',
-  'Approval required: runtime listing submission or MarketRegistry admin mutation.',
+  'Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation.',
   'post-listing-policy MarketRegistry admin boundary',
   'Listed assets are ERC-20-style vault tokens.',
   '`MarketRegistry` is market metadata/enabled-pair truth, not custody truth.',
@@ -80,7 +80,7 @@ test('contract and architecture docs point to wrapped token listing rather than 
   assert.ok(architectureDoc.includes('Native Qi direct settlement is out of scope'));
 
   assert.ok(contractsReadme.includes('Current metadata/listing slices expose read-only `listedAssetStatus`'));
-  assert.ok(contractsReadme.includes('Approval required: runtime listing submission or MarketRegistry admin mutation'));
+  assert.ok(contractsReadme.includes('Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation'));
   assert.doesNotMatch(
     contractsReadme,
     /Recommended next slice: token listing and MarketRegistry metadata flow|Recommended next slice: choose exactly one native Qi path|accepted paths remain `wrapped_qi_receipt_token`/,
