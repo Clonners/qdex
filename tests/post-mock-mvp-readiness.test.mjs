@@ -53,14 +53,22 @@ test('post-mock MVP readiness plan pins owner-signed nonce-cancel and approval g
     'Completed: `quai_contract` mode is blocked unless explicit Clonners approval and event-truth readiness metadata are present.',
     '### Completed Task 5: Wrapped token listing correction',
     'Completed: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./2026-06-07-native-qi-wrapper-adapter-boundary.md) now supersedes the native Qi adapter blocker and pins WQUAI, WQI, and listed community-created tokens as the MVP asset model.',
+    '### Completed Task 6: Listing policy and prepare-only listing request surfaces',
+    'Completed: `GET /v1/listings/policy` exposes the read-only listing policy and `POST /v1/listings/requests` exposes only an intentional prepare-only `501` boundary.',
     '## Remaining implementation direction',
-    'Next safe slice: token listing and MarketRegistry metadata flow.',
-    'Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real native Qi settlement claims. Listing/admin metadata may enable token pairs, but it must not move user balances or grant withdrawal/admin power.',
+    'Existing safe surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.',
+    'Next boundary: explicit Clonners approval before runtime listing submission or MarketRegistry admin mutation.',
+    'Do not add runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, MarketRegistry mutation, or real native Qi settlement claims.',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }
 
   assert.doesNotMatch(plan, /## Next implementation tasks/, 'post-mock plan should not advertise completed tasks as next work');
+  assert.doesNotMatch(
+    plan,
+    /Next safe slice: token listing and MarketRegistry metadata flow/,
+    'post-mock plan must not point to the already-completed listing metadata slice as next work',
+  );
 
   const forbiddenRuntimeDetails = new RegExp(['process\\.env', 'RPC_URL', 'mnemo' + 'nic', 'seed' + ' phrase'].join('|'));
   assert.doesNotMatch(plan, forbiddenRuntimeDetails, 'plan must not add env, wallet-material, or secret-bearing implementation details');

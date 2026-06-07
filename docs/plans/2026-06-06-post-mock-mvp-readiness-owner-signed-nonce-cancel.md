@@ -144,9 +144,23 @@ Result:
 - `/v1/contracts`, SDKs, CLI, and docs expose read-only `listedAssetStatus` metadata.
 - No native Qi adapter interface, runtime behavior, wallet loading, signing, broadcast, deployment, transaction submission, or real settlement claim was added.
 
+### Completed Task 6: Listing policy and prepare-only listing request surfaces
+
+**Objective:** Complete the design-only listed-asset / MarketRegistry metadata surfaces without adding runtime listing authority.
+
+Completed: `GET /v1/listings/policy` exposes the read-only listing policy and `POST /v1/listings/requests` exposes only an intentional prepare-only `501` boundary.
+
+Result:
+
+- TypeScript SDK, Python SDK, and `qdex listings request --prepare` clients return the prepare-only envelope without treating it as an on-chain listing submission.
+- `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false` stay pinned.
+- No runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, MarketRegistry mutation, funds movement, or TradingVault balance authority was added.
+
 ## Remaining implementation direction
 
-Next safe slice: token listing and MarketRegistry metadata flow.
+Existing safe surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.
+
+Next boundary: explicit Clonners approval before runtime listing submission or MarketRegistry admin mutation.
 
 Required boundary before runtime listing behavior:
 
@@ -156,4 +170,4 @@ Required boundary before runtime listing behavior:
 - delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`,
 - real deploy/tx/wallet/RPC behavior remains approval-gated.
 
-Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real native Qi settlement claims. Listing/admin metadata may enable token pairs, but it must not move user balances or grant withdrawal/admin power.
+Do not add runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, MarketRegistry mutation, or real native Qi settlement claims. Listing/admin metadata may enable token pairs only after approval, and it must never move user balances or grant withdrawal/admin power.
