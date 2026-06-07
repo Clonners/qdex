@@ -212,6 +212,8 @@ export class QDexClient {
           body: Object.keys(body).length > 0 ? body : undefined,
         });
       },
+      openStream: (options = {}) => this.streams.open('orders', options),
+      stream: async (options = {}) => this.streams.read('orders', options),
     };
 
     this.fills = {

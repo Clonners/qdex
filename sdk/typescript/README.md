@@ -12,6 +12,9 @@ const contractRegistry = await dex.contracts.get();
 const fillsStream = dex.fills.openStream({ timeoutMs: 2000 });
 const initialFillsSnapshot = await fillsStream.next();
 await fillsStream.close();
+const ordersStream = dex.orders.openStream({ timeoutMs: 2000 });
+const initialOrdersSnapshot = await ordersStream.next();
+await ordersStream.close();
 
 const result = await runMockCrossSmoke(dex, {
   restingSell: createMockSignedOrder({ side: 'sell', amount: '100', price: '5', nonce: '1' }),
@@ -20,6 +23,7 @@ const result = await runMockCrossSmoke(dex, {
 
 console.log(contractRegistry.deploymentStatus); // local-only-not-deployed
 console.log(initialFillsSnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(initialOrdersSnapshot.snapshot.channel); // orders
 console.log(result.fill.projectionType); // IndexedFillProjection
 console.log(result.fill.sourceEventId);
 console.log(result.proof.settlementMode); // mock
@@ -28,5 +32,7 @@ console.log(result.proof.settlementMode); // mock
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects.
 
 `fills.openStream()` consumes the local `/v1/ws?channel=fills` WebSocket transport. Private stream snapshots remain read-only and carry `NO_WITHDRAW`/`NO_ADMIN` permissions.
+
+`orders.openStream()` consumes `/v1/ws?channel=orders` for order/cancel stream snapshots. Matcher-local cancellation updates keep on-chain nonce wording explicit and do not grant withdrawal/admin authority.
 
 The smoke helper is deliberately mock-only: it proves the API/indexer/proof loop without wallets, transactions, real Quai settlement, or fund movement.

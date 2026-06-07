@@ -85,6 +85,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
   qdex --base-url http://127.0.0.1:8787 cancel --all
   qdex --base-url http://127.0.0.1:8787 stream fills [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream orders [--limit 1]
   qdex --base-url http://127.0.0.1:8787 smoke
 `;
 
@@ -145,13 +146,14 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       return 0;
     }
 
-    if (command === 'stream' && rest[0] === 'fills') {
+    if (command === 'stream' && (rest[0] === 'fills' || rest[0] === 'orders')) {
+      const channel = rest[0];
       const options = parseStreamOptions(rest.slice(1));
-      const messages = await client.fills.stream(options);
+      const messages = await client[channel].stream(options);
       writeJson(stdout, {
-        command: 'stream fills',
+        command: `stream ${channel}`,
         baseUrl,
-        channel: 'fills',
+        channel,
         transport: 'websocket',
         limit: options.limit,
         messages,

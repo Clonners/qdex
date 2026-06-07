@@ -76,6 +76,24 @@ test('qdex stream fills command consumes local WebSocket snapshots with read-onl
   });
 });
 
+test('qdex stream orders command exposes bounded read-only order snapshots for cancellation monitors', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'stream', 'orders', '--limit', '1']);
+
+    assert.equal(result.command, 'stream orders');
+    assert.equal(result.channel, 'orders');
+    assert.equal(result.transport, 'websocket');
+    assert.equal(result.limit, 1);
+    assert.equal(result.messages.length, 1);
+    assert.equal(result.messages[0].type, 'snapshot');
+    assert.equal(result.messages[0].snapshot.channel, 'orders');
+    assert.equal(result.messages[0].snapshot.visibility, 'private');
+    assert.deepEqual(result.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.messages[0].snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+    assert.deepEqual(result.messages[0].snapshot.data.orders, []);
+  });
+});
+
 test('qdex contracts command prints local-only registry metadata without wallet or tx claims', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'contracts']);
