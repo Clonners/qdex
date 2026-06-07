@@ -54,7 +54,7 @@ test('OpenAPI exposes read-only token listing policy route and schema', async ()
   const tokenListingAsset = sectionBetween(spec, '    TokenListingAsset:', '    TokenListingMarketRegistry:');
   const marketRegistry = sectionBetween(spec, '    TokenListingMarketRegistry:', '    TokenListingAuthority:');
   const listingAuthority = sectionBetween(spec, '    TokenListingAuthority:', '    TokenListingSafety:');
-  const safety = sectionBetween(spec, '    TokenListingSafety:', '    ListingRequestPrepare:');
+  const safety = sectionBetween(spec, '    TokenListingSafety:', '    ListingRequestReviewFlow:');
 
   for (const requiredText of [
     'summary: Read-only token listing and MarketRegistry metadata policy',
@@ -136,6 +136,70 @@ test('OpenAPI exposes read-only token listing policy route and schema', async ()
   ]) {
     assert.ok(safety.includes(requiredText), `TokenListingSafety schema should include ${requiredText}`);
   }
+});
+
+test('OpenAPI and docs expose local listing request review approval flow without runtime mutation', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const policy = await readText('docs/listing-policy.md');
+  const route = sectionBetween(spec, '  /v1/listings/review-flow:', '  /v1/listings/requests:');
+  const reviewFlow = sectionBetween(spec, '    ListingRequestReviewFlow:', '    ListingRequestPrepare:');
+
+  for (const requiredText of [
+    'summary: Read-only local listing request review and approval flow',
+    'Clonners-managed local review metadata only',
+    'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, MarketRegistry mutation, or real funds',
+    '$ref: "#/components/schemas/ListingRequestReviewFlow"',
+  ]) {
+    assert.ok(route.includes(requiredText), `/v1/listings/review-flow route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [source, status, phase, requestSurface, reviewAuthority, stages, approvalOutcome, safety]',
+    'enum: [listed-asset-marketregistry-review-flow]',
+    'enum: [design-only-local-metadata]',
+    'enum: [clonners-managed-local-review-before-dao]',
+    'prepare-only POST /v1/listings/requests',
+    'Clonners-managed MarketRegistry authority',
+    'MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority',
+    'metadata_intake',
+    'token_safety_review',
+    'market_parameter_review',
+    'clonners_local_approval',
+    'marketregistry_admin_gate',
+    'approved-local-metadata-only',
+    'rejected-local-metadata-only',
+    'explicit Clonners approval required before MarketRegistry.addMarket',
+    'marketRegistryMutation:',
+    'enum: [false]',
+    'realQuaiTransactions:',
+    'walletRequired:',
+    'enum: [NO_WITHDRAW, NO_ADMIN]',
+    'noListingAdminKeys:',
+    'noRealTokenAddresses:',
+    'noFundsMovement:',
+  ]) {
+    assert.ok(reviewFlow.includes(requiredText), `ListingRequestReviewFlow schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '## Local listing request review/approval flow',
+    '`GET /v1/listings/review-flow` exposes the Clonners-managed local review and approval state machine as metadata only',
+    '`phase: clonners-managed-local-review-before-dao`',
+    '`marketRegistryMutation: false`',
+    '`approved-local-metadata-only`',
+    '`rejected-local-metadata-only`',
+    '`NO_WITHDRAW`',
+    '`NO_ADMIN`',
+    'explicit Clonners approval required before `MarketRegistry.addMarket`',
+  ]) {
+    assert.ok(policy.includes(requiredText), `docs/listing-policy.md should include ${requiredText}`);
+  }
+
+  assert.doesNotMatch(
+    `${route}\n${reviewFlow}\n${policy}`,
+    /walletPrivateKey|listingAdminPrivateKey|rpcUrl\s*:|txHash|signature|deployed address|MarketRegistry mutation submitted/i,
+    'review flow must not introduce wallet/RPC/signing/deploy/tx mechanics or mutation claims',
+  );
 });
 
 test('OpenAPI and docs expose prepare-only listing request placeholder without MarketRegistry mutation', async () => {

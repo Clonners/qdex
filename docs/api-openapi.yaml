@@ -115,6 +115,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TokenListingPolicy"
+  /v1/listings/review-flow:
+    get:
+      tags: [public]
+      summary: Read-only local listing request review and approval flow
+      description: Clonners-managed local review metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, MarketRegistry mutation, or real funds are introduced by this route.
+      responses:
+        "200":
+          description: Local listing review/approval metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestReviewFlow"
   /v1/listings/requests:
     post:
       tags: [public]
@@ -625,6 +637,127 @@ components:
         notice:
           type: string
           example: "Read-only listing metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds."
+    ListingRequestReviewFlow:
+      type: object
+      description: Read-only local listing request review/approval metadata. It does not persist a runtime queue, mutate MarketRegistry, load wallets, sign, broadcast, deploy, register real token addresses, or move funds.
+      required: [source, status, phase, requestSurface, reviewAuthority, stages, approvalOutcome, safety]
+      properties:
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-review-flow]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        phase:
+          type: string
+          enum: [clonners-managed-local-review-before-dao]
+        requestSurface:
+          type: string
+          example: "prepare-only POST /v1/listings/requests"
+        reviewAuthority:
+          type: object
+          required: [currentAuthority, futureAuthority, handoffPattern]
+          properties:
+            currentAuthority:
+              type: string
+              example: "Clonners-managed MarketRegistry authority"
+            futureAuthority:
+              type: string
+              enum: [dao-governance]
+            handoffPattern:
+              type: string
+              example: "MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority"
+        stages:
+          type: array
+          items:
+            type: object
+            required: [id, label, requiredEvidence, effect, marketRegistryMutation]
+            properties:
+              id:
+                type: string
+                enum: [metadata_intake, token_safety_review, market_parameter_review, clonners_local_approval, marketregistry_admin_gate]
+              label:
+                type: string
+              requiredEvidence:
+                type: array
+                items:
+                  type: string
+              effect:
+                type: string
+                enum: [local-review-record-only, approved-local-metadata-only, future-approved-addMarket-only-after-separate-slice]
+              marketRegistryMutation:
+                type: boolean
+                enum: [false]
+        approvalOutcome:
+          type: object
+          required: [approvedStatus, rejectedStatus, nextMutationGate, marketRegistryMutation, realQuaiTransactions]
+          properties:
+            approvedStatus:
+              type: string
+              enum: [approved-local-metadata-only]
+            rejectedStatus:
+              type: string
+              enum: [rejected-local-metadata-only]
+            nextMutationGate:
+              type: string
+              example: "explicit Clonners approval required before MarketRegistry.addMarket"
+            marketRegistryMutation:
+              type: boolean
+              enum: [false]
+            realQuaiTransactions:
+              type: boolean
+              enum: [false]
+        safety:
+          type: object
+          required: [custody, permissions, marketRegistryMutation, realQuaiTransactions, walletRequired, noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noListingAdminKeys, noRealTokenAddresses, noFundsMovement, notice]
+          properties:
+            custody:
+              type: string
+              enum: [non-custodial]
+            permissions:
+              type: array
+              items:
+                type: string
+                enum: [NO_WITHDRAW, NO_ADMIN]
+            marketRegistryMutation:
+              type: boolean
+              enum: [false]
+            realQuaiTransactions:
+              type: boolean
+              enum: [false]
+            walletRequired:
+              type: boolean
+              enum: [false]
+            noWalletLoading:
+              type: boolean
+              enum: [true]
+            noRpcUrlAccess:
+              type: boolean
+              enum: [true]
+            noSigning:
+              type: boolean
+              enum: [true]
+            noBroadcast:
+              type: boolean
+              enum: [true]
+            noDeploys:
+              type: boolean
+              enum: [true]
+            noTransactionSubmission:
+              type: boolean
+              enum: [true]
+            noListingAdminKeys:
+              type: boolean
+              enum: [true]
+            noRealTokenAddresses:
+              type: boolean
+              enum: [true]
+            noFundsMovement:
+              type: boolean
+              enum: [true]
+            notice:
+              type: string
+              example: "Local review/approval metadata only; it does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority."
     ListingRequestPrepare:
       type: object
       description: Metadata-only prepare payload for the approval-gated listing request placeholder. It intentionally excludes live authority details and credentials.

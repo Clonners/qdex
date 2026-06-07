@@ -133,6 +133,87 @@ test('GET /v1/listings/policy returns read-only token listing and MarketRegistry
   });
 });
 
+test('GET /v1/listings/review-flow exposes local Clonners-managed review approval metadata without MarketRegistry mutation', async () => {
+  await withServer(async (baseUrl) => {
+    const response = await requestJson(baseUrl, '/v1/listings/review-flow');
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body, {
+      source: 'listed-asset-marketregistry-review-flow',
+      status: 'design-only-local-metadata',
+      phase: 'clonners-managed-local-review-before-dao',
+      requestSurface: 'prepare-only POST /v1/listings/requests',
+      reviewAuthority: {
+        currentAuthority: 'Clonners-managed MarketRegistry authority',
+        futureAuthority: 'dao-governance',
+        handoffPattern: 'MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority',
+      },
+      stages: [
+        {
+          id: 'metadata_intake',
+          label: 'Metadata intake',
+          requiredEvidence: ['baseSymbol', 'quoteSymbol', 'tokenModel', 'requestedMarketId', 'pricePrecision', 'amountPrecision', 'minAmount'],
+          effect: 'local-review-record-only',
+          marketRegistryMutation: false,
+        },
+        {
+          id: 'token_safety_review',
+          label: 'Token safety review',
+          requiredEvidence: ['erc20-style-vault-token-behavior', 'no-native-qi-direct-settlement', 'no-custody-or-admin-withdrawal-path'],
+          effect: 'local-review-record-only',
+          marketRegistryMutation: false,
+        },
+        {
+          id: 'market_parameter_review',
+          label: 'Market parameter review',
+          requiredEvidence: ['WQUAI-or-WQI-quote', 'pricePrecision', 'amountPrecision', 'minAmount'],
+          effect: 'local-review-record-only',
+          marketRegistryMutation: false,
+        },
+        {
+          id: 'clonners_local_approval',
+          label: 'Clonners local approval',
+          requiredEvidence: ['operator-approval-note', 'NO_WITHDRAW', 'NO_ADMIN'],
+          effect: 'approved-local-metadata-only',
+          marketRegistryMutation: false,
+        },
+        {
+          id: 'marketregistry_admin_gate',
+          label: 'MarketRegistry admin gate',
+          requiredEvidence: ['separate-explicit-approval-before-addMarket', 'local-contract-ratchets-green'],
+          effect: 'future-approved-addMarket-only-after-separate-slice',
+          marketRegistryMutation: false,
+        },
+      ],
+      approvalOutcome: {
+        approvedStatus: 'approved-local-metadata-only',
+        rejectedStatus: 'rejected-local-metadata-only',
+        nextMutationGate: 'explicit Clonners approval required before MarketRegistry.addMarket',
+        marketRegistryMutation: false,
+        realQuaiTransactions: false,
+      },
+      safety: {
+        custody: 'non-custodial',
+        permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+        marketRegistryMutation: false,
+        realQuaiTransactions: false,
+        walletRequired: false,
+        noWalletLoading: true,
+        noRpcUrlAccess: true,
+        noSigning: true,
+        noBroadcast: true,
+        noDeploys: true,
+        noTransactionSubmission: true,
+        noListingAdminKeys: true,
+        noRealTokenAddresses: true,
+        noFundsMovement: true,
+        notice:
+          'Local review/approval metadata only; it does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority.',
+      },
+    });
+  });
+});
+
 test('POST /v1/listings/requests returns prepare-only approval-gated placeholder without runtime listing behavior', async () => {
   await withServer(async (baseUrl) => {
     const response = await requestJson(baseUrl, '/v1/listings/requests', {

@@ -76,6 +76,29 @@ walletRequired: false
 
 This surface performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds movement.
 
+## Local listing request review/approval flow
+
+`GET /v1/listings/review-flow` exposes the Clonners-managed local review and approval state machine as metadata only. It does not persist a runtime listing queue, does not mutate `MarketRegistry`, and does not create real token addresses.
+
+Required review-flow metadata:
+
+```text
+source: listed-asset-marketregistry-review-flow
+status: design-only-local-metadata
+phase: clonners-managed-local-review-before-dao
+requestSurface: prepare-only POST /v1/listings/requests
+marketRegistryMutation: false
+approvedStatus: approved-local-metadata-only
+rejectedStatus: rejected-local-metadata-only
+realQuaiTransactions: false
+walletRequired: false
+permissions: NO_WITHDRAW, NO_ADMIN
+```
+
+The local stages are `metadata_intake`, `token_safety_review`, `market_parameter_review`, `clonners_local_approval`, and `marketregistry_admin_gate`. The safety contract pins `phase: clonners-managed-local-review-before-dao` and `marketRegistryMutation: false`. A local approval is `approved-local-metadata-only`; a local rejection is `rejected-local-metadata-only`. The next mutation gate remains explicit Clonners approval required before `MarketRegistry.addMarket`.
+
+This route preserves `NO_WITHDRAW` and `NO_ADMIN`, and listing/admin metadata still cannot move `TradingVault` balances or grant withdrawal/admin authority.
+
 ## Prepare-only listing request API placeholder
 
 `POST /v1/listings/requests` returns `501` as a precise approval-gated placeholder. It is not a runtime listing queue, it does not persist submitted token listings, and it does not mutate `MarketRegistry`.

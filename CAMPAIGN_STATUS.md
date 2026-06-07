@@ -2,11 +2,11 @@
 
 ## State
 
-- Status: active autonomous builder cron; listing authority boundary approved by Clonners; current repo checks green
+- Status: active autonomous builder cron; local listing review-flow metadata green; current repo checks green
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: Clonners-managed MarketRegistry listing authority with future DAO handoff; no wallets/RPC/deploys/txs are approved
+- Current phase: Clonners-managed local listing request review/approval metadata with future DAO handoff; no wallets/RPC/deploys/txs are approved
 
 ## Current repo baseline
 
@@ -38,9 +38,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 ## Next recommended slices
 
 1. Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.
-2. Existing safe listing surfaces remain `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests` while contract-level authority handoff is local-only.
-3. Next bounded slice: expose local listing request review/approval flow for Clonners-managed metadata before DAO governance wiring.
-4. Preserve `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`/`NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin power.
+2. Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, and prepare-only `POST /v1/listings/requests`; contract-level authority handoff remains local-only.
+3. Next bounded slice: read-only TypeScript/Python SDK and `qdex` CLI clients for `GET /v1/listings/review-flow`.
+4. Preserve `source: listed-asset-marketregistry-review-flow`, `status: design-only-local-metadata`, `phase: clonners-managed-local-review-before-dao`, `NO_WITHDRAW`/`NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that local review/approval metadata cannot move TradingVault balances, mutate `MarketRegistry`, or grant withdrawal/admin power.
 5. Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, or funds movement.
 
 ## Cron runner
@@ -148,3 +148,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 15:03 -03: Cleaned stale post-listing admin plan pre-placeholder wording: the plan now names existing safe surfaces (`GET /v1/listings/policy`, prepare-only `POST /v1/listings/requests`), removes old “introduce placeholder first” copy, and aligns prepare-only response invariants to `listed-asset-marketregistry-policy`; verified RED/GREEN `node --test tests/post-listing-policy-admin-boundary.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `8b2fd6c`; next slice: explicit Clonners approval before any runtime listing submission or MarketRegistry admin behavior.
 - 2026-06-07 15:23 -03: Pinned campaign top-level status to blocked pending explicit Clonners approval and added a doc ratchet so no autonomous runtime listing/admin slice starts past the existing `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests` surfaces; verified RED/GREEN `node --test tests/post-listing-policy-admin-boundary.test.mjs`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `6c3efb9`; next slice: ✋ DECISIÓN required before runtime listing submission or MarketRegistry admin mutation.
 - 2026-06-07 16:23 -03: Approval received for a useful listing path initially managed by Clonners and later delegable to a DAO. Added local-only `MarketRegistry` two-step authority handoff (`proposeMarketAuthority` -> `acceptMarketAuthority`) plus API/docs/status metadata for Clonners-managed listing authority; verified focused MR-03/API/docs tests, `pnpm --filter @qdex/contracts test:local`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; no wallets, RPC URLs, deploys, txs, real token addresses, real network mutations, or funds movement are approved in this slice; next bounded slice: local listing request review/approval flow before DAO governance wiring.
+- 2026-06-07 16:43 -03: Added read-only local listing review/approval flow metadata through `GET /v1/listings/review-flow`, OpenAPI, and `docs/listing-policy.md`; it pins `source: listed-asset-marketregistry-review-flow`, `phase: clonners-managed-local-review-before-dao`, local approval/rejection statuses, `NO_WITHDRAW`/`NO_ADMIN`, and no `MarketRegistry` mutation/funds movement/wallet/RPC/sign/broadcast/deploy/tx behavior; verified RED 404/OpenAPI/doc failures, GREEN focused API/docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`.

@@ -95,15 +95,16 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   );
 });
 
-test('campaign status records approval for Clonners-managed listing authority with DAO handoff', async () => {
+test('campaign status records local listing review flow with DAO-ready authority boundaries', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
-    '- Status: active autonomous builder cron; listing authority boundary approved by Clonners; current repo checks green',
-    '- Current phase: Clonners-managed MarketRegistry listing authority with future DAO handoff; no wallets/RPC/deploys/txs are approved',
+    '- Status: active autonomous builder cron; local listing review-flow metadata green; current repo checks green',
+    '- Current phase: Clonners-managed local listing request review/approval metadata with future DAO handoff; no wallets/RPC/deploys/txs are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
-    'Existing safe listing surfaces remain `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests` while contract-level authority handoff is local-only.',
-    'Next bounded slice: expose local listing request review/approval flow for Clonners-managed metadata before DAO governance wiring.',
+    'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, and prepare-only `POST /v1/listings/requests`; contract-level authority handoff remains local-only.',
+    'Next bounded slice: read-only TypeScript/Python SDK and `qdex` CLI clients for `GET /v1/listings/review-flow`.',
+    'Added read-only local listing review/approval flow metadata through `GET /v1/listings/review-flow`, OpenAPI, and `docs/listing-policy.md`;',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
