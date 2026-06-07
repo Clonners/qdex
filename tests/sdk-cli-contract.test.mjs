@@ -347,6 +347,38 @@ test('SDK and CLI README docs expose read-only listedAssetStatus metadata bounda
   }
 });
 
+test('SDK and CLI contract docs do not point bots at completed listing metadata as a future slice', async () => {
+  const docs = [
+    'sdk/typescript/spec.md',
+    'sdk/typescript/README.md',
+    'sdk/python/spec.md',
+    'sdk/python/README.md',
+    'cli/qdex/spec.md',
+    'cli/qdex/README.md',
+  ];
+
+  for (const path of docs) {
+    const text = await readText(path);
+    assert.doesNotMatch(
+      text,
+      /Token listing and MarketRegistry metadata are the next safe surface|future listing\/MarketRegistry metadata/,
+      `${path} should point to existing listing-policy/request surfaces, not completed future listing metadata work`,
+    );
+    assert.ok(
+      text.includes('Listing policy metadata is already exposed through GET /v1/listings/policy'),
+      `${path} should mention the current read-only listing-policy surface`,
+    );
+    assert.ok(
+      text.includes('listing requests remain prepare-only through POST /v1/listings/requests'),
+      `${path} should keep listing requests prepare-only`,
+    );
+    assert.ok(
+      text.includes('runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval'),
+      `${path} should pin the next trust boundary to explicit Clonners approval`,
+    );
+  }
+});
+
 test('SDK and CLI README docs expose read-only listing policy clients', async () => {
   const docs = [
     {
