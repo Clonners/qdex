@@ -61,3 +61,11 @@
 The operator may run matching, relaying, listing and indexing infrastructure, but must not have a code path that can withdraw user funds.
 
 Withdrawals require the user's wallet or a separately approved high-trust path. Bot/delegate keys default to `NO_WITHDRAW`.
+
+## Post-mock MVP readiness
+
+The current mock loop is a local executable MVP, not real Quai settlement. Post-mock MVP readiness work must keep `settlementMode: mock`, null proof tx/block/explorer fields, and `local-only-not-deployed` contract metadata until approved contract evidence replaces the mock plane.
+
+Matcher-local cancellation is not on-chain nonce cancellation. The former removes open matcher quantity for bots/UI; the latter needs a separate owner-signed NonceManager flow before any claim that signed order replay has been invalidated on-chain. Delegate/API keys remain `NO_WITHDRAW`/`NO_ADMIN` and cannot submit that owner flow by default.
+
+See [`docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md`](./plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md) for the approval-gated replacement map.

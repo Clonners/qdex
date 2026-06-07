@@ -22,6 +22,8 @@ Local harness: [`contracts/hardhat.config.cjs`](../contracts/hardhat.config.cjs)
 
 No autonomous deployment, transaction, wallet, external RPC, or real-funds activity is implied by `/v1/contracts`. Real Quai addresses can only replace `null` after explicit approval, deployment evidence, verified source links, and event-truth indexing are available.
 
+Post-mock readiness / owner-signed nonce-cancel plan: [`docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md`](./plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md) separates matcher-local cancellation from contract-facing `NonceManager` cancellation and keeps real Quai replacement work approval-gated.
+
 The local dependency shape is now:
 
 ```text
