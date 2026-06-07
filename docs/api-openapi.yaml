@@ -103,6 +103,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContractRegistry"
+  /v1/listings/policy:
+    get:
+      tags: [public]
+      summary: Read-only token listing and MarketRegistry metadata policy
+      description: Token listing policy/status metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds are introduced by this route.
+      responses:
+        "200":
+          description: Token listing policy metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenListingPolicy"
   /v1/relayer/settlement-mode-gate:
     get:
       tags: [public]
@@ -399,6 +411,142 @@ components:
         safetyNotice:
           type: string
           example: "QDEX MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens; native Qi is not a direct TradingVault asset in this campaign."
+    TokenListingPolicy:
+      type: object
+      description: Read-only token listing and MarketRegistry metadata policy. It does not submit listings, load wallets, sign, broadcast, read RPC URLs, deploy, or move real funds.
+      required: [source, status, assetModel, primaryQuoteAssets, supportedAssets, exampleMarkets, listingLifecycle, marketRegistry, safety]
+      properties:
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-policy]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        assetModel:
+          type: string
+          enum: [erc20-style-vault-token]
+        primaryQuoteAssets:
+          type: array
+          items:
+            type: string
+            enum: [WQUAI, WQI]
+        supportedAssets:
+          type: array
+          items:
+            $ref: "#/components/schemas/TokenListingAsset"
+        exampleMarkets:
+          type: array
+          items:
+            type: object
+            required: [marketId, baseAsset, quoteAsset, marketRegistryStatus, custodyAuthority]
+            properties:
+              marketId:
+                type: string
+                example: WQI-WQUAI
+              baseAsset:
+                type: string
+                example: WQI
+              quoteAsset:
+                type: string
+                example: WQUAI
+              marketRegistryStatus:
+                type: string
+                enum: [listable-after-review]
+              custodyAuthority:
+                type: boolean
+                enum: [false]
+        listingLifecycle:
+          type: array
+          items:
+            type: string
+            enum: [submit-token-metadata, review-token-safety, define-precision-and-minimums, marketRegistry.addMarket-after-approval, marketRegistry.disableMarket-if-needed]
+        marketRegistry:
+          $ref: "#/components/schemas/TokenListingMarketRegistry"
+        safety:
+          $ref: "#/components/schemas/TokenListingSafety"
+    TokenListingAsset:
+      type: object
+      description: Listed or listable ERC-20-style vault asset metadata; addresses stay null in local-only autonomous work.
+      required: [symbol, role, assetModel, address, listingStatus, nativeQiDirectSettlement]
+      properties:
+        symbol:
+          type: string
+          enum: [WQUAI, WQI, community-created-erc20-style-token]
+        role:
+          type: string
+          enum: [quote-and-base-vault-token, qi-facing-vault-token, user-created-listable-asset]
+        assetModel:
+          type: string
+          enum: [erc20-style-vault-token]
+        address:
+          type: [string, "null"]
+          description: Null until explicit deploy/listing approval and evidence exist.
+        listingStatus:
+          type: string
+          enum: [listed, listable-after-review]
+        nativeQiDirectSettlement:
+          type: boolean
+          enum: [false]
+    TokenListingMarketRegistry:
+      type: object
+      description: MarketRegistry enabled-pair metadata boundary. It can enable/disable pairs but cannot move TradingVault balances or grant withdrawal/admin power.
+      required: [truthSource, canEnableMarkets, canDisableMarkets, custodyAuthority, balanceMovement, operatorWithdrawalAuthority, notes]
+      properties:
+        truthSource:
+          type: string
+          enum: [MarketRegistry-enabled-pair-metadata]
+        canEnableMarkets:
+          type: boolean
+          enum: [true]
+        canDisableMarkets:
+          type: boolean
+          enum: [true]
+        custodyAuthority:
+          type: boolean
+          enum: [false]
+        balanceMovement:
+          type: boolean
+          enum: [false]
+        operatorWithdrawalAuthority:
+          type: boolean
+          enum: [false]
+        notes:
+          type: string
+          example: MarketRegistry listing metadata can enable or disable token pairs, but it cannot move TradingVault balances or grant withdrawal/admin power.
+    TokenListingSafety:
+      type: object
+      description: Read-only listing-policy safety metadata; all real Quai activity remains approval-gated.
+      required: [realQuaiTransactions, walletRequired, noWalletLoading, noSigning, noBroadcast, noRpcUrlAccess, noTransactionSubmission, delegatePermissions, notice]
+      properties:
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        noWalletLoading:
+          type: boolean
+          enum: [true]
+        noSigning:
+          type: boolean
+          enum: [true]
+        noBroadcast:
+          type: boolean
+          enum: [true]
+        noRpcUrlAccess:
+          type: boolean
+          enum: [true]
+        noTransactionSubmission:
+          type: boolean
+          enum: [true]
+        delegatePermissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        notice:
+          type: string
+          example: "Read-only listing metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds."
     ContractMetadata:
       type: object
       required: [key, contractName, address, deploymentStatus, operatorWithdrawalAuthority]

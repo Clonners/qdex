@@ -74,6 +74,6 @@ See [`docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md
 
 QDEX MVP uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets. Native Qi direct settlement is out of scope for the current DEX plan; the Qi-facing market surface is WQI, not raw native Qi.
 
-Market listing is a metadata/governance plane, not custody authority: `MarketRegistry` can enable or disable token pairs, but it must not move user balances or grant withdrawal/admin power. The next safe slice is a token listing and MarketRegistry metadata flow.
+Market listing is a metadata/governance plane, not custody authority: `MarketRegistry` can enable or disable token pairs, but it must not move user balances or grant withdrawal/admin power. The active safe slice is the token listing and MarketRegistry metadata flow exposed as read-only local policy in [`docs/listing-policy.md`](./listing-policy.md) and `GET /v1/listings/policy`.
 
 See [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) for the corrected wrapped/listed-token boundary.

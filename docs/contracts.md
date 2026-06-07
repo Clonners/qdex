@@ -8,7 +8,7 @@ Contract implementation should start from the single-zone Hardhat + Quais SDK de
 
 Important current risk: Quai docs/examples disagree on the exact maximum Solidity compiler (`0.8.19` reference page vs `0.8.20` deployment guide/example). The current local interface ratchet pins Solidity `0.8.20` as the Hardhat candidate from `docs/quai-tooling.md`; verify locally/testnet before value-bearing deployment.
 
-Token assumption: the MVP asset plane is listed ERC-20-style vault tokens. `WQUAI`, `WQI`, and community-created tokens can be listed as market assets; raw native Qi direct settlement is out of scope unless Clonners explicitly reopens it. Corrected listing plan: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) supersedes the native-Qi-adapter blocker; `/v1/contracts` now exposes read-only `listedAssetStatus` for the wrapped/listed-token direction.
+Token assumption: the MVP asset plane is listed ERC-20-style vault tokens. `WQUAI`, `WQI`, and community-created tokens can be listed as market assets; raw native Qi direct settlement is out of scope unless Clonners explicitly reopens it. Corrected listing plan: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) supersedes the native-Qi-adapter blocker; `/v1/contracts` now exposes read-only `listedAssetStatus` for the wrapped/listed-token direction. The active token listing and MarketRegistry metadata flow is pinned in [`docs/listing-policy.md`](./listing-policy.md).
 
 Static ratchet: `tests/contract-interface-invariants.test.mjs` must stay green before adding implementation code. It guards compiler drift, no admin/operator withdrawal selectors, replay-domain fields, fee-cap fields, and `NO_WITHDRAW`/`NO_ADMIN` delegate semantics.
 
@@ -48,7 +48,7 @@ realQuaiTransactions: false
 walletRequired: false
 ```
 
-Native Qi direct settlement is not an MVP blocker anymore; the Qi-facing DEX surface is `WQI`. The next safe contract/API slice is a token listing and MarketRegistry metadata flow that can enable/disable listed token pairs without introducing custody, wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds.
+Native Qi direct settlement is not an MVP blocker anymore; the Qi-facing DEX surface is `WQI`. The next safe contract/API slice is a token listing and MarketRegistry metadata flow that can enable/disable listed token pairs without introducing custody, wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. `GET /v1/listings/policy` and [`docs/listing-policy.md`](./listing-policy.md) expose that flow as read-only local metadata before any runtime listing behavior.
 
 ## TradingVault
 

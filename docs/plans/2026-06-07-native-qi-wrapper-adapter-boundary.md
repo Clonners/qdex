@@ -81,25 +81,29 @@ Result:
 - Docs and SDK/CLI copy pin `WQUAI`, `WQI`, and listed community-created tokens as the MVP asset model.
 - Native Qi direct settlement remains out of scope unless explicitly reopened.
 
-## Next implementation slice
+## Completed token listing metadata slice
 
-### Task: Token listing and MarketRegistry metadata flow
+Completed: `GET /v1/listings/policy` exposes read-only listing metadata for the token listing and MarketRegistry metadata flow. Policy doc: `docs/listing-policy.md`.
 
-**Objective:** Define how user-created tokens become listable markets without granting custody or withdrawal authority.
+This slice defines how user-created tokens become listable markets without granting custody or withdrawal authority.
 
-**Files:**
+**Implemented files:**
 
-- Test: `tests/token-listing-boundary.test.mjs` or extend existing OpenAPI/docs ratchets.
+- Test: `tests/token-listing-boundary.test.mjs` plus API route coverage.
 - Docs: `docs/listing-policy.md`, `docs/contracts.md`, `docs/architecture.md`.
 - API/OpenAPI: read-only listing policy/status surface before runtime behavior.
 
-**Required invariants:**
+**Pinned invariants:**
 
 - Listed assets are ERC-20-style vault tokens.
 - `MarketRegistry` is market metadata/enabled-pair truth, not custody truth.
 - Token listing can enable/disable markets but cannot move user balances.
 - Delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`.
 - Real deploy/tx/wallet/RPC behavior remains approval-gated.
+
+## Next implementation slice
+
+Token listing and MarketRegistry metadata flow clients: expose the read-only listing policy through TypeScript SDK, Python SDK, and `qdex` CLI clients without adding wallet loading, RPC URLs, signing, broadcasts, deploys, transaction submission, or listing-admin runtime behavior.
 
 ---
 
