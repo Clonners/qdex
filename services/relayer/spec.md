@@ -109,7 +109,8 @@ Before `validated`, the relayer must check:
 6. Fees do not exceed the signed fee cap or configured hard cap.
 7. Delegate/API-key permissions used to place the orders are trade/cancel scoped and include `NO_WITHDRAW`.
 8. `market_ioc` orders retain signed IOC/slippage/price bounds.
-9. `settlementMode` is explicitly `mock` or `quai`; no implicit default that could be mistaken for real settlement.
+9. `settlementMode` is explicitly `mock` or `quai_contract`; no implicit default that could be mistaken for real settlement.
+10. `quai_contract` mode passes the real-Quai approval gate before any submission-mode activation.
 
 Validation may use API/indexer projections to reject obviously bad fills, but final success comes only from settlement confirmation. The relayer must not invent balance truth.
 
@@ -154,6 +155,51 @@ Rules:
 - `confirmed` requires the indexed settlement event for the fill.
 - Contract events are final truth; DB/API state is projection/cache.
 - Reorg handling belongs to the indexer/projection layer, but the relayer must surface when confirmation is not final enough for public proof projection.
+
+## Real Quai approval gate
+
+`quai_contract` submission mode is disabled unless a local approval gate evaluates to ready. The gate is intentionally dependency-light and side-effect free: no wallet loading, signing, broadcast, RPC URL, or transaction submission is implemented by this gate. It records readiness only; a separate explicitly approved wallet/broadcast implementation would still be required later.
+
+Required approval metadata:
+
+```text
+approval.explicitApproval = true
+approval.approvalId
+approval.approvedBy
+approval.approvedAt
+approval.scope
+```
+
+The approval must be explicit Clonners approval for this repo and this relayer mode. Autonomous cron jobs must treat missing approval as a blocker and keep `realQuaiTransactions: false` plus `walletRequired: false`.
+
+Required event-truth metadata:
+
+```text
+proofTrigger = TradeSettled
+settlementContract
+chainId
+zone
+indexerSource
+finalityDepth
+requiredEventTruthFields = settlementTx, blockNumber, blockHash, eventIndex, explorerUrl
+```
+
+`requiredEventTruthFields` pins the minimum evidence that must later exist before a `quai_contract` settlement can be projected publicly. The gate does not make a receipt final and does not replace the indexer/proof-service requirement that `TradeSettled` events are the proof trigger.
+
+Gate results are operator-facing metadata, not settlement events:
+
+```json
+{
+  "allowed": false,
+  "reason": "real_quai_approval_gate_blocked",
+  "settlementMode": "quai_contract",
+  "realQuaiTransactions": false,
+  "walletRequired": false,
+  "custody": "non-custodial-relayer-gate"
+}
+```
+
+When all approval and event-truth inputs are present, the gate may return `allowed: true` for mode readiness only. It still returns `realQuaiTransactions: false` and `walletRequired: false` because this slice does not add wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 ## Event log
 
