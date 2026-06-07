@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: terminal UI matcher-local cancel trigger/browser smoke green -> next local API + terminal UI cancel/stream integration smoke
+- Current phase: local API + terminal UI cancel/stream integration smoke green -> next post-mock MVP readiness / owner-signed nonce-cancel planning
 
 ## Current repo baseline
 
@@ -37,7 +37,7 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add a local API + terminal UI integration smoke that binds the cancel trigger and private `orders` WebSocket stream together against `createApiServer()`, proving browser click -> resting mock order -> matcher-local cancel -> rendered stream panel end-to-end.
+1. Add a post-mock MVP readiness / owner-signed nonce-cancel planning slice that maps remaining local-only mock surfaces to approval-gated real Quai replacement work without deploys, wallets, RPC URLs, or txs.
 2. Keep TradingVault `TV-01`..`TV-06`, Settlement `ST-01`..`ST-07`/`DK-02`/`NM-02`/`MR-02`/`FM-02`, NonceManager `NM-01`, MarketRegistry `MR-01`, FeeManager `FM-01`, and DelegateKeyRegistry `DK-01` custody/replay/constraint/proof/dependency boundaries green while dependency contracts are wired.
 3. Keep native Qi wrapper/adapter risk explicit before any real `QI-QUAI` settlement claim.
 
@@ -117,3 +117,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-06 21:26 -03: Added TypeScript SDK `orders.openStream()`/`orders.stream()` plus `qdex stream orders --limit N` for private order/cancel WebSocket consumers, preserving matcher-local nonce wording and `NO_WITHDRAW`/`NO_ADMIN`; verified RED focused SDK/CLI/doc tests, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `4267a79`; next slice: terminal UI order/cancel stream binding.
 - 2026-06-06 21:46 -03: Added terminal UI private `orders` WebSocket binding for matcher-local cancellation updates: `live-orders.js` validates read-only `NO_WITHDRAW`/`NO_ADMIN` snapshots, cancellation permissions, nonce-unchanged wording, and renderer/README now surface the live orders panel; verified RED focused terminal UI test failed on missing module/panel, GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `de88dd7`; next slice: terminal UI matcher-local cancel trigger/browser smoke.
 - 2026-06-06 22:06 -03: Added terminal UI matcher-local cancel trigger/browser smoke: browser button creates one resting local/dev order, sends `DELETE /v1/orders/:orderHash`, validates cancellation-only `CANCEL_ORDER` + `NO_WITHDRAW`/`NO_ADMIN`, and keeps on-chain nonce-unchanged/no-real-Quai/no-funds copy visible; verified RED focused terminal UI test failed on missing module/panel, GREEN `pnpm --filter @qdex/terminal-ui test`, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `909f8c7`; next slice: local API + terminal UI cancel/stream integration smoke.
+- 2026-06-06 22:25 -03: Added local API + terminal UI cancel/stream integration smoke: `createApiServer()` + browser cancel trigger + private `orders` WebSocket now prove `POST resting order -> DELETE matcher-local cancel -> rendered cancellation panel`, preserving nonce-unchanged/NO_WITHDRAW/NO_ADMIN/no-funds/no-real-Quai safety; verified RED missing integration seam, GREEN focused terminal UI test, `pnpm --filter @qdex/terminal-ui check`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `b93354d`; next slice: post-mock MVP readiness / owner-signed nonce-cancel planning.
