@@ -104,6 +104,19 @@ class _ContractsApi:
         return self._client._request_ok("/v1/contracts")
 
 
+class _ListingPolicyApi:
+    def __init__(self, client):
+        self._client = client
+
+    def get(self):
+        return self._client._request_ok("/v1/listings/policy")
+
+
+class _ListingsApi:
+    def __init__(self, client):
+        self.policy = _ListingPolicyApi(client)
+
+
 class _SettlementModeGateApi:
     def __init__(self, client):
         self._client = client
@@ -188,6 +201,7 @@ class QDexClient:
         self.tickers = _TickersApi(self)
         self.orderbook = _OrderbookApi(self)
         self.contracts = _ContractsApi(self)
+        self.listings = _ListingsApi(self)
         self.relayer = _RelayerApi(self)
         self.nonces = _NoncesApi(self)
         self.orders = _OrdersApi(self)

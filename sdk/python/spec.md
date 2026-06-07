@@ -10,6 +10,7 @@ dex = QDexClient(base_url=base_url, wallet=wallet, delegate_key=delegate_key)
 markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
+listing_policy = dex.listings.policy.get()  # GET /v1/listings/policy
 relayer_gate = dex.relayer.settlement_mode_gate.get()  # GET /v1/relayer/settlement-mode-gate
 nonce_cancel_prepare = dex.nonces.prepare_cancel({
     'action': 'cancelNonce',
@@ -63,6 +64,10 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 The registry includes `listedAssetStatus`: `status: wrapped-token-listing`, `primaryQuoteAssets: [WQUAI, WQI]`, `supportedAssetModel: erc20-style-vault-token`, and `userListedTokens: True`. Token listing and MarketRegistry metadata are the next safe surface; native Qi direct settlement is out of scope and the Qi-facing token surface is WQI. The status is read-only metadata and its safety notice must say the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 The Python SDK must not load wallets, send transactions, read RPC URLs, infer real contract addresses, or imply deploy authority from this metadata. Listed assets are ERC-20-style vault tokens; MarketRegistry/listing metadata cannot move balances or grant withdrawal/admin power.
+
+## Listing policy
+
+`listings.policy.get()` is a read-only listing-policy client for `GET /v1/listings/policy`. It returns `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI primary quote assets, `community-created-erc20-style-token` metadata, and `MarketRegistry-enabled-pair-metadata` truth labels. The policy client must preserve `NO_WITHDRAW`/`NO_ADMIN` delegate safety, must not expose listing submission or listing-admin runtime helpers, and must say there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. MarketRegistry metadata can enable/disable approved pairs only; it cannot move TradingVault balances or grant withdrawal/admin power.
 
 ## Relayer settlement-mode gate
 

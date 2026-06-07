@@ -198,6 +198,12 @@ export class QDexClient {
       get: async () => this.#requestOk('/v1/contracts'),
     };
 
+    this.listings = {
+      policy: {
+        get: async () => this.#requestOk('/v1/listings/policy'),
+      },
+    };
+
     this.relayer = {
       settlementModeGate: {
         get: async () => this.#requestOk('/v1/relayer/settlement-mode-gate'),

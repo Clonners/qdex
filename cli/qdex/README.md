@@ -8,6 +8,7 @@ Implemented smoke/read-only stubs:
 qdex --base-url http://127.0.0.1:8787 markets
 qdex --base-url http://127.0.0.1:8787 book QI-QUAI
 qdex --base-url http://127.0.0.1:8787 contracts
+qdex --base-url http://127.0.0.1:8787 listings policy
 qdex --base-url http://127.0.0.1:8787 relayer gate
 qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner 0xowner --nonce 42 --chain-id 0 --nonce-manager-contract 0xnonce-manager --expires-at 1780003600 --signature 0xowner-signature
 qdex --base-url http://127.0.0.1:8787 stream fills --limit 1
@@ -16,6 +17,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 ```
 
 `qdex contracts` prints the `GET /v1/contracts` registry as local-only metadata: `local-only-not-deployed`, null addresses, no real Quai tx, no wallet required, and no deploy authority. It includes read-only `listedAssetStatus` metadata: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and the safety notice that the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
+
+`qdex listings policy` prints `GET /v1/listings/policy` read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
 
 `qdex relayer gate` prints `GET /v1/relayer/settlement-mode-gate` read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus `real_quai_approval_gate_blocked` for `quai_contract`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

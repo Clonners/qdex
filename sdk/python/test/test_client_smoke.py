@@ -152,6 +152,45 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertTrue(gate["safety"]["noTransactionSubmission"])
             self.assertEqual(gate["safety"]["proofTrigger"], "TradeSettled")
 
+    def test_python_sdk_exposes_read_only_listing_policy_metadata_without_listing_admin_or_tx_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            policy = client.listings.policy.get()
+
+            self.assertEqual(policy["source"], "listed-asset-marketregistry-policy")
+            self.assertEqual(policy["status"], "design-only-local-metadata")
+            self.assertEqual(policy["assetModel"], "erc20-style-vault-token")
+            self.assertEqual(policy["primaryQuoteAssets"], ["WQUAI", "WQI"])
+            self.assertEqual(
+                [asset["symbol"] for asset in policy["supportedAssets"]],
+                ["WQUAI", "WQI", "community-created-erc20-style-token"],
+            )
+            self.assertIsNone(policy["supportedAssets"][0]["address"])
+            self.assertIsNone(policy["supportedAssets"][1]["address"])
+            self.assertEqual(policy["supportedAssets"][2]["listingStatus"], "listable-after-review")
+            self.assertEqual(policy["exampleMarkets"][0]["marketId"], "WQI-WQUAI")
+            self.assertFalse(policy["exampleMarkets"][0]["custodyAuthority"])
+            self.assertEqual(policy["marketRegistry"]["truthSource"], "MarketRegistry-enabled-pair-metadata")
+            self.assertFalse(policy["marketRegistry"]["balanceMovement"])
+            self.assertFalse(policy["marketRegistry"]["operatorWithdrawalAuthority"])
+            self.assertEqual(policy["safety"]["delegatePermissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(policy["safety"]["realQuaiTransactions"])
+            self.assertFalse(policy["safety"]["walletRequired"])
+            self.assertTrue(policy["safety"]["noWalletLoading"])
+            self.assertTrue(policy["safety"]["noSigning"])
+            self.assertTrue(policy["safety"]["noBroadcast"])
+            self.assertTrue(policy["safety"]["noRpcUrlAccess"])
+            self.assertTrue(policy["safety"]["noTransactionSubmission"])
+            self.assertIn(
+                "no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds",
+                policy["safety"]["notice"],
+            )
+            self.assertIn(
+                "cannot move TradingVault balances or grant withdrawal/admin power",
+                policy["marketRegistry"]["notes"],
+            )
+
     def test_python_sdk_exposes_owner_signed_nonce_cancel_prepare_placeholder_without_wallet_or_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

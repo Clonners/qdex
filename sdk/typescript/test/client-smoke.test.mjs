@@ -156,6 +156,42 @@ test('TypeScript SDK exposes read-only relayer settlement-mode gate metadata wit
   });
 });
 
+test('TypeScript SDK exposes read-only listing policy metadata without listing-admin or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const policy = await client.listings.policy.get();
+
+    assert.equal(policy.source, 'listed-asset-marketregistry-policy');
+    assert.equal(policy.status, 'design-only-local-metadata');
+    assert.equal(policy.assetModel, 'erc20-style-vault-token');
+    assert.deepEqual(policy.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(policy.supportedAssets.map((asset) => asset.symbol), [
+      'WQUAI',
+      'WQI',
+      'community-created-erc20-style-token',
+    ]);
+    assert.equal(policy.supportedAssets[0].address, null);
+    assert.equal(policy.supportedAssets[1].address, null);
+    assert.equal(policy.supportedAssets[2].listingStatus, 'listable-after-review');
+    assert.equal(policy.exampleMarkets[0].marketId, 'WQI-WQUAI');
+    assert.equal(policy.exampleMarkets[0].custodyAuthority, false);
+    assert.equal(policy.marketRegistry.truthSource, 'MarketRegistry-enabled-pair-metadata');
+    assert.equal(policy.marketRegistry.balanceMovement, false);
+    assert.equal(policy.marketRegistry.operatorWithdrawalAuthority, false);
+    assert.deepEqual(policy.safety.delegatePermissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(policy.safety.realQuaiTransactions, false);
+    assert.equal(policy.safety.walletRequired, false);
+    assert.equal(policy.safety.noWalletLoading, true);
+    assert.equal(policy.safety.noSigning, true);
+    assert.equal(policy.safety.noBroadcast, true);
+    assert.equal(policy.safety.noRpcUrlAccess, true);
+    assert.equal(policy.safety.noTransactionSubmission, true);
+    assert.match(policy.safety.notice, /no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds/i);
+    assert.match(policy.marketRegistry.notes, /cannot move TradingVault balances or grant withdrawal\/admin power/i);
+  });
+});
+
 test('TypeScript SDK exposes owner-signed nonce-cancel prepare placeholder without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

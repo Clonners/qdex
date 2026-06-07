@@ -10,6 +10,7 @@ const dex = new QDexClient({ baseUrl, wallet, delegateKey });
 await dex.markets.list();
 await dex.orderbook.get(marketId);
 await dex.contracts.get(); // GET /v1/contracts
+await dex.listings.policy.get(); // GET /v1/listings/policy
 await dex.relayer.settlementModeGate.get(); // GET /v1/relayer/settlement-mode-gate
 await dex.nonces.prepareCancel({
   action: 'cancelNonce',
@@ -55,6 +56,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 `contracts.get()` is read-only contract-registry metadata from `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety; it must not load wallets, send transactions, or imply deployment authority.
 
 The contract registry also exposes `listedAssetStatus`: `status: wrapped-token-listing`, `primaryQuoteAssets: [WQUAI, WQI]`, `supportedAssetModel: erc20-style-vault-token`, and `userListedTokens: true`. Token listing and MarketRegistry metadata are the next safe surface; native Qi direct settlement is out of scope and the Qi-facing token surface is WQI. The `listedAssetStatus.safetyNotice` must say the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens, with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
+
+`listings.policy.get()` is a read-only listing-policy client for `GET /v1/listings/policy`. It returns `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI primary quote assets, `community-created-erc20-style-token` metadata, and `MarketRegistry-enabled-pair-metadata` truth labels. The policy client must preserve `NO_WITHDRAW`/`NO_ADMIN` delegate safety, must not expose listing submission or listing-admin runtime helpers, and must say there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. MarketRegistry metadata can enable/disable approved pairs only; it cannot move TradingVault balances or grant withdrawal/admin power.
 
 `relayer.settlementModeGate.get()` is read-only relayer gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

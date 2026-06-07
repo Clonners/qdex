@@ -9,6 +9,7 @@ import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-
 
 const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
 const contractRegistry = await dex.contracts.get();
+const listingPolicy = await dex.listings.policy.get();
 const relayerGate = await dex.relayer.settlementModeGate.get();
 const nonceCancelPrepare = await dex.nonces.prepareCancel({
   action: 'cancelNonce',
@@ -36,6 +37,12 @@ console.log(contractRegistry.listedAssetStatus.status); // wrapped-token-listing
 console.log(contractRegistry.listedAssetStatus.primaryQuoteAssets); // WQUAI, WQI
 console.log(contractRegistry.listedAssetStatus.supportedAssetModel); // erc20-style-vault-token
 console.log(contractRegistry.listedAssetStatus.nativeQiTreatment); // out-of-scope-direct-settlement-use-WQI
+console.log(listingPolicy.source); // listed-asset-marketregistry-policy
+console.log(listingPolicy.status); // design-only-local-metadata
+console.log(listingPolicy.primaryQuoteAssets); // WQUAI, WQI
+console.log(listingPolicy.supportedAssets[2].symbol); // community-created-erc20-style-token
+console.log(listingPolicy.marketRegistry.truthSource); // MarketRegistry-enabled-pair-metadata
+console.log(listingPolicy.safety.delegatePermissions); // NO_WITHDRAW, NO_ADMIN
 console.log(relayerGate.source); // relayer-approval-gate
 console.log(relayerGate.currentSettlementMode); // currentSettlementMode: mock
 console.log(relayerGate.modes.quai_contract.reason); // real_quai_approval_gate_blocked
@@ -51,6 +58,8 @@ console.log(result.proof.settlementMode); // mock
 ```
 
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects. `contractRegistry.listedAssetStatus.status` is `wrapped-token-listing`; primary quote assets are `WQUAI` and `WQI`; community-created tokens are listable through future listing/MarketRegistry metadata; and raw native Qi direct settlement is out of scope. The safety notice preserves: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
+
+`dex.listings.policy.get()` calls `GET /v1/listings/policy` and returns read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
 
 `dex.relayer.settlementModeGate.get()` calls `GET /v1/relayer/settlement-mode-gate` and returns read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

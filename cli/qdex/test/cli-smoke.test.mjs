@@ -164,6 +164,41 @@ test('qdex relayer gate command prints read-only settlement-mode approval gate m
   });
 });
 
+test('qdex listings policy command prints read-only token listing and MarketRegistry metadata', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'listings', 'policy']);
+
+    assert.equal(result.command, 'listings policy');
+    assert.equal(result.source, 'listed-asset-marketregistry-policy');
+    assert.equal(result.status, 'design-only-local-metadata');
+    assert.equal(result.assetModel, 'erc20-style-vault-token');
+    assert.deepEqual(result.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(result.supportedAssets.map((asset) => asset.symbol), [
+      'WQUAI',
+      'WQI',
+      'community-created-erc20-style-token',
+    ]);
+    assert.equal(result.supportedAssets[0].address, null);
+    assert.equal(result.supportedAssets[1].address, null);
+    assert.equal(result.supportedAssets[2].listingStatus, 'listable-after-review');
+    assert.equal(result.exampleMarkets[0].marketId, 'WQI-WQUAI');
+    assert.equal(result.exampleMarkets[0].custodyAuthority, false);
+    assert.equal(result.marketRegistry.truthSource, 'MarketRegistry-enabled-pair-metadata');
+    assert.equal(result.marketRegistry.balanceMovement, false);
+    assert.equal(result.marketRegistry.operatorWithdrawalAuthority, false);
+    assert.deepEqual(result.safety.delegatePermissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.safety.realQuaiTransactions, false);
+    assert.equal(result.safety.walletRequired, false);
+    assert.equal(result.safety.noWalletLoading, true);
+    assert.equal(result.safety.noSigning, true);
+    assert.equal(result.safety.noBroadcast, true);
+    assert.equal(result.safety.noRpcUrlAccess, true);
+    assert.equal(result.safety.noTransactionSubmission, true);
+    assert.match(result.safety.notice, /no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds/i);
+    assert.match(result.marketRegistry.notes, /cannot move TradingVault balances or grant withdrawal\/admin power/i);
+  });
+});
+
 test('qdex nonces cancel --prepare prints owner-signed placeholder without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson([
