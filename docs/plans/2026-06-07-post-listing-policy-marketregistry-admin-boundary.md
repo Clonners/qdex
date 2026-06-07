@@ -112,22 +112,15 @@ Also do not add listing submission persistence, listing-admin keys, generated de
 
 The placeholder does not persist listing submissions, mutate `MarketRegistry`, load wallets, read RPC URLs, sign, broadcast, deploy, create real token addresses, add listing-admin runtime behavior, move funds, or claim a listing was submitted on-chain.
 
-## Next bounded slice
+## Completed prepare-only clients
 
-The next safe bounded slice is read-only SDK/CLI clients for the prepare-only listing request placeholder. These clients must call `POST /v1/listings/requests` and must return the intentional `501` envelope without treating it as a successful listing submission.
+TypeScript SDK `listings.requests.prepareSubmit()`, Python SDK `listings.requests.prepare_submit()`, and `qdex listings request --prepare` now expose the prepare-only placeholder. These clients return the intentional `501` envelope as a prepare-only boundary response, not as a successful listing submission, and preserve `NO_WITHDRAW`, `NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds behavior, and no `MarketRegistry` mutation.
 
-Recommended future TDD steps:
+## Next approval-gated boundary
 
-### Task 3: Expose read-only clients only after API placeholder is green
+Approval required: runtime listing submission or MarketRegistry admin mutation.
 
-**Objective:** Let bots inspect the approval gate without submitting listings as active behavior.
-
-**Files:**
-- Modify: `sdk/typescript/spec.md`
-- Modify: `sdk/python/spec.md`
-- Modify: `cli/qdex/spec.md`
-
-**Guardrails:** Clients may call the placeholder and return the not-implemented envelope. They must not expose listing-admin runtime helpers, transaction helpers, real token addresses, wallet loading, signing, broadcasts, deploys, or funds movement.
+No further autonomous runtime listing submission or MarketRegistry admin behavior should start until Clonners explicitly approves the trust boundary. Any future approved slice must still begin with RED API/OpenAPI/docs/contract ratchets, remain metadata-only until local admin safety tests pass, and must not add listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, `MarketRegistry` mutation, or funds movement without a separate explicit approval.
 
 ---
 

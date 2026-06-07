@@ -62,15 +62,26 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
     '`status: design-only-local-metadata`',
     '`requestStatus: not-implemented-approval-required`',
     '`marketRegistryMutation: false`',
-    '## Next bounded slice',
-    'read-only SDK/CLI clients for the prepare-only listing request placeholder',
-    'must return the intentional `501` envelope without treating it as a successful listing submission',
+    '## Completed prepare-only clients',
+    'TypeScript SDK `listings.requests.prepareSubmit()`',
+    'Python SDK `listings.requests.prepare_submit()`',
+    '`qdex listings request --prepare`',
+    'return the intentional `501` envelope as a prepare-only boundary response',
+    'not as a successful listing submission',
+    '## Next approval-gated boundary',
+    'Approval required: runtime listing submission or MarketRegistry admin mutation',
+    'No further autonomous runtime listing submission or MarketRegistry admin behavior should start until Clonners explicitly approves the trust boundary.',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }
 
   assert.doesNotMatch(plan, forbiddenRuntimeDetails, 'plan must not include runtime secrets, env/RPC/deploy mechanics, or real address/key claims');
   assert.doesNotMatch(plan, /adminWithdraw|withdrawFrom|rescue|sweep/i, 'plan must not introduce custody/admin withdrawal surfaces');
+  assert.doesNotMatch(
+    plan,
+    /The next safe bounded slice is read-only SDK\/CLI clients for the prepare-only listing request placeholder/,
+    'plan must not keep completed listing-request client exposure as the next slice',
+  );
 });
 
 test('listing docs point future work to the post-listing policy approval gate', async () => {
