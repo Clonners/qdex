@@ -193,6 +193,65 @@ test('OpenAPI and order docs expose matcher-local cancellation response schemas'
   }
 });
 
+test('OpenAPI and order docs expose owner-signed nonce-cancel placeholder', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const doc = await readText('docs/order-schema.md');
+  const nonceCancelRoute = sectionBetween(spec, '  /v1/nonces/cancel:', '  /v1/delegate-keys:');
+  const nonceCancelRequest = sectionBetween(spec, '    OwnerSignedNonceCancelRequest:', '    OwnerSignedNonceCancelNotImplemented:');
+  const nonceCancelResponse = sectionBetween(spec, '    OwnerSignedNonceCancelNotImplemented:', '    Market:');
+  const nonceCancelDoc = sectionBetween(doc, '## Owner-signed nonce cancellation', '## API usage');
+
+  for (const requiredText of [
+    'summary: Prepare owner-signed NonceManager cancellation',
+    '$ref: "#/components/schemas/OwnerSignedNonceCancelRequest"',
+    '$ref: "#/components/schemas/OwnerSignedNonceCancelNotImplemented"',
+    '501',
+    'Matcher-local cancellation does not mutate on-chain NonceManager nonces',
+    'no wallet loading, transaction signing, RPC broadcast, or relayer submission',
+  ]) {
+    assert.ok(nonceCancelRoute.includes(requiredText), `/v1/nonces/cancel route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [action, owner, chainId, nonceManagerContract, expiresAt, signature]',
+    'enum: [cancelNonce, cancelNonceRange]',
+    'nonce:',
+    'nonceRange:',
+    'signature:',
+    'owner wallet signature',
+  ]) {
+    assert.ok(nonceCancelRequest.includes(requiredText), `OwnerSignedNonceCancelRequest should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'owner_signed_nonce_cancel_not_implemented',
+    'owner-signed-nonce-cancel-placeholder',
+    'owner-signed-required',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'realQuaiTransactions:',
+    'walletRequired:',
+    'explicit-approval-required-before-wallet-signing-or-quai-broadcast',
+  ]) {
+    assert.ok(nonceCancelResponse.includes(requiredText), `OwnerSignedNonceCancelNotImplemented should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '## Owner-signed nonce cancellation',
+    'POST /v1/nonces/cancel',
+    'prepare-only `501` placeholder',
+    'owner-signed-required',
+    'Matcher-local cancellation does not mutate on-chain NonceManager nonces',
+    'Delegate/API keys cannot submit this flow by default',
+    'CANCEL_ORDER` and `CANCEL_ALL` remain matcher-local permissions only',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'no wallet loading, no transaction signing, no RPC broadcast, and no relayer submission',
+  ]) {
+    assert.ok(nonceCancelDoc.includes(requiredText), `docs/order-schema.md owner-signed nonce section should include ${requiredText}`);
+  }
+});
+
 test('order schema splits internal FillPacket from public IndexedFillProjection rows', async () => {
   const doc = await readText('docs/order-schema.md');
   const projectionSection = sectionBetween(doc, '## IndexedFillProjection', '## API usage');

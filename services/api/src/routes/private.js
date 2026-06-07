@@ -9,6 +9,18 @@ const pathValue = (pathname, prefix) => {
   return rawValue.length > 0 ? decodeURIComponent(rawValue) : null;
 };
 
+const ownerSignedNonceCancelPlaceholder = () => jsonResult(501, {
+  error: 'owner_signed_nonce_cancel_not_implemented',
+  source: 'owner-signed-nonce-cancel-placeholder',
+  custody: 'non-custodial',
+  nonceManager: 'owner-signed-required',
+  permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+  message: 'Matcher-local cancellation does not mutate on-chain NonceManager nonces.',
+  realQuaiTransactions: false,
+  walletRequired: false,
+  approvalGate: 'explicit-approval-required-before-wallet-signing-or-quai-broadcast',
+});
+
 export const handlePrivateRoute = (context) => {
   const { method, pathname } = context;
 
@@ -63,6 +75,10 @@ export const handlePrivateRoute = (context) => {
   if (method === 'POST' && pathname === '/v1/orders/cancel-all') {
     const result = context.state.cancelAll(context.body ?? {});
     return jsonResult(result.statusCode, result.body);
+  }
+
+  if (method === 'POST' && pathname === '/v1/nonces/cancel') {
+    return ownerSignedNonceCancelPlaceholder();
   }
 
   if (method === 'GET' && pathname === '/v1/fills') {

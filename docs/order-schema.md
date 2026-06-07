@@ -162,6 +162,30 @@ A cancelled order row uses `nonceCancellation: "not-implied-matcher-local-only"`
 
 `POST /v1/orders/cancel-all` may add `CANCEL_ALL` to the permissions list and may echo `filters.marketId`/`filters.owner`, but it still cancels matcher-open quantity only and does not cancel on-chain NonceManager nonces. `CancellationError` payloads such as `order_not_found` and `order_not_open` carry the same custody, `nonceManager`, `NO_WITHDRAW`, and `NO_ADMIN` safety fields.
 
+## Owner-signed nonce cancellation
+
+`POST /v1/nonces/cancel` is a prepare-only `501` placeholder for the separate owner-signed NonceManager cancellation flow. Matcher-local cancellation does not mutate on-chain NonceManager nonces; it only removes open matcher quantity from the local orderbook.
+
+Future real behavior must target `cancelNonce(uint256 nonce)` or `cancelNonceRange(uint256 from, uint256 to)` on `NonceManager` only after an explicit owner wallet signing and approved Quai broadcast design exists. Delegate/API keys cannot submit this flow by default. `CANCEL_ORDER` and `CANCEL_ALL` remain matcher-local permissions only; nonce cancellation responses keep `NO_WITHDRAW` and `NO_ADMIN` visible.
+
+The current placeholder response is intentionally non-executable and has no wallet loading, no transaction signing, no RPC broadcast, and no relayer submission:
+
+```json
+{
+  "error": "owner_signed_nonce_cancel_not_implemented",
+  "source": "owner-signed-nonce-cancel-placeholder",
+  "custody": "non-custodial",
+  "nonceManager": "owner-signed-required",
+  "permissions": ["NO_WITHDRAW", "NO_ADMIN"],
+  "message": "Matcher-local cancellation does not mutate on-chain NonceManager nonces.",
+  "realQuaiTransactions": false,
+  "walletRequired": false,
+  "approvalGate": "explicit-approval-required-before-wallet-signing-or-quai-broadcast"
+}
+```
+
+A future request shape may carry `action`, `owner`, `nonce` or `nonceRange`, `chainId`, `nonceManagerContract`, `expiresAt`, and an owner wallet `signature`, but the local MVP route must stay placeholder-only until the approval gates in the post-mock readiness plan are satisfied.
+
 ## API usage
 
 `POST /v1/orders` accepts an `OrderRequest` containing the `SignedOrder`. Successful acceptance returns an `OrderAccepted` payload with `orderHash`, `status`, and projection fields. A confirmed `IndexedFillProjection` must be retrievable through `GET /v1/fills` and `GET /v1/proofs/trades/{tradeId}`.

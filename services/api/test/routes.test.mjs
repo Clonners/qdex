@@ -207,6 +207,37 @@ test('private routes expose order and fill placeholders without withdrawal autho
   });
 });
 
+test('POST /v1/nonces/cancel is an owner-signed NonceManager placeholder without tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const response = await requestJson(baseUrl, '/v1/nonces/cancel', {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'cancelNonce',
+        owner: '0x1111111111111111111111111111111111111111',
+        nonce: '42',
+        nonceRange: null,
+        chainId: 0,
+        nonceManagerContract: '0x0000000000000000000000000000000000000000',
+        expiresAt: 1780003600,
+        signature: '0xowner-signed-placeholder',
+      }),
+    });
+
+    assert.equal(response.status, 501);
+    assert.deepEqual(response.body, {
+      error: 'owner_signed_nonce_cancel_not_implemented',
+      source: 'owner-signed-nonce-cancel-placeholder',
+      custody: 'non-custodial',
+      nonceManager: 'owner-signed-required',
+      permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+      message: 'Matcher-local cancellation does not mutate on-chain NonceManager nonces.',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      approvalGate: 'explicit-approval-required-before-wallet-signing-or-quai-broadcast',
+    });
+  });
+});
+
 test('mock order cancellation removes only matcher-open quantity without nonce or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const firstRestingSell = mockOrder({

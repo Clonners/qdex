@@ -209,6 +209,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CancellationResult"
+  /v1/nonces/cancel:
+    post:
+      tags: [private]
+      summary: Prepare owner-signed NonceManager cancellation
+      description: Prepare-only 501 placeholder for owner-signed `cancelNonce`/`cancelNonceRange`; Matcher-local cancellation does not mutate on-chain NonceManager nonces, and this endpoint performs no wallet loading, transaction signing, RPC broadcast, or relayer submission.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OwnerSignedNonceCancelRequest"
+      responses:
+        "501":
+          description: Owner-signed nonce cancellation is documented but not wired to signing, broadcast, or relayer submission.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OwnerSignedNonceCancelNotImplemented"
   /v1/fills:
     get:
       tags: [private]
@@ -701,6 +719,80 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/IndexedFillProjection"
+    OwnerSignedNonceCancelRequest:
+      type: object
+      description: Prepare-only owner wallet signature payload for future NonceManager cancellation. It does not authorize wallet loading, transaction signing, RPC broadcast, or relayer submission.
+      required: [action, owner, chainId, nonceManagerContract, expiresAt, signature]
+      properties:
+        action:
+          type: string
+          enum: [cancelNonce, cancelNonceRange]
+        owner:
+          type: string
+          description: Main wallet that owns the nonce namespace; delegate/API keys cannot submit this flow by default.
+          example: "0x1111111111111111111111111111111111111111"
+        nonce:
+          type: [string, "null"]
+          pattern: "^[0-9]+$"
+          description: Decimal nonce for cancelNonce; null when nonceRange is used.
+          example: "42"
+        nonceRange:
+          type: [object, "null"]
+          description: Bounded range for cancelNonceRange; null for a single nonce.
+          properties:
+            from:
+              type: string
+              pattern: "^[0-9]+$"
+            to:
+              type: string
+              pattern: "^[0-9]+$"
+        chainId:
+          type: integer
+          minimum: 0
+        nonceManagerContract:
+          type: string
+          description: NonceManager contract address in the replay domain.
+        expiresAt:
+          type: integer
+          format: int64
+          minimum: 0
+        signature:
+          type: string
+          description: owner wallet signature over the nonce-cancel intent; not a delegate/API key credential.
+    OwnerSignedNonceCancelNotImplemented:
+      type: object
+      description: Precise 501 placeholder for the future owner-signed NonceManager cancellation flow.
+      required: [error, source, custody, nonceManager, permissions, message, realQuaiTransactions, walletRequired, approvalGate]
+      properties:
+        error:
+          type: string
+          enum: [owner_signed_nonce_cancel_not_implemented]
+        source:
+          type: string
+          enum: [owner-signed-nonce-cancel-placeholder]
+        custody:
+          type: string
+          enum: [non-custodial]
+        nonceManager:
+          type: string
+          enum: [owner-signed-required]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        message:
+          type: string
+          example: Matcher-local cancellation does not mutate on-chain NonceManager nonces.
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        approvalGate:
+          type: string
+          enum: [explicit-approval-required-before-wallet-signing-or-quai-broadcast]
     Market:
       type: object
       required: [id, base, quote, status]
