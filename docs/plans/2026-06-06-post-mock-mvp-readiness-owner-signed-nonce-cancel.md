@@ -158,9 +158,9 @@ Result:
 
 ## Remaining implementation direction
 
-Existing safe surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.
+Existing safe surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, and prepare-only fallback.
 
-Next boundary: explicit Clonners approval before runtime listing submission beyond local queue state or MarketRegistry admin mutation.
+Next boundary: explicit Clonners approval before runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation.
 
 Required boundary before runtime listing behavior:
 

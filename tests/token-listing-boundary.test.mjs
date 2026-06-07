@@ -408,6 +408,99 @@ test('OpenAPI and docs expose approved local in-memory listing review queue with
   );
 });
 
+test('OpenAPI and docs expose local in-memory listing review decision workflow without MarketRegistry mutation', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const policy = await readText('docs/listing-policy.md');
+  const plan = await readText('docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md');
+  const route = sectionBetween(spec, '  /v1/listings/requests/{requestId}/decision:', '  /v1/relayer/settlement-mode-gate:');
+  const decisionRequest = sectionBetween(spec, '    ListingRequestDecision:', '    ListingRequestDecisionResponse:');
+  const decisionResponse = sectionBetween(spec, '    ListingRequestDecisionResponse:', '    ListingRequestDecisionError:');
+  const decisionError = sectionBetween(spec, '    ListingRequestDecisionError:', '    ListingRequestSafety:');
+
+  for (const requiredText of [
+    'summary: Record a local-only listing review decision',
+    'decisionMode=local_review_decision',
+    'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, listing-admin keys, MarketRegistry mutation, or real funds',
+    '$ref: "#/components/schemas/ListingRequestDecision"',
+    '"200":',
+    '$ref: "#/components/schemas/ListingRequestDecisionResponse"',
+    '"400":',
+    '"404":',
+    '"409":',
+    '$ref: "#/components/schemas/ListingRequestDecisionError"',
+  ]) {
+    assert.ok(route.includes(requiredText), `/v1/listings/requests/{requestId}/decision route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [decisionMode, decision, reviewStage, decisionNotes]',
+    'decisionMode:',
+    'enum: [local_review_decision]',
+    'decision:',
+    'enum: [approve, reject]',
+    'reviewStage:',
+    'enum: [token_safety_review, market_parameter_review, clonners_local_approval]',
+    'decisionNotes:',
+    'rejectionReason:',
+  ]) {
+    assert.ok(decisionRequest.includes(requiredText), `ListingRequestDecision schema should include ${requiredText}`);
+  }
+  assert.doesNotMatch(decisionRequest, /tokenAddress|contractAddress|txHash|signature|rpcUrl/i, 'decision request schema must stay metadata-only');
+
+  for (const requiredText of [
+    'required: [requestId, source, status, requestStatus, phase, decisionMode, reviewStage, reviewDecision, decisionAt, nextMutationGate, request, decision, custody, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]',
+    'enum: [listed-asset-marketregistry-review-flow]',
+    'enum: [design-only-local-metadata]',
+    'enum: [reviewed-local-metadata-only]',
+    'enum: [local_review_decision]',
+    'enum: [approved-local-metadata-only, rejected-local-metadata-only]',
+    'explicit Clonners approval required before MarketRegistry.addMarket',
+    'marketRegistryMutation:',
+    'enum: [false]',
+    'enum: [NO_WITHDRAW, NO_ADMIN]',
+    'realQuaiTransactions:',
+    'walletRequired:',
+  ]) {
+    assert.ok(decisionResponse.includes(requiredText), `ListingRequestDecisionResponse schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'enum: [listing_review_decision_rejected]',
+    'enum: [rejected-local-review-decision]',
+    'request_not_found',
+    'request_already_decided',
+    'invalid_decision_body',
+    'forbidden_live_authority_fields',
+    'marketRegistryMutation:',
+    'enum: [false]',
+  ]) {
+    assert.ok(decisionError.includes(requiredText), `ListingRequestDecisionError schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '## Approved local review decision workflow',
+    '`POST /v1/listings/requests/{requestId}/decision`',
+    '`decisionMode: local_review_decision`',
+    '`requestStatus: reviewed-local-metadata-only`',
+    '`reviewDecision: approved-local-metadata-only`',
+    '`reviewDecision: rejected-local-metadata-only`',
+    'explicit Clonners approval required before `MarketRegistry.addMarket`',
+    'cannot move `TradingVault` balances, mutate `MarketRegistry`, register real token addresses, or grant withdrawal/admin authority',
+  ]) {
+    assert.ok(policy.includes(requiredText), `docs/listing-policy.md should include local decision text ${requiredText}`);
+  }
+
+  assert.ok(
+    plan.includes('Completed local review decision boundary'),
+    'post-listing plan should mark the local review decision boundary complete after this slice',
+  );
+  assert.doesNotMatch(
+    `${route}\n${decisionRequest}\n${decisionResponse}\n${decisionError}\n${policy}\n${plan}`,
+    /walletPrivateKey|listingAdminPrivateKey|rpcUrl\s*:|MarketRegistry mutation submitted|has been submitted on-chain/i,
+    'local review decision docs must not introduce wallets/RPC/signing/deploy/tx or on-chain submission claims',
+  );
+});
+
 test('contracts and architecture docs link listing policy as the active safe metadata slice', async () => {
   const contracts = await readText('docs/contracts.md');
   const architecture = await readText('docs/architecture.md');

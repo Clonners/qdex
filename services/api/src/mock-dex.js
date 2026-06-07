@@ -503,6 +503,10 @@ export const createMockDexState = ({
       return listingReviewQueue.enqueue(request);
     },
 
+    decideListingRequest(requestId, decision) {
+      return listingReviewQueue.decide(requestId, decision);
+    },
+
     listListingRequests() {
       return listingReviewQueue.list();
     },

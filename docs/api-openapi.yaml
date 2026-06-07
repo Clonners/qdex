@@ -168,6 +168,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListingRequestPlaceholderResponse"
+  /v1/listings/requests/{requestId}/decision:
+    post:
+      tags: [public]
+      summary: Record a local-only listing review decision
+      description: "Records approve/reject metadata only when decisionMode=local_review_decision. This local decision workflow performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, listing-admin keys, MarketRegistry mutation, or real funds; explicit Clonners approval is still required before MarketRegistry.addMarket."
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema: { type: string, example: listing-request-000001 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingRequestDecision"
+      responses:
+        "200":
+          description: Local review decision recorded in memory only; no MarketRegistry mutation or funds movement.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestDecisionResponse"
+        "400":
+          description: Local review decision rejected because metadata is missing/invalid or live authority fields were supplied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestDecisionError"
+        "404":
+          description: Local review request id was not found in the in-memory queue; no MarketRegistry mutation or funds movement.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestDecisionError"
+        "409":
+          description: Local review request already has a metadata-only decision; decisions are immutable and do not mutate MarketRegistry.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestDecisionError"
   /v1/relayer/settlement-mode-gate:
     get:
       tags: [public]
@@ -1129,6 +1170,144 @@ components:
             notice: { type: string }
         message:
           type: string
+    ListingRequestDecision:
+      type: object
+      required: [decisionMode, decision, reviewStage, decisionNotes]
+      additionalProperties: false
+      properties:
+        decisionMode:
+          type: string
+          enum: [local_review_decision]
+        decision:
+          type: string
+          enum: [approve, reject]
+        reviewStage:
+          type: string
+          enum: [token_safety_review, market_parameter_review, clonners_local_approval]
+        decisionNotes:
+          type: string
+          minLength: 1
+          example: "Metadata-only local approval pending explicit MarketRegistry admin approval."
+        rejectionReason:
+          type: string
+          example: "Metadata-only local rejection reason; required when decision is reject."
+    ListingRequestDecisionResponse:
+      type: object
+      required: [requestId, source, status, requestStatus, phase, decisionMode, reviewStage, reviewDecision, decisionAt, nextMutationGate, request, decision, custody, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]
+      properties:
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-review-flow]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        requestStatus:
+          type: string
+          enum: [reviewed-local-metadata-only]
+        phase:
+          type: string
+          enum: [clonners-managed-local-review-before-dao]
+        queueStatus:
+          type: string
+          enum: [local-in-memory-review-queue]
+        persistence:
+          type: string
+          enum: [in-memory-local-server-only]
+        requestId: { type: string, example: listing-request-000001 }
+        requestMode:
+          type: string
+          enum: [local_review_queue]
+        decisionMode:
+          type: string
+          enum: [local_review_decision]
+        reviewStage:
+          type: string
+          enum: [token_safety_review, market_parameter_review, clonners_local_approval]
+        reviewDecision:
+          type: string
+          enum: [approved-local-metadata-only, rejected-local-metadata-only]
+        decisionAt: { type: string, example: local-review-decision-sequence-000001 }
+        nextMutationGate:
+          type: string
+          example: "explicit Clonners approval required before MarketRegistry.addMarket"
+        request:
+          $ref: "#/components/schemas/ListingRequestPrepare"
+        marketRegistry:
+          $ref: "#/components/schemas/MarketRegistrySafety"
+        marketRegistryMutation: { type: boolean, enum: [false] }
+        realQuaiTransactions: { type: boolean, enum: [false] }
+        walletRequired: { type: boolean, enum: [false] }
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        custody:
+          type: string
+          example: "Listing review decisions are metadata-only; they cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin authority."
+        safety:
+          $ref: "#/components/schemas/ListingRequestSafety"
+        decision:
+          $ref: "#/components/schemas/ListingRequestDecision"
+        message:
+          type: string
+          example: "Recorded local approval metadata only; this does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses."
+    ListingRequestDecisionError:
+      type: object
+      required: [error, source, status, requestStatus, phase, reason, custody, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]
+      properties:
+        error:
+          type: string
+          enum: [listing_review_decision_rejected]
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-review-flow]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        requestStatus:
+          type: string
+          enum: [rejected-local-review-decision]
+        phase:
+          type: string
+          enum: [clonners-managed-local-review-before-dao]
+        reason:
+          type: string
+          enum:
+            - invalid_decision_body
+            - forbidden_live_authority_fields
+            - invalid_decision_mode
+            - invalid_decision
+            - invalid_review_stage
+            - missing_decision_notes
+            - missing_rejection_reason
+            - request_not_found
+            - request_already_decided
+        requestId: { type: string, example: listing-request-000001 }
+        decisionMode:
+          type: string
+          enum: [local_review_decision]
+        forbiddenFields:
+          type: array
+          items: { type: string }
+        marketRegistry:
+          $ref: "#/components/schemas/MarketRegistrySafety"
+        marketRegistryMutation: { type: boolean, enum: [false] }
+        realQuaiTransactions: { type: boolean, enum: [false] }
+        walletRequired: { type: boolean, enum: [false] }
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        custody:
+          type: string
+          example: "non-custodial"
+        safety:
+          $ref: "#/components/schemas/ListingRequestSafety"
+        message:
+          type: string
+          example: "Rejected local review decision input; no MarketRegistry mutation, signing, broadcast, transaction submission, deploy, or funds movement occurred."
     ListingRequestSafety:
       type: object
       required: [noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noRuntimeListingQueue, noListingAdminKeys, noRealTokenAddresses, noFundsMovement, notice]

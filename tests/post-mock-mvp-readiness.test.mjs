@@ -56,8 +56,8 @@ test('post-mock MVP readiness plan pins owner-signed nonce-cancel and approval g
     '### Completed Task 6: Listing policy and prepare-only listing request surfaces',
     'Completed: `GET /v1/listings/policy` exposes the read-only listing policy, `POST /v1/listings/requests` preserves an intentional prepare-only `501` fallback, and approved `requestMode: local_review_queue` writes only to the local in-memory review queue.',
     '## Remaining implementation direction',
-    'Existing safe surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.',
-    'Next boundary: explicit Clonners approval before runtime listing submission beyond local queue state or MarketRegistry admin mutation.',
+    'Existing safe surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, and prepare-only fallback.',
+    'Next boundary: explicit Clonners approval before runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation.',
     'Do not add runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, MarketRegistry mutation, or real native Qi settlement claims.',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);

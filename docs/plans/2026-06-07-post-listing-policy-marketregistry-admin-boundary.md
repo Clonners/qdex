@@ -4,7 +4,7 @@
 
 **Goal:** Pin the completed listing-policy/request surfaces, the approved local in-memory review queue, and the explicit MarketRegistry admin approval gate without adding live listing/admin behavior.
 
-**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback. Runtime listing submission beyond local queue state or MarketRegistry admin mutation remains blocked until separate explicit Clonners approval and local contract/admin ratchets. `MarketRegistry` remains enabled-pair metadata truth; `TradingVault` remains balance truth.
+**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, and prepare-only fallback. Runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation remains blocked until separate explicit Clonners approval and local contract/admin ratchets. `MarketRegistry` remains enabled-pair metadata truth; `TradingVault` remains custody/balance truth.
 
 **Tech Stack:** Markdown plan/spec ratchets, Node `node:test` doc guards, existing OpenAPI/API/SDK/CLI docs, and local-only Solidity `MarketRegistry` concepts. No wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin keys, `MarketRegistry` mutation, or funds movement are introduced by this plan.
 
@@ -30,7 +30,7 @@ This boundary describes WQUAI, WQI, and community-created ERC-20-style vault tok
 
 ## Approval-gated runtime listing submission boundary
 
-Runtime listing submission beyond local queue state is approval-gated before implementation. The prepare-only `POST /v1/listings/requests` fallback still returns a non-implemented response unless the caller explicitly uses approved local review queue mode.
+Runtime listing submission beyond local queue/decision state is approval-gated before implementation. The prepare-only `POST /v1/listings/requests` fallback still returns a non-implemented response unless the caller explicitly uses approved local review queue mode.
 
 Current local review request shape (metadata-only; queued locally only with `requestMode: local_review_queue`):
 ```json
@@ -60,7 +60,7 @@ marketRegistryMutation: false
 tradingVaultBalanceMovement: false
 ```
 
-There is still no on-chain/runtime listing submission beyond metadata-only local queue surfaces. Do not add a persistent production queue, listing admin account, wallet/signing path, RPC path, contract call, deploy helper, address registry, or token verification claim until separate approval and external evidence exist.
+There is still no on-chain/runtime listing submission beyond metadata-only local queue/decision surfaces. Do not add a persistent production queue, listing admin account, wallet/signing path, RPC path, contract call, deploy helper, address registry, or token verification claim until separate approval and external evidence exist.
 
 ## MarketRegistry admin metadata boundary
 
@@ -140,9 +140,15 @@ This local queue preserves `source: listed-asset-marketregistry-review-flow`, `s
 
 The queue is server-local and in-memory only. It cannot move `TradingVault` balances, mutate `MarketRegistry`, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, register real token addresses, create listing-admin keys, or claim that a listing request was submitted on-chain.
 
+## Completed local review decision boundary
+
+`POST /v1/listings/requests/{requestId}/decision` now records immutable local-only approval/rejection metadata for an existing in-memory request when the caller provides `decisionMode: local_review_decision`. The response preserves `source: listed-asset-marketregistry-review-flow`, `status: design-only-local-metadata`, `requestStatus: reviewed-local-metadata-only`, `reviewDecision: approved-local-metadata-only` or `reviewDecision: rejected-local-metadata-only`, `nextMutationGate: explicit Clonners approval required before MarketRegistry.addMarket`, `marketRegistryMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `NO_WITHDRAW`, and `NO_ADMIN`.
+
+Local decisions are server-memory metadata only and immutable once recorded. They cannot move `TradingVault` balances, mutate `MarketRegistry`, register real token addresses, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, create listing-admin keys, grant withdrawal/admin authority, or claim that a listing request was submitted on-chain.
+
 ## Next approval-gated boundary
 
-Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation.
+Approval required: runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation.
 
 No further autonomous runtime listing submission or MarketRegistry admin behavior should start until Clonners explicitly approves the trust boundary. Any future approved slice must still begin with RED API/OpenAPI/docs/contract ratchets, remain metadata-only until local admin safety tests pass, and must not add listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, `MarketRegistry` mutation, or funds movement without a separate explicit approval.
 

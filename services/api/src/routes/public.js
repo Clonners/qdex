@@ -28,6 +28,17 @@ const marketPathValue = (pathname, prefix) => {
   return rawValue.length > 0 ? decodeURIComponent(rawValue) : null;
 };
 
+const listingRequestDecisionId = (pathname) => {
+  const prefix = '/v1/listings/requests/';
+  const suffix = '/decision';
+  if (!pathname.startsWith(prefix) || !pathname.endsWith(suffix)) {
+    return null;
+  }
+
+  const rawValue = pathname.slice(prefix.length, pathname.length - suffix.length);
+  return rawValue.length > 0 && !rawValue.includes('/') ? decodeURIComponent(rawValue) : null;
+};
+
 export const handlePublicRoute = (context) => {
   const { method, pathname, searchParams, state } = context;
   if (method === 'GET' && pathname === '/v1/health') {
@@ -119,6 +130,12 @@ export const handlePublicRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/listings/requests') {
     return jsonResult(200, state.listListingRequests());
+  }
+
+  const listingDecisionRequestId = listingRequestDecisionId(pathname);
+  if (method === 'POST' && listingDecisionRequestId !== null) {
+    const result = state.decideListingRequest(listingDecisionRequestId, context.body);
+    return jsonResult(result.statusCode, result.body);
   }
 
   if (method === 'POST' && pathname === '/v1/listings/requests') {

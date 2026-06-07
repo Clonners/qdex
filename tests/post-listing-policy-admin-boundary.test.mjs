@@ -29,7 +29,7 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
     '# Post-Listing-Policy MarketRegistry Admin Boundary Implementation Plan',
     '> **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.',
     '**Goal:** Pin the completed listing-policy/request surfaces, the approved local in-memory review queue, and the explicit MarketRegistry admin approval gate without adding live listing/admin behavior.',
-    '**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.',
+    '**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, and prepare-only fallback.',
     '**Tech Stack:** Markdown plan/spec ratchets, Node `node:test` doc guards, existing OpenAPI/API/SDK/CLI docs, and local-only Solidity `MarketRegistry` concepts.',
     '## Current completed boundary',
     '`GET /v1/listings/policy`',
@@ -41,10 +41,10 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
     'WQI',
     'community-created ERC-20-style vault tokens',
     '## Approval-gated runtime listing submission boundary',
-    'Runtime listing submission beyond local queue state is approval-gated before implementation',
+    'Runtime listing submission beyond local queue/decision state is approval-gated before implementation',
     'The prepare-only `POST /v1/listings/requests` fallback still returns a non-implemented response unless the caller explicitly uses approved local review queue mode',
     'Current local review request shape',
-    'There is still no on-chain/runtime listing submission beyond metadata-only local queue surfaces.',
+    'There is still no on-chain/runtime listing submission beyond metadata-only local queue/decision surfaces.',
     '## MarketRegistry admin metadata boundary',
     '`MarketRegistry.addMarket` is enabled-pair metadata only',
     '`MarketRegistry.disableMarket` retains metadata for indexer replay',
@@ -79,8 +79,14 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
     '`queueStatus: local-in-memory-review-queue`',
     '`persistence: in-memory-local-server-only`',
     '`requestStatus: queued-local-review`',
+    '## Completed local review decision boundary',
+    '`POST /v1/listings/requests/{requestId}/decision`',
+    '`decisionMode: local_review_decision`',
+    '`requestStatus: reviewed-local-metadata-only`',
+    '`reviewDecision: approved-local-metadata-only`',
+    '`reviewDecision: rejected-local-metadata-only`',
     '## Next approval-gated boundary',
-    'Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation',
+    'Approval required: runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation',
     'No further autonomous runtime listing submission or MarketRegistry admin behavior should start until Clonners explicitly approves the trust boundary.',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
@@ -105,17 +111,18 @@ test('campaign status records completion-mode continuation and local listing rev
 
   for (const requiredText of [
     '- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated',
-    '- Current phase: local listing review queue intake/inspection clients complete; next autonomous slice is local in-memory review decision workflow with no real network mutation; no wallets/RPC/deploys/txs are approved',
+    '- Current phase: local in-memory listing review decision API complete; next autonomous slice is TypeScript/Python/qdex clients for local review decisions with no real network mutation; no wallets/RPC/deploys/txs are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
-    'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
+    'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
     'Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.',
-    'Next autonomous slice: local in-memory listing review decisions (`approve`/`reject` metadata workflow) without listing submission, real token addresses, or `MarketRegistry` mutation.',
+    'Next autonomous slice: TypeScript/Python/qdex clients for local in-memory listing review decisions (`approve`/`reject` metadata workflow) without listing submission, real token addresses, or `MarketRegistry` mutation.',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
     'Clonners approved the next local-only runtime listing review queue slice.',
     'Implemented the approved local in-memory listing review queue:',
     'Added TypeScript/Python SDK and `qdex` CLI clients for the local in-memory listing review queue',
     'Clonners asked the campaign to keep going until the DEX is completed.',
+    'Added local-only listing review decision workflow: `POST /v1/listings/requests/{requestId}/decision` records immutable in-memory approve/reject metadata for queued requests',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
@@ -144,11 +151,11 @@ test('listing docs point future work to the post-listing policy approval gate', 
     ['docs/architecture.md', architecture],
   ]) {
     assert.ok(
-      text.includes('Existing safe listing surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.'),
+      text.includes('Existing safe listing surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, and prepare-only fallback.'),
       `${label} should point to the existing policy/request surfaces instead of a future planning slice`,
     );
     assert.ok(
-      text.includes('Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation'),
+      text.includes('Approval required: runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation'),
       `${label} should pin the runtime listing/admin approval gate`,
     );
     assert.doesNotMatch(
@@ -159,7 +166,7 @@ test('listing docs point future work to the post-listing policy approval gate', 
   }
 
   assert.ok(
-    contractsReadme.includes('Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation'),
+    contractsReadme.includes('Approval required: runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation'),
     'contracts README should point to the approval gate instead of a completed listing-policy slice',
   );
   assert.doesNotMatch(

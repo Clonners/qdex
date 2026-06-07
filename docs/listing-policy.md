@@ -147,6 +147,29 @@ Rejected input returns `listing_request_rejected` / `rejected-local-review-input
 
 Operator-facing status copy should keep the core markers explicit: `queueStatus: local-in-memory-review-queue`, `persistence: in-memory-local-server-only`, `requestStatus: queued-local-review`, `reviewDecision: pending-local-review`, `marketRegistryMutation: false`, `realQuaiTransactions: false`, and `walletRequired: false`.
 
+## Approved local review decision workflow
+
+`POST /v1/listings/requests/{requestId}/decision` records an immutable local metadata decision for an existing in-memory review request. The decision body must include `decisionMode: local_review_decision`, `decision: approve` or `decision: reject`, a reviewed stage, and human-readable `decisionNotes`; rejected decisions also carry `rejectionReason`.
+
+Required decision metadata:
+
+```text
+source: listed-asset-marketregistry-review-flow
+status: design-only-local-metadata
+phase: clonners-managed-local-review-before-dao
+decisionMode: local_review_decision
+requestStatus: reviewed-local-metadata-only
+reviewDecision: approved-local-metadata-only
+reviewDecision: rejected-local-metadata-only
+nextMutationGate: explicit Clonners approval required before MarketRegistry.addMarket
+marketRegistryMutation: false
+realQuaiTransactions: false
+walletRequired: false
+permissions: NO_WITHDRAW, NO_ADMIN
+```
+
+Decision errors return `listing_review_decision_rejected` / `rejected-local-review-decision` for invalid decision bodies, forbidden live authority fields, missing request ids, or immutable already-decided requests. Operator copy should preserve `decisionMode: local_review_decision`, `requestStatus: reviewed-local-metadata-only`, `reviewDecision: approved-local-metadata-only`, `reviewDecision: rejected-local-metadata-only`, `marketRegistryMutation: false`, `realQuaiTransactions: false`, and `walletRequired: false`. A local review decision cannot move `TradingVault` balances, mutate `MarketRegistry`, register real token addresses, or grant withdrawal/admin authority; it also cannot load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or move funds.
+
 ## Explicitly out of scope
 
 - Direct native Qi settlement inside `TradingVault`.
@@ -156,8 +179,8 @@ Operator-facing status copy should keep the core markers explicit: `queueStatus:
 
 ## Current approval gate
 
-Existing safe listing surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback.
+Existing safe listing surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, and prepare-only fallback.
 
-Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation.
+Approval required: runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation.
 
-The post-listing-policy MarketRegistry admin boundary is documented in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md). That approval gate preserves the current read-only policy endpoint, review-flow metadata, local in-memory request queue, and prepare-only fallback, and repeats that listing/admin metadata cannot move `TradingVault` balances, cannot grant withdrawal/admin authority, and cannot add wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin key behavior, `MarketRegistry` mutation, or funds movement.
+The post-listing-policy MarketRegistry admin boundary is documented in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md). That approval gate preserves the current read-only policy endpoint, review-flow metadata, local in-memory request queue, local review decision workflow, and prepare-only fallback, and repeats that listing/admin metadata cannot move `TradingVault` balances, cannot grant withdrawal/admin authority, and cannot add wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin key behavior, `MarketRegistry` mutation, or funds movement.
