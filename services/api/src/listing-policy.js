@@ -74,3 +74,41 @@ export const createTokenListingPolicyResponse = () => ({
     notice: 'Read-only listing metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds.',
   },
 });
+
+export const createListingRequestPlaceholderResponse = () => ({
+  error: 'listing_request_not_implemented',
+  source: 'listed-asset-marketregistry-policy',
+  status: 'design-only-local-metadata',
+  requestStatus: 'not-implemented-approval-required',
+  approvalGate: 'listing-submission-approval-gate',
+  custody: 'non-custodial',
+  assetModel: 'erc20-style-vault-token',
+  primaryQuoteAssets: [...PRIMARY_QUOTE_ASSETS],
+  supportedAsset: 'community-created-erc20-style-token',
+  marketRegistry: {
+    truthSource: 'MarketRegistry-enabled-pair-metadata',
+    marketRegistryMutation: false,
+    canMoveTradingVaultBalances: false,
+    canGrantWithdrawalAuthority: false,
+    canGrantAdminAuthority: false,
+  },
+  permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+  realQuaiTransactions: false,
+  walletRequired: false,
+  safety: {
+    noWalletLoading: true,
+    noRpcUrlAccess: true,
+    noSigning: true,
+    noBroadcast: true,
+    noDeploys: true,
+    noTransactionSubmission: true,
+    noRuntimeListingQueue: true,
+    noListingAdminKeys: true,
+    noRealTokenAddresses: true,
+    noFundsMovement: true,
+    notice:
+      'Prepare-only listing request placeholder: no listing request was submitted, no MarketRegistry mutation occurred, and listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin authority.',
+  },
+  message:
+    'Listing requests are approval-gated and not implemented; this placeholder does not submit listings, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority.',
+});

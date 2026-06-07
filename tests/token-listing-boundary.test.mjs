@@ -44,11 +44,11 @@ test('token listing policy doc pins MarketRegistry metadata flow without custody
 
 test('OpenAPI exposes read-only token listing policy route and schema', async () => {
   const spec = await readText('docs/api-openapi.yaml');
-  const route = sectionBetween(spec, '  /v1/listings/policy:', '  /v1/relayer/settlement-mode-gate:');
+  const route = sectionBetween(spec, '  /v1/listings/policy:', '  /v1/listings/requests:');
   const tokenListingPolicy = sectionBetween(spec, '    TokenListingPolicy:', '    TokenListingAsset:');
   const tokenListingAsset = sectionBetween(spec, '    TokenListingAsset:', '    TokenListingMarketRegistry:');
   const marketRegistry = sectionBetween(spec, '    TokenListingMarketRegistry:', '    TokenListingSafety:');
-  const safety = sectionBetween(spec, '    TokenListingSafety:', '    ContractMetadata:');
+  const safety = sectionBetween(spec, '    TokenListingSafety:', '    ListingRequestPrepare:');
 
   for (const requiredText of [
     'summary: Read-only token listing and MarketRegistry metadata policy',
@@ -110,6 +110,109 @@ test('OpenAPI exposes read-only token listing policy route and schema', async ()
   ]) {
     assert.ok(safety.includes(requiredText), `TokenListingSafety schema should include ${requiredText}`);
   }
+});
+
+test('OpenAPI and docs expose prepare-only listing request placeholder without MarketRegistry mutation', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const policy = await readText('docs/listing-policy.md');
+  const route = sectionBetween(spec, '  /v1/listings/requests:', '  /v1/relayer/settlement-mode-gate:');
+  const requestSchema = sectionBetween(
+    spec,
+    '    ListingRequestPrepare:',
+    '    ListingRequestPlaceholderResponse:',
+  );
+  const responseSchema = sectionBetween(
+    spec,
+    '    ListingRequestPlaceholderResponse:',
+    '    ListingRequestSafety:',
+  );
+  const safetySchema = sectionBetween(spec, '    ListingRequestSafety:', '    ContractMetadata:');
+
+  for (const requiredText of [
+    'summary: Prepare-only listing request approval gate',
+    'POST /v1/listings/requests is an intentional 501 placeholder',
+    'not-implemented approval boundary',
+    'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, listing-admin runtime behavior, MarketRegistry mutation, or real funds',
+    '$ref: "#/components/schemas/ListingRequestPrepare"',
+    '"501":',
+    '$ref: "#/components/schemas/ListingRequestPlaceholderResponse"',
+  ]) {
+    assert.ok(route.includes(requiredText), `/v1/listings/requests route should include ${requiredText}`);
+  }
+  assert.doesNotMatch(route, /"200":|"201":/, 'placeholder must not advertise successful listing creation');
+
+  for (const requiredText of [
+    'required: [baseSymbol, quoteSymbol, tokenModel, requestedMarketId, pricePrecision, amountPrecision, minAmount]',
+    'baseSymbol:',
+    'quoteSymbol:',
+    'enum: [WQUAI, WQI]',
+    'tokenModel:',
+    'enum: [erc20-style-vault-token]',
+    'requestedMarketId:',
+    'pricePrecision:',
+    'amountPrecision:',
+    'minAmount:',
+    'reviewNotes:',
+  ]) {
+    assert.ok(requestSchema.includes(requiredText), `ListingRequestPrepare schema should include ${requiredText}`);
+  }
+  assert.doesNotMatch(requestSchema, /tokenAddress|contractAddress|txHash|signature|rpcUrl/i, 'prepare schema must stay metadata-only');
+
+  for (const requiredText of [
+    'required: [error, source, status, requestStatus, approvalGate, custody, assetModel, primaryQuoteAssets, supportedAsset, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]',
+    'enum: [listing_request_not_implemented]',
+    'enum: [listed-asset-marketregistry-policy]',
+    'enum: [design-only-local-metadata]',
+    'enum: [not-implemented-approval-required]',
+    'enum: [listing-submission-approval-gate]',
+    'enum: [non-custodial]',
+    'enum: [community-created-erc20-style-token]',
+    'marketRegistryMutation:',
+    'canMoveTradingVaultBalances:',
+    'canGrantWithdrawalAuthority:',
+    'canGrantAdminAuthority:',
+    'enum: [NO_WITHDRAW, NO_ADMIN]',
+    'realQuaiTransactions:',
+    'walletRequired:',
+  ]) {
+    assert.ok(responseSchema.includes(requiredText), `ListingRequestPlaceholderResponse schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'noWalletLoading:',
+    'noRpcUrlAccess:',
+    'noSigning:',
+    'noBroadcast:',
+    'noDeploys:',
+    'noTransactionSubmission:',
+    'noRuntimeListingQueue:',
+    'noListingAdminKeys:',
+    'noRealTokenAddresses:',
+    'noFundsMovement:',
+  ]) {
+    assert.ok(safetySchema.includes(requiredText), `ListingRequestSafety schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '## Prepare-only listing request API placeholder',
+    '`POST /v1/listings/requests` returns `501`',
+    '`source: listed-asset-marketregistry-policy`',
+    '`status: design-only-local-metadata`',
+    '`requestStatus: not-implemented-approval-required`',
+    '`marketRegistryMutation: false`',
+    '`realQuaiTransactions: false`',
+    '`walletRequired: false`',
+    '`NO_WITHDRAW`',
+    '`NO_ADMIN`',
+    'listing/admin metadata cannot move `TradingVault` balances or grant withdrawal/admin authority',
+  ]) {
+    assert.ok(policy.includes(requiredText), `docs/listing-policy.md should include ${requiredText}`);
+  }
+  assert.doesNotMatch(
+    policy,
+    /has been submitted on-chain|listing request submitted|MarketRegistry mutation submitted/i,
+    'docs must not claim the placeholder submits listings or mutates MarketRegistry',
+  );
 });
 
 test('contracts and architecture docs link listing policy as the active safe metadata slice', async () => {

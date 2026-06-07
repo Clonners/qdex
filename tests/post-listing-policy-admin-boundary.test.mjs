@@ -55,9 +55,16 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
     'Delegate/API keys cannot become listing-admin authority',
     '## Disallowed autonomous work',
     'no wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin runtime behavior, or funds movement',
+    '## Completed prepare-only API placeholder',
+    '`POST /v1/listings/requests`',
+    'returns a precise `501` approval-gated placeholder',
+    '`source: listed-asset-marketregistry-policy`',
+    '`status: design-only-local-metadata`',
+    '`requestStatus: not-implemented-approval-required`',
+    '`marketRegistryMutation: false`',
     '## Next bounded slice',
-    'docs/OpenAPI placeholder for a prepare-only listing submission endpoint',
-    'return an intentional non-implemented boundary until Clonners approves runtime behavior',
+    'read-only SDK/CLI clients for the prepare-only listing request placeholder',
+    'must return the intentional `501` envelope without treating it as a successful listing submission',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }

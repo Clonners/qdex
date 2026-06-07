@@ -19,10 +19,12 @@ const withServer = async (callback) => {
   }
 };
 
-const requestJson = async (baseUrl, path) => {
+const requestJson = async (baseUrl, path, options = {}) => {
   const response = await fetch(`${baseUrl}${path}`, {
+    ...options,
     headers: {
       'content-type': 'application/json',
+      ...(options.headers ?? {}),
     },
   });
 
@@ -107,6 +109,63 @@ test('GET /v1/listings/policy returns read-only token listing and MarketRegistry
       noTransactionSubmission: true,
       delegatePermissions: ['NO_WITHDRAW', 'NO_ADMIN'],
       notice: 'Read-only listing metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds.',
+    });
+  });
+});
+
+test('POST /v1/listings/requests returns prepare-only approval-gated placeholder without runtime listing behavior', async () => {
+  await withServer(async (baseUrl) => {
+    const response = await requestJson(baseUrl, '/v1/listings/requests', {
+      method: 'POST',
+      body: JSON.stringify({
+        baseSymbol: 'COMMUNITY',
+        quoteSymbol: 'WQUAI',
+        tokenModel: 'erc20-style-vault-token',
+        requestedMarketId: 'COMMUNITY-WQUAI',
+        pricePrecision: 8,
+        amountPrecision: 8,
+        minAmount: '1',
+        reviewNotes: 'metadata-only local request',
+      }),
+    });
+
+    assert.equal(response.status, 501);
+    assert.deepEqual(response.body, {
+      error: 'listing_request_not_implemented',
+      source: 'listed-asset-marketregistry-policy',
+      status: 'design-only-local-metadata',
+      requestStatus: 'not-implemented-approval-required',
+      approvalGate: 'listing-submission-approval-gate',
+      custody: 'non-custodial',
+      assetModel: 'erc20-style-vault-token',
+      primaryQuoteAssets: ['WQUAI', 'WQI'],
+      supportedAsset: 'community-created-erc20-style-token',
+      marketRegistry: {
+        truthSource: 'MarketRegistry-enabled-pair-metadata',
+        marketRegistryMutation: false,
+        canMoveTradingVaultBalances: false,
+        canGrantWithdrawalAuthority: false,
+        canGrantAdminAuthority: false,
+      },
+      permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+      realQuaiTransactions: false,
+      walletRequired: false,
+      safety: {
+        noWalletLoading: true,
+        noRpcUrlAccess: true,
+        noSigning: true,
+        noBroadcast: true,
+        noDeploys: true,
+        noTransactionSubmission: true,
+        noRuntimeListingQueue: true,
+        noListingAdminKeys: true,
+        noRealTokenAddresses: true,
+        noFundsMovement: true,
+        notice:
+          'Prepare-only listing request placeholder: no listing request was submitted, no MarketRegistry mutation occurred, and listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin authority.',
+      },
+      message:
+        'Listing requests are approval-gated and not implemented; this placeholder does not submit listings, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority.',
     });
   });
 });

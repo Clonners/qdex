@@ -115,6 +115,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TokenListingPolicy"
+  /v1/listings/requests:
+    post:
+      tags: [public]
+      summary: Prepare-only listing request approval gate
+      description: "POST /v1/listings/requests is an intentional 501 placeholder and not-implemented approval boundary. It performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, listing-admin runtime behavior, MarketRegistry mutation, or real funds."
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListingRequestPrepare"
+      responses:
+        "501":
+          description: Listing request placeholder remains approval-gated and not implemented
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestPlaceholderResponse"
   /v1/relayer/settlement-mode-gate:
     get:
       tags: [public]
@@ -547,6 +565,143 @@ components:
         notice:
           type: string
           example: "Read-only listing metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds."
+    ListingRequestPrepare:
+      type: object
+      description: Metadata-only prepare payload for the approval-gated listing request placeholder. It intentionally excludes live authority details and credentials.
+      required: [baseSymbol, quoteSymbol, tokenModel, requestedMarketId, pricePrecision, amountPrecision, minAmount]
+      properties:
+        baseSymbol:
+          type: string
+          example: COMMUNITY
+        quoteSymbol:
+          type: string
+          enum: [WQUAI, WQI]
+        tokenModel:
+          type: string
+          enum: [erc20-style-vault-token]
+        requestedMarketId:
+          type: string
+          example: COMMUNITY-WQUAI
+        pricePrecision:
+          type: integer
+          minimum: 0
+          example: 8
+        amountPrecision:
+          type: integer
+          minimum: 0
+          example: 8
+        minAmount:
+          type: string
+          example: "1"
+        reviewNotes:
+          type: string
+          example: metadata-only local request
+    ListingRequestPlaceholderResponse:
+      type: object
+      description: Prepare-only listing request placeholder response. It is not a submission queue and does not mutate MarketRegistry or touch user funds.
+      required: [error, source, status, requestStatus, approvalGate, custody, assetModel, primaryQuoteAssets, supportedAsset, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]
+      properties:
+        error:
+          type: string
+          enum: [listing_request_not_implemented]
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-policy]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        requestStatus:
+          type: string
+          enum: [not-implemented-approval-required]
+        approvalGate:
+          type: string
+          enum: [listing-submission-approval-gate]
+        custody:
+          type: string
+          enum: [non-custodial]
+        assetModel:
+          type: string
+          enum: [erc20-style-vault-token]
+        primaryQuoteAssets:
+          type: array
+          items:
+            type: string
+            enum: [WQUAI, WQI]
+        supportedAsset:
+          type: string
+          enum: [community-created-erc20-style-token]
+        marketRegistry:
+          type: object
+          required: [truthSource, marketRegistryMutation, canMoveTradingVaultBalances, canGrantWithdrawalAuthority, canGrantAdminAuthority]
+          properties:
+            truthSource:
+              type: string
+              enum: [MarketRegistry-enabled-pair-metadata]
+            marketRegistryMutation:
+              type: boolean
+              enum: [false]
+            canMoveTradingVaultBalances:
+              type: boolean
+              enum: [false]
+            canGrantWithdrawalAuthority:
+              type: boolean
+              enum: [false]
+            canGrantAdminAuthority:
+              type: boolean
+              enum: [false]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        safety:
+          $ref: "#/components/schemas/ListingRequestSafety"
+        message:
+          type: string
+          example: "Listing requests are approval-gated and not implemented; this placeholder does not submit listings, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority."
+    ListingRequestSafety:
+      type: object
+      required: [noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noRuntimeListingQueue, noListingAdminKeys, noRealTokenAddresses, noFundsMovement, notice]
+      properties:
+        noWalletLoading:
+          type: boolean
+          enum: [true]
+        noRpcUrlAccess:
+          type: boolean
+          enum: [true]
+        noSigning:
+          type: boolean
+          enum: [true]
+        noBroadcast:
+          type: boolean
+          enum: [true]
+        noDeploys:
+          type: boolean
+          enum: [true]
+        noTransactionSubmission:
+          type: boolean
+          enum: [true]
+        noRuntimeListingQueue:
+          type: boolean
+          enum: [true]
+        noListingAdminKeys:
+          type: boolean
+          enum: [true]
+        noRealTokenAddresses:
+          type: boolean
+          enum: [true]
+        noFundsMovement:
+          type: boolean
+          enum: [true]
+        notice:
+          type: string
+          example: "Prepare-only listing request placeholder: no listing request was submitted, no MarketRegistry mutation occurred, and listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin authority."
     ContractMetadata:
       type: object
       required: [key, contractName, address, deploymentStatus, operatorWithdrawalAuthority]

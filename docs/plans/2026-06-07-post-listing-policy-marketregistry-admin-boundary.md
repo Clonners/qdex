@@ -106,48 +106,17 @@ no wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real to
 
 Also do not add listing submission persistence, listing-admin keys, generated deployment manifests, address claims, token verification claims, fee/economics policy, or any claim that `MarketRegistry` metadata can move `TradingVault` balances.
 
+## Completed prepare-only API placeholder
+
+`POST /v1/listings/requests` now returns a precise `501` approval-gated placeholder. It preserves `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `marketRegistryMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `NO_WITHDRAW`, and `NO_ADMIN`.
+
+The placeholder does not persist listing submissions, mutate `MarketRegistry`, load wallets, read RPC URLs, sign, broadcast, deploy, create real token addresses, add listing-admin runtime behavior, move funds, or claim a listing was submitted on-chain.
+
 ## Next bounded slice
 
-The next safe bounded slice is docs/OpenAPI placeholder for a prepare-only listing submission endpoint. It should return an intentional non-implemented boundary until Clonners approves runtime behavior.
+The next safe bounded slice is read-only SDK/CLI clients for the prepare-only listing request placeholder. These clients must call `POST /v1/listings/requests` and must return the intentional `501` envelope without treating it as a successful listing submission.
 
 Recommended future TDD steps:
-
-### Task 1: Add docs/OpenAPI ratchet for prepare-only listing submission
-
-**Objective:** Pin the endpoint contract without enabling runtime listing behavior.
-
-**Files:**
-- Modify: `docs/api-openapi.yaml`
-- Modify: `docs/listing-policy.md`
-- Test: `tests/token-listing-boundary.test.mjs` or a focused listing-submission placeholder test
-
-**Step 1: Write failing test**
-
-Assert that OpenAPI documents `POST /v1/listings/requests` as prepare-only/not-implemented and includes `realQuaiTransactions: false`, `walletRequired: false`, `marketRegistryMutation: false`, `NO_WITHDRAW`, and `NO_ADMIN`.
-
-**Step 2: Run test to verify failure**
-
-Run: `node --test tests/token-listing-boundary.test.mjs`
-Expected: FAIL on missing route/schema text.
-
-**Step 3: Write minimal docs/OpenAPI placeholder**
-
-Add schema-only endpoint docs; do not add API route behavior yet.
-
-**Step 4: Run test to verify pass**
-
-Run: `node --test tests/token-listing-boundary.test.mjs`
-Expected: PASS.
-
-### Task 2: Add API placeholder only after OpenAPI/docs are green
-
-**Objective:** Return a precise not-implemented approval boundary without listing runtime behavior.
-
-**Files:**
-- Modify: `services/api/src/routes/public.js` or the existing listing route module
-- Test: `services/api/test/listing-policy.test.mjs`
-
-**Guardrails:** The response must not mutate `MarketRegistry`, must not load wallets, must not read RPC URLs, must not sign/broadcast/deploy, and must not persist listing submissions unless a separate approval explicitly allows it.
 
 ### Task 3: Expose read-only clients only after API placeholder is green
 

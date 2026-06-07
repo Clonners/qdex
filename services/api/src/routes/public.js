@@ -1,6 +1,6 @@
 import { createContractRegistryResponse } from '../contract-registry.js';
 import { jsonResult } from '../http.js';
-import { createTokenListingPolicyResponse } from '../listing-policy.js';
+import { createListingRequestPlaceholderResponse, createTokenListingPolicyResponse } from '../listing-policy.js';
 import { createRelayerSettlementModeGateStatus } from '../relayer-gate-status.js';
 
 const MARKET_ID = 'QI-QUAI';
@@ -107,6 +107,10 @@ export const handlePublicRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/listings/policy') {
     return jsonResult(200, createTokenListingPolicyResponse());
+  }
+
+  if (method === 'POST' && pathname === '/v1/listings/requests') {
+    return jsonResult(501, createListingRequestPlaceholderResponse());
   }
 
   if (method === 'GET' && pathname === '/v1/relayer/settlement-mode-gate') {

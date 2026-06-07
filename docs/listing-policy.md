@@ -45,7 +45,7 @@ Contract surfaces:
 
 ## Read-only API status
 
-`GET /v1/listings/policy` is a read-only metadata endpoint for the current autonomous slice. It is intentionally not a listing submission endpoint.
+`GET /v1/listings/policy` is a read-only metadata endpoint. It is intentionally not a listing submission endpoint.
 
 Required safety metadata:
 
@@ -59,6 +59,29 @@ walletRequired: false
 ```
 
 This surface performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds movement.
+
+## Prepare-only listing request API placeholder
+
+`POST /v1/listings/requests` returns `501` as a precise approval-gated placeholder. It is not a runtime listing queue, it does not persist submitted token listings, and it does not mutate `MarketRegistry`.
+
+Required placeholder response fields:
+
+```text
+source: listed-asset-marketregistry-policy
+status: design-only-local-metadata
+requestStatus: not-implemented-approval-required
+approvalGate: listing-submission-approval-gate
+marketRegistryMutation: false
+realQuaiTransactions: false
+walletRequired: false
+permissions: NO_WITHDRAW, NO_ADMIN
+```
+
+The response preserves `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `marketRegistryMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `NO_WITHDRAW`, and `NO_ADMIN`.
+
+The placeholder keeps WQUAI/WQI/community-token framing: quote assets are `WQUAI` and `WQI`, and the only future user-created asset model described here is `community-created-erc20-style-token` / `erc20-style-vault-token` metadata.
+
+This endpoint performs no wallet loading, RPC URL access, signing, broadcast, transaction submission, deploy, real token-address registration, listing-admin runtime behavior, or funds movement. A `501` response must state that listing/admin metadata cannot move `TradingVault` balances or grant withdrawal/admin authority.
 
 ## Explicitly out of scope
 
