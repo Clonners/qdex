@@ -99,6 +99,25 @@ test('listing docs point future work to the post-listing policy approval gate', 
     );
   }
 
+  for (const [label, text] of [
+    ['docs/listing-policy.md', listingPolicy],
+    ['docs/contracts.md', contracts],
+  ]) {
+    assert.ok(
+      text.includes('Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.'),
+      `${label} should point to the existing policy/request surfaces instead of a future planning slice`,
+    );
+    assert.ok(
+      text.includes('Approval required: runtime listing submission or MarketRegistry admin mutation'),
+      `${label} should pin the runtime listing/admin approval gate`,
+    );
+    assert.doesNotMatch(
+      text,
+      /The next (?:safe|design-only) planning boundary is/,
+      `${label} must not describe the completed post-listing plan as the next planning boundary`,
+    );
+  }
+
   assert.ok(
     contractsReadme.includes('Approval required: runtime listing submission or MarketRegistry admin mutation'),
     'contracts README should point to the approval gate instead of a completed listing-policy slice',

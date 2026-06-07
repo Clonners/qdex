@@ -90,8 +90,10 @@ This endpoint performs no wallet loading, RPC URL access, signing, broadcast, tr
 - RPC URL reads, broadcasts, deploys, or transaction submission.
 - Any listing path that can sweep, rescue, withdraw, unlock, or settle user funds.
 
-## Next approval-gated boundary
+## Current approval gate
 
-The next safe planning boundary is the post-listing-policy MarketRegistry admin boundary in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md).
+Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.
 
-That plan keeps future listing submission and MarketRegistry admin metadata design-only until explicit approval. It preserves the current read-only policy endpoint and repeats that listing/admin metadata cannot move `TradingVault` balances, cannot grant withdrawal/admin authority, and cannot add wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin runtime behavior, or funds movement.
+Approval required: runtime listing submission or MarketRegistry admin mutation.
+
+The post-listing-policy MarketRegistry admin boundary is documented in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md). That plan keeps future listing submission and MarketRegistry admin metadata design-only until explicit approval. It preserves the current read-only policy endpoint and prepare-only request placeholder, and repeats that listing/admin metadata cannot move `TradingVault` balances, cannot grant withdrawal/admin authority, and cannot add wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin runtime behavior, or funds movement.
