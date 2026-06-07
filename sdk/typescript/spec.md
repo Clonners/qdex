@@ -31,6 +31,11 @@ await dex.listings.requests.enqueueLocalReview({
   amountPrecision: 8,
   minAmount: '1',
 }); // POST /v1/listings/requests with requestMode: local_review_queue -> queued-local-review / pending-local-review
+await dex.listings.requests.decideLocalReview('listing-request-000001', {
+  decision: 'approve',
+  reviewStage: 'clonners_local_approval',
+  decisionNotes: 'metadata-only local approval',
+}); // POST /v1/listings/requests/{requestId}/decision with decisionMode: local_review_decision -> reviewed-local-metadata-only / approved-local-metadata-only
 await dex.relayer.settlementModeGate.get(); // GET /v1/relayer/settlement-mode-gate
 await dex.nonces.prepareCancel({
   action: 'cancelNonce',
@@ -84,6 +89,8 @@ The contract registry also exposes `listedAssetStatus`: `status: wrapped-token-l
 `listings.requests.prepareSubmit()` is a prepare-only client for `POST /v1/listings/requests`. It intentionally returns the API placeholder response `listing_request_not_implemented` with `requestStatus: not-implemented-approval-required`, `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI quote framing, `community-created-erc20-style-token`, `NO_WITHDRAW`, and `NO_ADMIN`. The client must treat the intentional 501 as a boundary response, not a generic transport failure and not proof of submission; it preserves no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior and does not prove a listing request was submitted on-chain.
 
 `listings.requests.listLocalReviewQueue()` and `listings.requests.enqueueLocalReview()` expose the approved local listing review queue only. `listLocalReviewQueue()` calls `GET /v1/listings/requests`; `enqueueLocalReview()` calls `POST /v1/listings/requests with requestMode: local_review_queue` and returns `local-in-memory-review-queue`, `in-memory-local-server-only`, `queued-local-review`, and `pending-local-review` metadata from `listed-asset-marketregistry-review-flow`. These clients preserve `NO_WITHDRAW`/`NO_ADMIN`, have no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
+
+`listings.requests.decideLocalReview()` records immutable local review decision metadata for an existing in-memory queued request through `POST /v1/listings/requests/{requestId}/decision`. The client supplies `decisionMode: local_review_decision` and surfaces `reviewed-local-metadata-only`, `approved-local-metadata-only` / `rejected-local-metadata-only`, and `nextMutationGate: explicit Clonners approval required before MarketRegistry.addMarket`; it preserves `NO_WITHDRAW`/`NO_ADMIN`, has no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 
 `relayer.settlementModeGate.get()` is read-only relayer gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

@@ -111,11 +111,11 @@ test('campaign status records completion-mode continuation and local listing rev
 
   for (const requiredText of [
     '- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated',
-    '- Current phase: local in-memory listing review decision API complete; next autonomous slice is TypeScript/Python/qdex clients for local review decisions with no real network mutation; no wallets/RPC/deploys/txs are approved',
+    '- Current phase: local in-memory listing review decision API plus TypeScript/Python/qdex clients complete; next autonomous slice is a post-decision status/approval-boundary cleanup or another bounded local/source-only MVP slice with no real network mutation; no wallets/RPC/deploys/txs are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
-    'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
+    'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, TypeScript/Python/qdex decision clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
     'Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.',
-    'Next autonomous slice: TypeScript/Python/qdex clients for local in-memory listing review decisions (`approve`/`reject` metadata workflow) without listing submission, real token addresses, or `MarketRegistry` mutation.',
+    'Next autonomous slice: post-decision status/approval-boundary cleanup or another bounded local/source-only MVP slice without listing submission, real token addresses, or `MarketRegistry` mutation.',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
     'Clonners approved the next local-only runtime listing review queue slice.',
@@ -123,6 +123,7 @@ test('campaign status records completion-mode continuation and local listing rev
     'Added TypeScript/Python SDK and `qdex` CLI clients for the local in-memory listing review queue',
     'Clonners asked the campaign to keep going until the DEX is completed.',
     'Added local-only listing review decision workflow: `POST /v1/listings/requests/{requestId}/decision` records immutable in-memory approve/reject metadata for queued requests',
+    'Added TypeScript/Python SDK and `qdex` CLI clients for local in-memory listing review decisions',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

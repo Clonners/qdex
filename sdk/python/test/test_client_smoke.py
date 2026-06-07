@@ -302,6 +302,68 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(queue["count"], 1)
             self.assertEqual(queue["requests"], [queued])
 
+    def test_python_sdk_records_local_listing_review_decisions_without_marketregistry_mutation_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            queued_result = client.listings.requests.enqueue_local_review(
+                local_listing_review_request(reviewNotes="metadata-only local decision request from Python SDK")
+            )
+            queued = queued_result["body"]
+
+            decision_result = client.listings.requests.decide_local_review(
+                queued["requestId"],
+                {
+                    "decision": "reject",
+                    "reviewStage": "token_safety_review",
+                    "decisionNotes": "rejected locally for metadata-only smoke coverage",
+                    "rejectionReason": "metadata-incomplete-local-only",
+                },
+            )
+
+            self.assertEqual(decision_result["status"], 200)
+            decision = decision_result["body"]
+            self.assertEqual(decision["requestId"], queued["requestId"])
+            self.assertEqual(decision["source"], "listed-asset-marketregistry-review-flow")
+            self.assertEqual(decision["status"], "design-only-local-metadata")
+            self.assertEqual(decision["requestStatus"], "reviewed-local-metadata-only")
+            self.assertEqual(decision["phase"], "clonners-managed-local-review-before-dao")
+            self.assertEqual(decision["decisionMode"], "local_review_decision")
+            self.assertEqual(decision["reviewStage"], "token_safety_review")
+            self.assertEqual(decision["reviewDecision"], "rejected-local-metadata-only")
+            self.assertEqual(
+                decision["nextMutationGate"],
+                "explicit Clonners approval required before MarketRegistry.addMarket",
+            )
+            self.assertEqual(
+                decision["decision"],
+                {
+                    "decision": "reject",
+                    "rejectionReason": "metadata-incomplete-local-only",
+                    "decisionNotes": "rejected locally for metadata-only smoke coverage",
+                },
+            )
+            self.assertEqual(decision["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(decision["realQuaiTransactions"])
+            self.assertFalse(decision["walletRequired"])
+            self.assertFalse(decision["marketRegistry"]["marketRegistryMutation"])
+            self.assertFalse(decision["marketRegistry"]["canMoveTradingVaultBalances"])
+            self.assertFalse(decision["marketRegistry"]["canGrantWithdrawalAuthority"])
+            self.assertTrue(decision["safety"]["noWalletLoading"])
+            self.assertTrue(decision["safety"]["noRpcUrlAccess"])
+            self.assertTrue(decision["safety"]["noSigning"])
+            self.assertTrue(decision["safety"]["noBroadcast"])
+            self.assertTrue(decision["safety"]["noDeploys"])
+            self.assertTrue(decision["safety"]["noTransactionSubmission"])
+            self.assertTrue(decision["safety"]["noListingAdminKeys"])
+            self.assertTrue(decision["safety"]["noRealTokenAddresses"])
+            self.assertTrue(decision["safety"]["noFundsMovement"])
+            self.assertIn("Recorded local rejection metadata only", decision["message"])
+            self.assertIn("does not mutate MarketRegistry", decision["message"])
+
+            queue = client.listings.requests.list_local_review_queue()
+            self.assertEqual(queue["requests"][0]["requestId"], queued["requestId"])
+            self.assertEqual(queue["requests"][0]["reviewDecision"], "rejected-local-metadata-only")
+
     def test_python_sdk_exposes_prepare_only_listing_request_placeholder_without_treating_501_as_submission_success(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

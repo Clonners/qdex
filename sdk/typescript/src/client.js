@@ -217,6 +217,14 @@ export class QDexClient {
           body: { ...request, requestMode: 'local_review_queue' },
           expectedStatus: 202,
         }),
+        decideLocalReview: async (requestId, decision) => this.#requestExpectedStatus(
+          `/v1/listings/requests/${encodeURIComponent(requestId)}/decision`,
+          {
+            method: 'POST',
+            body: { ...decision, decisionMode: 'local_review_decision' },
+            expectedStatus: 200,
+          },
+        ),
       },
     };
 

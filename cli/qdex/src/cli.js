@@ -287,6 +287,54 @@ const parseListingRequestOptions = (args) => {
   return { mode: 'prepare', request };
 };
 
+const parseListingRequestDecisionOptions = (args) => {
+  const decision = {
+    decisionMode: 'local_review_decision',
+  };
+
+  for (let index = 0; index < args.length;) {
+    const arg = args[index];
+
+    if (arg === '--decision') {
+      decision.decision = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--review-stage') {
+      decision.reviewStage = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--decision-notes') {
+      decision.decisionNotes = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--rejection-reason') {
+      decision.rejectionReason = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    throw new Error(`unknown listings request decision option: ${arg}`);
+  }
+
+  for (const requiredField of ['decision', 'reviewStage', 'decisionNotes']) {
+    if (decision[requiredField] === undefined) {
+      throw new Error(`listings request decision requires ${requiredField}.`);
+    }
+  }
+
+  if (decision.decision === 'reject' && decision.rejectionReason === undefined) {
+    throw new Error('listings request decision --decision reject requires --rejection-reason.');
+  }
+
+  return decision;
+};
+
 const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 markets
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
@@ -296,6 +344,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 listings requests
   qdex --base-url http://127.0.0.1:8787 listings request --prepare --base-symbol COMMUNITY --quote-symbol WQUAI --token-model erc20-style-vault-token --market-id COMMUNITY-WQUAI --price-precision 8 --amount-precision 8 --min-amount 1
   qdex --base-url http://127.0.0.1:8787 listings request --local-review-queue --base-symbol COMMUNITY --quote-symbol WQI --token-model erc20-style-vault-token --market-id COMMUNITY-WQI --price-precision 8 --amount-precision 8 --min-amount 1
+  qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
@@ -370,6 +419,26 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
     }
 
     if (command === 'listings' && rest[0] === 'request') {
+      if (rest[1] === 'decision') {
+        if (rest[2] === undefined) {
+          throw new Error('listings request decision requires <request-id>.');
+        }
+
+        const result = await client.listings.requests.decideLocalReview(
+          rest[2],
+          parseListingRequestDecisionOptions(rest.slice(3)),
+        );
+        writeJson(stdout, {
+          command: 'listings request decision',
+          baseUrl,
+          httpStatus: result.status,
+          metadataStatus: result.body.status,
+          ...result.body,
+          status: result.status,
+        });
+        return 0;
+      }
+
       const { mode, request } = parseListingRequestOptions(rest.slice(1));
       if (mode === 'local-review-queue') {
         const result = await client.listings.requests.enqueueLocalReview(request);

@@ -313,6 +313,86 @@ test('qdex listings queue commands inspect and enqueue local review metadata wit
   });
 });
 
+test('qdex listings request decision records local review metadata without mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const queued = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'listings',
+      'request',
+      '--local-review-queue',
+      '--base-symbol',
+      'COMMUNITY',
+      '--quote-symbol',
+      'WQI',
+      '--token-model',
+      'erc20-style-vault-token',
+      '--market-id',
+      'COMMUNITY-WQI',
+      '--price-precision',
+      '8',
+      '--amount-precision',
+      '8',
+      '--min-amount',
+      '1',
+      '--review-notes',
+      'metadata-only local decision request from qdex CLI',
+    ]);
+
+    const decision = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'listings',
+      'request',
+      'decision',
+      queued.requestId,
+      '--decision',
+      'approve',
+      '--review-stage',
+      'clonners_local_approval',
+      '--decision-notes',
+      'approved locally for metadata-only qdex CLI smoke coverage',
+    ]);
+
+    assert.equal(decision.command, 'listings request decision');
+    assert.equal(decision.status, 200);
+    assert.equal(decision.httpStatus, 200);
+    assert.equal(decision.metadataStatus, 'design-only-local-metadata');
+    assert.equal(decision.requestId, queued.requestId);
+    assert.equal(decision.source, 'listed-asset-marketregistry-review-flow');
+    assert.equal(decision.requestStatus, 'reviewed-local-metadata-only');
+    assert.equal(decision.phase, 'clonners-managed-local-review-before-dao');
+    assert.equal(decision.decisionMode, 'local_review_decision');
+    assert.equal(decision.reviewStage, 'clonners_local_approval');
+    assert.equal(decision.reviewDecision, 'approved-local-metadata-only');
+    assert.equal(decision.nextMutationGate, 'explicit Clonners approval required before MarketRegistry.addMarket');
+    assert.deepEqual(decision.decision, {
+      decision: 'approve',
+      decisionNotes: 'approved locally for metadata-only qdex CLI smoke coverage',
+    });
+    assert.deepEqual(decision.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(decision.realQuaiTransactions, false);
+    assert.equal(decision.walletRequired, false);
+    assert.equal(decision.marketRegistry.marketRegistryMutation, false);
+    assert.equal(decision.marketRegistry.canMoveTradingVaultBalances, false);
+    assert.equal(decision.safety.noWalletLoading, true);
+    assert.equal(decision.safety.noRpcUrlAccess, true);
+    assert.equal(decision.safety.noSigning, true);
+    assert.equal(decision.safety.noBroadcast, true);
+    assert.equal(decision.safety.noDeploys, true);
+    assert.equal(decision.safety.noTransactionSubmission, true);
+    assert.equal(decision.safety.noListingAdminKeys, true);
+    assert.equal(decision.safety.noRealTokenAddresses, true);
+    assert.equal(decision.safety.noFundsMovement, true);
+    assert.match(decision.message, /Recorded local approval metadata only/i);
+    assert.match(decision.message, /does not mutate MarketRegistry/i);
+
+    const queue = await runCliJson(['--base-url', baseUrl, 'listings', 'requests']);
+    assert.equal(queue.requests[0].requestId, queued.requestId);
+    assert.equal(queue.requests[0].reviewDecision, 'approved-local-metadata-only');
+  });
+});
+
 test('qdex listings request --prepare prints prepare-only placeholder without treating 501 as submission success', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson([

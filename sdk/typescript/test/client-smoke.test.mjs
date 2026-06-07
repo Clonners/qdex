@@ -298,6 +298,59 @@ test('TypeScript SDK queues and inspects local listing review requests without M
   });
 });
 
+test('TypeScript SDK records local listing review decisions without MarketRegistry mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+    const queuedResult = await client.listings.requests.enqueueLocalReview(localListingReviewRequest({
+      reviewNotes: 'metadata-only local decision request from TypeScript SDK',
+    }));
+    const queued = queuedResult.body;
+
+    const decisionResult = await client.listings.requests.decideLocalReview(queued.requestId, {
+      decision: 'approve',
+      reviewStage: 'clonners_local_approval',
+      decisionNotes: 'approved locally for metadata-only smoke coverage',
+    });
+
+    assert.equal(decisionResult.status, 200);
+    const decision = decisionResult.body;
+    assert.equal(decision.requestId, queued.requestId);
+    assert.equal(decision.source, 'listed-asset-marketregistry-review-flow');
+    assert.equal(decision.status, 'design-only-local-metadata');
+    assert.equal(decision.requestStatus, 'reviewed-local-metadata-only');
+    assert.equal(decision.phase, 'clonners-managed-local-review-before-dao');
+    assert.equal(decision.decisionMode, 'local_review_decision');
+    assert.equal(decision.reviewStage, 'clonners_local_approval');
+    assert.equal(decision.reviewDecision, 'approved-local-metadata-only');
+    assert.equal(decision.nextMutationGate, 'explicit Clonners approval required before MarketRegistry.addMarket');
+    assert.deepEqual(decision.decision, {
+      decision: 'approve',
+      decisionNotes: 'approved locally for metadata-only smoke coverage',
+    });
+    assert.deepEqual(decision.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(decision.realQuaiTransactions, false);
+    assert.equal(decision.walletRequired, false);
+    assert.equal(decision.marketRegistry.marketRegistryMutation, false);
+    assert.equal(decision.marketRegistry.canMoveTradingVaultBalances, false);
+    assert.equal(decision.marketRegistry.canGrantWithdrawalAuthority, false);
+    assert.equal(decision.safety.noWalletLoading, true);
+    assert.equal(decision.safety.noRpcUrlAccess, true);
+    assert.equal(decision.safety.noSigning, true);
+    assert.equal(decision.safety.noBroadcast, true);
+    assert.equal(decision.safety.noDeploys, true);
+    assert.equal(decision.safety.noTransactionSubmission, true);
+    assert.equal(decision.safety.noListingAdminKeys, true);
+    assert.equal(decision.safety.noRealTokenAddresses, true);
+    assert.equal(decision.safety.noFundsMovement, true);
+    assert.match(decision.message, /Recorded local approval metadata only/i);
+    assert.match(decision.message, /does not mutate MarketRegistry/i);
+
+    const queue = await client.listings.requests.listLocalReviewQueue();
+    assert.equal(queue.requests[0].requestId, queued.requestId);
+    assert.equal(queue.requests[0].reviewDecision, 'approved-local-metadata-only');
+  });
+});
+
 test('TypeScript SDK exposes prepare-only listing request placeholder without treating 501 as submission success', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

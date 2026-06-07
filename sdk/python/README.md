@@ -36,6 +36,12 @@ queued_listing_request = dex.listings.requests.enqueue_local_review({
     "minAmount": "1",
     "reviewNotes": "metadata-only local review queue request",
 })
+listing_review_decision = dex.listings.requests.decide_local_review(queued_listing_request["body"]["requestId"], {
+    "decision": "reject",
+    "reviewStage": "token_safety_review",
+    "decisionNotes": "metadata-only local rejection",
+    "rejectionReason": "metadata-incomplete-local-only",
+})
 assert contracts["listedAssetStatus"]["status"] == "wrapped-token-listing"
 assert contracts["listedAssetStatus"]["primaryQuoteAssets"] == ["WQUAI", "WQI"]
 assert contracts["listedAssetStatus"]["supportedAssetModel"] == "erc20-style-vault-token"
@@ -65,6 +71,12 @@ assert queued_listing_request["status"] == 202
 assert queued_listing_request["body"]["requestStatus"] == "queued-local-review"
 assert queued_listing_request["body"]["reviewDecision"] == "pending-local-review"
 assert queued_listing_request["body"]["permissions"] == ["NO_WITHDRAW", "NO_ADMIN"]
+assert listing_review_decision["status"] == 200
+assert listing_review_decision["body"]["decisionMode"] == "local_review_decision"
+assert listing_review_decision["body"]["requestStatus"] == "reviewed-local-metadata-only"
+assert listing_review_decision["body"]["reviewDecision"] == "rejected-local-metadata-only"
+assert listing_review_decision["body"]["nextMutationGate"] == "explicit Clonners approval required before MarketRegistry.addMarket"
+assert listing_review_decision["body"]["permissions"] == ["NO_WITHDRAW", "NO_ADMIN"]
 relayer_gate = dex.relayer.settlement_mode_gate.get()
 nonce_cancel_prepare = dex.nonces.prepare_cancel({
     "action": "cancelNonce",
@@ -92,6 +104,8 @@ proof = smoke["proof"]
 `dex.listings.requests.prepare_submit()` calls `POST /v1/listings/requests` and returns the prepare-only 501 placeholder body (`listing_request_not_implemented`, `not-implemented-approval-required`, `listed-asset-marketregistry-policy`, `design-only-local-metadata`) for WQUAI/WQI `community-created-erc20-style-token` metadata. It treats the intentional 501 as a boundary response, not as a generic transport failure and not as proof of submission: it preserves `NO_WITHDRAW`/`NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and does not prove a listing request was submitted on-chain.
 
 `dex.listings.requests.list_local_review_queue()` calls `GET /v1/listings/requests`, and `dex.listings.requests.enqueue_local_review()` calls `POST /v1/listings/requests with requestMode: local_review_queue`. The local queue surface returns `listed-asset-marketregistry-review-flow`, `local-in-memory-review-queue`, `in-memory-local-server-only`, `queued-local-review`, and `pending-local-review` metadata only. It preserves `NO_WITHDRAW`/`NO_ADMIN`, has no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
+
+`dex.listings.requests.decide_local_review()` calls `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision` and records immutable local review metadata only. The response carries `reviewed-local-metadata-only`, `approved-local-metadata-only` / `rejected-local-metadata-only`, `explicit Clonners approval required before MarketRegistry.addMarket`, `NO_WITHDRAW`, and `NO_ADMIN`; it has no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
 
 `dex.relayer.settlement_mode_gate.get()` calls `GET /v1/relayer/settlement-mode-gate` and returns read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

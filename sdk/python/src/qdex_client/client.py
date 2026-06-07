@@ -144,6 +144,15 @@ class _ListingRequestsApi:
             body=body,
         )
 
+    def decide_local_review(self, request_id, decision):
+        body = {**decision, "decisionMode": "local_review_decision"}
+        return self._client._request_expected_status(
+            f"/v1/listings/requests/{_encode_path_value(request_id)}/decision",
+            expected_status=200,
+            method="POST",
+            body=body,
+        )
+
 
 class _ListingsApi:
     def __init__(self, client):
