@@ -99,9 +99,12 @@ test('listing docs point future work to the post-listing policy approval gate', 
     );
   }
 
+  const staleApprovalGateCopy = /Future listing submission and MarketRegistry admin metadata are pinned as an approval-gated, design-only next boundary|That plan keeps future listing submission and MarketRegistry admin metadata design-only|The next (?:safe|design-only) planning boundary is/;
+
   for (const [label, text] of [
     ['docs/listing-policy.md', listingPolicy],
     ['docs/contracts.md', contracts],
+    ['docs/architecture.md', architecture],
   ]) {
     assert.ok(
       text.includes('Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.'),
@@ -113,8 +116,8 @@ test('listing docs point future work to the post-listing policy approval gate', 
     );
     assert.doesNotMatch(
       text,
-      /The next (?:safe|design-only) planning boundary is/,
-      `${label} must not describe the completed post-listing plan as the next planning boundary`,
+      staleApprovalGateCopy,
+      `${label} must not describe completed listing surfaces as a future/next autonomous planning boundary`,
     );
   }
 
