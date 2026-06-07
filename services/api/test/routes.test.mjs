@@ -140,30 +140,20 @@ test('GET /v1/contracts exposes local-only dependency registry without deploy or
     assert.equal(response.body.custody, 'non-custodial-no-withdrawal-authority');
     assert.equal(response.body.realQuaiTransactions, false);
     assert.equal(response.body.walletRequired, false);
-    assert.match(response.body.nativeQiCaveat, /UTXO/);
-    assert.equal(response.body.nativeQiStatus.status, 'design-required');
-    assert.equal(response.body.nativeQiStatus.marketId, 'QI-QUAI');
-    assert.equal(response.body.nativeQiStatus.currentTreatment, 'mock-only');
-    assert.equal(response.body.nativeQiStatus.nativeQiModel, 'UTXO-model');
-    assert.deepEqual(response.body.nativeQiStatus.acceptedFuturePaths, [
-      'wrapped_qi_receipt_token',
-      'contract_native_qi_adapter',
-      'conversion_settlement_flow',
-    ]);
-    assert.equal(response.body.nativeQiStatus.selectedPath, null);
-    assert.deepEqual(response.body.nativeQiStatus.evidenceRequired, [
-      'reserve/conversion event truth',
-      'redemption/unwrap proof path',
-      'solvency invariant',
-      'TradeSettled trade-proof truth',
-      'explicit Clonners approval',
-    ]);
-    assert.equal(response.body.nativeQiStatus.approvalRequired, true);
-    assert.equal(response.body.nativeQiStatus.realQuaiTransactions, false);
-    assert.equal(response.body.nativeQiStatus.walletRequired, false);
+    assert.match(response.body.assetListingCaveat, /WQUAI, WQI/);
+    assert.equal(response.body.listedAssetStatus.status, 'wrapped-token-listing');
+    assert.deepEqual(response.body.listedAssetStatus.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.equal(response.body.listedAssetStatus.supportedAssetModel, 'erc20-style-vault-token');
+    assert.equal(response.body.listedAssetStatus.userListedTokens, true);
+    assert.equal(response.body.listedAssetStatus.listingFlowStatus, 'design-required');
+    assert.equal(response.body.listedAssetStatus.marketRegistryRole, 'list approved token pairs after review');
+    assert.equal(response.body.listedAssetStatus.nativeQiTreatment, 'out-of-scope-direct-settlement-use-WQI');
+    assert.equal(response.body.listedAssetStatus.nativeQiDirectSettlement, false);
+    assert.equal(response.body.listedAssetStatus.realQuaiTransactions, false);
+    assert.equal(response.body.listedAssetStatus.walletRequired, false);
     assert.match(
-      response.body.nativeQiStatus.safetyNotice,
-      /no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim/i,
+      response.body.listedAssetStatus.safetyNotice,
+      /WQUAI, WQI, and approved community tokens/i,
     );
 
     assert.deepEqual(Object.keys(response.body.contracts).sort(), [

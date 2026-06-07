@@ -64,40 +64,36 @@ test('OpenAPI exposes SignedOrder requests and public IndexedFillProjection comp
   );
 });
 
-test('OpenAPI ContractRegistry exposes read-only nativeQiStatus design boundary', async () => {
+test('OpenAPI ContractRegistry exposes read-only listed-asset boundary', async () => {
   const spec = await readText('docs/api-openapi.yaml');
-  const contractRegistry = sectionBetween(spec, '    ContractRegistry:', '    NativeQiStatus:');
-  const nativeQiStatus = sectionBetween(spec, '    NativeQiStatus:', '    ContractMetadata:');
+  const contractRegistry = sectionBetween(spec, '    ContractRegistry:', '    ListedAssetStatus:');
+  const listedAssetStatus = sectionBetween(spec, '    ListedAssetStatus:', '    ContractMetadata:');
 
   for (const requiredText of [
-    '- nativeQiStatus',
-    'nativeQiStatus:',
-    '$ref: "#/components/schemas/NativeQiStatus"',
+    '- listedAssetStatus',
+    'listedAssetStatus:',
+    '$ref: "#/components/schemas/ListedAssetStatus"',
   ]) {
     assert.ok(contractRegistry.includes(requiredText), `ContractRegistry schema should include ${requiredText}`);
   }
 
   for (const requiredText of [
-    'description: Read-only native Qi boundary metadata',
-    'required: [status, marketId, currentTreatment, nativeQiModel, acceptedFuturePaths, selectedPath, evidenceRequired, approvalRequired, realQuaiTransactions, walletRequired, safetyNotice]',
+    'description: Read-only listed-asset metadata',
+    'required: [status, primaryQuoteAssets, supportedAssetModel, userListedTokens, listingFlowStatus, marketRegistryRole, nativeQiTreatment, nativeQiDirectSettlement, realQuaiTransactions, walletRequired, safetyNotice]',
+    'enum: [wrapped-token-listing]',
+    'enum: [WQUAI, WQI]',
+    'enum: [erc20-style-vault-token]',
+    'enum: [true]',
     'enum: [design-required]',
-    'enum: [QI-QUAI]',
-    'enum: [mock-only]',
-    'enum: [UTXO-model]',
-    'wrapped_qi_receipt_token',
-    'contract_native_qi_adapter',
-    'conversion_settlement_flow',
-    'reserve/conversion event truth',
-    'redemption/unwrap proof path',
-    'solvency invariant',
-    'TradeSettled trade-proof truth',
-    'explicit Clonners approval',
+    'list approved token pairs after review',
+    'out-of-scope-direct-settlement-use-WQI',
+    'nativeQiDirectSettlement:',
     'realQuaiTransactions:',
     'enum: [false]',
     'walletRequired:',
-    'no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim',
+    'WQUAI, WQI, and approved community tokens',
   ]) {
-    assert.ok(nativeQiStatus.includes(requiredText), `NativeQiStatus schema should include ${requiredText}`);
+    assert.ok(listedAssetStatus.includes(requiredText), `ListedAssetStatus schema should include ${requiredText}`);
   }
 });
 

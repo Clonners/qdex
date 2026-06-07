@@ -79,25 +79,19 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(registry["deploymentStatus"], "local-only-not-deployed")
             self.assertFalse(registry["realQuaiTransactions"])
             self.assertFalse(registry["walletRequired"])
-            self.assertIn("UTXO-model", registry["nativeQiCaveat"])
-            self.assertEqual(registry["nativeQiStatus"]["status"], "design-required")
-            self.assertEqual(registry["nativeQiStatus"]["marketId"], "QI-QUAI")
-            self.assertEqual(registry["nativeQiStatus"]["currentTreatment"], "mock-only")
-            self.assertEqual(registry["nativeQiStatus"]["nativeQiModel"], "UTXO-model")
-            self.assertEqual(
-                registry["nativeQiStatus"]["acceptedFuturePaths"],
-                [
-                    "wrapped_qi_receipt_token",
-                    "contract_native_qi_adapter",
-                    "conversion_settlement_flow",
-                ],
-            )
-            self.assertIsNone(registry["nativeQiStatus"]["selectedPath"])
-            self.assertFalse(registry["nativeQiStatus"]["realQuaiTransactions"])
-            self.assertFalse(registry["nativeQiStatus"]["walletRequired"])
+            self.assertIn("WQUAI, WQI", registry["assetListingCaveat"])
+            self.assertEqual(registry["listedAssetStatus"]["status"], "wrapped-token-listing")
+            self.assertEqual(registry["listedAssetStatus"]["primaryQuoteAssets"], ["WQUAI", "WQI"])
+            self.assertEqual(registry["listedAssetStatus"]["supportedAssetModel"], "erc20-style-vault-token")
+            self.assertTrue(registry["listedAssetStatus"]["userListedTokens"])
+            self.assertEqual(registry["listedAssetStatus"]["listingFlowStatus"], "design-required")
+            self.assertEqual(registry["listedAssetStatus"]["nativeQiTreatment"], "out-of-scope-direct-settlement-use-WQI")
+            self.assertFalse(registry["listedAssetStatus"]["nativeQiDirectSettlement"])
+            self.assertFalse(registry["listedAssetStatus"]["realQuaiTransactions"])
+            self.assertFalse(registry["listedAssetStatus"]["walletRequired"])
             self.assertIn(
-                "no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim",
-                registry["nativeQiStatus"]["safetyNotice"],
+                "WQUAI, WQI, and approved community tokens",
+                registry["listedAssetStatus"]["safetyNotice"],
             )
             self.assertIsNone(registry["contracts"]["tradingVault"]["address"])
             self.assertFalse(registry["contracts"]["tradingVault"]["operatorWithdrawalAuthority"])

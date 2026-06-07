@@ -14,29 +14,19 @@ const dependencyNames = [
   'DelegateKeyRegistry',
 ];
 
-const nativeQiStatus = {
-  status: 'design-required',
-  marketId: 'QI-QUAI',
-  currentTreatment: 'mock-only',
-  nativeQiModel: 'UTXO-model',
-  acceptedFuturePaths: [
-    'wrapped_qi_receipt_token',
-    'contract_native_qi_adapter',
-    'conversion_settlement_flow',
-  ],
-  selectedPath: null,
-  evidenceRequired: [
-    'reserve/conversion event truth',
-    'redemption/unwrap proof path',
-    'solvency invariant',
-    'TradeSettled trade-proof truth',
-    'explicit Clonners approval',
-  ],
-  approvalRequired: true,
+const listedAssetStatus = {
+  status: 'wrapped-token-listing',
+  primaryQuoteAssets: ['WQUAI', 'WQI'],
+  supportedAssetModel: 'erc20-style-vault-token',
+  userListedTokens: true,
+  listingFlowStatus: 'design-required',
+  marketRegistryRole: 'list approved token pairs after review',
+  nativeQiTreatment: 'out-of-scope-direct-settlement-use-WQI',
+  nativeQiDirectSettlement: false,
   realQuaiTransactions: false,
   walletRequired: false,
   safetyNotice:
-    'Read-only native Qi status metadata only: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.',
+    'QDEX MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens; native Qi is not a direct TradingVault asset in this campaign.',
 };
 
 export const createContractRegistryResponse = () => ({
@@ -48,12 +38,11 @@ export const createContractRegistryResponse = () => ({
   walletRequired: false,
   source: 'contracts-local-harness-and-docs',
   docs: ['docs/contracts.md', 'docs/quai-tooling.md', 'contracts/README.md'],
-  nativeQiCaveat:
-    'Native Qi remains UTXO-model and is not treated as an ERC-20 vault token until a wrapper/adapter/conversion design is proven.',
-  nativeQiStatus: {
-    ...nativeQiStatus,
-    acceptedFuturePaths: [...nativeQiStatus.acceptedFuturePaths],
-    evidenceRequired: [...nativeQiStatus.evidenceRequired],
+  assetListingCaveat:
+    'QDEX MVP lists and settles ERC-20-style vault tokens such as WQUAI, WQI, and approved community-created tokens; native Qi direct settlement is out of scope unless explicitly reopened.',
+  listedAssetStatus: {
+    ...listedAssetStatus,
+    primaryQuoteAssets: [...listedAssetStatus.primaryQuoteAssets],
   },
   contracts: {
     tradingVault: localContract({

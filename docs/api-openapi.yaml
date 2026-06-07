@@ -310,8 +310,8 @@ components:
         - custody
         - realQuaiTransactions
         - walletRequired
-        - nativeQiCaveat
-        - nativeQiStatus
+        - assetListingCaveat
+        - listedAssetStatus
         - contracts
         - safety
       properties:
@@ -333,11 +333,11 @@ components:
         walletRequired:
           type: boolean
           description: False for local metadata; real wallet activity requires explicit approval.
-        nativeQiCaveat:
+        assetListingCaveat:
           type: string
-          description: Native Qi remains UTXO-model and requires a wrapper/adapter/conversion design before real vault settlement claims.
-        nativeQiStatus:
-          $ref: "#/components/schemas/NativeQiStatus"
+          description: QDEX MVP lists ERC-20-style vault tokens such as WQUAI, WQI, and approved community tokens; native Qi direct settlement is out of scope.
+        listedAssetStatus:
+          $ref: "#/components/schemas/ListedAssetStatus"
         docs:
           type: array
           items: { type: string }
@@ -359,39 +359,37 @@ components:
               $ref: "#/components/schemas/ContractMetadata"
         safety:
           $ref: "#/components/schemas/ContractSafety"
-    NativeQiStatus:
+    ListedAssetStatus:
       type: object
-      description: Read-only native Qi boundary metadata. It states that real native-Qi-backed QI-QUAI settlement is design-required and mock-only until an approved wrapper, adapter, or conversion path is proven.
-      required: [status, marketId, currentTreatment, nativeQiModel, acceptedFuturePaths, selectedPath, evidenceRequired, approvalRequired, realQuaiTransactions, walletRequired, safetyNotice]
+      description: Read-only listed-asset metadata. The MVP settles listed ERC-20-style vault tokens such as WQUAI, WQI, and approved community tokens; native Qi direct settlement is out of scope.
+      required: [status, primaryQuoteAssets, supportedAssetModel, userListedTokens, listingFlowStatus, marketRegistryRole, nativeQiTreatment, nativeQiDirectSettlement, realQuaiTransactions, walletRequired, safetyNotice]
       properties:
         status:
           type: string
-          enum: [design-required]
-        marketId:
-          type: string
-          enum: [QI-QUAI]
-        currentTreatment:
-          type: string
-          enum: [mock-only]
-        nativeQiModel:
-          type: string
-          enum: [UTXO-model]
-        acceptedFuturePaths:
+          enum: [wrapped-token-listing]
+        primaryQuoteAssets:
           type: array
           items:
             type: string
-            enum: [wrapped_qi_receipt_token, contract_native_qi_adapter, conversion_settlement_flow]
-        selectedPath:
-          type: [string, "null"]
-          description: Null until Clonners explicitly approves one native Qi design path.
-        evidenceRequired:
-          type: array
-          items:
-            type: string
-            enum: [reserve/conversion event truth, redemption/unwrap proof path, solvency invariant, TradeSettled trade-proof truth, explicit Clonners approval]
-        approvalRequired:
+            enum: [WQUAI, WQI]
+        supportedAssetModel:
+          type: string
+          enum: [erc20-style-vault-token]
+        userListedTokens:
           type: boolean
           enum: [true]
+        listingFlowStatus:
+          type: string
+          enum: [design-required]
+        marketRegistryRole:
+          type: string
+          example: list approved token pairs after review
+        nativeQiTreatment:
+          type: string
+          enum: [out-of-scope-direct-settlement-use-WQI]
+        nativeQiDirectSettlement:
+          type: boolean
+          enum: [false]
         realQuaiTransactions:
           type: boolean
           enum: [false]
@@ -400,7 +398,7 @@ components:
           enum: [false]
         safetyNotice:
           type: string
-          example: "Read-only native Qi status metadata only: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim."
+          example: "QDEX MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens; native Qi is not a direct TradingVault asset in this campaign."
     ContractMetadata:
       type: object
       required: [key, contractName, address, deploymentStatus, operatorWithdrawalAuthority]

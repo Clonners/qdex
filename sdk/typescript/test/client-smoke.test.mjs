@@ -90,20 +90,17 @@ test('TypeScript SDK exposes local-only contract registry metadata without walle
     assert.equal(registry.deploymentStatus, 'local-only-not-deployed');
     assert.equal(registry.realQuaiTransactions, false);
     assert.equal(registry.walletRequired, false);
-    assert.match(registry.nativeQiCaveat, /UTXO-model/);
-    assert.equal(registry.nativeQiStatus.status, 'design-required');
-    assert.equal(registry.nativeQiStatus.marketId, 'QI-QUAI');
-    assert.equal(registry.nativeQiStatus.currentTreatment, 'mock-only');
-    assert.equal(registry.nativeQiStatus.nativeQiModel, 'UTXO-model');
-    assert.deepEqual(registry.nativeQiStatus.acceptedFuturePaths, [
-      'wrapped_qi_receipt_token',
-      'contract_native_qi_adapter',
-      'conversion_settlement_flow',
-    ]);
-    assert.equal(registry.nativeQiStatus.selectedPath, null);
-    assert.equal(registry.nativeQiStatus.realQuaiTransactions, false);
-    assert.equal(registry.nativeQiStatus.walletRequired, false);
-    assert.match(registry.nativeQiStatus.safetyNotice, /no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim/i);
+    assert.match(registry.assetListingCaveat, /WQUAI, WQI/);
+    assert.equal(registry.listedAssetStatus.status, 'wrapped-token-listing');
+    assert.deepEqual(registry.listedAssetStatus.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.equal(registry.listedAssetStatus.supportedAssetModel, 'erc20-style-vault-token');
+    assert.equal(registry.listedAssetStatus.userListedTokens, true);
+    assert.equal(registry.listedAssetStatus.listingFlowStatus, 'design-required');
+    assert.equal(registry.listedAssetStatus.nativeQiTreatment, 'out-of-scope-direct-settlement-use-WQI');
+    assert.equal(registry.listedAssetStatus.nativeQiDirectSettlement, false);
+    assert.equal(registry.listedAssetStatus.realQuaiTransactions, false);
+    assert.equal(registry.listedAssetStatus.walletRequired, false);
+    assert.match(registry.listedAssetStatus.safetyNotice, /WQUAI, WQI, and approved community tokens/i);
     assert.equal(registry.contracts.tradingVault.address, null);
     assert.equal(registry.contracts.tradingVault.operatorWithdrawalAuthority, false);
     assert.equal(registry.contracts.settlement.proofTrigger, 'TradeSettled');

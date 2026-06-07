@@ -23,7 +23,7 @@ test('post-mock MVP readiness plan pins owner-signed nonce-cancel and approval g
     '`walletRequired: false`',
     'No deploys, RPC URLs, wallets, transaction sends, or real funds are introduced by this plan.',
     '## Gap map before real Quai replacement',
-    'Native Qi remains UTXO-model and needs a wrapper/adapter/conversion design before any real `QI-QUAI` settlement claim.',
+    'Raw native Qi direct settlement is out of scope for the MVP. QDEX uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets; the Qi-facing market surface is WQI.',
     '## Owner-signed nonce-cancel boundary',
     'Matcher-local cancellation removes only open matcher quantity',
     'does not mutate `NonceManager`',
@@ -51,11 +51,11 @@ test('post-mock MVP readiness plan pins owner-signed nonce-cancel and approval g
     'Completed: future `NonceCancelled` and `NonceRangeCancelled` event projections are separated from matcher-local cancellation events.',
     '### Completed Task 4: Relayer real-Quai approval gate',
     'Completed: `quai_contract` mode is blocked unless explicit Clonners approval and event-truth readiness metadata are present.',
-    '### Completed Task 5: Native Qi wrapper/adapter boundary plan',
-    'Completed: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./2026-06-07-native-qi-wrapper-adapter-boundary.md) keeps mock `QI-QUAI` mock-only and limits future paths.',
-    '## Remaining approval-gated decision',
-    'Choose exactly one native Qi path only after explicit Clonners approval and external evidence.',
-    'Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real Qi settlement claims until the path is selected.',
+    '### Completed Task 5: Wrapped token listing correction',
+    'Completed: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./2026-06-07-native-qi-wrapper-adapter-boundary.md) now supersedes the native Qi adapter blocker and pins WQUAI, WQI, and listed community-created tokens as the MVP asset model.',
+    '## Remaining implementation direction',
+    'Next safe slice: token listing and MarketRegistry metadata flow.',
+    'Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real native Qi settlement claims. Listing/admin metadata may enable token pairs, but it must not move user balances or grant withdrawal/admin power.',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }

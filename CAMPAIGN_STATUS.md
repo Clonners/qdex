@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: native Qi `nativeQiStatus` metadata green -> next approval-gated native Qi path decision only after external evidence
+- Current phase: wrapped/listed-token asset direction corrected -> next token listing and MarketRegistry metadata flow
 
 ## Current repo baseline
 
@@ -37,8 +37,9 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. After explicit approval and external evidence, choose exactly one native Qi path (`wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow`) before writing any adapter interface or runtime behavior.
-2. Keep `QI-QUAI` mock-only and `nativeQiStatus: design-required` visible in API/SDK/CLI until the chosen path has reserve/conversion truth, redemption/unwrap proof path, solvency invariant, and `TradeSettled` proof truth.
+1. Define token listing and MarketRegistry metadata flow for WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets.
+2. Keep native Qi direct settlement out of scope unless Clonners explicitly reopens it; WQI is the Qi-facing listed token surface.
+3. Preserve `NO_WITHDRAW`/`NO_ADMIN`, null addresses, `realQuaiTransactions: false`, and `walletRequired: false` until explicit deploy/tx approval exists.
 
 ## Cron runner
 
@@ -129,3 +130,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 01:52 -03: Added read-only `nativeQiStatus: design-required` metadata to `/v1/contracts`, OpenAPI, TypeScript/Python SDK docs/tests, and `qdex contracts` docs/tests; real native-Qi-backed `QI-QUAI` remains mock-only with null addresses, `realQuaiTransactions: false`, and `walletRequired: false`; verified RED API/SDK/CLI/doc ratchets, GREEN focused tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: approval-gated native Qi path decision only after external evidence.
 - 2026-06-07 02:03 -03: Cleaned the native Qi boundary plan/test ratchet so completed `nativeQiStatus` metadata tasks are marked complete and the only remaining Task 3 is explicit approval-gated selected-path interface work; verified RED `node --test tests/native-qi-adapter-boundary.test.mjs` failed on missing completed-task wording, GREEN focused test, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; next slice: explicit Clonners approval plus external evidence before choosing a native Qi path.
 - 2026-06-07 06:23 -03: Cleaned stale post-mock readiness plan wording so completed nonce-cancel/gate/native-Qi tasks are marked complete and only the approval-gated native Qi path decision remains; verified RED `node --test tests/post-mock-mvp-readiness.test.mjs` failed on missing completed-task wording, GREEN focused test, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `640375f`; next slice: explicit Clonners approval plus external evidence before choosing a native Qi path.
+- 2026-06-07 06:51 -03: Corrected QDEX asset direction per Clonners: MVP uses WQUAI, WQI, and listed community-created ERC-20-style vault tokens; native Qi direct settlement is out of scope and no longer blocks the campaign. Replaced `nativeQiStatus`/adapter-decision metadata with `listedAssetStatus`, updated API/OpenAPI/SDK/CLI/docs/tests/status, and set next slice to token listing + MarketRegistry metadata flow; verified focused docs/API/SDK/CLI tests, full `pnpm check`, `git diff --check`, and high-confidence secret scan no findings; next slice: token listing and MarketRegistry metadata flow with no custody/withdraw/admin power.

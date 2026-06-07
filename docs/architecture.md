@@ -70,8 +70,10 @@ Matcher-local cancellation is not on-chain nonce cancellation. The former remove
 
 See [`docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md`](./plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md) for the approval-gated replacement map.
 
-## Native Qi wrapper/adapter boundary
+## Wrapped token listing boundary
 
-Native Qi is UTXO-model, so real `QI-QUAI` settlement remains blocked until a wrapper, contract-native adapter, or explicit conversion settlement flow is proven by event truth and approved. The mock `QI-QUAI` stays mock-only: mock fills/proofs, matcher-local balances, and local-only contract metadata cannot be presented as native Qi vault settlement.
+QDEX MVP uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets. Native Qi direct settlement is out of scope for the current DEX plan; the Qi-facing market surface is WQI, not raw native Qi.
 
-See [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) for the next read-only metadata and design-gate tasks.
+Market listing is a metadata/governance plane, not custody authority: `MarketRegistry` can enable or disable token pairs, but it must not move user balances or grant withdrawal/admin power. The next safe slice is a token listing and MarketRegistry metadata flow.
+
+See [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) for the corrected wrapped/listed-token boundary.

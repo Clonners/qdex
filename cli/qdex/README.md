@@ -15,7 +15,7 @@ qdex --base-url http://127.0.0.1:8787 stream orders --limit 1
 qdex --base-url http://127.0.0.1:8787 smoke
 ```
 
-`qdex contracts` prints the `GET /v1/contracts` registry as local-only metadata: `local-only-not-deployed`, null addresses, no real Quai tx, no wallet required, and no deploy authority. It includes read-only `nativeQiStatus` metadata for `QI-QUAI`: `design-required`, `mock-only`, `UTXO-model`, accepted paths `wrapped_qi_receipt_token`, `contract_native_qi_adapter`, and `conversion_settlement_flow`, and the safety notice that there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.
+`qdex contracts` prints the `GET /v1/contracts` registry as local-only metadata: `local-only-not-deployed`, null addresses, no real Quai tx, no wallet required, and no deploy authority. It includes read-only `listedAssetStatus` metadata: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and the safety notice that the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `qdex relayer gate` prints `GET /v1/relayer/settlement-mode-gate` read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus `real_quai_approval_gate_blocked` for `quai_contract`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

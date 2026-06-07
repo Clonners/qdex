@@ -87,9 +87,9 @@ test('local harness documentation tracks current local contract coverage', async
     '`NM-02`: local Settlement delegates nonce truth to a settlement-scoped `NonceManager`; user cancellations live on `NonceManager`, full fills emit `NonceUsed`, and DK-02 delegate safety remains intact.',
     '`MR-02`: local Settlement delegates market truth to a market-authority-scoped `MarketRegistry`; fills require enabled base/quote metadata and disabled or token-mismatched markets reject before nonce/accounting/vault/proof mutation.',
     '`FM-02`: local Settlement delegates fee truth to a fee-authority-scoped `FeeManager`; nonzero fees require manager recipient truth plus signed and manager schedule caps before vault/proof mutation.',
-    'Current metadata slice: `/v1/contracts` exposes read-only `nativeQiStatus` so API/SDK/CLI surfaces state that real native-Qi-backed `QI-QUAI` settlement remains design-required and mock-only until an approved wrapper/adapter/conversion path is proven.',
-    'Recommended next slice: choose exactly one native Qi path only after explicit approval and external evidence; accepted paths remain `wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow`.',
-    'Native Qi remains out of real vault tests until a wrapper/adapter/conversion design is proven.',
+    'Current metadata slice: `/v1/contracts` exposes read-only `listedAssetStatus` so API/SDK/CLI surfaces state that the MVP uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets.',
+    'Recommended next slice: token listing and MarketRegistry metadata flow. The listing plane may enable/disable token pairs, but it must not move user balances or grant withdrawal/admin power.',
+    'Native Qi direct settlement remains out of scope for the MVP unless Clonners explicitly reopens it; WQI is the Qi-facing listed token surface.',
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);
   }

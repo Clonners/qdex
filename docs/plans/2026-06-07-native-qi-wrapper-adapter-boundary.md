@@ -1,74 +1,65 @@
-# Native Qi Wrapper/Adapter Boundary Implementation Plan
+# Wrapped Token Listing Boundary Implementation Plan
 
-> **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
+> **For Hermes:** This plan supersedes the earlier native-Qi-adapter blocker. Do not keep asking Clonners to choose a native Qi adapter path for the MVP unless he explicitly reopens direct native Qi settlement.
 
-**Goal:** Define the approval-gated boundary for supporting native Qi in a real Quai TradingVault without treating UTXO Qi as an ERC-20 token.
+**Correction:** QDEX MVP uses `WQUAI`, `WQI`, and listed community-created tokens. Native Qi is not a direct `TradingVault` asset in the current DEX plan.
 
-**Architecture:** The current mock `QI-QUAI` loop stays mock-only while this plan defines evidence gates for wrapped Qi receipts, contract-native Qi adapters, or explicit conversion settlement flows. Real settlement remains blocked until one path has local-only ratchets, proof-service/indexer event truth, and explicit Clonners approval.
+**Goal:** Replace the native-Qi-adapter decision plateau with a wrapped/listed-token market plane: users trade contract/vault tokens, and markets are enabled through listing/registry metadata.
 
-**Tech Stack:** Node `node:test` doc ratchets, Solidity `0.8.20` local Hardhat interface tests, TypeScript OpenAPI/API metadata, and Quais SDK research only after explicit approval.
+**Architecture:** `TradingVault` accepts listed ERC-20-style vault tokens only. `MarketRegistry` lists approved token pairs such as `WQI-WQUAI` and future community token pairs. Settlement truth remains `TradeSettled`; listing metadata is not custody authority.
+
+**Tech Stack:** Node `node:test` doc ratchets, TypeScript OpenAPI/API metadata, SDK/CLI docs, and local Solidity `MarketRegistry`/`TradingVault` ratchets. No deploys, wallets, RPC URLs, signing, broadcasts, or real funds are introduced by this plan.
 
 ---
 
-## Current blocker
+## Current direction
 
-Native Qi is UTXO-model, while the current `TradingVault` implementation is account-model ERC-20-style vault accounting. Native Qi must not be represented as a normal ERC-20 token address inside `TradingVault` until Quai-specific contract support is proven.
+The asset plane is:
 
-The current mock `QI-QUAI` stays mock-only. Mock orderbooks, mock fills, mock proofs, and local-only Hardhat contract addresses do not prove that native Qi can be locked, settled, redeemed, or withdrawn by a real Quai contract.
+```text
+WQUAI / WQI / listed community tokens
+  -> TradingVault ERC-20-style balances
+  -> MarketRegistry enabled pairs
+  -> signed orders
+  -> Settlement TradeSettled event truth
+```
 
-## Acceptable design paths
+This means:
 
-Only one path should be selected for implementation, and only after evidence exists:
-
-1. `wrapped_qi_receipt_token`
-   - Users convert or wrap native Qi into an account-model receipt token.
-   - `TradingVault` accepts only the receipt token, not raw native Qi.
-   - The wrapper must expose reserve or conversion event truth and a redemption/unwrap proof path.
-2. `contract_native_qi_adapter`
-   - A Quai-supported contract primitive lets a contract verify and control native Qi state directly.
-   - The adapter must prove lock, unlock, settle, and user-owned exit behavior without giving the operator withdrawal authority.
-3. `conversion_settlement_flow`
-   - Orders settle through an explicit conversion pipeline rather than pretending native Qi is already vault-held.
-   - The indexer must separate trade settlement proof from conversion proof, and UI/API copy must state that both are required for real settlement truth.
+- `WQUAI` is the QUAI-facing wrapped/tokenized quote asset.
+- `WQI` is the Qi-facing wrapped/tokenized asset used by the DEX.
+- Tokens created by users can be listed after whatever review/governance/admin policy the product chooses.
+- Native Qi direct settlement is out of scope for the MVP and must not block the autonomous campaign.
 
 ## Disallowed shortcuts
 
-- Do not add `TradingVault.deposit(qiToken, amount)` for native Qi as if it were ERC-20.
-- Do not claim real `QI-QUAI` settlement from mock proofs, mock fills, local-only contract addresses, or matcher-local balances.
-- Do not let the relayer, API, delegate key, or matching engine create a hidden custody path around native Qi.
-- Do not promote `quai_contract` settlement mode just because local ERC-20-style tests are green.
-
-## Evidence required before unblocking real QI-QUAI
-
-Before any real native-Qi-backed market is presented as settled by Quai contracts, require all of this:
-
-- Public Quai documentation or an approved local prototype showing the selected native Qi path.
-- Local-only interface ratchets for the selected path.
-- Reserve or conversion event truth for the native Qi leg.
-- Redemption/unwrap proof path owned by the user, not by the operator.
-- solvency invariant showing every receipt or settlement credit maps to verifiable native Qi backing or conversion evidence.
-- Proof-service/indexer projection that keeps trade proof and native Qi backing/conversion proof distinguishable.
-- `TradeSettled` remains the public trade-proof trigger; native Qi wrapper/conversion events are supporting evidence, not replacement trade events.
-- Explicit Clonners approval before any testnet/mainnet deployment, transaction submission, RPC configuration, wallet loading, or real funds.
+- Do not reintroduce `wrapped_qi_receipt_token`, `contract_native_qi_adapter`, or `conversion_settlement_flow` as the active next task.
+- Do not represent raw native Qi as a normal `TradingVault.deposit(token, amount)` asset.
+- Do not claim direct native Qi custody, settlement, redemption, unwrap, or conversion behavior from the local mock loop.
+- Do not add wallet loading, RPC URLs, signing, broadcasts, deploy scripts, or real tx behavior.
+- Do not give listing/admin authority any withdrawal path over user balances.
 
 ## API and metadata boundary
 
-The next safe implementation slice should add read-only status metadata, not runtime native Qi behavior.
-
-Required metadata while the design is unproven includes `nativeQiStatus: design-required`. This means keeping `local-only-not-deployed`, `realQuaiTransactions: false`, and `walletRequired: false` in public metadata:
+Public metadata should describe the listed-asset direction, not a native Qi decision gate:
 
 ```text
-nativeQiStatus: design-required
-contractMode: local-only-not-deployed
+listedAssetStatus.status: wrapped-token-listing
+primaryQuoteAssets: WQUAI, WQI
+supportedAssetModel: erc20-style-vault-token
+userListedTokens: true
+listingFlowStatus: design-required
+nativeQiTreatment: out-of-scope-direct-settlement-use-WQI
+nativeQiDirectSettlement: false
 realQuaiTransactions: false
 walletRequired: false
 ```
 
-`GET /v1/contracts`, SDKs, CLI, and docs should state that `QI-QUAI` is mock/wrapped-only until the selected design path is approved and proven by event truth.
+`GET /v1/contracts`, SDKs, CLI, and docs should state that the MVP settles listed vault tokens such as `WQUAI`, `WQI`, and approved community tokens.
 
 ## Delegate and custody boundary
 
-Delegate/API keys remain trading-only and cannot become native Qi custody tools.
+Delegate/API keys remain trading-only and cannot become listing-admin, withdrawal, wrapping, or redemption authority.
 
 Required permission copy keeps `NO_WITHDRAW` and `NO_ADMIN` explicit:
 
@@ -80,71 +71,35 @@ NO_WITHDRAW
 NO_ADMIN
 ```
 
-Delegate/API keys cannot wrap, unwrap, redeem, or withdraw native Qi. Any owner action for native Qi exit must be a separate main-wallet flow with explicit user approval and proof-service/indexer visibility.
+## Completed metadata correction
 
-## Completed metadata tasks
-
-### Completed Task 1: Add read-only native Qi status metadata to `/v1/contracts`
-
-**Objective:** Expose that native Qi support is design-required and still blocked in local MVP mode.
-
-Completed: `/v1/contracts` exposes read-only `nativeQiStatus: design-required` metadata.
+Completed: the campaign direction has been corrected away from a native Qi adapter selection blocker. The active contract/API metadata boundary is now listed/wrapped-token assets.
 
 Result:
 
-- The contract registry response keeps `deploymentStatus: local-only-not-deployed`, null addresses, `realQuaiTransactions: false`, and `walletRequired: false`.
-- `nativeQiStatus` states `currentTreatment: mock-only`, `nativeQiModel: UTXO-model`, accepted future paths, and `selectedPath: null`.
-- No wallets, RPC URLs, signing, broadcasts, deploy scripts, tx helpers, or real contract addresses were added.
+- `/v1/contracts` exposes `listedAssetStatus` instead of asking for a native Qi path decision.
+- Docs and SDK/CLI copy pin `WQUAI`, `WQI`, and listed community-created tokens as the MVP asset model.
+- Native Qi direct settlement remains out of scope unless explicitly reopened.
 
-### Completed Task 2: Add OpenAPI/docs ratchets for `nativeQiStatus`
+## Next implementation slice
 
-**Objective:** Keep API docs, SDK docs, and CLI copy from claiming real native Qi settlement before the design exists.
+### Task: Token listing and MarketRegistry metadata flow
 
-Completed: OpenAPI, API, SDK, CLI, and docs ratchets keep `QI-QUAI` mock-only and local-only.
-
-Result:
-
-- `docs/api-openapi.yaml`, `docs/contracts.md`, SDK specs/READMEs, and `qdex contracts` docs all expose the same read-only native Qi design boundary.
-- Consumer docs preserve `NO_WITHDRAW`, `NO_ADMIN`, null-address, no-wallet, no-broadcast, no-RPC, and no-real-Quai-transaction safety language.
-- The current repo remains in mock/native-Qi-design-required mode until explicit approval and external evidence select one future path.
-
-## Remaining approval-gated task
-
-### Task 3: Add local-only interface ratchets for the selected adapter path after approval
-
-No selected path exists yet; do not add an adapter interface until Clonners approves one path with external evidence.
-
-**Objective:** Prevent implementation from inventing a native Qi custody path without a written accepted design.
+**Objective:** Define how user-created tokens become listable markets without granting custody or withdrawal authority.
 
 **Files:**
-- Test: `tests/contract-interface-invariants.test.mjs`
-- Create only after approval: `contracts/src/INativeQiAdapter.sol` or selected-path interface
 
-**Step 1: Write failing interface test**
+- Test: `tests/token-listing-boundary.test.mjs` or extend existing OpenAPI/docs ratchets.
+- Docs: `docs/listing-policy.md`, `docs/contracts.md`, `docs/architecture.md`.
+- API/OpenAPI: read-only listing policy/status surface before runtime behavior.
 
-The test should assert the selected path name, user-owned exit surface, event-truth fields, and absence of operator withdrawal/admin shortcuts.
+**Required invariants:**
 
-**Step 2: Run RED**
-
-Run: `node --test tests/contract-interface-invariants.test.mjs`
-Expected: FAIL on missing selected-path interface.
-
-**Step 3: Add minimal interface only**
-
-Add interface declarations and events only. Do not add implementation, deploy scripts, external network config, wallet loading, signing, broadcasts, or tx behavior.
-
-**Step 4: Run GREEN**
-
-Run: `pnpm check`
-Expected: PASS.
-
-**Step 5: Commit**
-
-```bash
-git add tests/contract-interface-invariants.test.mjs contracts/src
-
-git commit -m "contracts: pin native qi adapter interface boundary"
-```
+- Listed assets are ERC-20-style vault tokens.
+- `MarketRegistry` is market metadata/enabled-pair truth, not custody truth.
+- Token listing can enable/disable markets but cannot move user balances.
+- Delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`.
+- Real deploy/tx/wallet/RPC behavior remains approval-gated.
 
 ---
 

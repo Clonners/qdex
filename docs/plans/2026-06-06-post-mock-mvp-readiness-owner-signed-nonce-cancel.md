@@ -37,7 +37,7 @@ No deploys, RPC URLs, wallets, transaction sends, or real funds are introduced b
 | Contracts | Local Hardhat `TradingVault`, `Settlement`, `NonceManager`, `MarketRegistry`, `FeeManager`, `DelegateKeyRegistry` | Preserve TV/ST/NM/MR/FM/DK ratchets before any approved Orchard work. |
 | Contract metadata | `/v1/contracts` returns `local-only-not-deployed` and `address: null` | Replace only after approved deployment evidence, verified source links, and event-truth indexing. |
 | Delegates/API keys | `READ_ONLY`, `PLACE_ORDER`, `CANCEL_ORDER`, `CANCEL_ALL`, `NO_WITHDRAW`, `NO_ADMIN` | Never grant nonce-cancel, withdraw, or admin power to delegate/API keys by default. |
-| Native Qi | Documented caveat only | Native Qi remains UTXO-model and needs a wrapper/adapter/conversion design before any real `QI-QUAI` settlement claim. |
+| Native Qi | Documented caveat only | Raw native Qi direct settlement is out of scope for the MVP. QDEX uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets; the Qi-facing market surface is WQI. |
 | Relayer | Mock/local confirmation path | Real Quai broadcast mode remains approval-gated and must not read wallet material autonomously. |
 
 ## Owner-signed nonce-cancel boundary
@@ -83,7 +83,7 @@ Do not cross any gate autonomously:
 - Contract proofs require event-truth indexing from `TradeSettled`; API/cache rows are projection only.
 - Nonce-cancel proof UX requires `NonceCancelled`/`NonceRangeCancelled` event indexing before claiming on-chain cancellation status.
 - Quais SDK relayer mode requires an approved signing/broadcast design and must not use cron-held wallet material.
-- Native Qi wrapper/adapter work must be designed and reviewed before any real `QI-QUAI` settlement claim.
+- Token listing and MarketRegistry work must keep listing authority separate from custody; raw native Qi direct settlement is out of scope unless explicitly reopened.
 
 ## Completed post-mock readiness tasks
 
@@ -132,34 +132,28 @@ Result:
 - `evaluateRelayerSettlementModeGate()` is metadata/readiness-only and keeps `realQuaiTransactions: false` plus `walletRequired: false`.
 - API/SDK/CLI clients can read the gate state, but no wallet loading, signing, broadcast, RPC access, relayer submission, or transaction behavior was added.
 
-### Completed Task 5: Native Qi wrapper/adapter boundary plan
+### Completed Task 5: Wrapped token listing correction
 
-**Objective:** Prevent accidental ERC-20 assumptions for native Qi before contract settlement claims become real.
+**Objective:** Remove the stale native-Qi-adapter blocker and pin the MVP to listed ERC-20-style vault tokens.
 
-Completed: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./2026-06-07-native-qi-wrapper-adapter-boundary.md) keeps mock `QI-QUAI` mock-only and limits future paths.
+Completed: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./2026-06-07-native-qi-wrapper-adapter-boundary.md) now supersedes the native Qi adapter blocker and pins WQUAI, WQI, and listed community-created tokens as the MVP asset model.
 
 Result:
 
-- Native Qi remains documented as UTXO-model and not safe to treat as an ERC-20-style vault token.
-- `/v1/contracts`, SDKs, CLI, and docs expose read-only `nativeQiStatus: design-required` metadata.
+- Raw native Qi direct settlement is out of scope for the MVP.
+- `/v1/contracts`, SDKs, CLI, and docs expose read-only `listedAssetStatus` metadata.
 - No native Qi adapter interface, runtime behavior, wallet loading, signing, broadcast, deployment, transaction submission, or real settlement claim was added.
 
-## Remaining approval-gated decision
+## Remaining implementation direction
 
-Choose exactly one native Qi path only after explicit Clonners approval and external evidence.
+Next safe slice: token listing and MarketRegistry metadata flow.
 
-Accepted future paths remain limited to:
+Required boundary before runtime listing behavior:
 
-1. `wrapped_qi_receipt_token`
-2. `contract_native_qi_adapter`
-3. `conversion_settlement_flow`
+- listed assets are ERC-20-style vault tokens,
+- `MarketRegistry` is market metadata/enabled-pair truth, not custody truth,
+- listing/admin metadata can enable or disable markets but cannot move balances,
+- delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`,
+- real deploy/tx/wallet/RPC behavior remains approval-gated.
 
-Required evidence before any selected-path interface or runtime work:
-
-- reserve or conversion event truth,
-- redemption/unwrap proof path,
-- solvency invariant,
-- `TradeSettled` trade-proof truth,
-- selected path design reviewed and approved.
-
-Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real Qi settlement claims until the path is selected.
+Do not add adapter interfaces, wallets, RPC URLs, signing, broadcasts, deploys, or real native Qi settlement claims. Listing/admin metadata may enable token pairs, but it must not move user balances or grant withdrawal/admin power.

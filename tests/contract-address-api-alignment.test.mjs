@@ -20,7 +20,7 @@ test('OpenAPI pins local-only contract registry metadata for /v1/contracts', asy
     'operatorWithdrawalAuthority:',
     'proofTrigger:',
     'TradeSettled',
-    'nativeQiCaveat:',
+    'assetListingCaveat:',
     'NO_WITHDRAW',
     'No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts',
   ]) {
@@ -40,7 +40,7 @@ test('contracts overview documents API metadata as local-only dependency truth',
     'TradeSettled',
     'TradingVault`, `NonceManager`, `MarketRegistry`, `FeeManager`, and `DelegateKeyRegistry`',
     'NO_WITHDRAW',
-    'Native Qi remains a UTXO-model caveat',
+    'WQUAI, WQI, and community-created tokens',
   ]) {
     assert.ok(contracts.includes(requiredText), `docs/contracts.md should include ${requiredText}`);
   }

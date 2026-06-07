@@ -13,12 +13,10 @@ dex = QDexClient(base_url=base_url)
 markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
 contracts = dex.contracts.get()
-assert contracts["nativeQiStatus"]["status"] == "design-required"
-assert contracts["nativeQiStatus"]["currentTreatment"] == "mock-only"
-assert contracts["nativeQiStatus"]["nativeQiModel"] == "UTXO-model"
-assert "wrapped_qi_receipt_token" in contracts["nativeQiStatus"]["acceptedFuturePaths"]
-assert "contract_native_qi_adapter" in contracts["nativeQiStatus"]["acceptedFuturePaths"]
-assert "conversion_settlement_flow" in contracts["nativeQiStatus"]["acceptedFuturePaths"]
+assert contracts["listedAssetStatus"]["status"] == "wrapped-token-listing"
+assert contracts["listedAssetStatus"]["primaryQuoteAssets"] == ["WQUAI", "WQI"]
+assert contracts["listedAssetStatus"]["supportedAssetModel"] == "erc20-style-vault-token"
+assert contracts["listedAssetStatus"]["nativeQiTreatment"] == "out-of-scope-direct-settlement-use-WQI"
 relayer_gate = dex.relayer.settlement_mode_gate.get()
 nonce_cancel_prepare = dex.nonces.prepare_cancel({
     "action": "cancelNonce",
@@ -37,7 +35,7 @@ assert smoke["fill"]["projectionType"] == "IndexedFillProjection"
 proof = smoke["proof"]
 ```
 
-`contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `nativeQiStatus`: `design-required`, `mock-only`, `UTXO-model`, and accepted future paths `wrapped_qi_receipt_token`, `contract_native_qi_adapter`, and `conversion_settlement_flow`. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim.
+`contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `listedAssetStatus`: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and native Qi direct settlement out of scope in favor of WQI. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `dex.relayer.settlement_mode_gate.get()` calls `GET /v1/relayer/settlement-mode-gate` and returns read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

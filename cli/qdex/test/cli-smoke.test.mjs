@@ -102,19 +102,17 @@ test('qdex contracts command prints local-only registry metadata without wallet 
     assert.equal(result.deploymentStatus, 'local-only-not-deployed');
     assert.equal(result.realQuaiTransactions, false);
     assert.equal(result.walletRequired, false);
-    assert.match(result.nativeQiCaveat, /UTXO-model/);
-    assert.equal(result.nativeQiStatus.status, 'design-required');
-    assert.equal(result.nativeQiStatus.marketId, 'QI-QUAI');
-    assert.equal(result.nativeQiStatus.currentTreatment, 'mock-only');
-    assert.deepEqual(result.nativeQiStatus.acceptedFuturePaths, [
-      'wrapped_qi_receipt_token',
-      'contract_native_qi_adapter',
-      'conversion_settlement_flow',
-    ]);
-    assert.equal(result.nativeQiStatus.selectedPath, null);
-    assert.equal(result.nativeQiStatus.realQuaiTransactions, false);
-    assert.equal(result.nativeQiStatus.walletRequired, false);
-    assert.match(result.nativeQiStatus.safetyNotice, /no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real Qi settlement claim/i);
+    assert.match(result.assetListingCaveat, /WQUAI, WQI/);
+    assert.equal(result.listedAssetStatus.status, 'wrapped-token-listing');
+    assert.deepEqual(result.listedAssetStatus.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.equal(result.listedAssetStatus.supportedAssetModel, 'erc20-style-vault-token');
+    assert.equal(result.listedAssetStatus.userListedTokens, true);
+    assert.equal(result.listedAssetStatus.listingFlowStatus, 'design-required');
+    assert.equal(result.listedAssetStatus.nativeQiTreatment, 'out-of-scope-direct-settlement-use-WQI');
+    assert.equal(result.listedAssetStatus.nativeQiDirectSettlement, false);
+    assert.equal(result.listedAssetStatus.realQuaiTransactions, false);
+    assert.equal(result.listedAssetStatus.walletRequired, false);
+    assert.match(result.listedAssetStatus.safetyNotice, /WQUAI, WQI, and approved community tokens/i);
     assert.equal(result.contracts.tradingVault.address, null);
     assert.equal(result.contracts.tradingVault.operatorWithdrawalAuthority, false);
     assert.equal(result.contracts.settlement.proofTrigger, 'TradeSettled');
