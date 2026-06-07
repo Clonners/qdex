@@ -28,8 +28,8 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   for (const requiredText of [
     '# Post-Listing-Policy MarketRegistry Admin Boundary Implementation Plan',
     '> **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.',
-    '**Goal:** Plan the future token listing submission and MarketRegistry admin metadata boundary without adding runtime listing behavior.',
-    '**Architecture:** Keep `GET /v1/listings/policy` as the only executable listing surface for now.',
+    '**Goal:** Pin the completed listing-policy/request surfaces and the explicit MarketRegistry admin approval gate without adding runtime listing behavior.',
+    '**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.',
     '**Tech Stack:** Markdown plan/spec ratchets, Node `node:test` doc guards, existing OpenAPI/API/SDK/CLI docs, and local-only Solidity `MarketRegistry` concepts.',
     '## Current completed boundary',
     '`GET /v1/listings/policy`',
@@ -40,10 +40,11 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
     'WQUAI',
     'WQI',
     'community-created ERC-20-style vault tokens',
-    '## Future listing submission boundary',
+    '## Approval-gated runtime listing submission boundary',
     'approval-gated before implementation',
-    'metadata intake only',
-    'no runtime listing submission in this slice',
+    'The prepare-only `POST /v1/listings/requests` boundary already exists',
+    'Current prepare-only request shape',
+    'There is still no runtime listing submission beyond the prepare-only placeholder.',
     '## MarketRegistry admin metadata boundary',
     '`MarketRegistry.addMarket` is enabled-pair metadata only',
     '`MarketRegistry.disableMarket` retains metadata for indexer replay',
@@ -77,6 +78,11 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
 
   assert.doesNotMatch(plan, forbiddenRuntimeDetails, 'plan must not include runtime secrets, env/RPC/deploy mechanics, or real address/key claims');
   assert.doesNotMatch(plan, /adminWithdraw|withdrawFrom|rescue|sweep/i, 'plan must not introduce custody/admin withdrawal surfaces');
+  assert.doesNotMatch(
+    plan,
+    /Future listing submission should be introduced first as a prepare-only\/docs\/OpenAPI boundary|Minimum future request fields, if approved for a placeholder:|source: listing-submission-approval-gate/,
+    'plan must not keep stale pre-placeholder wording now that listing request clients are complete',
+  );
   assert.doesNotMatch(
     plan,
     /The next safe bounded slice is read-only SDK\/CLI clients for the prepare-only listing request placeholder/,

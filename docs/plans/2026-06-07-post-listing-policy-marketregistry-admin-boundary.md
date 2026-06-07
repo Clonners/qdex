@@ -2,9 +2,9 @@
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
-**Goal:** Plan the future token listing submission and MarketRegistry admin metadata boundary without adding runtime listing behavior.
+**Goal:** Pin the completed listing-policy/request surfaces and the explicit MarketRegistry admin approval gate without adding runtime listing behavior.
 
-**Architecture:** Keep `GET /v1/listings/policy` as the only executable listing surface for now. Future listing submission should be introduced first as a prepare-only/docs/OpenAPI boundary, then only become runtime behavior after explicit Clonners approval and local contract/admin ratchets. `MarketRegistry` remains enabled-pair metadata truth; `TradingVault` remains balance truth.
+**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`. Runtime listing submission or MarketRegistry admin mutation remains blocked until explicit Clonners approval and local contract/admin ratchets. `MarketRegistry` remains enabled-pair metadata truth; `TradingVault` remains balance truth.
 
 **Tech Stack:** Markdown plan/spec ratchets, Node `node:test` doc guards, existing OpenAPI/API/SDK/CLI docs, and local-only Solidity `MarketRegistry` concepts. No wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin keys, listing-admin runtime behavior, or funds movement are introduced by this plan.
 
@@ -28,12 +28,11 @@ walletRequired: false
 
 This boundary describes WQUAI, WQI, and community-created ERC-20-style vault tokens. It does not accept listing requests, mutate `MarketRegistry`, load wallets, load RPC URLs, sign messages, submit transactions, deploy contracts, publish token addresses, or move real funds.
 
-## Future listing submission boundary
+## Approval-gated runtime listing submission boundary
 
-Future listing submission is approval-gated before implementation. The first safe runtime-adjacent slice should still be metadata intake only and should return a non-implemented/prepare-only response until Clonners explicitly approves listing submission behavior.
+Runtime listing submission is approval-gated before implementation. The prepare-only `POST /v1/listings/requests` boundary already exists and intentionally returns a non-implemented response until Clonners explicitly approves runtime listing/admin behavior.
 
-Minimum future request fields, if approved for a placeholder:
-
+Current prepare-only request shape (metadata-only; not persisted or submitted):
 ```json
 {
   "baseSymbol": "COMMUNITY",
@@ -47,11 +46,12 @@ Minimum future request fields, if approved for a placeholder:
 }
 ```
 
-Placeholder response invariants:
+Prepare-only response invariants:
 
 ```text
-source: listing-submission-approval-gate
-status: not-implemented-approval-required
+source: listed-asset-marketregistry-policy
+status: design-only-local-metadata
+requestStatus: not-implemented-approval-required
 custody: non-custodial
 realQuaiTransactions: false
 walletRequired: false
@@ -59,7 +59,7 @@ marketRegistryMutation: false
 tradingVaultBalanceMovement: false
 ```
 
-There is no runtime listing submission in this slice. Do not add a persistent queue, listing admin account, wallet/signing path, RPC path, contract call, deploy helper, address registry, or token verification claim until approval and external evidence exist.
+There is still no runtime listing submission beyond the prepare-only placeholder. Do not add a persistent queue, listing admin account, wallet/signing path, RPC path, contract call, deploy helper, address registry, or token verification claim until approval and external evidence exist.
 
 ## MarketRegistry admin metadata boundary
 
