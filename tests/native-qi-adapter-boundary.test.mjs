@@ -70,11 +70,11 @@ test('contract and architecture docs point to wrapped token listing rather than 
   assert.ok(architectureDoc.includes('WQUAI, WQI, and listed community-created tokens'));
   assert.ok(architectureDoc.includes('Native Qi direct settlement is out of scope'));
 
-  assert.ok(contractsReadme.includes('Current metadata slice: `/v1/contracts` exposes read-only `listedAssetStatus`'));
-  assert.ok(contractsReadme.includes('Recommended next slice: token listing and MarketRegistry metadata flow'));
+  assert.ok(contractsReadme.includes('Current metadata/listing slices expose read-only `listedAssetStatus`'));
+  assert.ok(contractsReadme.includes('Approval required: runtime listing submission or MarketRegistry admin mutation'));
   assert.doesNotMatch(
     contractsReadme,
-    /Recommended next slice: choose exactly one native Qi path|accepted paths remain `wrapped_qi_receipt_token`/,
-    'contracts README should not point at stale native Qi path selection work',
+    /Recommended next slice: token listing and MarketRegistry metadata flow|Recommended next slice: choose exactly one native Qi path|accepted paths remain `wrapped_qi_receipt_token`/,
+    'contracts README should not point at completed listing-policy slices or stale native Qi path selection work',
   );
 });

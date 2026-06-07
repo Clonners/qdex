@@ -42,8 +42,8 @@ Implemented local-only Hardhat ratchets from `docs/contract-implementation-test-
 20. `MR-02`: local Settlement delegates market truth to a market-authority-scoped `MarketRegistry`; fills require enabled base/quote metadata and disabled or token-mismatched markets reject before nonce/accounting/vault/proof mutation.
 21. `FM-02`: local Settlement delegates fee truth to a fee-authority-scoped `FeeManager`; nonzero fees require manager recipient truth plus signed and manager schedule caps before vault/proof mutation.
 
-Current metadata slice: `/v1/contracts` exposes read-only `listedAssetStatus` so API/SDK/CLI surfaces state that the MVP uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets.
+Current metadata/listing slices expose read-only `listedAssetStatus` plus `GET /v1/listings/policy`, `POST /v1/listings/requests` prepare-only metadata, and SDK/CLI clients so API/SDK/CLI surfaces state that the MVP uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets.
 
-Recommended next slice: token listing and MarketRegistry metadata flow. The listing plane may enable/disable token pairs, but it must not move user balances or grant withdrawal/admin power.
+Next approval boundary: post-listing-policy MarketRegistry admin boundary in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](../docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md). Approval required: runtime listing submission or MarketRegistry admin mutation. Until Clonners explicitly approves that trust boundary, do not add listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, `MarketRegistry` mutation, or funds movement.
 
-Native Qi direct settlement remains out of scope for the MVP unless Clonners explicitly reopens it; WQI is the Qi-facing listed token surface.
+The listing plane may enable/disable token-pair metadata only after approval, but it must not move user balances or grant withdrawal/admin power. Native Qi direct settlement remains out of scope for the MVP unless Clonners explicitly reopens it; WQI is the Qi-facing listed token surface.

@@ -88,9 +88,10 @@ test('listing docs point future work to the post-listing policy approval gate', 
   const listingPolicy = await readText('docs/listing-policy.md');
   const contracts = await readText('docs/contracts.md');
   const architecture = await readText('docs/architecture.md');
+  const contractsReadme = await readText('contracts/README.md');
   const wrappedPlan = await readText('docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md');
 
-  for (const text of [listingPolicy, contracts, architecture, wrappedPlan]) {
+  for (const text of [listingPolicy, contracts, architecture, contractsReadme, wrappedPlan]) {
     assert.ok(text.includes(planPath), 'docs should link the post-listing-policy admin boundary plan');
     assert.ok(
       text.includes('post-listing-policy MarketRegistry admin boundary'),
@@ -98,6 +99,15 @@ test('listing docs point future work to the post-listing policy approval gate', 
     );
   }
 
+  assert.ok(
+    contractsReadme.includes('Approval required: runtime listing submission or MarketRegistry admin mutation'),
+    'contracts README should point to the approval gate instead of a completed listing-policy slice',
+  );
+  assert.doesNotMatch(
+    contractsReadme,
+    /Recommended next slice: token listing and MarketRegistry metadata flow/,
+    'contracts README must not keep the completed token-listing metadata flow as the next slice',
+  );
   assert.ok(
     wrappedPlan.includes('Completed: TypeScript SDK, Python SDK, and `qdex` CLI clients expose the read-only listing policy'),
     'wrapped token plan should mark listing-policy clients complete',
