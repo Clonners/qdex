@@ -128,10 +128,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListingRequestReviewFlow"
   /v1/listings/requests:
+    get:
+      tags: [public]
+      summary: Inspect local in-memory listing review queue
+      description: Read-only inspection of the approved local in-memory listing review queue. It exposes metadata-only local review records and performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, listing-admin keys, MarketRegistry mutation, or real funds movement.
+      responses:
+        "200":
+          description: Local in-memory listing review queue state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestQueueResponse"
     post:
       tags: [public]
-      summary: Prepare-only listing request approval gate
-      description: "POST /v1/listings/requests is an intentional 501 placeholder and not-implemented approval boundary. It performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, listing-admin runtime behavior, MarketRegistry mutation, or real funds."
+      summary: Prepare-only listing request approval gate or local review queue intake
+      description: "POST /v1/listings/requests is an intentional 501 placeholder and not-implemented approval boundary unless requestMode=local_review_queue is provided. With requestMode=local_review_queue it records metadata only in the in-memory local review queue and returns 202; prepare-only mode still returns the approval-gated placeholder. It performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, real token addresses, listing-admin runtime behavior, MarketRegistry mutation, or real funds; listing-admin keys are also forbidden."
       requestBody:
         required: false
         content:
@@ -139,8 +150,20 @@ paths:
             schema:
               $ref: "#/components/schemas/ListingRequestPrepare"
       responses:
+        "202":
+          description: Local review request queued in memory only; no MarketRegistry mutation or funds movement.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestQueuedResponse"
+        "400":
+          description: Local review request rejected before queueing because metadata is missing/invalid or live authority fields were supplied.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingRequestRejectionResponse"
         "501":
-          description: Listing request placeholder remains approval-gated and not implemented
+          description: Listing request placeholder remains approval-gated and not implemented when requestMode is not local_review_queue
           content:
             application/json:
               schema:
@@ -653,7 +676,7 @@ components:
           enum: [clonners-managed-local-review-before-dao]
         requestSurface:
           type: string
-          example: "prepare-only POST /v1/listings/requests"
+          example: "prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection"
         reviewAuthority:
           type: object
           required: [currentAuthority, futureAuthority, handoffPattern]
@@ -757,12 +780,16 @@ components:
               enum: [true]
             notice:
               type: string
-              example: "Local review/approval metadata only; it does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority."
+              example: "Local review/approval metadata plus approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses."
     ListingRequestPrepare:
       type: object
-      description: Metadata-only prepare payload for the approval-gated listing request placeholder. It intentionally excludes live authority details and credentials.
+      description: Metadata-only prepare/local-review payload for the listing request boundary. It intentionally excludes live authority details and credentials; queue writes require requestMode=local_review_queue.
       required: [baseSymbol, quoteSymbol, tokenModel, requestedMarketId, pricePrecision, amountPrecision, minAmount]
       properties:
+        requestMode:
+          type: string
+          enum: [prepare_only, local_review_queue]
+          description: Omit or use prepare_only for the 501 placeholder; use local_review_queue for in-memory local review queue intake.
         baseSymbol:
           type: string
           example: COMMUNITY
@@ -858,6 +885,250 @@ components:
         message:
           type: string
           example: "Listing requests are approval-gated and not implemented; this placeholder does not submit listings, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority."
+    ListingRequestQueueResponse:
+      type: object
+      description: Read-only inspection response for the approved local in-memory listing review queue. It exposes metadata-only review records and never mutates MarketRegistry or touches funds.
+      required: [source, status, phase, queueStatus, persistence, inspectionSurface, submitSurface, count, requests, marketRegistry, safety, message]
+      properties:
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-review-flow]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        phase:
+          type: string
+          enum: [clonners-managed-local-review-before-dao]
+        queueStatus:
+          type: string
+          enum: [local-in-memory-review-queue]
+        persistence:
+          type: string
+          enum: [in-memory-local-server-only]
+        inspectionSurface:
+          type: string
+          example: GET /v1/listings/requests
+        submitSurface:
+          type: string
+          example: POST /v1/listings/requests with requestMode=local_review_queue
+        count:
+          type: integer
+          minimum: 0
+        requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListingRequestQueuedResponse"
+        marketRegistry:
+          type: object
+          required: [truthSource, marketRegistryMutation, canMoveTradingVaultBalances, canGrantWithdrawalAuthority, canGrantAdminAuthority]
+          properties:
+            truthSource:
+              type: string
+              enum: [MarketRegistry-enabled-pair-metadata]
+            marketRegistryMutation:
+              type: boolean
+              enum: [false]
+            canMoveTradingVaultBalances:
+              type: boolean
+              enum: [false]
+            canGrantWithdrawalAuthority:
+              type: boolean
+              enum: [false]
+            canGrantAdminAuthority:
+              type: boolean
+              enum: [false]
+        safety:
+          type: object
+          required: [permissions, marketRegistryMutation, realQuaiTransactions, walletRequired, noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noListingAdminKeys, noRealTokenAddresses, noFundsMovement, notice]
+          properties:
+            permissions:
+              type: array
+              items:
+                type: string
+                enum: [NO_WITHDRAW, NO_ADMIN]
+            marketRegistryMutation:
+              type: boolean
+              enum: [false]
+            realQuaiTransactions:
+              type: boolean
+              enum: [false]
+            walletRequired:
+              type: boolean
+              enum: [false]
+            noWalletLoading: { type: boolean, enum: [true] }
+            noRpcUrlAccess: { type: boolean, enum: [true] }
+            noSigning: { type: boolean, enum: [true] }
+            noBroadcast: { type: boolean, enum: [true] }
+            noDeploys: { type: boolean, enum: [true] }
+            noTransactionSubmission: { type: boolean, enum: [true] }
+            noListingAdminKeys: { type: boolean, enum: [true] }
+            noRealTokenAddresses: { type: boolean, enum: [true] }
+            noFundsMovement: { type: boolean, enum: [true] }
+            notice:
+              type: string
+              example: "Local in-memory listing review queue only: it cannot mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses."
+        message:
+          type: string
+          example: "Local listing review queue is in-memory and metadata-only; it does not mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority."
+    ListingRequestQueuedResponse:
+      type: object
+      description: Metadata-only queued local review request. It is not an on-chain listing submission and carries no wallet/RPC/admin authority.
+      required: [requestId, source, status, requestStatus, phase, requestMode, reviewStage, reviewDecision, submittedAt, request, custody, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]
+      properties:
+        requestId: { type: string, example: listing-request-000001 }
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-review-flow]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        requestStatus:
+          type: string
+          enum: [queued-local-review]
+        phase:
+          type: string
+          enum: [clonners-managed-local-review-before-dao]
+        requestMode:
+          type: string
+          enum: [local_review_queue]
+        reviewStage:
+          type: string
+          enum: [metadata_intake]
+        reviewDecision:
+          type: string
+          enum: [pending-local-review]
+        submittedAt: { type: string, example: local-review-sequence-000001 }
+        request:
+          $ref: "#/components/schemas/ListingRequestPrepare"
+        custody:
+          type: string
+          enum: [non-custodial]
+        marketRegistry:
+          type: object
+          required: [truthSource, marketRegistryMutation, canMoveTradingVaultBalances, canGrantWithdrawalAuthority, canGrantAdminAuthority]
+          properties:
+            truthSource:
+              type: string
+              enum: [MarketRegistry-enabled-pair-metadata]
+            marketRegistryMutation:
+              type: boolean
+              enum: [false]
+            canMoveTradingVaultBalances:
+              type: boolean
+              enum: [false]
+            canGrantWithdrawalAuthority:
+              type: boolean
+              enum: [false]
+            canGrantAdminAuthority:
+              type: boolean
+              enum: [false]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        safety:
+          type: object
+          required: [permissions, marketRegistryMutation, realQuaiTransactions, walletRequired, noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noListingAdminKeys, noRealTokenAddresses, noFundsMovement, notice]
+          properties:
+            permissions:
+              type: array
+              items:
+                type: string
+                enum: [NO_WITHDRAW, NO_ADMIN]
+            marketRegistryMutation: { type: boolean, enum: [false] }
+            realQuaiTransactions: { type: boolean, enum: [false] }
+            walletRequired: { type: boolean, enum: [false] }
+            noWalletLoading: { type: boolean, enum: [true] }
+            noRpcUrlAccess: { type: boolean, enum: [true] }
+            noSigning: { type: boolean, enum: [true] }
+            noBroadcast: { type: boolean, enum: [true] }
+            noDeploys: { type: boolean, enum: [true] }
+            noTransactionSubmission: { type: boolean, enum: [true] }
+            noListingAdminKeys: { type: boolean, enum: [true] }
+            noRealTokenAddresses: { type: boolean, enum: [true] }
+            noFundsMovement: { type: boolean, enum: [true] }
+            notice: { type: string }
+        message:
+          type: string
+    ListingRequestRejectionResponse:
+      type: object
+      description: Rejection response for local review queue input that is missing metadata, invalid, or tries to carry live authority fields.
+      required: [error, source, status, requestStatus, phase, reason, custody, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]
+      properties:
+        error:
+          type: string
+          enum: [listing_request_rejected]
+        source:
+          type: string
+          enum: [listed-asset-marketregistry-review-flow]
+        status:
+          type: string
+          enum: [design-only-local-metadata]
+        requestStatus:
+          type: string
+          enum: [rejected-local-review-input]
+        phase:
+          type: string
+          enum: [clonners-managed-local-review-before-dao]
+        reason:
+          type: string
+          enum: [missing_request_body, missing_required_fields, missing_local_review_queue_mode, invalid_symbol_metadata, unsupported_quote_asset, unsupported_token_model, invalid_precision_metadata, invalid_min_amount, forbidden_live_authority_fields]
+        missingFields:
+          type: array
+          items: { type: string }
+        forbiddenFields:
+          type: array
+          items: { type: string }
+        custody:
+          type: string
+          enum: [non-custodial]
+        marketRegistry:
+          type: object
+          required: [truthSource, marketRegistryMutation, canMoveTradingVaultBalances, canGrantWithdrawalAuthority, canGrantAdminAuthority]
+          properties:
+            truthSource: { type: string, enum: [MarketRegistry-enabled-pair-metadata] }
+            marketRegistryMutation: { type: boolean, enum: [false] }
+            canMoveTradingVaultBalances: { type: boolean, enum: [false] }
+            canGrantWithdrawalAuthority: { type: boolean, enum: [false] }
+            canGrantAdminAuthority: { type: boolean, enum: [false] }
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        realQuaiTransactions: { type: boolean, enum: [false] }
+        walletRequired: { type: boolean, enum: [false] }
+        safety:
+          type: object
+          required: [permissions, marketRegistryMutation, realQuaiTransactions, walletRequired, noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noListingAdminKeys, noRealTokenAddresses, noFundsMovement, notice]
+          properties:
+            permissions:
+              type: array
+              items:
+                type: string
+                enum: [NO_WITHDRAW, NO_ADMIN]
+            marketRegistryMutation: { type: boolean, enum: [false] }
+            realQuaiTransactions: { type: boolean, enum: [false] }
+            walletRequired: { type: boolean, enum: [false] }
+            noWalletLoading: { type: boolean, enum: [true] }
+            noRpcUrlAccess: { type: boolean, enum: [true] }
+            noSigning: { type: boolean, enum: [true] }
+            noBroadcast: { type: boolean, enum: [true] }
+            noDeploys: { type: boolean, enum: [true] }
+            noTransactionSubmission: { type: boolean, enum: [true] }
+            noListingAdminKeys: { type: boolean, enum: [true] }
+            noRealTokenAddresses: { type: boolean, enum: [true] }
+            noFundsMovement: { type: boolean, enum: [true] }
+            notice: { type: string }
+        message:
+          type: string
     ListingRequestSafety:
       type: object
       required: [noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noRuntimeListingQueue, noListingAdminKeys, noRealTokenAddresses, noFundsMovement, notice]

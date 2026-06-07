@@ -2,11 +2,11 @@
 
 > **For Hermes:** Use subagent-driven-development skill to implement this plan task-by-task.
 
-**Goal:** Pin the completed listing-policy/request surfaces and the explicit MarketRegistry admin approval gate without adding runtime listing behavior.
+**Goal:** Pin the completed listing-policy/request surfaces, the approved local in-memory review queue, and the explicit MarketRegistry admin approval gate without adding live listing/admin behavior.
 
-**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`. Runtime listing submission or MarketRegistry admin mutation remains blocked until explicit Clonners approval and local contract/admin ratchets. `MarketRegistry` remains enabled-pair metadata truth; `TradingVault` remains balance truth.
+**Architecture:** Existing safe listing surfaces are `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, and prepare-only fallback. Runtime listing submission beyond local queue state or MarketRegistry admin mutation remains blocked until separate explicit Clonners approval and local contract/admin ratchets. `MarketRegistry` remains enabled-pair metadata truth; `TradingVault` remains balance truth.
 
-**Tech Stack:** Markdown plan/spec ratchets, Node `node:test` doc guards, existing OpenAPI/API/SDK/CLI docs, and local-only Solidity `MarketRegistry` concepts. No wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin keys, listing-admin runtime behavior, or funds movement are introduced by this plan.
+**Tech Stack:** Markdown plan/spec ratchets, Node `node:test` doc guards, existing OpenAPI/API/SDK/CLI docs, and local-only Solidity `MarketRegistry` concepts. No wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin keys, `MarketRegistry` mutation, or funds movement are introduced by this plan.
 
 ---
 
@@ -30,9 +30,9 @@ This boundary describes WQUAI, WQI, and community-created ERC-20-style vault tok
 
 ## Approval-gated runtime listing submission boundary
 
-Runtime listing submission is approval-gated before implementation. The prepare-only `POST /v1/listings/requests` boundary already exists and intentionally returns a non-implemented response until Clonners explicitly approves runtime listing/admin behavior.
+Runtime listing submission beyond local queue state is approval-gated before implementation. The prepare-only `POST /v1/listings/requests` fallback still returns a non-implemented response unless the caller explicitly uses approved local review queue mode.
 
-Current prepare-only request shape (metadata-only; not persisted or submitted):
+Current local review request shape (metadata-only; queued locally only with `requestMode: local_review_queue`):
 ```json
 {
   "baseSymbol": "COMMUNITY",
@@ -42,7 +42,8 @@ Current prepare-only request shape (metadata-only; not persisted or submitted):
   "pricePrecision": 8,
   "amountPrecision": 8,
   "minAmount": "1",
-  "reviewNotes": "metadata-only local request"
+  "reviewNotes": "metadata-only local request",
+  "requestMode": "local_review_queue"
 }
 ```
 
@@ -59,7 +60,7 @@ marketRegistryMutation: false
 tradingVaultBalanceMovement: false
 ```
 
-There is still no runtime listing submission beyond the prepare-only placeholder. Do not add a persistent queue, listing admin account, wallet/signing path, RPC path, contract call, deploy helper, address registry, or token verification claim until approval and external evidence exist.
+There is still no on-chain/runtime listing submission beyond metadata-only local queue surfaces. Do not add a persistent production queue, listing admin account, wallet/signing path, RPC path, contract call, deploy helper, address registry, or token verification claim until separate approval and external evidence exist.
 
 ## MarketRegistry admin metadata boundary
 
@@ -93,7 +94,7 @@ events: MarketAuthorityHandoffProposed, MarketAuthorityHandoffAccepted
 
 Only the current authority can propose the next authority. Only the proposed DAO/multisig can accept. Once accepted, the old Clonners-managed authority loses `addMarket`/`disableMarket` power. This is metadata authority only: no custody, no withdrawal, no delegate-admin power, no wallet loading, no RPC URL, no signing, no broadcast, no deploy, no real token-address claims, and no funds movement.
 
-The next bounded runtime-facing slice should stay local/metadata-first: expose a review/approval flow for listing requests that Clonners can operate before DAO governance wiring. Real network mutations still require a separate approval/evidence gate.
+The approved bounded runtime-facing slice stays local/metadata-first: expose an in-memory review queue for listing requests that Clonners can inspect before DAO governance wiring. Real network mutations still require a separate approval/evidence gate.
 
 ## Delegates and listing-admin separation
 
@@ -116,10 +117,10 @@ Future listing-admin approval, if any, must be a separate high-trust operator/go
 Autonomous cron slices must not add:
 
 ```text
-no wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin runtime behavior, or funds movement
+no wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, listing-admin key behavior, MarketRegistry mutation, or funds movement
 ```
 
-Also do not add listing submission persistence, listing-admin keys, generated deployment manifests, address claims, token verification claims, fee/economics policy, or any claim that `MarketRegistry` metadata can move `TradingVault` balances.
+Also do not add listing submission persistence beyond local in-memory queue state, listing-admin keys, generated deployment manifests, address claims, token verification claims, fee/economics policy, or any claim that `MarketRegistry` metadata can move `TradingVault` balances.
 
 ## Completed prepare-only API placeholder
 
@@ -131,9 +132,17 @@ The placeholder does not persist listing submissions, mutate `MarketRegistry`, l
 
 TypeScript SDK `listings.requests.prepareSubmit()`, Python SDK `listings.requests.prepare_submit()`, and `qdex listings request --prepare` now expose the prepare-only placeholder. These clients return the intentional `501` envelope as a prepare-only boundary response, not as a successful listing submission, and preserve `NO_WITHDRAW`, `NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds behavior, and no `MarketRegistry` mutation.
 
+## Completed local review queue boundary
+
+Clonners approved the local runtime listing review queue as an in-memory metadata-only intake surface. `POST /v1/listings/requests` with `requestMode: local_review_queue` can queue a local review record, and `GET /v1/listings/requests` can inspect those local records.
+
+This local queue preserves `source: listed-asset-marketregistry-review-flow`, `status: design-only-local-metadata`, `phase: clonners-managed-local-review-before-dao`, `queueStatus: local-in-memory-review-queue`, `persistence: in-memory-local-server-only`, `requestStatus: queued-local-review`, `reviewStage: metadata_intake`, `reviewDecision: pending-local-review`, `marketRegistryMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `NO_WITHDRAW`, and `NO_ADMIN`.
+
+The queue is server-local and in-memory only. It cannot move `TradingVault` balances, mutate `MarketRegistry`, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, register real token addresses, create listing-admin keys, or claim that a listing request was submitted on-chain.
+
 ## Next approval-gated boundary
 
-Approval required: runtime listing submission or MarketRegistry admin mutation.
+Approval required: runtime listing submission beyond local queue state or MarketRegistry admin mutation.
 
 No further autonomous runtime listing submission or MarketRegistry admin behavior should start until Clonners explicitly approves the trust boundary. Any future approved slice must still begin with RED API/OpenAPI/docs/contract ratchets, remain metadata-only until local admin safety tests pass, and must not add listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, `MarketRegistry` mutation, or funds movement without a separate explicit approval.
 

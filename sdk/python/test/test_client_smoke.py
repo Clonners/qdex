@@ -200,7 +200,10 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(review_flow["source"], "listed-asset-marketregistry-review-flow")
             self.assertEqual(review_flow["status"], "design-only-local-metadata")
             self.assertEqual(review_flow["phase"], "clonners-managed-local-review-before-dao")
-            self.assertEqual(review_flow["requestSurface"], "prepare-only POST /v1/listings/requests")
+            self.assertEqual(
+                review_flow["requestSurface"],
+                "prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection",
+            )
             self.assertEqual(
                 [stage["id"] for stage in review_flow["stages"]],
                 [
@@ -229,7 +232,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertTrue(review_flow["safety"]["noRealTokenAddresses"])
             self.assertTrue(review_flow["safety"]["noFundsMovement"])
             self.assertIn(
-                "does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority",
+                "approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority",
                 review_flow["safety"]["notice"],
             )
 

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { createInMemoryIndexerProjection } from '../../indexer/src/in-memory-projection.js';
+import { createListingReviewQueue } from './listing-review-queue.js';
 import { createInMemoryProofService } from '../../proof-service/src/in-memory-proof-service.js';
 
 export const MARKET_ID = 'QI-QUAI';
@@ -182,6 +183,7 @@ const bookOrder = (order) => ({
 
 export const createMockDexState = ({
   indexer = createInMemoryIndexerProjection(),
+  listingReviewQueue = createListingReviewQueue(),
   proofService = createInMemoryProofService({ indexer }),
 } = {}) => {
   const state = {
@@ -495,6 +497,14 @@ export const createMockDexState = ({
 
     listFills() {
       return indexer.listFills();
+    },
+
+    submitListingRequest(request) {
+      return listingReviewQueue.enqueue(request);
+    },
+
+    listListingRequests() {
+      return listingReviewQueue.list();
     },
 
     listTrades(marketId) {

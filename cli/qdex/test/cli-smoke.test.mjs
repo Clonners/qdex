@@ -207,7 +207,7 @@ test('qdex listings review-flow command prints read-only local review metadata w
     assert.equal(result.source, 'listed-asset-marketregistry-review-flow');
     assert.equal(result.status, 'design-only-local-metadata');
     assert.equal(result.phase, 'clonners-managed-local-review-before-dao');
-    assert.equal(result.requestSurface, 'prepare-only POST /v1/listings/requests');
+    assert.equal(result.requestSurface, 'prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection');
     assert.deepEqual(result.stages.map((stage) => stage.id), [
       'metadata_intake',
       'token_safety_review',
@@ -234,7 +234,7 @@ test('qdex listings review-flow command prints read-only local review metadata w
     assert.equal(result.safety.noFundsMovement, true);
     assert.match(
       result.safety.notice,
-      /does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal\/admin authority/i,
+      /approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal\/admin authority/i,
     );
   });
 });

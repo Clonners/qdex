@@ -117,8 +117,17 @@ export const handlePublicRoute = (context) => {
     return jsonResult(200, createListingRequestReviewFlowResponse());
   }
 
+  if (method === 'GET' && pathname === '/v1/listings/requests') {
+    return jsonResult(200, state.listListingRequests());
+  }
+
   if (method === 'POST' && pathname === '/v1/listings/requests') {
-    return jsonResult(501, createListingRequestPlaceholderResponse());
+    if (context.body?.requestMode !== 'local_review_queue') {
+      return jsonResult(501, createListingRequestPlaceholderResponse());
+    }
+
+    const result = state.submitListingRequest(context.body);
+    return jsonResult(result.statusCode, result.body);
   }
 
   if (method === 'GET' && pathname === '/v1/relayer/settlement-mode-gate') {

@@ -201,7 +201,7 @@ test('TypeScript SDK exposes read-only listing review-flow metadata without Mark
     assert.equal(reviewFlow.source, 'listed-asset-marketregistry-review-flow');
     assert.equal(reviewFlow.status, 'design-only-local-metadata');
     assert.equal(reviewFlow.phase, 'clonners-managed-local-review-before-dao');
-    assert.equal(reviewFlow.requestSurface, 'prepare-only POST /v1/listings/requests');
+    assert.equal(reviewFlow.requestSurface, 'prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection');
     assert.deepEqual(reviewFlow.stages.map((stage) => stage.id), [
       'metadata_intake',
       'token_safety_review',
@@ -228,7 +228,7 @@ test('TypeScript SDK exposes read-only listing review-flow metadata without Mark
     assert.equal(reviewFlow.safety.noFundsMovement, true);
     assert.match(
       reviewFlow.safety.notice,
-      /does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal\/admin authority/i,
+      /approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal\/admin authority/i,
     );
   });
 });

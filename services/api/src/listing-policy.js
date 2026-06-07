@@ -98,7 +98,7 @@ export const createListingRequestReviewFlowResponse = () => ({
   source: 'listed-asset-marketregistry-review-flow',
   status: 'design-only-local-metadata',
   phase: 'clonners-managed-local-review-before-dao',
-  requestSurface: 'prepare-only POST /v1/listings/requests',
+  requestSurface: 'prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection',
   reviewAuthority: {
     currentAuthority: 'Clonners-managed MarketRegistry authority',
     futureAuthority: 'dao-governance',
@@ -164,7 +164,7 @@ export const createListingRequestReviewFlowResponse = () => ({
     noRealTokenAddresses: true,
     noFundsMovement: true,
     notice:
-      'Local review/approval metadata only; it does not persist a runtime listing queue, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority.',
+      'Local review/approval metadata plus approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses.',
   },
 });
 

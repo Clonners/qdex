@@ -229,7 +229,7 @@ test('OpenAPI and docs expose prepare-only listing request placeholder without M
   ]) {
     assert.ok(route.includes(requiredText), `/v1/listings/requests route should include ${requiredText}`);
   }
-  assert.doesNotMatch(route, /"200":|"201":/, 'placeholder must not advertise successful listing creation');
+  assert.doesNotMatch(route, /"201":/, 'placeholder must not advertise successful listing creation');
 
   for (const requiredText of [
     'required: [baseSymbol, quoteSymbol, tokenModel, requestedMarketId, pricePrecision, amountPrecision, minAmount]',
@@ -302,6 +302,109 @@ test('OpenAPI and docs expose prepare-only listing request placeholder without M
     policy,
     /has been submitted on-chain|listing request submitted|MarketRegistry mutation submitted/i,
     'docs must not claim the placeholder submits listings or mutates MarketRegistry',
+  );
+});
+
+test('OpenAPI and docs expose approved local in-memory listing review queue without MarketRegistry mutation', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const policy = await readText('docs/listing-policy.md');
+  const plan = await readText('docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md');
+  const route = sectionBetween(spec, '  /v1/listings/requests:', '  /v1/relayer/settlement-mode-gate:');
+  const prepareSchema = sectionBetween(spec, '    ListingRequestPrepare:', '    ListingRequestPlaceholderResponse:');
+  const queueResponse = sectionBetween(spec, '    ListingRequestQueueResponse:', '    ListingRequestQueuedResponse:');
+  const queuedResponse = sectionBetween(spec, '    ListingRequestQueuedResponse:', '    ListingRequestRejectionResponse:');
+  const rejectionResponse = sectionBetween(spec, '    ListingRequestRejectionResponse:', '    ListingRequestSafety:');
+
+  for (const requiredText of [
+    'get:',
+    'summary: Inspect local in-memory listing review queue',
+    '$ref: "#/components/schemas/ListingRequestQueueResponse"',
+    'requestMode=local_review_queue',
+    '"202":',
+    '$ref: "#/components/schemas/ListingRequestQueuedResponse"',
+    '"400":',
+    '$ref: "#/components/schemas/ListingRequestRejectionResponse"',
+    '"501":',
+    'prepare-only mode still returns the approval-gated placeholder',
+  ]) {
+    assert.ok(route.includes(requiredText), `/v1/listings/requests route should include local queue text ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'requestMode:',
+    'enum: [prepare_only, local_review_queue]',
+    'local_review_queue',
+  ]) {
+    assert.ok(prepareSchema.includes(requiredText), `ListingRequestPrepare schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [source, status, phase, queueStatus, persistence, inspectionSurface, submitSurface, count, requests, marketRegistry, safety, message]',
+    'enum: [listed-asset-marketregistry-review-flow]',
+    'enum: [local-in-memory-review-queue]',
+    'enum: [in-memory-local-server-only]',
+    'GET /v1/listings/requests',
+    'POST /v1/listings/requests with requestMode=local_review_queue',
+    'marketRegistryMutation:',
+    'enum: [false]',
+    'enum: [NO_WITHDRAW, NO_ADMIN]',
+  ]) {
+    assert.ok(queueResponse.includes(requiredText), `ListingRequestQueueResponse schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [requestId, source, status, requestStatus, phase, requestMode, reviewStage, reviewDecision, submittedAt, request, custody, marketRegistry, permissions, realQuaiTransactions, walletRequired, safety, message]',
+    'enum: [queued-local-review]',
+    'enum: [local_review_queue]',
+    'enum: [metadata_intake]',
+    'enum: [pending-local-review]',
+    'canMoveTradingVaultBalances:',
+    'canGrantWithdrawalAuthority:',
+    'canGrantAdminAuthority:',
+    'realQuaiTransactions:',
+    'walletRequired:',
+  ]) {
+    assert.ok(queuedResponse.includes(requiredText), `ListingRequestQueuedResponse schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'enum: [listing_request_rejected]',
+    'enum: [rejected-local-review-input]',
+    'forbiddenFields:',
+    'missingFields:',
+    'forbidden_live_authority_fields',
+    'marketRegistryMutation:',
+    'enum: [false]',
+  ]) {
+    assert.ok(rejectionResponse.includes(requiredText), `ListingRequestRejectionResponse schema should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '## Approved local runtime listing review queue',
+    '`POST /v1/listings/requests` with `requestMode: local_review_queue`',
+    '`GET /v1/listings/requests` inspects the in-memory local queue',
+    '`queueStatus: local-in-memory-review-queue`',
+    '`persistence: in-memory-local-server-only`',
+    '`requestStatus: queued-local-review`',
+    '`reviewDecision: pending-local-review`',
+    '`marketRegistryMutation: false`',
+    '`realQuaiTransactions: false`',
+    '`walletRequired: false`',
+    '`NO_WITHDRAW`',
+    '`NO_ADMIN`',
+    'cannot move `TradingVault` balances, mutate `MarketRegistry`, or grant withdrawal/admin authority',
+  ]) {
+    assert.ok(policy.includes(requiredText), `docs/listing-policy.md should include local queue text ${requiredText}`);
+  }
+
+  assert.ok(
+    plan.includes('Clonners approved the local runtime listing review queue'),
+    'post-listing plan should mark the local review queue approval/implementation boundary',
+  );
+  assert.doesNotMatch(
+    `${route}\n${prepareSchema}\n${queueResponse}\n${queuedResponse}\n${rejectionResponse}\n${policy}\n${plan}`,
+    /walletPrivateKey|listingAdminPrivateKey|rpcUrl\s*:|MarketRegistry mutation submitted|has been submitted on-chain/i,
+    'local runtime queue docs must not introduce wallets/RPC/signing/deploy/tx or on-chain submission claims',
   );
 });
 
