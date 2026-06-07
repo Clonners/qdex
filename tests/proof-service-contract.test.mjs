@@ -53,3 +53,26 @@ test('OpenAPI trade proof schema distinguishes mock proofs from real Quai eviden
     assert.ok(openapi.includes(requiredText), `docs/api-openapi.yaml should include ${requiredText}`);
   }
 });
+
+test('proof service spec pins owner-signed nonce-cancel proof rows without matcher-local proof claims', async () => {
+  const spec = await readText('services/proof-service/spec.md');
+
+  for (const requiredText of [
+    'NonceCancellationProof',
+    'getNonceCancellationProof(proofId)',
+    'NonceCancelled',
+    'NonceRangeCancelled',
+    'NONCE_CANCEL_CONFIRMED',
+    'NONCE_RANGE_CANCEL_CONFIRMED',
+    'matcher_local_order_cancelled',
+    'matcher_local_orders_cancelled',
+    'matcher-local-cancel-only-on-chain-nonce-unchanged',
+    'owner-signed NonceManager cancellation proof',
+    'txHash, blockNumber, blockHash, eventIndex, and explorerUrl',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'does not create a trade proof',
+  ]) {
+    assert.ok(spec.includes(requiredText), `services/proof-service/spec.md should include ${requiredText}`);
+  }
+});

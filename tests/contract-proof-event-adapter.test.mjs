@@ -4,7 +4,9 @@ import test from 'node:test';
 
 import {
   PUBLIC_CONTRACT_PROOF_EVENT,
+  adaptContractNonceCancellationEventToNonceProofEvent,
   adaptContractProofEventToSettlementEvent,
+  listNonceCancellationProofEvents,
   listPublicProofTriggerEvents,
 } from '../services/indexer/src/contract-proof-event-adapter.js';
 import { createInMemoryIndexerProjection } from '../services/indexer/src/in-memory-projection.js';
@@ -22,6 +24,9 @@ const MAKER = '0x1111111111111111111111111111111111111111';
 const TAKER = '0x2222222222222222222222222222222222222222';
 const SETTLEMENT_CONTRACT = '0x3333333333333333333333333333333333333333';
 const SETTLEMENT_TX = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+const NONCE_MANAGER_CONTRACT = '0x4444444444444444444444444444444444444444';
+const NONCE_CANCEL_TX = '0x1212121212121212121212121212121212121212121212121212121212121212';
+const NONCE_RANGE_CANCEL_TX = '0x3434343434343434343434343434343434343434343434343434343434343434';
 const BLOCK_HASH = '0x9999999999999999999999999999999999999999999999999999999999999999';
 
 const tradeSettledArgs = (overrides = {}) => ({
@@ -49,6 +54,16 @@ const completeQuaiEvidence = (overrides = {}) => ({
   blockHash: BLOCK_HASH,
   eventIndex: 7,
   explorerUrl: `https://quaiscan.io/tx/${SETTLEMENT_TX}`,
+  ...overrides,
+});
+
+const completeNonceCancellationEvidence = (overrides = {}) => ({
+  contractAddress: NONCE_MANAGER_CONTRACT,
+  txHash: NONCE_CANCEL_TX,
+  blockNumber: 23456,
+  blockHash: BLOCK_HASH,
+  eventIndex: 9,
+  explorerUrl: `https://quaiscan.io/tx/${NONCE_CANCEL_TX}`,
   ...overrides,
 });
 
@@ -185,4 +200,197 @@ test('TradeSettled maps to SETTLEMENT_CONFIRMED and then creates the public proo
   assert.equal(proof.body.proof.eventIndex, 7);
   assert.equal(proof.body.proof.explorerUrl, `https://quaiscan.io/tx/${SETTLEMENT_TX}`);
   assert.equal(proof.body.proof.safetyNotice, 'Quai contract proof: verify settlementTx, blockNumber, eventIndex, and explorerUrl against contract events.');
+});
+
+test('nonce-cancel proof adapter projects owner-signed NonceCancelled events into proof-service rows', () => {
+  assert.deepEqual(listNonceCancellationProofEvents(), ['NonceCancelled', 'NonceRangeCancelled']);
+  const indexer = createInMemoryIndexerProjection();
+  const proofService = createInMemoryProofService({ indexer });
+  const adapted = adaptContractNonceCancellationEventToNonceProofEvent({
+    eventName: 'NonceCancelled',
+    args: {
+      user: MAKER,
+      nonce: 42n,
+    },
+    evidence: completeNonceCancellationEvidence(),
+  });
+
+  assert.deepEqual(adapted, {
+    projected: true,
+    event: {
+      eventId: `quai_contract_nonce:${NONCE_MANAGER_CONTRACT}:${NONCE_CANCEL_TX}:9`,
+      type: 'NONCE_CANCEL_CONFIRMED',
+      source: 'quai-contract:NonceCancelled',
+      proofId: `nonce-cancel:${MAKER}:42:${NONCE_CANCEL_TX}:9`,
+      action: 'cancelNonce',
+      owner: MAKER,
+      nonce: '42',
+      nonceRange: null,
+      nonceManagerContract: NONCE_MANAGER_CONTRACT,
+      nonceManager: 'contract-event-truth',
+      custody: 'non-custodial-no-withdrawal-authority',
+      permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+      txHash: NONCE_CANCEL_TX,
+      blockNumber: 23456,
+      blockHash: BLOCK_HASH,
+      eventIndex: 9,
+      explorerUrl: `https://quaiscan.io/tx/${NONCE_CANCEL_TX}`,
+    },
+  });
+
+  assert.deepEqual(indexer.projectNonceCancellationEvent(adapted.event), {
+    projected: true,
+    eventIdentity: `quai_contract_nonce:${NONCE_CANCEL_TX}:9`,
+    proofId: `nonce-cancel:${MAKER}:42:${NONCE_CANCEL_TX}:9`,
+  });
+
+  const expectedProof = {
+    proofType: 'NonceCancellationProof',
+    proofId: `nonce-cancel:${MAKER}:42:${NONCE_CANCEL_TX}:9`,
+    action: 'cancelNonce',
+    owner: MAKER,
+    nonce: '42',
+    nonceRange: null,
+    nonceManagerContract: NONCE_MANAGER_CONTRACT,
+    nonceManager: 'contract-event-truth',
+    custody: 'non-custodial-no-withdrawal-authority',
+    permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+    txHash: NONCE_CANCEL_TX,
+    blockNumber: 23456,
+    blockHash: BLOCK_HASH,
+    eventIndex: 9,
+    explorerUrl: `https://quaiscan.io/tx/${NONCE_CANCEL_TX}`,
+    sourceEventId: `quai_contract_nonce:${NONCE_MANAGER_CONTRACT}:${NONCE_CANCEL_TX}:9`,
+    safetyNotice: 'Owner-signed NonceManager cancellation proof: verify txHash, blockNumber, eventIndex, and explorerUrl against the NonceManager event.',
+  };
+
+  assert.deepEqual(indexer.listNonceCancellationProofs(), [expectedProof]);
+  assert.deepEqual(proofService.getNonceCancellationProof(expectedProof.proofId), {
+    statusCode: 200,
+    body: {
+      proofId: expectedProof.proofId,
+      source: 'proof-service-indexer-projection',
+      custody: 'non-custodial-no-withdrawal-authority',
+      proof: expectedProof,
+    },
+  });
+
+  assert.deepEqual(indexer.projectNonceCancellationEvent(adapted.event), {
+    projected: false,
+    reason: 'duplicate_nonce_cancellation_event',
+    eventIdentity: `quai_contract_nonce:${NONCE_CANCEL_TX}:9`,
+  });
+});
+
+test('nonce-cancel proof adapter projects owner-signed NonceRangeCancelled events separately from single nonce cancellation', () => {
+  const indexer = createInMemoryIndexerProjection();
+  const rangeEvidence = completeNonceCancellationEvidence({
+    txHash: NONCE_RANGE_CANCEL_TX,
+    eventIndex: 10,
+    explorerUrl: `https://quaiscan.io/tx/${NONCE_RANGE_CANCEL_TX}`,
+  });
+  const adapted = adaptContractNonceCancellationEventToNonceProofEvent({
+    eventName: 'NonceRangeCancelled',
+    args: {
+      user: MAKER,
+      from: 100n,
+      to: 102n,
+    },
+    evidence: rangeEvidence,
+  });
+
+  assert.equal(adapted.projected, true);
+  assert.deepEqual(adapted.event, {
+    eventId: `quai_contract_nonce:${NONCE_MANAGER_CONTRACT}:${NONCE_RANGE_CANCEL_TX}:10`,
+    type: 'NONCE_RANGE_CANCEL_CONFIRMED',
+    source: 'quai-contract:NonceRangeCancelled',
+    proofId: `nonce-range-cancel:${MAKER}:100-102:${NONCE_RANGE_CANCEL_TX}:10`,
+    action: 'cancelNonceRange',
+    owner: MAKER,
+    nonce: null,
+    nonceRange: {
+      from: '100',
+      to: '102',
+    },
+    nonceManagerContract: NONCE_MANAGER_CONTRACT,
+    nonceManager: 'contract-event-truth',
+    custody: 'non-custodial-no-withdrawal-authority',
+    permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+    txHash: NONCE_RANGE_CANCEL_TX,
+    blockNumber: 23456,
+    blockHash: BLOCK_HASH,
+    eventIndex: 10,
+    explorerUrl: `https://quaiscan.io/tx/${NONCE_RANGE_CANCEL_TX}`,
+  });
+
+  assert.deepEqual(indexer.projectNonceCancellationEvent(adapted.event), {
+    projected: true,
+    eventIdentity: `quai_contract_nonce:${NONCE_RANGE_CANCEL_TX}:10`,
+    proofId: `nonce-range-cancel:${MAKER}:100-102:${NONCE_RANGE_CANCEL_TX}:10`,
+  });
+  assert.deepEqual(indexer.getNonceCancellationProof(`nonce-range-cancel:${MAKER}:100-102:${NONCE_RANGE_CANCEL_TX}:10`).nonceRange, {
+    from: '100',
+    to: '102',
+  });
+});
+
+test('nonce-cancel proof adapter suppresses matcher-local cancellations and incomplete real evidence', () => {
+  const indexer = createInMemoryIndexerProjection();
+  const proofService = createInMemoryProofService({ indexer });
+
+  assert.deepEqual(adaptContractNonceCancellationEventToNonceProofEvent({
+    eventName: 'matcher_local_order_cancelled',
+    args: {
+      user: MAKER,
+      nonce: 42n,
+    },
+    evidence: completeNonceCancellationEvidence(),
+  }), {
+    projected: false,
+    reason: 'matcher_local_cancellation_not_nonce_manager_event',
+    eventName: 'matcher_local_order_cancelled',
+    nonceManager: 'matcher-local-cancel-only-on-chain-nonce-unchanged',
+    acceptedEventNames: ['NonceCancelled', 'NonceRangeCancelled'],
+  });
+
+  assert.deepEqual(adaptContractNonceCancellationEventToNonceProofEvent({
+    eventName: 'NonceCancelled',
+    args: {
+      user: MAKER,
+      nonce: 42n,
+    },
+    evidence: completeNonceCancellationEvidence({
+      txHash: null,
+      blockNumber: null,
+      blockHash: null,
+      explorerUrl: null,
+    }),
+  }), {
+    projected: false,
+    reason: 'missing_nonce_cancellation_event_evidence',
+    eventName: 'NonceCancelled',
+    missingFields: ['txHash', 'blockNumber', 'blockHash', 'explorerUrl'],
+  });
+
+  assert.deepEqual(indexer.projectNonceCancellationEvent({
+    eventId: 'matcher-local-event-0001',
+    type: 'matcher_local_order_cancelled',
+  }), {
+    projected: false,
+    reason: 'not_nonce_manager_contract_cancellation',
+    eventType: 'matcher_local_order_cancelled',
+    nonceManager: 'matcher-local-cancel-only-on-chain-nonce-unchanged',
+  });
+  assert.deepEqual(indexer.listNonceCancellationProofs(), []);
+  assert.deepEqual(proofService.getNonceCancellationProof(`nonce-cancel:${MAKER}:42:${NONCE_CANCEL_TX}:9`), {
+    statusCode: 404,
+    body: {
+      error: 'nonce_cancellation_proof_not_found',
+      proofId: `nonce-cancel:${MAKER}:42:${NONCE_CANCEL_TX}:9`,
+      proof: null,
+      source: 'proof-service-indexer-projection',
+      custody: 'non-custodial-no-withdrawal-authority',
+      message: 'No indexed owner-signed NonceManager cancellation proof exists for this id yet.',
+    },
+  });
 });

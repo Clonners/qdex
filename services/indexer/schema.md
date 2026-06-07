@@ -16,6 +16,7 @@ MVP scope:
 - mock settlement events for the local vertical slice
 - later Quai contract events from TradingVault/Settlement/NonceManager/MarketRegistry/FeeManager
 - projections for `GET /v1/fills`, `GET /v1/trades/:market`, and `GET /v1/proofs/trades/:tradeId`
+- future owner-signed nonce-cancel proof rows from `NonceCancelled` / `NonceRangeCancelled` contract events
 - private settlement visibility for pending/failed relayer states
 
 Out of scope:
@@ -281,6 +282,49 @@ Rules:
 - `GET /v1/proofs/trades/:tradeId` reads from `proofs`.
 - Mock proof rows must keep `explorerUrl = null` and explain no real Quai transaction or funds moved.
 - Real proof rows must be traceable to verified contract source/event data.
+
+### nonce_cancellation_proofs
+
+Projection consumed by future owner-signed nonce-cancel proof UX. These rows are not trade proofs and do not create public fills, trades, settlements, or TradeProof rows.
+
+A nonce-cancel projection does not create public fills, trades, settlements, or TradeProof rows.
+
+Accepted source events:
+
+```text
+NonceCancelled -> NONCE_CANCEL_CONFIRMED
+NonceRangeCancelled -> NONCE_RANGE_CANCEL_CONFIRMED
+```
+
+Required fields:
+
+```text
+proofType: NonceCancellationProof
+proofId
+owner
+action: cancelNonce | cancelNonceRange
+nonce
+nonceRange
+nonceManagerContract
+nonceManager: contract-event-truth
+custody: non-custodial-no-withdrawal-authority
+permissions: NO_WITHDRAW | NO_ADMIN
+txHash
+blockNumber
+blockHash
+eventIndex
+explorerUrl
+sourceEventId
+safetyNotice
+```
+
+Rules:
+
+- Owner-signed NonceManager cancellation proof rows require real contract evidence: `txHash, blockNumber, blockHash, eventIndex, and explorerUrl`.
+- `NonceCancelled` and `NonceRangeCancelled` are the only contract events that can project nonce-cancel proof rows.
+- `matcher_local_order_cancelled` and `matcher_local_orders_cancelled` matcher-local cancellation events are suppressed; their nonce marker remains `matcher-local-cancel-only-on-chain-nonce-unchanged`.
+- Matcher-local cancellation events are suppressed because they remove only matcher-open quantity and do not mutate on-chain `NonceManager` nonce truth.
+- Rows preserve `NO_WITHDRAW` and `NO_ADMIN`; neither the indexer nor proof service gains wallet, withdrawal, signing, broadcast, relayer, admin, or custody authority.
 
 ## Projection flow
 

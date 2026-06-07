@@ -28,4 +28,31 @@ export const createInMemoryProofService = ({ indexer }) => ({
       },
     };
   },
+
+  getNonceCancellationProof(proofId) {
+    const proof = indexer.getNonceCancellationProof(proofId);
+    if (proof === null) {
+      return {
+        statusCode: 404,
+        body: {
+          error: 'nonce_cancellation_proof_not_found',
+          proofId,
+          proof: null,
+          source: PROOF_SOURCE,
+          custody: CUSTODY_NOTE,
+          message: 'No indexed owner-signed NonceManager cancellation proof exists for this id yet.',
+        },
+      };
+    }
+
+    return {
+      statusCode: 200,
+      body: {
+        proofId,
+        source: PROOF_SOURCE,
+        custody: CUSTODY_NOTE,
+        proof,
+      },
+    };
+  },
 });

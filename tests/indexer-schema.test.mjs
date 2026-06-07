@@ -52,3 +52,24 @@ test('indexer schema preserves reorg, replay, and custody invariants', async () 
     assert.ok(schema.includes(requiredText), `services/indexer/schema.md should include ${requiredText}`);
   }
 });
+
+test('indexer schema defines owner-signed nonce-cancel proof projection without matcher-local nonce mutation', async () => {
+  const schema = await readText('services/indexer/schema.md');
+
+  for (const requiredText of [
+    'nonce_cancellation_proofs',
+    'NonceCancelled',
+    'NonceRangeCancelled',
+    'NONCE_CANCEL_CONFIRMED',
+    'NONCE_RANGE_CANCEL_CONFIRMED',
+    'matcher-local cancellation events are suppressed',
+    'matcher-local-cancel-only-on-chain-nonce-unchanged',
+    'Owner-signed NonceManager cancellation proof',
+    'txHash, blockNumber, blockHash, eventIndex, and explorerUrl',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'does not create public fills, trades, settlements, or TradeProof rows',
+  ]) {
+    assert.ok(schema.includes(requiredText), `services/indexer/schema.md should include ${requiredText}`);
+  }
+});

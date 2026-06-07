@@ -1,7 +1,10 @@
 const MOCK_SAFETY_NOTICE = 'Mock proof only: no real Quai transaction, no explorer URL, no funds moved.';
+const NONCE_CANCELLATION_SAFETY_NOTICE = 'Owner-signed NonceManager cancellation proof: verify txHash, blockNumber, eventIndex, and explorerUrl against the NonceManager event.';
 const FINAL_SETTLEMENT_EVENT = 'SETTLEMENT_CONFIRMED';
+const NONCE_CANCELLATION_EVENTS = new Set(['NONCE_CANCEL_CONFIRMED', 'NONCE_RANGE_CANCEL_CONFIRMED']);
 const MOCK_SETTLEMENT_MODE = 'mock';
 const QUAI_CONTRACT_SETTLEMENT_MODE = 'quai_contract';
+const MATCHER_LOCAL_NONCE_UNCHANGED = 'matcher-local-cancel-only-on-chain-nonce-unchanged';
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -15,6 +18,64 @@ const buildEventIdentity = (event) => {
   }
 
   return `quai_contract:${event.settlementTx}:${event.eventIndex}`;
+};
+
+const buildNonceCancellationEventIdentity = (event) => `quai_contract_nonce:${event.txHash}:${event.eventIndex}`;
+
+const validateNonceCancellationEvent = (event) => {
+  if (!NONCE_CANCELLATION_EVENTS.has(event.type)) {
+    return {
+      projected: false,
+      reason: 'not_nonce_manager_contract_cancellation',
+      eventType: event.type,
+      nonceManager: MATCHER_LOCAL_NONCE_UNCHANGED,
+    };
+  }
+
+  const commonMissing = missingFields(event, [
+    'eventId',
+    'source',
+    'proofId',
+    'action',
+    'owner',
+    'nonceManagerContract',
+    'nonceManager',
+    'custody',
+    'permissions',
+    'txHash',
+    'blockNumber',
+    'blockHash',
+    'eventIndex',
+    'explorerUrl',
+  ]);
+  if (commonMissing.length > 0) {
+    return {
+      projected: false,
+      reason: 'invalid_nonce_cancellation_event',
+      missingFields: commonMissing,
+    };
+  }
+
+  if (event.type === 'NONCE_CANCEL_CONFIRMED' && isMissing(event.nonce)) {
+    return {
+      projected: false,
+      reason: 'invalid_nonce_cancellation_event',
+      missingFields: ['nonce'],
+    };
+  }
+
+  if (event.type === 'NONCE_RANGE_CANCEL_CONFIRMED') {
+    const missingRange = missingFields(event.nonceRange ?? {}, ['from', 'to']);
+    if (missingRange.length > 0) {
+      return {
+        projected: false,
+        reason: 'invalid_nonce_cancellation_event',
+        missingFields: missingRange.map((field) => `nonceRange.${field}`),
+      };
+    }
+  }
+
+  return null;
 };
 
 const validateSettlementMode = (event) => {
@@ -159,11 +220,33 @@ const projectProof = (event) => ({
   createdFromEventId: event.eventId,
 });
 
+const projectNonceCancellationProof = (event) => ({
+  proofType: 'NonceCancellationProof',
+  proofId: event.proofId,
+  action: event.action,
+  owner: event.owner,
+  nonce: event.nonce ?? null,
+  nonceRange: event.nonceRange === null ? null : clone(event.nonceRange),
+  nonceManagerContract: event.nonceManagerContract,
+  nonceManager: event.nonceManager,
+  custody: event.custody,
+  permissions: clone(event.permissions),
+  txHash: event.txHash,
+  blockNumber: event.blockNumber,
+  blockHash: event.blockHash,
+  eventIndex: event.eventIndex,
+  explorerUrl: event.explorerUrl,
+  sourceEventId: event.eventId,
+  safetyNotice: NONCE_CANCELLATION_SAFETY_NOTICE,
+});
+
 export const createInMemoryIndexerProjection = () => {
   const acceptedEventIdentities = new Set();
+  const acceptedNonceCancellationEventIdentities = new Set();
   const fills = [];
   const trades = [];
   const proofs = new Map();
+  const nonceCancellationProofs = new Map();
 
   return {
     projectSettlementEvent(inputEvent) {
@@ -195,6 +278,32 @@ export const createInMemoryIndexerProjection = () => {
       };
     },
 
+    projectNonceCancellationEvent(inputEvent) {
+      const event = clone(inputEvent);
+      const validation = validateNonceCancellationEvent(event);
+      if (validation !== null) {
+        return validation;
+      }
+
+      const eventIdentity = buildNonceCancellationEventIdentity(event);
+      if (acceptedNonceCancellationEventIdentities.has(eventIdentity)) {
+        return {
+          projected: false,
+          reason: 'duplicate_nonce_cancellation_event',
+          eventIdentity,
+        };
+      }
+
+      acceptedNonceCancellationEventIdentities.add(eventIdentity);
+      nonceCancellationProofs.set(event.proofId, projectNonceCancellationProof(event));
+
+      return {
+        projected: true,
+        eventIdentity,
+        proofId: event.proofId,
+      };
+    },
+
     listFills() {
       return clone(fills);
     },
@@ -209,6 +318,14 @@ export const createInMemoryIndexerProjection = () => {
 
     getProof(tradeId) {
       return proofs.has(tradeId) ? clone(proofs.get(tradeId)) : null;
+    },
+
+    listNonceCancellationProofs() {
+      return clone(Array.from(nonceCancellationProofs.values()));
+    },
+
+    getNonceCancellationProof(proofId) {
+      return nonceCancellationProofs.has(proofId) ? clone(nonceCancellationProofs.get(proofId)) : null;
     },
   };
 };

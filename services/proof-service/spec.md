@@ -105,6 +105,37 @@ Real production/testnet proof mode is `quai_contract`. Real Quai proofs require 
 
 Real proof rows are reorg-sensitive until the indexer's `finalityDepth` policy marks them displayable. If a reorg supersedes a proof, the API must mark the old proof superseded rather than silently pretending it never existed.
 
+## Owner-signed nonce-cancel proof rows
+
+The proof service also exposes an internal read contract for future owner-signed NonceManager cancellation proof rows:
+
+```text
+getNonceCancellationProof(proofId) -> NonceCancellationProof | nonce_cancellation_proof_not_found
+```
+
+Accepted source events and normalized event types:
+
+```text
+NonceCancelled -> NONCE_CANCEL_CONFIRMED
+NonceRangeCancelled -> NONCE_RANGE_CANCEL_CONFIRMED
+```
+
+`NonceCancellationProof` rows prove that an owner-signed NonceManager cancellation event was indexed. They are separate from trade proofs and a nonce-cancel proof does not create a trade proof.
+
+Required proof evidence:
+
+```text
+txHash, blockNumber, blockHash, eventIndex, and explorerUrl
+```
+
+Rules:
+
+- `matcher_local_order_cancelled` and `matcher_local_orders_cancelled` are matcher-local cache/orderbook events only; they are suppressed by the proof-service/indexer projection and keep `matcher-local-cancel-only-on-chain-nonce-unchanged` wording.
+- Matcher-local cancellation removes matcher-open quantity only and does not mutate on-chain `NonceManager` nonces.
+- A nonce-cancel proof row requires `NonceCancelled` or `NonceRangeCancelled` contract event truth from the NonceManager surface.
+- Rows preserve `NO_WITHDRAW` and `NO_ADMIN`; the proof service does not load wallets, sign messages, broadcast transactions, submit through relayers, move funds, withdraw, or grant admin authority.
+- Safety copy must say this is an owner-signed NonceManager cancellation proof, not a trade settlement, withdrawal, or delegate/API-key capability.
+
 ## Custody and delegate invariants
 
 - The proof service cannot withdraw user funds.
