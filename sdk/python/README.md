@@ -14,6 +14,16 @@ markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
 contracts = dex.contracts.get()
 listing_policy = dex.listings.policy.get()
+listing_request_prepare = dex.listings.requests.prepare_submit({
+    "baseSymbol": "COMMUNITY",
+    "quoteSymbol": "WQUAI",
+    "tokenModel": "erc20-style-vault-token",
+    "requestedMarketId": "COMMUNITY-WQUAI",
+    "pricePrecision": 8,
+    "amountPrecision": 8,
+    "minAmount": "1",
+    "reviewNotes": "metadata-only local request",
+})
 assert contracts["listedAssetStatus"]["status"] == "wrapped-token-listing"
 assert contracts["listedAssetStatus"]["primaryQuoteAssets"] == ["WQUAI", "WQI"]
 assert contracts["listedAssetStatus"]["supportedAssetModel"] == "erc20-style-vault-token"
@@ -23,6 +33,14 @@ assert listing_policy["status"] == "design-only-local-metadata"
 assert listing_policy["supportedAssets"][2]["symbol"] == "community-created-erc20-style-token"
 assert listing_policy["marketRegistry"]["truthSource"] == "MarketRegistry-enabled-pair-metadata"
 assert listing_policy["safety"]["delegatePermissions"] == ["NO_WITHDRAW", "NO_ADMIN"]
+assert listing_request_prepare["status"] == 501
+assert listing_request_prepare["body"]["error"] == "listing_request_not_implemented"
+assert listing_request_prepare["body"]["requestStatus"] == "not-implemented-approval-required"
+assert listing_request_prepare["body"]["source"] == "listed-asset-marketregistry-policy"
+assert listing_request_prepare["body"]["status"] == "design-only-local-metadata"
+assert listing_request_prepare["body"]["supportedAsset"] == "community-created-erc20-style-token"
+assert listing_request_prepare["body"]["primaryQuoteAssets"] == ["WQUAI", "WQI"]
+assert listing_request_prepare["body"]["permissions"] == ["NO_WITHDRAW", "NO_ADMIN"]
 relayer_gate = dex.relayer.settlement_mode_gate.get()
 nonce_cancel_prepare = dex.nonces.prepare_cancel({
     "action": "cancelNonce",
@@ -44,6 +62,8 @@ proof = smoke["proof"]
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `listedAssetStatus`: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and native Qi direct settlement out of scope in favor of WQI. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `dex.listings.policy.get()` calls `GET /v1/listings/policy` and returns read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
+
+`dex.listings.requests.prepare_submit()` calls `POST /v1/listings/requests` and returns the prepare-only 501 placeholder body (`listing_request_not_implemented`, `not-implemented-approval-required`, `listed-asset-marketregistry-policy`, `design-only-local-metadata`) for WQUAI/WQI `community-created-erc20-style-token` metadata. It treats the intentional 501 as a boundary response, not as a generic transport failure and not as proof of submission: it preserves `NO_WITHDRAW`/`NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and does not prove a listing request was submitted on-chain.
 
 `dex.relayer.settlement_mode_gate.get()` calls `GET /v1/relayer/settlement-mode-gate` and returns read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

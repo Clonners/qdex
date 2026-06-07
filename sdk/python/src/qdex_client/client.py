@@ -112,9 +112,23 @@ class _ListingPolicyApi:
         return self._client._request_ok("/v1/listings/policy")
 
 
+class _ListingRequestsApi:
+    def __init__(self, client):
+        self._client = client
+
+    def prepare_submit(self, request):
+        return self._client._request_expected_status(
+            "/v1/listings/requests",
+            expected_status=501,
+            method="POST",
+            body=request,
+        )
+
+
 class _ListingsApi:
     def __init__(self, client):
         self.policy = _ListingPolicyApi(client)
+        self.requests = _ListingRequestsApi(client)
 
 
 class _SettlementModeGateApi:

@@ -184,11 +184,97 @@ const parseNonceCancelOptions = (args) => {
   };
 };
 
+const parseListingRequestOptions = (args) => {
+  const request = {};
+  let prepare = false;
+
+  for (let index = 0; index < args.length;) {
+    const arg = args[index];
+
+    if (arg === '--prepare') {
+      prepare = true;
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--base-symbol') {
+      request.baseSymbol = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--quote-symbol') {
+      request.quoteSymbol = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--token-model') {
+      request.tokenModel = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--market-id') {
+      request.requestedMarketId = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--price-precision') {
+      request.pricePrecision = parseNonNegativeInteger(args[index + 1], '--price-precision');
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--amount-precision') {
+      request.amountPrecision = parseNonNegativeInteger(args[index + 1], '--amount-precision');
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--min-amount') {
+      request.minAmount = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--review-notes') {
+      request.reviewNotes = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    throw new Error(`unknown listings request option: ${arg}`);
+  }
+
+  if (!prepare) {
+    throw new Error('listings request requires --prepare; this CLI does not submit listings or mutate MarketRegistry.');
+  }
+
+  for (const requiredField of [
+    'baseSymbol',
+    'quoteSymbol',
+    'tokenModel',
+    'requestedMarketId',
+    'pricePrecision',
+    'amountPrecision',
+    'minAmount',
+  ]) {
+    if (request[requiredField] === undefined) {
+      throw new Error(`listings request --prepare requires ${requiredField}.`);
+    }
+  }
+
+  return request;
+};
+
 const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 markets
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
   qdex --base-url http://127.0.0.1:8787 contracts
   qdex --base-url http://127.0.0.1:8787 listings policy
+  qdex --base-url http://127.0.0.1:8787 listings request --prepare --base-symbol COMMUNITY --quote-symbol WQUAI --token-model erc20-style-vault-token --market-id COMMUNITY-WQUAI --price-precision 8 --amount-precision 8 --min-amount 1
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
@@ -240,6 +326,20 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         command: 'listings policy',
         baseUrl,
         ...(await client.listings.policy.get()),
+      });
+      return 0;
+    }
+
+    if (command === 'listings' && rest[0] === 'request') {
+      const request = parseListingRequestOptions(rest.slice(1));
+      const result = await client.listings.requests.prepareSubmit(request);
+      writeJson(stdout, {
+        command: 'listings request prepare',
+        baseUrl,
+        httpStatus: result.status,
+        metadataStatus: result.body.status,
+        ...result.body,
+        status: result.status,
       });
       return 0;
     }

@@ -202,6 +202,13 @@ export class QDexClient {
       policy: {
         get: async () => this.#requestOk('/v1/listings/policy'),
       },
+      requests: {
+        prepareSubmit: async (request) => this.#requestExpectedStatus('/v1/listings/requests', {
+          method: 'POST',
+          body: request,
+          expectedStatus: 501,
+        }),
+      },
     };
 
     this.relayer = {

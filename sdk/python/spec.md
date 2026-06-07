@@ -11,6 +11,15 @@ markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
 listing_policy = dex.listings.policy.get()  # GET /v1/listings/policy
+listing_request_prepare = dex.listings.requests.prepare_submit({
+    'baseSymbol': 'COMMUNITY',
+    'quoteSymbol': 'WQUAI',
+    'tokenModel': 'erc20-style-vault-token',
+    'requestedMarketId': 'COMMUNITY-WQUAI',
+    'pricePrecision': 8,
+    'amountPrecision': 8,
+    'minAmount': '1',
+})  # POST /v1/listings/requests -> listing_request_not_implemented / not-implemented-approval-required while prepare-only
 relayer_gate = dex.relayer.settlement_mode_gate.get()  # GET /v1/relayer/settlement-mode-gate
 nonce_cancel_prepare = dex.nonces.prepare_cancel({
     'action': 'cancelNonce',
@@ -68,6 +77,10 @@ The Python SDK must not load wallets, send transactions, read RPC URLs, infer re
 ## Listing policy
 
 `listings.policy.get()` is a read-only listing-policy client for `GET /v1/listings/policy`. It returns `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI primary quote assets, `community-created-erc20-style-token` metadata, and `MarketRegistry-enabled-pair-metadata` truth labels. The policy client must preserve `NO_WITHDRAW`/`NO_ADMIN` delegate safety, must not expose listing submission or listing-admin runtime helpers, and must say there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. MarketRegistry metadata can enable/disable approved pairs only; it cannot move TradingVault balances or grant withdrawal/admin power.
+
+## Listing request placeholder
+
+`listings.requests.prepare_submit()` is a prepare-only client for `POST /v1/listings/requests`. It intentionally returns the API placeholder response `listing_request_not_implemented` with `requestStatus: not-implemented-approval-required`, `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI quote framing, `community-created-erc20-style-token`, `NO_WITHDRAW`, and `NO_ADMIN`. The client must treat the intentional 501 as a boundary response, not a generic transport failure or proof of submission. It must not add listing-admin runtime behavior, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, funds movement, or MarketRegistry mutation.
 
 ## Relayer settlement-mode gate
 

@@ -191,6 +191,48 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 policy["marketRegistry"]["notes"],
             )
 
+    def test_python_sdk_exposes_prepare_only_listing_request_placeholder_without_treating_501_as_submission_success(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            result = client.listings.requests.prepare_submit(
+                {
+                    "baseSymbol": "COMMUNITY",
+                    "quoteSymbol": "WQUAI",
+                    "tokenModel": "erc20-style-vault-token",
+                    "requestedMarketId": "COMMUNITY-WQUAI",
+                    "pricePrecision": 8,
+                    "amountPrecision": 8,
+                    "minAmount": "1",
+                    "reviewNotes": "metadata-only local request",
+                }
+            )
+
+            self.assertEqual(result["status"], 501)
+            body = result["body"]
+            self.assertEqual(body["error"], "listing_request_not_implemented")
+            self.assertEqual(body["source"], "listed-asset-marketregistry-policy")
+            self.assertEqual(body["status"], "design-only-local-metadata")
+            self.assertEqual(body["requestStatus"], "not-implemented-approval-required")
+            self.assertEqual(body["approvalGate"], "listing-submission-approval-gate")
+            self.assertEqual(body["primaryQuoteAssets"], ["WQUAI", "WQI"])
+            self.assertEqual(body["supportedAsset"], "community-created-erc20-style-token")
+            self.assertEqual(body["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(body["realQuaiTransactions"])
+            self.assertFalse(body["walletRequired"])
+            self.assertFalse(body["marketRegistry"]["marketRegistryMutation"])
+            self.assertFalse(body["marketRegistry"]["canMoveTradingVaultBalances"])
+            self.assertFalse(body["marketRegistry"]["canGrantWithdrawalAuthority"])
+            self.assertTrue(body["safety"]["noRuntimeListingQueue"])
+            self.assertTrue(body["safety"]["noListingAdminKeys"])
+            self.assertTrue(body["safety"]["noRealTokenAddresses"])
+            self.assertTrue(body["safety"]["noFundsMovement"])
+            self.assertIn("no listing request was submitted", body["safety"]["notice"])
+            self.assertIn(
+                "does not submit listings, mutate MarketRegistry, move TradingVault balances, or grant withdrawal/admin authority",
+                body["message"],
+            )
+
     def test_python_sdk_exposes_owner_signed_nonce_cancel_prepare_placeholder_without_wallet_or_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

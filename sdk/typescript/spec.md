@@ -11,6 +11,15 @@ await dex.markets.list();
 await dex.orderbook.get(marketId);
 await dex.contracts.get(); // GET /v1/contracts
 await dex.listings.policy.get(); // GET /v1/listings/policy
+await dex.listings.requests.prepareSubmit({
+  baseSymbol: 'COMMUNITY',
+  quoteSymbol: 'WQUAI',
+  tokenModel: 'erc20-style-vault-token',
+  requestedMarketId: 'COMMUNITY-WQUAI',
+  pricePrecision: 8,
+  amountPrecision: 8,
+  minAmount: '1',
+}); // POST /v1/listings/requests -> listing_request_not_implemented / not-implemented-approval-required while prepare-only
 await dex.relayer.settlementModeGate.get(); // GET /v1/relayer/settlement-mode-gate
 await dex.nonces.prepareCancel({
   action: 'cancelNonce',
@@ -58,6 +67,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 The contract registry also exposes `listedAssetStatus`: `status: wrapped-token-listing`, `primaryQuoteAssets: [WQUAI, WQI]`, `supportedAssetModel: erc20-style-vault-token`, and `userListedTokens: true`. Token listing and MarketRegistry metadata are the next safe surface; native Qi direct settlement is out of scope and the Qi-facing token surface is WQI. The `listedAssetStatus.safetyNotice` must say the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens, with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `listings.policy.get()` is a read-only listing-policy client for `GET /v1/listings/policy`. It returns `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI primary quote assets, `community-created-erc20-style-token` metadata, and `MarketRegistry-enabled-pair-metadata` truth labels. The policy client must preserve `NO_WITHDRAW`/`NO_ADMIN` delegate safety, must not expose listing submission or listing-admin runtime helpers, and must say there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. MarketRegistry metadata can enable/disable approved pairs only; it cannot move TradingVault balances or grant withdrawal/admin power.
+
+`listings.requests.prepareSubmit()` is a prepare-only client for `POST /v1/listings/requests`. It intentionally returns the API placeholder response `listing_request_not_implemented` with `requestStatus: not-implemented-approval-required`, `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, WQUAI/WQI quote framing, `community-created-erc20-style-token`, `NO_WITHDRAW`, and `NO_ADMIN`. The client must treat the intentional 501 as a boundary response, not a generic transport failure and not proof of submission; it preserves no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior and does not prove a listing request was submitted on-chain.
 
 `relayer.settlementModeGate.get()` is read-only relayer gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 

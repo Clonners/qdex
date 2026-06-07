@@ -199,6 +199,54 @@ test('qdex listings policy command prints read-only token listing and MarketRegi
   });
 });
 
+test('qdex listings request --prepare prints prepare-only placeholder without treating 501 as submission success', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'listings',
+      'request',
+      '--prepare',
+      '--base-symbol',
+      'COMMUNITY',
+      '--quote-symbol',
+      'WQUAI',
+      '--token-model',
+      'erc20-style-vault-token',
+      '--market-id',
+      'COMMUNITY-WQUAI',
+      '--price-precision',
+      '8',
+      '--amount-precision',
+      '8',
+      '--min-amount',
+      '1',
+      '--review-notes',
+      'metadata-only local request',
+    ]);
+
+    assert.equal(result.command, 'listings request prepare');
+    assert.equal(result.status, 501);
+    assert.equal(result.error, 'listing_request_not_implemented');
+    assert.equal(result.source, 'listed-asset-marketregistry-policy');
+    assert.equal(result.requestStatus, 'not-implemented-approval-required');
+    assert.equal(result.approvalGate, 'listing-submission-approval-gate');
+    assert.deepEqual(result.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.equal(result.supportedAsset, 'community-created-erc20-style-token');
+    assert.deepEqual(result.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.realQuaiTransactions, false);
+    assert.equal(result.walletRequired, false);
+    assert.equal(result.marketRegistry.marketRegistryMutation, false);
+    assert.equal(result.marketRegistry.canMoveTradingVaultBalances, false);
+    assert.equal(result.safety.noRuntimeListingQueue, true);
+    assert.equal(result.safety.noListingAdminKeys, true);
+    assert.equal(result.safety.noRealTokenAddresses, true);
+    assert.equal(result.safety.noFundsMovement, true);
+    assert.match(result.safety.notice, /no listing request was submitted/i);
+    assert.match(result.message, /does not submit listings, mutate MarketRegistry, move TradingVault balances, or grant withdrawal\/admin authority/i);
+  });
+});
+
 test('qdex nonces cancel --prepare prints owner-signed placeholder without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson([
