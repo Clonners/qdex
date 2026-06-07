@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: prepare-only listing request placeholder pinned -> next read-only SDK/CLI client exposure
+- Current phase: listing-request prepare clients pinned -> explicit approval required before any runtime listing submission or MarketRegistry admin behavior
 
 ## Current repo baseline
 
@@ -37,8 +37,8 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 
 ## Next recommended slices
 
-1. Add read-only TypeScript SDK, Python SDK, and `qdex` CLI clients for the prepare-only `POST /v1/listings/requests` placeholder; clients should expect/return the intentional `501` envelope without treating it as a successful listing submission.
-2. Keep listing submission design-only until explicit approval: no runtime listing queue, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, MarketRegistry mutation, or funds movement.
+1. Pause before runtime listing submission / MarketRegistry admin behavior unless Clonners explicitly approves the next trust boundary.
+2. If approved later, keep listing/admin flow design-only or prepare-only first: no listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, tx helpers, MarketRegistry mutation, or funds movement until a separate approval-gated implementation slice.
 3. Preserve `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`/`NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and the invariant that listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin power.
 
 ## Cron runner
@@ -135,3 +135,4 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 - 2026-06-07 07:33 -03: Exposed read-only listing policy through TypeScript SDK `listings.policy.get()`, Python SDK `listings.policy.get()`, and `qdex listings policy`, preserving `listed-asset-marketregistry-policy`, `design-only-local-metadata`, `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`/`NO_ADMIN`, and no wallet/RPC/sign/broadcast/deploy/tx/funds behavior; verified focused SDK/Python/CLI/docs tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `c025bbd`; next slice: post-listing-policy approval-gated listing submission / MarketRegistry admin boundary plan (docs/spec only, no runtime behavior).
 - 2026-06-07 07:45 -03: Added post-listing-policy MarketRegistry admin boundary plan plus doc ratchet: future listing submission remains approval-gated/design-only, MarketRegistry admin metadata cannot move TradingVault balances or grant withdrawal/admin power, and stale listing-policy-client next-slice wording now points to prepare-only placeholder planning; verified RED `node --test tests/post-listing-policy-admin-boundary.test.mjs`, focused native/listing doc tests, GREEN `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `82926d4`; next slice: docs/OpenAPI prepare-only `POST /v1/listings/requests` placeholder boundary.
 - 2026-06-07 08:07 -03: Added prepare-only `POST /v1/listings/requests` API/OpenAPI/docs placeholder returning intentional `501` with `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`/`NO_ADMIN`, no MarketRegistry mutation, no wallet/RPC/sign/broadcast/deploy/tx/funds behavior, and no TradingVault balance/authority power; verified RED focused OpenAPI/API/docs ratchets, GREEN `pnpm --filter @qdex/api test`, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `e2e761e`; next slice: read-only TypeScript/Python SDK and `qdex` CLI clients for the listing request placeholder.
+- 2026-06-07 08:34 -03: Exposed prepare-only listing request clients through TypeScript SDK `listings.requests.prepareSubmit()`, Python SDK `listings.requests.prepare_submit()`, and `qdex listings request --prepare`; clients expect/return the intentional 501 envelope without treating it as a successful listing submission and preserve `NO_WITHDRAW`/`NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior; verified focused SDK/Python/CLI/doc tests, `pnpm check`, `git diff --check`, and secret-pattern scan no matches; slice commit `ef15833`; next slice: explicit Clonners approval before any runtime listing submission or MarketRegistry admin behavior.
