@@ -31,8 +31,12 @@ const requiredPlanText = [
   'nativeQiDirectSettlement: false',
   '## Completed metadata correction',
   'Completed: the campaign direction has been corrected away from a native Qi adapter selection blocker.',
-  '## Next implementation slice',
-  'Token listing and MarketRegistry metadata flow',
+  '## Existing safe listing surfaces and approval boundary',
+  'Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.',
+  'Completed: TypeScript SDK, Python SDK, and `qdex` CLI clients expose the read-only listing policy',
+  'Completed: prepare-only listing request clients expose `POST /v1/listings/requests` without listing-admin runtime behavior.',
+  'Approval required: runtime listing submission or MarketRegistry admin mutation.',
+  'post-listing-policy MarketRegistry admin boundary',
   'Listed assets are ERC-20-style vault tokens.',
   '`MarketRegistry` is market metadata/enabled-pair truth, not custody truth.',
   '`NO_WITHDRAW`',
@@ -52,6 +56,11 @@ test('wrapped token listing boundary plan supersedes native Qi adapter blocker',
     'i',
   );
   assert.doesNotMatch(plan, forbiddenRuntimeDetails, 'listing plan must not add env, wallet-material, or secret-bearing implementation details');
+  assert.doesNotMatch(
+    plan,
+    /## Next implementation slice|pins future listing submission and MarketRegistry admin metadata as design-only|Next implementation slice\n\npost-listing-policy MarketRegistry admin boundary/,
+    'listing plan must not keep completed listing surfaces framed as the next autonomous implementation slice',
+  );
 });
 
 test('contract and architecture docs point to wrapped token listing rather than native Qi decision', async () => {

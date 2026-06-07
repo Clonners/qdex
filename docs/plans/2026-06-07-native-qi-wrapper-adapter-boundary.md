@@ -101,15 +101,19 @@ This slice defines how user-created tokens become listable markets without grant
 - Delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`.
 - Real deploy/tx/wallet/RPC behavior remains approval-gated.
 
-## Completed listing policy client slice
+## Existing safe listing surfaces and approval boundary
 
 Completed: TypeScript SDK, Python SDK, and `qdex` CLI clients expose the read-only listing policy without adding wallet loading, RPC URLs, signing, broadcasts, deploys, transaction submission, listing-admin runtime behavior, or funds movement.
 
-Token listing and MarketRegistry metadata flow clients are now complete as a read-only surface; future work moves to a separate approval-gated admin boundary.
+Completed: prepare-only listing request clients expose `POST /v1/listings/requests` without listing-admin runtime behavior.
 
-## Next implementation slice
+Token listing and MarketRegistry metadata flow clients are now complete as read-only/prepare-only surfaces.
 
-post-listing-policy MarketRegistry admin boundary: [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./2026-06-07-post-listing-policy-marketregistry-admin-boundary.md) pins future listing submission and MarketRegistry admin metadata as design-only, approval-gated work. Do not add runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, or claims that MarketRegistry metadata can move TradingVault balances.
+Existing safe listing surfaces: `GET /v1/listings/policy` and prepare-only `POST /v1/listings/requests`.
+
+post-listing-policy MarketRegistry admin boundary: [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./2026-06-07-post-listing-policy-marketregistry-admin-boundary.md).
+
+Approval required: runtime listing submission or MarketRegistry admin mutation. Do not add runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, or claims that MarketRegistry metadata can move TradingVault balances.
 
 ---
 
