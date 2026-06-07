@@ -201,6 +201,34 @@ Gate results are operator-facing metadata, not settlement events:
 
 When all approval and event-truth inputs are present, the gate may return `allowed: true` for mode readiness only. It still returns `realQuaiTransactions: false` and `walletRequired: false` because this slice does not add wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
+### Read-only API status
+
+`GET /v1/relayer/settlement-mode-gate` exposes operator-facing, read-only API status for the current mock settlement mode plus the blocked `quai_contract` approval gate. This endpoint is metadata only; it must not read wallet files, load keys, sign payloads, broadcast transactions, read RPC URLs, or submit anything to Quai.
+
+Minimum response fields:
+
+```json
+{
+  "source": "relayer-approval-gate",
+  "currentSettlementMode": "mock",
+  "realQuaiTransactions": false,
+  "walletRequired": false,
+  "modes": {
+    "mock": { "allowed": true, "reason": "mock_mode_local_only" },
+    "quai_contract": { "allowed": false, "reason": "real_quai_approval_gate_blocked" }
+  },
+  "safety": {
+    "approvalRequired": true,
+    "proofTrigger": "TradeSettled",
+    "noWalletLoading": true,
+    "noSigning": true,
+    "noBroadcast": true,
+    "noRpcUrlAccess": true,
+    "noTransactionSubmission": true
+  }
+}
+```
+
 ## Event log
 
 The relayer emits append-only events. Corrections are new events, never mutation without trace.

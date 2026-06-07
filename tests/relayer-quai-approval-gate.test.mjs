@@ -99,6 +99,26 @@ test('mock mode remains local-only and does not need real-Quai approval inputs',
   });
 });
 
+test('OpenAPI exposes read-only relayer settlement-mode gate status', async () => {
+  const openapi = await readText('docs/api-openapi.yaml');
+
+  for (const requiredText of [
+    '/v1/relayer/settlement-mode-gate:',
+    '$ref: "#/components/schemas/RelayerSettlementModeGateStatus"',
+    'RelayerSettlementModeGateStatus:',
+    'RelayerModeGateResult:',
+    'relayer-approval-gate',
+    'quai_contract',
+    'real_quai_approval_gate_blocked',
+    'requiredEventTruthFields:',
+    'noWalletLoading:',
+    'noTransactionSubmission:',
+    'Read-only relayer gate metadata only',
+  ]) {
+    assert.ok(openapi.includes(requiredText), `docs/api-openapi.yaml should include ${requiredText}`);
+  }
+});
+
 test('relayer approval gate docs are explicit and source stays side-effect free', async () => {
   const spec = await readText('services/relayer/spec.md');
   const source = await readText('services/relayer/src/approval-gate.js');
@@ -116,6 +136,8 @@ test('relayer approval gate docs are explicit and source stays side-effect free'
     'no wallet loading, signing, broadcast, RPC URL, or transaction submission is implemented by this gate',
     'realQuaiTransactions: false',
     'walletRequired: false',
+    'GET /v1/relayer/settlement-mode-gate',
+    'read-only API status',
   ]) {
     assert.ok(spec.includes(requiredText), `services/relayer/spec.md should include ${requiredText}`);
   }

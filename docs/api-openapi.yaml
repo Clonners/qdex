@@ -103,6 +103,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ContractRegistry"
+  /v1/relayer/settlement-mode-gate:
+    get:
+      tags: [public]
+      summary: Read-only relayer settlement-mode approval gate status
+      description: Read-only relayer gate metadata only. Returns mock-mode status and the blocked quai_contract activation gate without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
+      responses:
+        "200":
+          description: Relayer settlement-mode gate status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RelayerSettlementModeGateStatus"
   /v1/auth/challenge:
     post:
       tags: [private]
@@ -399,6 +411,101 @@ components:
         notice:
           type: string
           example: No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts.
+    RelayerSettlementModeGateStatus:
+      type: object
+      description: Read-only relayer gate metadata only; no wallet loading, signing, broadcast, RPC URL access, or transaction submission is performed.
+      required: [source, currentSettlementMode, supportedSettlementModes, custody, realQuaiTransactions, walletRequired, requiredEventTruthFields, modes, safety]
+      properties:
+        source:
+          type: string
+          enum: [relayer-approval-gate]
+        currentSettlementMode:
+          type: string
+          enum: [mock]
+        supportedSettlementModes:
+          type: array
+          items:
+            type: string
+            enum: [mock, quai_contract]
+        custody:
+          type: string
+          enum: [non-custodial-relayer-gate]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        requiredEventTruthFields:
+          type: array
+          items:
+            type: string
+            enum: [settlementTx, blockNumber, blockHash, eventIndex, explorerUrl]
+        modes:
+          type: object
+          required: [mock, quai_contract]
+          properties:
+            mock:
+              $ref: "#/components/schemas/RelayerModeGateResult"
+            quai_contract:
+              $ref: "#/components/schemas/RelayerModeGateResult"
+        safety:
+          type: object
+          required: [approvalRequired, explicitApproval, noWalletLoading, noSigning, noBroadcast, noRpcUrlAccess, noTransactionSubmission, proofTrigger, notice]
+          properties:
+            approvalRequired: { type: boolean }
+            explicitApproval:
+              type: string
+              example: Clonners approval required before quai_contract activation
+            noWalletLoading: { type: boolean, enum: [true] }
+            noSigning: { type: boolean, enum: [true] }
+            noBroadcast: { type: boolean, enum: [true] }
+            noRpcUrlAccess: { type: boolean, enum: [true] }
+            noTransactionSubmission: { type: boolean, enum: [true] }
+            proofTrigger:
+              type: string
+              enum: [TradeSettled]
+            notice:
+              type: string
+              example: Read-only relayer gate metadata only; no wallet loading, signing, broadcast, RPC URL access, or transaction submission is performed.
+    RelayerModeGateResult:
+      type: object
+      required: [allowed, reason, settlementMode, realQuaiTransactions, walletRequired, custody, safetyNotice]
+      properties:
+        allowed: { type: boolean }
+        reason:
+          type: string
+          enum: [mock_mode_local_only, real_quai_approval_gate_blocked, real_quai_approval_gate_ready, unsupported_settlement_mode]
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        missingFields:
+          type: array
+          items: { type: string }
+        requiredEventTruthFields:
+          type: array
+          items:
+            type: string
+            enum: [settlementTx, blockNumber, blockHash, eventIndex, explorerUrl]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        custody:
+          type: string
+          enum: [non-custodial-relayer-gate]
+        proofTrigger:
+          type: string
+          enum: [TradeSettled]
+        approvalId:
+          type: string
+        nextAction:
+          type: string
+        safetyNotice:
+          type: string
+          example: Real Quai relayer mode requires explicit Clonners approval and complete event-truth inputs; this gate performs no wallet loading, signing, broadcast, RPC URL, or transaction submission.
     OrderSide:
       type: string
       enum: [buy, sell]

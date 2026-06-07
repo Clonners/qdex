@@ -178,6 +178,51 @@ test('GET /v1/contracts exposes local-only dependency registry without deploy or
   });
 });
 
+test('GET /v1/relayer/settlement-mode-gate exposes read-only approval gate status', async () => {
+  await withServer(async (baseUrl) => {
+    const response = await requestJson(baseUrl, '/v1/relayer/settlement-mode-gate');
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.source, 'relayer-approval-gate');
+    assert.equal(response.body.currentSettlementMode, 'mock');
+    assert.equal(response.body.custody, 'non-custodial-relayer-gate');
+    assert.equal(response.body.realQuaiTransactions, false);
+    assert.equal(response.body.walletRequired, false);
+
+    assert.equal(response.body.modes.mock.allowed, true);
+    assert.equal(response.body.modes.mock.reason, 'mock_mode_local_only');
+    assert.equal(response.body.modes.mock.realQuaiTransactions, false);
+    assert.equal(response.body.modes.mock.walletRequired, false);
+
+    assert.equal(response.body.modes.quai_contract.allowed, false);
+    assert.equal(response.body.modes.quai_contract.reason, 'real_quai_approval_gate_blocked');
+    assert.equal(response.body.modes.quai_contract.realQuaiTransactions, false);
+    assert.equal(response.body.modes.quai_contract.walletRequired, false);
+    assert.ok(response.body.modes.quai_contract.missingFields.includes('approval.explicitApproval'));
+    assert.ok(response.body.modes.quai_contract.missingFields.includes('eventTruth.requiredFields.settlementTx'));
+    assert.deepEqual(response.body.modes.quai_contract.requiredEventTruthFields, [
+      'settlementTx',
+      'blockNumber',
+      'blockHash',
+      'eventIndex',
+      'explorerUrl',
+    ]);
+
+    assert.deepEqual(response.body.safety, {
+      approvalRequired: true,
+      explicitApproval: 'Clonners approval required before quai_contract activation',
+      noWalletLoading: true,
+      noSigning: true,
+      noBroadcast: true,
+      noRpcUrlAccess: true,
+      noTransactionSubmission: true,
+      proofTrigger: 'TradeSettled',
+      notice:
+        'Read-only relayer gate metadata only: no wallet loading, signing, broadcast, RPC URL access, or transaction submission is performed.',
+    });
+  });
+});
+
 test('private routes expose order and fill placeholders without withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const orders = await requestJson(baseUrl, '/v1/orders');
