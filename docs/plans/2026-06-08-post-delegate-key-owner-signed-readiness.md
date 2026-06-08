@@ -171,7 +171,11 @@ Completed: private DelegateKeyRegistry registration/revocation WebSocket snapsho
 
 The stream contracts and WebSocket transport now reuse `createDelegateKeyHistoryProjectionEnvelope()` for private read-only registration/revocation history snapshots. They preserve `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, empty mock arrays, mock-null event evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next bounded local/source-only slice: terminal UI binding for private DelegateKeyRegistry history streams, with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: terminal UI binding for private DelegateKeyRegistry history streams.
+
+The terminal UI now exposes `web/terminal-ui/src/live-delegate-key-history.js`, opens `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations`, validates the private `delegatekeyregistry-event-projection` snapshots, and renders only read-only `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection` metadata with `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, mock-null event evidence, no live `DelegateKeyRegistry` mutation, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: local API + terminal UI DelegateKeyRegistry history stream integration smoke, with REST + WebSocket agreement checks before rendering and still no live `DelegateKeyRegistry` mutation or wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

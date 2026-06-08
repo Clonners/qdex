@@ -148,12 +148,16 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should retain the delegate-key history REST smoke as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
-    'campaign status should record the delegate-key history stream alignment as this run',
+    status.includes('Completed previous run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
+    'campaign status should retain the delegate-key history stream alignment as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI binding for private DelegateKeyRegistry history streams'),
-    'campaign status should point to the terminal UI delegate-key stream binding after stream alignment',
+    status.includes('Completed this run: terminal UI private DelegateKeyRegistry history stream binding'),
+    'campaign status should record the terminal UI delegate-key stream binding as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
+    'campaign status should point to the local API + terminal UI delegate-key stream smoke after stream binding',
   );
   assert.doesNotMatch(
     `${readme}\n${status}`,

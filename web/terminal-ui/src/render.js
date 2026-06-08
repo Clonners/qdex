@@ -199,6 +199,52 @@ const renderVaultHistoryStreamPanel = (vaultHistoryStream) => {
   `;
 };
 
+const renderDelegateKeyHistoryStreamEvents = (events = []) => {
+  if (events.length === 0) {
+    return '<li class="muted">waiting for private DelegateKeyRegistry history stream snapshot</li>';
+  }
+
+  return events.map(({ channel, event }) => `
+    <li><span>${escapeHtml(channel)}</span> <code>${escapeHtml(event?.reason ?? 'initial_snapshot')}</code></li>
+  `).join('');
+};
+
+const renderDelegateKeyHistoryStreamPanel = (delegateKeyHistoryStream) => {
+  if (delegateKeyHistoryStream === undefined || delegateKeyHistoryStream === null) {
+    return '';
+  }
+
+  const permissions = (delegateKeyHistoryStream.permissions ?? []).join(', ');
+  const channels = (delegateKeyHistoryStream.channels ?? []).join(', ');
+  const projectionSafetyNotices = delegateKeyHistoryStream.projectionSafetyNotices ?? {};
+
+  return `
+        <article class="panel stream-panel delegate-key-history-stream-panel">
+          <h2>live delegate/API key history streams</h2>
+          <p class="warning">${escapeHtml(delegateKeyHistoryStream.safetyNotice)}</p>
+          <p class="warning">${escapeHtml(projectionSafetyNotices.registrations ?? '')}</p>
+          <p class="warning">${escapeHtml(projectionSafetyNotices.revocations ?? '')}</p>
+          <dl class="kv">
+            <div><dt>channels</dt><dd>${escapeHtml(channels)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(delegateKeyHistoryStream.source)}</dd></div>
+            <div><dt>stream custody</dt><dd>${escapeHtml(delegateKeyHistoryStream.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(delegateKeyHistoryStream.settlementMode)}</dd></div>
+            <div><dt>delegate can withdraw</dt><dd>${escapeHtml(delegateKeyHistoryStream.delegateCanWithdraw)}</dd></div>
+            <div><dt>delegate can admin</dt><dd>${escapeHtml(delegateKeyHistoryStream.delegateCanAdmin)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(delegateKeyHistoryStream.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(delegateKeyHistoryStream.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(delegateKeyHistoryStream.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(delegateKeyHistoryStream.tradingVaultMutation)}</dd></div>
+            <div><dt>DelegateKeyRegistry mutation</dt><dd>${escapeHtml(delegateKeyHistoryStream.delegateKeyRegistryMutation)}</dd></div>
+            <div><dt>row count</dt><dd>${escapeHtml(delegateKeyHistoryStream.rowCount ?? 0)}</dd></div>
+          </dl>
+          <h3>private stream events</h3>
+          <ul>${renderDelegateKeyHistoryStreamEvents(delegateKeyHistoryStream.streamEvents)}</ul>
+        </article>
+  `;
+};
+
 const renderVaultOperationPanel = (vaultOperation) => {
   if (vaultOperation === undefined || vaultOperation === null) {
     return '';
@@ -506,6 +552,8 @@ ${renderVaultOperationPanel(fixture.vaultOperation)}
 ${renderDelegateKeyOperationPanel(fixture.delegateKeyOperation)}
 
 ${renderDelegateKeyHistoryPanel(fixture.delegateKeyHistory)}
+
+${renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream)}
 
 ${renderVaultHistoryStreamPanel(fixture.vaultHistoryStream)}
 
