@@ -1,9 +1,8 @@
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
-import { bindLiveVaultHistoryStreams } from './live-vault-history.js';
+import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
-import { bindVaultHistoryLocalApiSmoke } from './vault-history-binding.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
@@ -79,40 +78,28 @@ if (mount) {
   }
 
   try {
-    bindVaultHistoryLocalApiSmoke({
+    bindLiveVaultHistoryStreamsWithRestHistory({
       mount,
       baseUrl,
       baseFixture: mockVerticalSliceFixture,
       render: renderTradeProofPanel,
-      onError: (error) => {
-        mount.dataset.qdxVaultHistorySmoke = 'error';
-        console.warn('QDEX vault history smoke failed; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+      onRestError: (error) => {
+        mount.dataset.qdxVaultHistoryRestSnapshot = 'error';
+        console.warn('QDEX vault history REST snapshot unavailable; keeping static read-only fixture.', error);
       },
-      onHistory: () => {
-        mount.dataset.qdxVaultHistorySmoke = 'tradingvault-event-projection';
+      onRestHistory: () => {
+        mount.dataset.qdxVaultHistoryRestSnapshot = 'tradingvault-event-projection';
       },
-    }).catch((error) => {
-      mount.dataset.qdxVaultHistorySmoke = 'disabled';
-      console.warn('QDEX local vault history API/UI smoke disabled; keeping static read-only fixture.', error);
-    });
-  } catch (error) {
-    mount.dataset.qdxVaultHistorySmoke = 'disabled';
-    console.warn('QDEX vault history smoke disabled; keeping static read-only fixture.', error);
-  }
-
-  try {
-    bindLiveVaultHistoryStreams({
-      mount,
-      baseUrl,
-      baseFixture: mockVerticalSliceFixture,
-      render: renderTradeProofPanel,
-      onError: (error) => {
+      onStreamError: (error) => {
         mount.dataset.qdxVaultHistoryStreams = 'error';
         console.warn('QDEX live vault history streams unavailable; keeping static read-only fixture and no funds behavior.', error);
       },
-      onUpdate: () => {
+      onStreamUpdate: () => {
         mount.dataset.qdxVaultHistoryStreams = 'deposits,withdrawals';
       },
+    }).catch((error) => {
+      mount.dataset.qdxVaultHistoryStreams = 'disabled';
+      console.warn('QDEX local vault history API/stream smoke disabled; keeping static read-only fixture.', error);
     });
   } catch (error) {
     mount.dataset.qdxVaultHistoryStreams = 'disabled';

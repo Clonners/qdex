@@ -209,11 +209,15 @@ test('vault history SDK and CLI docs expose read-only clients without wallet beh
     'campaign status should retain the bounded local/source-only vault history stream alignment slice',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI private vault history stream binding'),
-    'campaign status should checkpoint the bounded local/source-only terminal UI vault history stream binding slice',
+    status.includes('Completed previous run: terminal UI private vault history stream binding'),
+    'campaign status should retain the bounded local/source-only terminal UI vault history stream binding slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI vault history stream integration smoke'),
-    'campaign status should name the next bounded local/source-only vault history stream smoke slice',
+    status.includes('Completed this run: local API + terminal UI vault history stream integration smoke'),
+    'campaign status should checkpoint the bounded local/source-only vault history stream smoke slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: read-only SDK/CLI vault history stream consumers'),
+    'campaign status should name the next bounded local/source-only vault history stream consumer slice',
   );
 });
