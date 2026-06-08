@@ -108,4 +108,6 @@ delegateKeyRegistryMutation: false
 
 Empty registration/revocation arrays are valid local/mock state until real `DelegateKeyRegistry` event evidence exists. These envelopes are projection/cache surfaces only: no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement.
 
-Next local/source-only step: TypeScript/Python/qdex clients for the read-only delegate-key history endpoints, still treating empty mock rows as valid state and without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed local/source-only clients: TypeScript SDK `delegateKeys.listRegistrations()` / `delegateKeys.listRevocations()`, Python SDK `delegate_keys.list_registrations()` / `delegate_keys.list_revocations()`, and `qdex api registrations` / `qdex api revocations` now consume these read-only history endpoints, still treating empty mock rows as valid state and without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next local/source-only step: terminal UI read-only delegate-key history panel for the same projection envelopes, with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.

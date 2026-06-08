@@ -77,6 +77,8 @@ const delegateKeyRevocationPrepare = await dex.delegateKeys.prepareRevoke('bot-m
   owner: '0x1111111111111111111111111111111111111111',
   signature: '0xowner-signed-placeholder',
 });
+const delegateKeyRegistrations = await dex.delegateKeys.listRegistrations();
+const delegateKeyRevocations = await dex.delegateKeys.listRevocations();
 const fillsStream = dex.fills.openStream({ timeoutMs: 2000 });
 const initialFillsSnapshot = await fillsStream.next();
 await fillsStream.close();
@@ -170,6 +172,10 @@ console.log(delegateKeyPrepare.body.source); // delegate-key-owner-signed-prepar
 console.log(delegateKeyPrepare.body.operationStatus); // prepare-only-owner-signed-required
 console.log(delegateKeyPrepare.body.ownerAuthorization); // owner-wallet-signature-required
 console.log(delegateKeyPrepare.body.delegateCanWithdraw); // delegateCanWithdraw: false
+console.log(delegateKeyRegistrations.source); // GET /v1/delegate-keys/registrations, delegatekeyregistry-event-projection
+console.log(delegateKeyRegistrations.projectionType); // DelegateKeyRegisteredProjection
+console.log(delegateKeyRegistrations.delegateKeyRegistryMutation); // delegateKeyRegistryMutation: false
+console.log(delegateKeyRevocations.projectionType); // GET /v1/delegate-keys/revocations, DelegateKeyRevokedProjection
 console.log(delegateKeyPrepare.body.delegateCanAdmin); // delegateCanAdmin: false
 console.log(delegateKeyRevocationPrepare.body.error); // delegate_key_revocation_not_implemented
 console.log(initialFillsSnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
@@ -210,6 +216,8 @@ console.log(result.proof.settlementMode); // mock
 `dex.nonces.prepareCancel()` calls `POST /v1/nonces/cancel` and returns the prepare-only 501 placeholder body (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
 
 `dex.delegateKeys.prepareRegister()` and `dex.delegateKeys.prepareRevoke()` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and return intentional 501 owner-signed delegate/API key placeholder bodies (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The envelopes preserve `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; these clients have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
+
+`dex.delegateKeys.listRegistrations()` and `dex.delegateKeys.listRevocations()` call `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` and return read-only DelegateKeyRegistry event history envelopes. They expose `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: false`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `fills.openStream()` consumes the local `/v1/ws?channel=fills` WebSocket transport. Private stream snapshots remain read-only and carry `NO_WITHDRAW`/`NO_ADMIN` permissions.
 

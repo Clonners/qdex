@@ -131,8 +131,8 @@ test('delegate docs, readiness plan, and campaign status mark projection schema 
     'campaign status should checkpoint the DelegateKeyRegistry projection schema slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript/Python/qdex delegate-key history clients'),
-    'campaign status should move to delegate-key history API visibility after the schema ratchet',
+    status.includes('Completed this run: read-only TypeScript/Python/qdex delegate-key history clients'),
+    'campaign status should preserve the latest delegate-key history client checkpoint after the schema/API ratchets',
   );
 
   const staleNextSlice = /Next bounded local\/source-only slice: read-only DelegateKeyRegistry `DelegateKeyRegistered`\/`DelegateKeyRevoked` projection schema ratchet|The next safe local\/source-only slice is a read-only DelegateKeyRegistry `DelegateKeyRegistered`\/`DelegateKeyRevoked` projection schema ratchet/;

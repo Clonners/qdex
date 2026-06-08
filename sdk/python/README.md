@@ -154,6 +154,8 @@ delegate_key_revocation_prepare = dex.delegate_keys.prepare_revoke("bot-mm-1", {
     "owner": "0x1111111111111111111111111111111111111111",
     "signature": "0xowner-signed-placeholder",
 })
+delegate_key_registrations = dex.delegate_keys.list_registrations()
+delegate_key_revocations = dex.delegate_keys.list_revocations()
 
 resting_sell = create_mock_signed_order(side="sell", amount="100", price="5", nonce="1")
 crossing_buy = create_mock_signed_order(side="buy", amount="100", price="6", nonce="2")
@@ -189,3 +191,5 @@ Mock proofs intentionally keep `settlementMode: mock`, `settlementTx: None`, no 
 `dex.nonces.prepare_cancel()` calls `POST /v1/nonces/cancel` and returns the prepare-only 501 placeholder body (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
 
 `dex.delegate_keys.prepare_register()` and `dex.delegate_keys.prepare_revoke()` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and return intentional 501 owner-signed delegate/API key placeholder bodies (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The envelopes preserve `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; these clients have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
+
+`dex.delegate_keys.list_registrations()` and `dex.delegate_keys.list_revocations()` call `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` and return read-only DelegateKeyRegistry event history envelopes. They expose `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: False`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.

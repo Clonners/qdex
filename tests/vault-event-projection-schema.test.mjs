@@ -155,8 +155,8 @@ test('vault docs, post-vault plan, and campaign status mark projection schema co
     'campaign status should checkpoint the DelegateKeyRegistry projection schema ratchet',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript/Python/qdex delegate-key history clients'),
-    'campaign status should move to read-only delegate-key history clients after the history API slice',
+    status.includes('Completed this run: read-only TypeScript/Python/qdex delegate-key history clients'),
+    'campaign status should retain the completed read-only delegate-key history clients checkpoint',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet|Recommended next autonomous slice: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet/;

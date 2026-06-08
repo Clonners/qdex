@@ -86,6 +86,8 @@ delegate_key_revocation_prepare = dex.delegate_keys.prepare_revoke('bot-mm-1', {
     'owner': '0xowner',
     'signature': '0xowner-signature',
 })  # DELETE /v1/delegate-keys/{keyId} -> delegate_key_revocation_not_implemented / owner-wallet-signature-required
+delegate_key_registrations = dex.delegate_keys.list_registrations()  # GET /v1/delegate-keys/registrations -> delegatekeyregistry-event-projection / DelegateKeyRegisteredProjection
+delegate_key_revocations = dex.delegate_keys.list_revocations()  # GET /v1/delegate-keys/revocations -> delegatekeyregistry-event-projection / DelegateKeyRevokedProjection
 
 limit_order: SignedOrder = dex.orders.create_limit_order(
     market_id='QI-QUAI',
@@ -163,6 +165,8 @@ The Python SDK must not load wallets, send transactions, read RPC URLs, infer re
 `nonces.prepare_cancel()` is a prepare-only client for `POST /v1/nonces/cancel`. It intentionally surfaces the API placeholder response `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local `orders.cancel_all`.
 
 `delegate_keys.prepare_register()` and `delegate_keys.prepare_revoke()` expose prepare-only owner-signed delegate/API key boundaries through `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`. They intentionally surface `delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented` with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; they have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and no live DelegateKeyRegistry or TradingVault mutation.
+
+`delegate_keys.list_registrations()` and `delegate_keys.list_revocations()` expose read-only DelegateKeyRegistry history envelopes through `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`. They return `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: False`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; they preserve no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
 
 ## Delegate/API key safety
 

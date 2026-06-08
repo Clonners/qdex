@@ -155,7 +155,11 @@ delegateKeyRegistryMutation: false
 
 The history API is local/source-only and read-only. It must not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `DelegateKeyRegistry`, mutate TradingVault balances, or move funds.
 
-Next bounded local/source-only slice: TypeScript/Python/qdex clients for the read-only delegate-key history endpoints, still backed by empty/mock local projection rows and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: read-only TypeScript/Python/qdex delegate-key history clients for `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`.
+
+The clients now expose TypeScript SDK `delegateKeys.listRegistrations()` / `delegateKeys.listRevocations()`, Python SDK `delegate_keys.list_registrations()` / `delegate_keys.list_revocations()`, and `qdex api registrations` / `qdex api revocations`, all backed by empty/mock local projection rows with `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateKeyRegistryMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: terminal UI read-only delegate-key history panel for the same projection envelopes, with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

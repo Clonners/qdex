@@ -495,6 +495,8 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
+  qdex --base-url http://127.0.0.1:8787 api registrations
+  qdex --base-url http://127.0.0.1:8787 api revocations
   qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner <0xowner> --delegate <0xdelegate> --allowed-market QI-QUAI --max-notional 1000 --expires-at <unix> --permission PLACE_ORDER --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 api revoke-key bot-mm-1 --prepare --owner <0xowner> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 vault deposits
@@ -666,6 +668,24 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         httpStatus: result.status,
         ...result.body,
         status: result.status,
+      });
+      return 0;
+    }
+
+    if (command === 'api' && rest[0] === 'registrations') {
+      writeJson(stdout, {
+        command: 'api registrations',
+        baseUrl,
+        ...(await client.delegateKeys.listRegistrations()),
+      });
+      return 0;
+    }
+
+    if (command === 'api' && rest[0] === 'revocations') {
+      writeJson(stdout, {
+        command: 'api revocations',
+        baseUrl,
+        ...(await client.delegateKeys.listRevocations()),
       });
       return 0;
     }

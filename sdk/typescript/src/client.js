@@ -304,6 +304,8 @@ export class QDexClient {
 
     this.delegateKeys = {
       list: async () => this.#requestOk('/v1/delegate-keys'),
+      listRegistrations: async () => this.#requestOk('/v1/delegate-keys/registrations'),
+      listRevocations: async () => this.#requestOk('/v1/delegate-keys/revocations'),
       prepareRegister: async (request) => this.#requestExpectedStatus('/v1/delegate-keys', {
         method: 'POST',
         body: request,

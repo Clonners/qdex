@@ -17,6 +17,8 @@ qdex --base-url http://127.0.0.1:8787 listings request --local-review-queue --ba
 qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
 qdex --base-url http://127.0.0.1:8787 relayer gate
 qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner 0xowner --nonce 42 --chain-id 0 --nonce-manager-contract 0xnonce-manager --expires-at 1780003600 --signature 0xowner-signature
+qdex --base-url http://127.0.0.1:8787 api registrations
+qdex --base-url http://127.0.0.1:8787 api revocations
 qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner 0xowner --delegate 0xdelegate --allowed-market QI-QUAI --max-notional 1000 --expires-at 1780003600 --permission PLACE_ORDER --signature 0xowner-signature
 qdex --base-url http://127.0.0.1:8787 api revoke-key bot-mm-1 --prepare --owner 0xowner --signature 0xowner-signature
 qdex --base-url http://127.0.0.1:8787 vault deposits
@@ -51,6 +53,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 `qdex relayer gate` prints `GET /v1/relayer/settlement-mode-gate` read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus `real_quai_approval_gate_blocked` for `quai_contract`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 `qdex nonces cancel --prepare` calls `POST /v1/nonces/cancel` and prints the prepare-only 501 placeholder (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
+
+`qdex api registrations` and `qdex api revocations` print `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` as read-only `source: delegatekeyregistry-event-projection` history envelopes. They expose `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: false`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex api create-key bot-mm-1 --prepare` and `qdex api revoke-key bot-mm-1 --prepare` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and print intentional 501 owner-signed delegate/API key placeholders (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The output preserves `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; these commands have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
 

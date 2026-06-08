@@ -471,6 +471,12 @@ class _DelegateKeysApi:
     def list(self):
         return self._client._request_ok("/v1/delegate-keys")
 
+    def list_registrations(self):
+        return self._client._request_ok("/v1/delegate-keys/registrations")
+
+    def list_revocations(self):
+        return self._client._request_ok("/v1/delegate-keys/revocations")
+
     def prepare_register(self, request):
         return self._client._request_expected_status(
             "/v1/delegate-keys",

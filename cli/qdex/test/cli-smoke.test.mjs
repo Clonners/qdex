@@ -755,6 +755,56 @@ test('qdex api create-key/revoke-key --prepare prints owner-signed delegate-key 
   });
 });
 
+test('qdex api registrations/revocations print read-only DelegateKeyRegistry history envelopes without wallet or mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const registrations = await runCliJson(['--base-url', baseUrl, 'api', 'registrations']);
+    assert.equal(registrations.command, 'api registrations');
+    assert.deepEqual(registrations.registrations, []);
+    assert.equal(registrations.source, 'delegatekeyregistry-event-projection');
+    assert.equal(registrations.projectionType, 'DelegateKeyRegisteredProjection');
+    assert.equal(registrations.eventName, 'DelegateKeyRegistered');
+    assert.equal(registrations.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(registrations.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(registrations.settlementMode, 'mock');
+    assert.equal(registrations.settlementTx, null);
+    assert.equal(registrations.blockNumber, null);
+    assert.equal(registrations.blockHash, null);
+    assert.equal(registrations.eventIndex, null);
+    assert.equal(registrations.explorerUrl, null);
+    assert.equal(registrations.realQuaiTransactions, false);
+    assert.equal(registrations.walletRequired, false);
+    assert.equal(registrations.fundsMoved, false);
+    assert.equal(registrations.tradingVaultMutation, false);
+    assert.equal(registrations.delegateKeyRegistryMutation, false);
+    assert.equal(registrations.delegateCanWithdraw, false);
+    assert.equal(registrations.delegateCanAdmin, false);
+    assert.match(registrations.safetyNotice, /read-only DelegateKeyRegistry DelegateKeyRegistered history projection/i);
+
+    const revocations = await runCliJson(['--base-url', baseUrl, 'api', 'revocations']);
+    assert.equal(revocations.command, 'api revocations');
+    assert.deepEqual(revocations.revocations, []);
+    assert.equal(revocations.source, 'delegatekeyregistry-event-projection');
+    assert.equal(revocations.projectionType, 'DelegateKeyRevokedProjection');
+    assert.equal(revocations.eventName, 'DelegateKeyRevoked');
+    assert.equal(revocations.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(revocations.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(revocations.settlementMode, 'mock');
+    assert.equal(revocations.settlementTx, null);
+    assert.equal(revocations.blockNumber, null);
+    assert.equal(revocations.blockHash, null);
+    assert.equal(revocations.eventIndex, null);
+    assert.equal(revocations.explorerUrl, null);
+    assert.equal(revocations.realQuaiTransactions, false);
+    assert.equal(revocations.walletRequired, false);
+    assert.equal(revocations.fundsMoved, false);
+    assert.equal(revocations.tradingVaultMutation, false);
+    assert.equal(revocations.delegateKeyRegistryMutation, false);
+    assert.equal(revocations.delegateCanWithdraw, false);
+    assert.equal(revocations.delegateCanAdmin, false);
+    assert.match(revocations.safetyNotice, /read-only DelegateKeyRegistry DelegateKeyRevoked history projection/i);
+  });
+});
+
 test('qdex cancel --all removes mock resting orders without nonce or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

@@ -64,7 +64,8 @@ test('post-delegate-key owner-signed readiness plan pins completed prepare surfa
     '## Completed projection schema slice',
     'Completed: read-only DelegateKeyRegistry `DelegateKeyRegistered`/`DelegateKeyRevoked` projection schema ratchet',
     'Completed: read-only delegate-key registration/revocation history API envelopes',
-    'Next bounded local/source-only slice: TypeScript/Python/qdex clients for the read-only delegate-key history endpoints',
+    'Completed: read-only TypeScript/Python/qdex delegate-key history clients for `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`',
+    'Next bounded local/source-only slice: terminal UI read-only delegate-key history panel',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }
@@ -107,8 +108,9 @@ test('campaign status moves from delegate prepare smoke to the post-delegate rea
     'Completed previous run: local API + terminal UI delegate/API key prepare smoke',
     'Completed previous run: post-delegate-key owner-signed readiness docs added `docs/plans/2026-06-08-post-delegate-key-owner-signed-readiness.md` plus delegate/core doc links',
     'Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet added `DelegateKeyRegisteredProjection` and `DelegateKeyRevokedProjection`',
-    'Completed this run: read-only delegate-key registration/revocation history API envelopes',
-    'Next autonomous slice: read-only TypeScript/Python/qdex delegate-key history clients',
+    'Completed previous run: read-only delegate-key registration/revocation history API envelopes',
+    'Completed this run: read-only TypeScript/Python/qdex delegate-key history clients',
+    'Next autonomous slice: terminal UI read-only delegate-key history panel',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);

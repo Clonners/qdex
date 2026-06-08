@@ -1014,6 +1014,106 @@ test('SDK and CLI README docs expose prepare-only delegate/API key registration 
   }
 });
 
+test('SDK and CLI docs expose read-only delegate-key registration and revocation history clients', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/spec.md',
+      terms: [
+        'delegateKeys.listRegistrations()',
+        'delegateKeys.listRevocations()',
+        'GET /v1/delegate-keys/registrations',
+        'GET /v1/delegate-keys/revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'dex.delegateKeys.listRegistrations',
+        'dex.delegateKeys.listRevocations',
+        'GET /v1/delegate-keys/registrations',
+        'GET /v1/delegate-keys/revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        'delegate_keys.list_registrations()',
+        'delegate_keys.list_revocations()',
+        'GET /v1/delegate-keys/registrations',
+        'GET /v1/delegate-keys/revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateKeyRegistryMutation: False',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.delegate_keys.list_registrations',
+        'dex.delegate_keys.list_revocations',
+        'GET /v1/delegate-keys/registrations',
+        'GET /v1/delegate-keys/revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'delegateKeyRegistryMutation: False',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/spec.md',
+      terms: [
+        'qdex api registrations',
+        'qdex api revocations',
+        'GET /v1/delegate-keys/registrations',
+        'GET /v1/delegate-keys/revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'qdex api registrations',
+        'qdex api revocations',
+        'GET /v1/delegate-keys/registrations',
+        'GET /v1/delegate-keys/revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
 test('SDK and CLI README docs expose read-only relayer gate clients', async () => {
   const docs = [
     {
