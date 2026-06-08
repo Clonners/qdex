@@ -98,7 +98,7 @@ test('account docs and campaign status pin the read-only overview API and client
     'campaign status should retain the local API account overview smoke as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should stop pointing next work at already-completed Python public market-data stream parity',
+    status.includes('Next autonomous slice: Python SDK public kline/candle consumers'),
+    'campaign status should point next work at Python public kline/candle parity after TypeScript/qdex kline consumers',
   );
 });

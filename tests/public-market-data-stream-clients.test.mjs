@@ -16,6 +16,13 @@ test('TypeScript SDK and qdex docs expose bounded public market-data stream cons
     {
       path: 'sdk/typescript/spec.md',
       terms: [
+        'klines.get(marketId, { interval })',
+        '/v1/klines/<MARKET>?interval=1m',
+        'klines.openStream(marketId, { interval })',
+        'klines.stream(marketId, { interval, limit })',
+        '/v1/ws?channel=market.<MARKET>.klines.1m',
+        'kline_snapshot',
+        'mock-candle-projection',
         'tickers.openStream()',
         'tickers.stream({ limit })',
         '/v1/ws?channel=global.tickers',
@@ -39,6 +46,13 @@ test('TypeScript SDK and qdex docs expose bounded public market-data stream cons
     {
       path: 'sdk/typescript/README.md',
       terms: [
+        'dex.klines.get',
+        'dex.klines.openStream',
+        'dex.klines.stream',
+        '/v1/klines/<MARKET>?interval=1m',
+        '/v1/ws?channel=market.<MARKET>.klines.1m',
+        'kline_snapshot',
+        'mock-candle-projection',
         'dex.tickers.openStream',
         'dex.tickers.stream',
         'dex.orderbook.openStream',
@@ -61,6 +75,12 @@ test('TypeScript SDK and qdex docs expose bounded public market-data stream cons
     {
       path: 'cli/qdex/spec.md',
       terms: [
+        'qdex klines QI-QUAI --interval 1m',
+        'qdex stream klines QI-QUAI --interval 1m --limit N',
+        '/v1/klines/<MARKET>?interval=1m',
+        '/v1/ws?channel=market.<MARKET>.klines.1m',
+        'kline_snapshot',
+        'mock-candle-projection',
         'qdex stream tickers',
         'qdex stream depth QI-QUAI',
         'qdex stream trades QI-QUAI',
@@ -81,6 +101,12 @@ test('TypeScript SDK and qdex docs expose bounded public market-data stream cons
     {
       path: 'cli/qdex/README.md',
       terms: [
+        'qdex --base-url http://127.0.0.1:8787 klines QI-QUAI --interval 1m',
+        'qdex --base-url http://127.0.0.1:8787 stream klines QI-QUAI --interval 1m --limit 1',
+        '/v1/klines/<MARKET>?interval=1m',
+        '/v1/ws?channel=market.<MARKET>.klines.1m',
+        'kline_snapshot',
+        'mock-candle-projection',
         'qdex --base-url http://127.0.0.1:8787 stream tickers --limit 1',
         'qdex --base-url http://127.0.0.1:8787 stream depth QI-QUAI --limit 1',
         'qdex --base-url http://127.0.0.1:8787 stream trades QI-QUAI --limit 1',
@@ -165,20 +191,20 @@ test('campaign status marks Python public market-data stream clients complete af
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: Python SDK public market-data stream consumers are complete'),
-    'campaign status should mark Python public market-data stream parity as current phase',
+    status.includes('Current phase: TypeScript SDK and qdex CLI public kline/candle consumers are complete'),
+    'campaign status should mark TypeScript/qdex public kline consumers as current phase',
   );
   assert.ok(
-    status.includes('Completed previous run: read-only TypeScript SDK and `qdex` CLI public market-data stream consumers'),
-    'campaign status should move TypeScript/qdex public market-data streams to previous work',
+    status.includes('Completed previous run: Python SDK public market-data stream consumers'),
+    'campaign status should move Python public market-data stream parity to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: Python SDK public market-data stream consumers'),
-    'campaign status should record this run as Python public market-data stream consumers',
+    status.includes('Completed this run: TypeScript SDK and `qdex` CLI public kline/candle consumers'),
+    'campaign status should record this run as TypeScript/qdex public kline consumers',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should stop pointing at already-completed Python parity',
+    status.includes('Next autonomous slice: Python SDK public kline/candle consumers'),
+    'campaign status should point to Python public kline parity next',
   );
   assert.doesNotMatch(
     status,

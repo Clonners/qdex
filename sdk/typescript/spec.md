@@ -15,6 +15,10 @@ await dex.orderbook.get(marketId);
 const depthStream = dex.orderbook.openStream(marketId); // /v1/ws?channel=market.<MARKET>.depth -> orderbook_depth, mock-orderbook
 await depthStream.close();
 await dex.orderbook.stream(marketId, { limit });
+await dex.klines.get(marketId, { interval }); // /v1/klines/<MARKET>?interval=1m -> kline_snapshot, mock-candle-projection
+const klineStream = dex.klines.openStream(marketId, { interval }); // /v1/ws?channel=market.<MARKET>.klines.1m -> kline_snapshot, mock-candle-projection
+await klineStream.close();
+await dex.klines.stream(marketId, { interval, limit });
 const tradesStream = dex.trades.openStream(marketId); // /v1/ws?channel=market.<MARKET>.trades -> trade_projection, confirmed-settlement-only
 await tradesStream.close();
 await dex.trades.stream(marketId, { limit });
@@ -150,6 +154,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 `tickers.openStream()` and `tickers.stream({ limit })` consume public ticker snapshots from `/v1/ws?channel=global.tickers`. Stream messages carry `payload: ticker_snapshot`, `custody: public-read-only-no-custody`, `source: mock-market-data`, null mock prices, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `orderbook.openStream(marketId)` and `orderbook.stream(marketId, { limit })` consume public market depth snapshots from `/v1/ws?channel=market.<MARKET>.depth`. Stream messages carry `payload: orderbook_depth`, `custody: public-read-only-no-custody`, `source: mock-orderbook`, local mock depth rows, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`klines.get(marketId, { interval })` reads public candle projections from `/v1/klines/<MARKET>?interval=1m`; `klines.openStream(marketId, { interval })` and `klines.stream(marketId, { interval, limit })` consume bounded public candle snapshots from `/v1/ws?channel=market.<MARKET>.klines.1m`. Kline messages carry `payload: kline_snapshot`, `custody: public-read-only-no-custody`, `source: mock-candle-projection`, local mock candle rows, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `trades.openStream(marketId)` and `trades.stream(marketId, { limit })` consume public confirmed trade projection snapshots from `/v1/ws?channel=market.<MARKET>.trades`. Stream messages carry `payload: trade_projection`, `custody: public-read-only-no-custody`, `source: in-memory-indexer-projection`, `confirmed-settlement-only` semantics, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 

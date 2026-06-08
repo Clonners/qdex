@@ -20,6 +20,11 @@ const depthStream = dex.orderbook.openStream('QI-QUAI', { timeoutMs: 2000 });
 const initialDepthSnapshot = await depthStream.next();
 await depthStream.close();
 const boundedDepthSnapshots = await dex.orderbook.stream('QI-QUAI', { limit: 1 });
+const oneMinuteKlines = await dex.klines.get('QI-QUAI', { interval: '1m' }); // /v1/klines/<MARKET>?interval=1m
+const klineStream = dex.klines.openStream('QI-QUAI', { interval: '1m', timeoutMs: 2000 }); // /v1/ws?channel=market.<MARKET>.klines.1m
+const initialKlineSnapshot = await klineStream.next();
+await klineStream.close();
+const boundedKlineSnapshots = await dex.klines.stream('QI-QUAI', { interval: '1m', limit: 1 });
 const tradeStream = dex.trades.openStream('QI-QUAI', { timeoutMs: 2000 });
 const initialTradeSnapshot = await tradeStream.next();
 await tradeStream.close();
@@ -180,6 +185,11 @@ console.log(initialDepthSnapshot.snapshot.channel); // /v1/ws?channel=market.<MA
 console.log(initialDepthSnapshot.snapshot.payload); // orderbook_depth
 console.log(initialDepthSnapshot.snapshot.source); // mock-orderbook
 console.log(boundedDepthSnapshots[0].snapshot.custody); // public-read-only-no-custody
+console.log(oneMinuteKlines.source); // mock-candle-projection
+console.log(initialKlineSnapshot.snapshot.channel); // /v1/ws?channel=market.<MARKET>.klines.1m
+console.log(initialKlineSnapshot.snapshot.payload); // kline_snapshot
+console.log(initialKlineSnapshot.snapshot.source); // mock-candle-projection
+console.log(boundedKlineSnapshots[0].snapshot.data.interval); // 1m
 console.log(initialTradeSnapshot.snapshot.channel); // /v1/ws?channel=market.<MARKET>.trades
 console.log(initialTradeSnapshot.snapshot.payload); // trade_projection
 console.log(initialTradeSnapshot.snapshot.source); // in-memory-indexer-projection

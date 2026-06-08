@@ -1066,6 +1066,39 @@ test('TypeScript SDK consumes public market-data streams without wallet or tx au
     assert.equal(tradeMessages[0].snapshot.data.marketId, 'QI-QUAI');
     assert.equal(tradeMessages[0].snapshot.data.source, 'in-memory-indexer-projection');
     assert.deepEqual(tradeMessages[0].snapshot.data.trades, []);
+
+    const oneMinuteKlines = await client.klines.get('QI-QUAI', { interval: '1m' });
+    assert.equal(oneMinuteKlines.marketId, 'QI-QUAI');
+    assert.equal(oneMinuteKlines.interval, '1m');
+    assert.deepEqual(oneMinuteKlines.candles, []);
+    assert.equal(oneMinuteKlines.source, 'mock-candle-projection');
+
+    const klineStream = client.klines.openStream('QI-QUAI', { interval: '1m', timeoutMs: 2_000 });
+    try {
+      const klineMessage = await klineStream.next();
+      assert.equal(klineMessage.type, 'snapshot');
+      assert.equal(klineMessage.snapshot.channel, 'market.QI-QUAI.klines.1m');
+      assert.equal(klineMessage.snapshot.visibility, 'public');
+      assert.equal(klineMessage.snapshot.payload, 'kline_snapshot');
+      assert.equal(klineMessage.snapshot.source, 'mock-candle-projection');
+      assert.equal(klineMessage.snapshot.custody, 'public-read-only-no-custody');
+      assert.equal(klineMessage.snapshot.data.marketId, 'QI-QUAI');
+      assert.equal(klineMessage.snapshot.data.interval, '1m');
+      assert.deepEqual(klineMessage.snapshot.data.candles, []);
+      assert.equal(klineMessage.snapshot.data.source, 'mock-candle-projection');
+    } finally {
+      await klineStream.close();
+    }
+
+    const fifteenMinuteKlines = await client.klines.stream('QI-QUAI', { interval: '15m', limit: 1, timeoutMs: 2_000 });
+    assert.equal(fifteenMinuteKlines.length, 1);
+    assert.equal(fifteenMinuteKlines[0].type, 'snapshot');
+    assert.equal(fifteenMinuteKlines[0].snapshot.channel, 'market.QI-QUAI.klines.15m');
+    assert.equal(fifteenMinuteKlines[0].snapshot.payload, 'kline_snapshot');
+    assert.equal(fifteenMinuteKlines[0].snapshot.source, 'mock-candle-projection');
+    assert.equal(fifteenMinuteKlines[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(fifteenMinuteKlines[0].snapshot.data.interval, '15m');
+    assert.deepEqual(fifteenMinuteKlines[0].snapshot.data.candles, []);
   });
 });
 

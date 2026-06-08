@@ -8,6 +8,11 @@ const DEFAULT_EXPIRES_AT = 1780003600;
 const trimTrailingSlash = (value) => value.replace(/\/+$/, '');
 const marketDepthChannel = (marketId) => `market.${marketId}.depth`;
 const marketTradesChannel = (marketId) => `market.${marketId}.trades`;
+const marketKlinesChannel = (marketId, interval = '15m') => `market.${marketId}.klines.${interval}`;
+const klinesPath = (marketId, { interval } = {}) => {
+  const path = `/v1/klines/${encodeURIComponent(marketId)}`;
+  return interval === undefined ? path : `${path}?${new URLSearchParams({ interval }).toString()}`;
+};
 
 class QDexHttpError extends Error {
   constructor(message, { status, body }) {
@@ -198,6 +203,12 @@ export class QDexClient {
       get: async (marketId) => this.#requestOk(`/v1/orderbook/${encodeURIComponent(marketId)}`),
       openStream: (marketId, options = {}) => this.streams.open(marketDepthChannel(marketId), options),
       stream: async (marketId, options = {}) => this.streams.read(marketDepthChannel(marketId), options),
+    };
+
+    this.klines = {
+      get: async (marketId, options = {}) => this.#requestOk(klinesPath(marketId, options)),
+      openStream: (marketId, { interval = '15m', ...options } = {}) => this.streams.open(marketKlinesChannel(marketId, interval), options),
+      stream: async (marketId, { interval = '15m', ...options } = {}) => this.streams.read(marketKlinesChannel(marketId, interval), options),
     };
 
     this.contracts = {

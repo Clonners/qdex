@@ -7,6 +7,7 @@
 ```bash
 qdex markets
 qdex ticker QI-QUAI
+qdex klines QI-QUAI --interval 1m
 qdex book QI-QUAI
 qdex contracts
 qdex fees
@@ -41,6 +42,7 @@ qdex stream fees
 qdex stream tickers
 qdex stream depth QI-QUAI
 qdex stream trades QI-QUAI
+qdex stream klines QI-QUAI --interval 1m --limit N
 qdex proof trade <trade-id>
 qdex api create-key bot-mm-1 --scope trade --expires 7d
 ```
@@ -63,6 +65,7 @@ qdex api create-key bot-mm-1 --scope trade --expires 7d
 - `qdex stream fees` consumes public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. It prints `fee_schedule_projection`, `public-read-only-no-custody`, `feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 - `qdex stream tickers` consumes public ticker snapshots from `/v1/ws?channel=global.tickers` and prints `ticker_snapshot`, `public-read-only-no-custody`, and `mock-market-data` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 - `qdex stream depth QI-QUAI` consumes public market depth snapshots from `/v1/ws?channel=market.<MARKET>.depth` and prints `orderbook_depth`, `public-read-only-no-custody`, and `mock-orderbook` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+- `qdex klines QI-QUAI --interval 1m` calls `/v1/klines/<MARKET>?interval=1m`, and `qdex stream klines QI-QUAI --interval 1m --limit N` consumes public candle snapshots from `/v1/ws?channel=market.<MARKET>.klines.1m`. They print `kline_snapshot`, `public-read-only-no-custody`, and `mock-candle-projection` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 - `qdex stream trades QI-QUAI` consumes public trade projection snapshots from `/v1/ws?channel=market.<MARKET>.trades` and prints `trade_projection`, `public-read-only-no-custody`, `in-memory-indexer-projection`, and `confirmed-settlement-only` semantics with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 - `qdex api create-key bot-mm-1 --prepare` and `qdex api revoke-key bot-mm-1 --prepare` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`. They print prepare-only owner-signed delegate/API key placeholders (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`) with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; the commands preserve no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
 - `qdex account` calls `GET /v1/account` and prints the read-only `mock-account-overview` envelope with `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`; it has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.

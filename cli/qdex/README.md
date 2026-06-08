@@ -7,6 +7,7 @@ Implemented smoke/read-only stubs:
 ```bash
 qdex --base-url http://127.0.0.1:8787 markets
 qdex --base-url http://127.0.0.1:8787 ticker QI-QUAI
+qdex --base-url http://127.0.0.1:8787 klines QI-QUAI --interval 1m
 qdex --base-url http://127.0.0.1:8787 book QI-QUAI
 qdex --base-url http://127.0.0.1:8787 account
 qdex --base-url http://127.0.0.1:8787 balance
@@ -38,6 +39,7 @@ qdex --base-url http://127.0.0.1:8787 stream fees --limit 1
 qdex --base-url http://127.0.0.1:8787 stream tickers --limit 1
 qdex --base-url http://127.0.0.1:8787 stream depth QI-QUAI --limit 1
 qdex --base-url http://127.0.0.1:8787 stream trades QI-QUAI --limit 1
+qdex --base-url http://127.0.0.1:8787 stream klines QI-QUAI --interval 1m --limit 1
 qdex --base-url http://127.0.0.1:8787 smoke
 ```
 
@@ -47,7 +49,7 @@ qdex --base-url http://127.0.0.1:8787 smoke
 
 `qdex stream fees` consumes bounded public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Output messages carry `fee_schedule_projection`, `public-read-only-no-custody`, `feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
-`qdex stream tickers`, `qdex stream depth QI-QUAI`, and `qdex stream trades QI-QUAI` consume bounded public market-data snapshots from `/v1/ws?channel=global.tickers`, `/v1/ws?channel=market.<MARKET>.depth`, and `/v1/ws?channel=market.<MARKET>.trades`. Output messages carry `ticker_snapshot` / `orderbook_depth` / `trade_projection`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, and `confirmed-settlement-only` trade projection semantics with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+`qdex stream tickers`, `qdex stream depth QI-QUAI`, `qdex stream trades QI-QUAI`, and `qdex stream klines QI-QUAI --interval 1m --limit 1` consume bounded public market-data snapshots from `/v1/ws?channel=global.tickers`, `/v1/ws?channel=market.<MARKET>.depth`, `/v1/ws?channel=market.<MARKET>.trades`, and `/v1/ws?channel=market.<MARKET>.klines.1m`. `qdex klines QI-QUAI --interval 1m` reads `/v1/klines/<MARKET>?interval=1m`. Output messages carry `ticker_snapshot` / `orderbook_depth` / `trade_projection` / `kline_snapshot`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, `mock-candle-projection`, and `confirmed-settlement-only` trade projection semantics with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex account` prints `GET /v1/account` as read-only `mock-account-overview` metadata: `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 

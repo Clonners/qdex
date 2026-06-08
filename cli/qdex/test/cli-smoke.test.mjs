@@ -240,6 +240,15 @@ test('qdex stream fees command exposes bounded read-only FeeManager fee schedule
 
 test('qdex stream market-data commands expose bounded public snapshots without wallet authority', async () => {
   await withServer(async (baseUrl) => {
+    const klineRest = await runCliJson(['--base-url', baseUrl, 'klines', 'QI-QUAI', '--interval', '1m']);
+
+    assert.equal(klineRest.command, 'klines');
+    assert.equal(klineRest.baseUrl, baseUrl);
+    assert.equal(klineRest.marketId, 'QI-QUAI');
+    assert.equal(klineRest.interval, '1m');
+    assert.deepEqual(klineRest.candles, []);
+    assert.equal(klineRest.source, 'mock-candle-projection');
+
     const tickers = await runCliJson(['--base-url', baseUrl, 'stream', 'tickers', '--limit', '1']);
 
     assert.equal(tickers.command, 'stream tickers');
@@ -287,6 +296,24 @@ test('qdex stream market-data commands expose bounded public snapshots without w
     assert.equal(trades.messages[0].snapshot.data.marketId, 'QI-QUAI');
     assert.equal(trades.messages[0].snapshot.data.source, 'in-memory-indexer-projection');
     assert.deepEqual(trades.messages[0].snapshot.data.trades, []);
+
+    const klines = await runCliJson(['--base-url', baseUrl, 'stream', 'klines', 'QI-QUAI', '--interval', '1m', '--limit', '1']);
+
+    assert.equal(klines.command, 'stream klines');
+    assert.equal(klines.channel, 'market.QI-QUAI.klines.1m');
+    assert.equal(klines.marketId, 'QI-QUAI');
+    assert.equal(klines.interval, '1m');
+    assert.equal(klines.transport, 'websocket');
+    assert.equal(klines.limit, 1);
+    assert.equal(klines.messages.length, 1);
+    assert.equal(klines.messages[0].snapshot.channel, 'market.QI-QUAI.klines.1m');
+    assert.equal(klines.messages[0].snapshot.visibility, 'public');
+    assert.equal(klines.messages[0].snapshot.payload, 'kline_snapshot');
+    assert.equal(klines.messages[0].snapshot.source, 'mock-candle-projection');
+    assert.equal(klines.messages[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(klines.messages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.equal(klines.messages[0].snapshot.data.interval, '1m');
+    assert.deepEqual(klines.messages[0].snapshot.data.candles, []);
   });
 });
 

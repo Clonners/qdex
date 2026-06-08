@@ -87,6 +87,38 @@ const parseStreamOptions = (args) => {
   return { limit, timeoutMs };
 };
 
+const parseMarketAndKlineOptions = (args) => {
+  const hasExplicitMarket = args[0] !== undefined && !args[0].startsWith('--');
+  const marketId = hasExplicitMarket ? args[0] : 'QI-QUAI';
+  const optionArgs = hasExplicitMarket ? args.slice(1) : args;
+  let interval = '15m';
+  const rest = [];
+
+  for (let index = 0; index < optionArgs.length;) {
+    const arg = optionArgs[index];
+    if (arg === '--interval') {
+      interval = optionArgs[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg.startsWith('--interval=')) {
+      interval = arg.slice('--interval='.length);
+      index += 1;
+      continue;
+    }
+
+    rest.push(arg);
+    index += 1;
+  }
+
+  if (typeof interval !== 'string' || interval.length === 0) {
+    throw new Error('--interval must be a non-empty string.');
+  }
+
+  return { marketId, interval, rest };
+};
+
 const parseDelegateKeyOptions = (args, mode) => {
   const request = {};
   const allowedMarkets = [];
@@ -485,6 +517,7 @@ const parseListingRequestDecisionOptions = (args) => {
 const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 markets
   qdex --base-url http://127.0.0.1:8787 ticker QI-QUAI
+  qdex --base-url http://127.0.0.1:8787 klines QI-QUAI --interval 1m
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
   qdex --base-url http://127.0.0.1:8787 balance
   qdex --base-url http://127.0.0.1:8787 account
@@ -518,6 +551,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 stream tickers [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream depth QI-QUAI [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream trades QI-QUAI [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream klines QI-QUAI --interval 1m [--limit 1]
   qdex --base-url http://127.0.0.1:8787 smoke
 `;
 
@@ -546,6 +580,16 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         command: 'ticker',
         baseUrl,
         ...(await client.tickers.get(marketId)),
+      });
+      return 0;
+    }
+
+    if (command === 'klines') {
+      const { marketId, interval } = parseMarketAndKlineOptions(rest);
+      writeJson(stdout, {
+        command: 'klines',
+        baseUrl,
+        ...(await client.klines.get(marketId, { interval })),
       });
       return 0;
     }
@@ -833,6 +877,23 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         baseUrl,
         channel: `market.${marketId}.trades`,
         marketId,
+        transport: 'websocket',
+        limit: options.limit,
+        messages,
+      });
+      return 0;
+    }
+
+    if (command === 'stream' && rest[0] === 'klines') {
+      const { marketId, interval, rest: streamArgs } = parseMarketAndKlineOptions(rest.slice(1));
+      const options = parseStreamOptions(streamArgs);
+      const messages = await client.klines.stream(marketId, { interval, ...options });
+      writeJson(stdout, {
+        command: 'stream klines',
+        baseUrl,
+        channel: `market.${marketId}.klines.${interval}`,
+        marketId,
+        interval,
         transport: 'websocket',
         limit: options.limit,
         messages,
