@@ -106,20 +106,21 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   );
 });
 
-test('campaign status records completion-mode continuation plus local listing and balance projection checkpoints', async () => {
+test('campaign status records completion-mode continuation plus local listing, balance, and vault prepare checkpoints', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
     '- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated',
-    '- Current phase: local API + terminal UI balances stream integration smoke is complete across the `GET /v1/account/balances` REST precheck, private `balances` WebSocket, browser binding, README, and ratchets; next autonomous slice should be a prepare-only owner-wallet vault deposit/withdrawal boundary or another bounded local/source-only MVP slice with no real network mutation; no wallets/RPC/deploys/txs are approved',
+    '- Current phase: prepare-only owner-wallet TradingVault deposit/withdrawal API boundary is complete across `POST /v1/vault/deposits/prepare`, `POST /v1/vault/withdrawals/prepare`, OpenAPI, docs, and API ratchets; next autonomous slice should expose these prepare-only vault boundaries through TypeScript/Python SDK and `qdex` CLI clients, still with no real network mutation; no wallets/RPC/deploys/txs/funds are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
     'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, TypeScript/Python/qdex decision clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
     'Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.',
     'Completed previous run: post-decision status/approval-boundary cleanup aligned listing review-flow metadata and docs with the existing local queue/decision API plus TypeScript/Python/qdex clients.',
     'Completed previous run: reconciled interrupted read-only mock vault balance projection across `GET /v1/account/balances`, private `balances` stream, TypeScript/Python SDKs, `qdex balance`, OpenAPI, docs, and ratchets.',
     'Completed previous run: terminal UI balance projection binding added a private `balances` WebSocket consumer, mock-vault renderer panel, browser app binding, README docs, and ratchets while preserving `mock-vault-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, and no wallet/funds behavior.',
-    'Completed this run: local API + terminal UI balances stream integration smoke added a REST precheck for `GET /v1/account/balances` before binding `/v1/ws?channel=balances`, keeping the browser panel on the same read-only `mock-vault-projection` safety envelope.',
-    'Next autonomous slice: prepare-only owner-wallet vault deposit/withdrawal boundary or another bounded local/source-only MVP slice without listing submission, real token addresses, wallets/RPC/signing/broadcast/deploy/tx behavior, funds movement, or real network `MarketRegistry` mutation.',
+    'Completed previous run: local API + terminal UI balances stream integration smoke added a REST precheck for `GET /v1/account/balances` before binding `/v1/ws?channel=balances`, keeping the browser panel on the same read-only `mock-vault-projection` safety envelope.',
+    'Completed this run: prepare-only owner-wallet TradingVault deposit/withdrawal API boundary added `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` with `501` placeholder envelopes, OpenAPI schemas, `docs/vault-operations.md`, core docs links, and API/doc ratchets; it preserves `owner-wallet-required`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.',
+    'Next autonomous slice: expose the prepare-only vault deposit/withdrawal boundaries through TypeScript/Python SDK and `qdex` CLI clients without wallets/RPC/signing/broadcast/deploy/tx/funds behavior.',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
     'Clonners approved the next local-only runtime listing review queue slice.',

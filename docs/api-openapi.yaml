@@ -254,6 +254,42 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccountBalances"
+  /v1/vault/deposits/prepare:
+    post:
+      tags: [private]
+      summary: Prepare owner-wallet TradingVault deposit
+      description: owner-wallet-only prepare-only boundary for future TradingVault deposits; performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or funds movement.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultOperationPrepareRequest"
+      responses:
+        "501":
+          description: Deposit preparation is documented but not wired to owner-wallet signing, broadcast, or TradingVault mutation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultOperationPrepareNotImplemented"
+  /v1/vault/withdrawals/prepare:
+    post:
+      tags: [private]
+      summary: Prepare owner-wallet TradingVault withdrawal
+      description: owner-wallet-only prepare-only boundary for future TradingVault withdrawals; performs no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or funds movement.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VaultOperationPrepareRequest"
+      responses:
+        "501":
+          description: Withdrawal preparation is documented but not wired to owner-wallet signing, broadcast, or TradingVault mutation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultOperationPrepareNotImplemented"
   /v1/orders:
     get:
       tags: [private]
@@ -446,6 +482,112 @@ components:
         safetyNotice:
           type: string
           description: Mock vault projection only; no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+    VaultOperationPrepareRequest:
+      type: object
+      description: owner wallet must authorize the future deposit/withdrawal; local prepare mode carries intent metadata only and no signing/RPC/tx fields.
+      required: [operation, owner, assetSymbol, amount, chainId, vaultContractRef]
+      properties:
+        operation:
+          type: string
+          enum: [deposit, withdrawal]
+        owner:
+          type: string
+          description: Main owner wallet that must authorize the future deposit/withdrawal; delegate keys cannot perform this flow.
+        assetSymbol:
+          type: string
+          enum: [WQUAI, WQI, community-created-erc20-style-token]
+        amount:
+          type: string
+          description: Decimal amount intent for the future owner-wallet operation; no funds move in prepare mode.
+        chainId:
+          type: integer
+          description: Future replay-domain chain id; local placeholder does not read RPC URLs.
+        vaultContractRef:
+          type: string
+          enum: [local-only-not-deployed]
+          description: Local-only TradingVault reference; no real contract address is accepted in this slice.
+    VaultOperationPrepareNotImplemented:
+      type: object
+      description: Prepare-only owner-wallet TradingVault deposit/withdrawal placeholder; no wallet, transaction, or fund movement behavior.
+      required: [error, source, custody, vaultOperation, operationStatus, ownerAuthorization, permissions, delegateAuthority, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, approvalGate, safety, message]
+      properties:
+        error:
+          type: string
+          enum: [owner_wallet_vault_deposit_not_implemented, owner_wallet_vault_withdrawal_not_implemented]
+        source:
+          type: string
+          enum: [owner-wallet-vault-operation-placeholder]
+        custody:
+          type: string
+          enum: [non-custodial-contract-vault]
+        vaultOperation:
+          type: string
+          enum: [deposit, withdrawal]
+        operationStatus:
+          type: string
+          enum: [prepare-only-not-implemented]
+        ownerAuthorization:
+          type: string
+          enum: [owner-wallet-required]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        delegateAuthority:
+          type: string
+          enum: [delegates-cannot-deposit-or-withdraw]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        approvalGate:
+          type: string
+          enum: [explicit-approval-required-before-wallet-signing-or-quai-broadcast]
+        safety:
+          type: object
+          required: [noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noFundsMovement, noDelegateWithdrawalAuthority, noAdminWithdrawalAuthority, notice]
+          properties:
+            noWalletLoading:
+              type: boolean
+              enum: [true]
+            noRpcUrlAccess:
+              type: boolean
+              enum: [true]
+            noSigning:
+              type: boolean
+              enum: [true]
+            noBroadcast:
+              type: boolean
+              enum: [true]
+            noDeploys:
+              type: boolean
+              enum: [true]
+            noTransactionSubmission:
+              type: boolean
+              enum: [true]
+            noFundsMovement:
+              type: boolean
+              enum: [true]
+            noDelegateWithdrawalAuthority:
+              type: boolean
+              enum: [true]
+            noAdminWithdrawalAuthority:
+              type: boolean
+              enum: [true]
+            notice:
+              type: string
+              description: Prepare-only owner-wallet TradingVault boundary with no wallet loading, no signing, no RPC URL access, no transaction submission, and no funds moved.
+        message:
+          type: string
     ContractRegistry:
       type: object
       description: Contract address and dependency metadata. No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts.

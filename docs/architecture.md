@@ -62,6 +62,8 @@ The operator may run matching, relaying, listing and indexing infrastructure, bu
 
 Withdrawals require the user's wallet or a separately approved high-trust path. Bot/delegate keys default to `NO_WITHDRAW`.
 
+The first owner-wallet vault operation boundary is prepare-only: [`docs/vault-operations.md`](./vault-operations.md) documents `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare`. Those routes are discovery/placeholders only; they keep `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`, and they do not load wallets, read RPC URLs, sign, broadcast, submit transactions, deploy, or move funds.
+
 ## Post-mock MVP readiness
 
 The current mock loop is a local executable MVP, not real Quai settlement. Post-mock MVP readiness work must keep `settlementMode: mock`, null proof tx/block/explorer fields, and `local-only-not-deployed` contract metadata until approved contract evidence replaces the mock plane.

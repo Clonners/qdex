@@ -6,7 +6,7 @@
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: local API + terminal UI balances stream integration smoke is complete across the `GET /v1/account/balances` REST precheck, private `balances` WebSocket, browser binding, README, and ratchets; next autonomous slice should be a prepare-only owner-wallet vault deposit/withdrawal boundary or another bounded local/source-only MVP slice with no real network mutation; no wallets/RPC/deploys/txs are approved
+- Current phase: prepare-only owner-wallet TradingVault deposit/withdrawal API boundary is complete across `POST /v1/vault/deposits/prepare`, `POST /v1/vault/withdrawals/prepare`, OpenAPI, docs, and API ratchets; next autonomous slice should expose these prepare-only vault boundaries through TypeScript/Python SDK and `qdex` CLI clients, still with no real network mutation; no wallets/RPC/deploys/txs/funds are approved
 
 ## Current repo baseline
 
@@ -44,9 +44,10 @@ No deploys, txs, real wallets, GitHub pushes, public servers, or external side e
 5. Completed previous run: post-decision status/approval-boundary cleanup aligned listing review-flow metadata and docs with the existing local queue/decision API plus TypeScript/Python/qdex clients.
 6. Completed previous run: reconciled interrupted read-only mock vault balance projection across `GET /v1/account/balances`, private `balances` stream, TypeScript/Python SDKs, `qdex balance`, OpenAPI, docs, and ratchets.
 7. Completed previous run: terminal UI balance projection binding added a private `balances` WebSocket consumer, mock-vault renderer panel, browser app binding, README docs, and ratchets while preserving `mock-vault-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, and no wallet/funds behavior.
-8. Completed this run: local API + terminal UI balances stream integration smoke added a REST precheck for `GET /v1/account/balances` before binding `/v1/ws?channel=balances`, keeping the browser panel on the same read-only `mock-vault-projection` safety envelope.
-9. Next autonomous slice: prepare-only owner-wallet vault deposit/withdrawal boundary or another bounded local/source-only MVP slice without listing submission, real token addresses, wallets/RPC/signing/broadcast/deploy/tx behavior, funds movement, or real network `MarketRegistry` mutation.
-10. Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
+8. Completed previous run: local API + terminal UI balances stream integration smoke added a REST precheck for `GET /v1/account/balances` before binding `/v1/ws?channel=balances`, keeping the browser panel on the same read-only `mock-vault-projection` safety envelope.
+9. Completed this run: prepare-only owner-wallet TradingVault deposit/withdrawal API boundary added `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` with `501` placeholder envelopes, OpenAPI schemas, `docs/vault-operations.md`, core docs links, and API/doc ratchets; it preserves `owner-wallet-required`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
+10. Next autonomous slice: expose the prepare-only vault deposit/withdrawal boundaries through TypeScript/Python SDK and `qdex` CLI clients without wallets/RPC/signing/broadcast/deploy/tx/funds behavior.
+11. Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
 ## Cron runner
 
