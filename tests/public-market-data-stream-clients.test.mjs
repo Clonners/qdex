@@ -132,11 +132,18 @@ test('TypeScript SDK and qdex docs expose bounded public market-data stream cons
   }
 });
 
-test('Python SDK docs expose bounded public market-data stream consumers', async () => {
+test('Python SDK docs expose bounded public market-data and kline/candle consumers', async () => {
   const docs = [
     {
       path: 'sdk/python/spec.md',
       terms: [
+        'klines.get(market_id, interval="1m")',
+        'klines.open_stream(market_id, interval="1m")',
+        'klines.stream(market_id, interval="1m", limit=limit)',
+        '/v1/klines/<MARKET>?interval=1m',
+        '/v1/ws?channel=market.<MARKET>.klines.1m',
+        'kline_snapshot',
+        'mock-candle-projection',
         'tickers.open_stream()',
         'tickers.stream(limit=limit)',
         '/v1/ws?channel=global.tickers',
@@ -160,6 +167,13 @@ test('Python SDK docs expose bounded public market-data stream consumers', async
     {
       path: 'sdk/python/README.md',
       terms: [
+        'dex.klines.get',
+        'dex.klines.open_stream',
+        'dex.klines.stream',
+        '/v1/klines/<MARKET>?interval=1m',
+        '/v1/ws?channel=market.<MARKET>.klines.1m',
+        'kline_snapshot',
+        'mock-candle-projection',
         'dex.tickers.open_stream',
         'dex.tickers.stream',
         'dex.orderbook.open_stream',
@@ -187,24 +201,24 @@ test('Python SDK docs expose bounded public market-data stream consumers', async
   }
 });
 
-test('campaign status marks Python public market-data stream clients complete after parity', async () => {
+test('campaign status marks Python public kline/candle SDK consumers complete after parity', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: TypeScript SDK and qdex CLI public kline/candle consumers are complete'),
-    'campaign status should mark TypeScript/qdex public kline consumers as current phase',
+    status.includes('Current phase: Python SDK public kline/candle consumers are complete'),
+    'campaign status should mark Python public kline consumers as current phase',
   );
   assert.ok(
-    status.includes('Completed previous run: Python SDK public market-data stream consumers'),
-    'campaign status should move Python public market-data stream parity to previous work',
+    status.includes('Completed previous run: TypeScript SDK and `qdex` CLI public kline/candle consumers'),
+    'campaign status should move TypeScript/qdex public kline consumers to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: TypeScript SDK and `qdex` CLI public kline/candle consumers'),
-    'campaign status should record this run as TypeScript/qdex public kline consumers',
+    status.includes('Completed this run: Python SDK public kline/candle consumers'),
+    'campaign status should record this run as Python public kline consumers',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK public kline/candle consumers'),
-    'campaign status should point to Python public kline parity next',
+    status.includes('Next autonomous slice: terminal UI public kline/candle panel binding'),
+    'campaign status should point to terminal UI public kline/candle panel binding next',
   );
   assert.doesNotMatch(
     status,

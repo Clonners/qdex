@@ -86,11 +86,11 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain the local API account overview smoke as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK public kline/candle consumers'),
-    'campaign status should point next work at Python public kline/candle parity after TypeScript/qdex kline consumers',
+    status.includes('Next autonomous slice: terminal UI public kline/candle panel binding'),
+    'campaign status should point next work at terminal UI public kline/candle panel binding after Python kline consumers',
   );
   assert.ok(
-    status.includes('Current phase: TypeScript SDK and qdex CLI public kline/candle consumers are complete'),
-    'campaign status should describe TypeScript/qdex public kline consumers as the current completed phase',
+    status.includes('Current phase: Python SDK public kline/candle consumers are complete'),
+    'campaign status should describe Python public kline consumers as the current completed phase',
   );
 });

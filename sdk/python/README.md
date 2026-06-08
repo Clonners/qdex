@@ -12,6 +12,13 @@ from qdex_client import QDexClient, create_mock_signed_order, run_mock_cross_smo
 dex = QDexClient(base_url=base_url)
 markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
+one_minute_klines = dex.klines.get("QI-QUAI", interval="1m")  # /v1/klines/<MARKET>?interval=1m
+kline_stream = dex.klines.open_stream("QI-QUAI", interval="1m", timeout=2)  # /v1/ws?channel=market.<MARKET>.klines.1m
+try:
+    initial_kline_stream_snapshot = kline_stream.next()
+finally:
+    kline_stream.close()
+kline_stream_snapshots = dex.klines.stream("QI-QUAI", interval="1m", limit=1, timeout=2)
 ticker_stream = dex.tickers.open_stream(timeout=2)  # /v1/ws?channel=global.tickers
 try:
     initial_ticker_stream_snapshot = ticker_stream.next()
@@ -92,6 +99,13 @@ listing_review_decision = dex.listings.requests.decide_local_review(queued_listi
     "rejectionReason": "metadata-incomplete-local-only",
 })
 assert contracts["listedAssetStatus"]["status"] == "wrapped-token-listing"
+assert one_minute_klines["source"] == "mock-candle-projection"  # /v1/klines/<MARKET>?interval=1m
+assert one_minute_klines["interval"] == "1m"
+assert initial_kline_stream_snapshot["snapshot"]["channel"] == "market.QI-QUAI.klines.1m"  # /v1/ws?channel=market.<MARKET>.klines.1m
+assert initial_kline_stream_snapshot["snapshot"]["payload"] == "kline_snapshot"
+assert initial_kline_stream_snapshot["snapshot"]["source"] == "mock-candle-projection"
+assert initial_kline_stream_snapshot["snapshot"]["custody"] == "public-read-only-no-custody"
+assert kline_stream_snapshots[0]["snapshot"]["payload"] == "kline_snapshot"
 assert initial_ticker_stream_snapshot["snapshot"]["channel"] == "global.tickers"
 assert initial_ticker_stream_snapshot["snapshot"]["payload"] == "ticker_snapshot"
 assert initial_ticker_stream_snapshot["snapshot"]["custody"] == "public-read-only-no-custody"
@@ -235,6 +249,8 @@ smoke = run_mock_cross_smoke(dex, resting_sell=resting_sell, crossing_buy=crossi
 assert smoke["fill"]["projectionType"] == "IndexedFillProjection"
 proof = smoke["proof"]
 ```
+
+`dex.klines.get()` calls `GET /v1/klines/<MARKET>?interval=1m` and returns public candle projection metadata with `source: mock-candle-projection`, empty local mock `candles`, and no custody authority. `dex.klines.open_stream()` consumes `/v1/ws?channel=market.<MARKET>.klines.1m`, and bounded `dex.klines.stream(limit=limit)` exposes the same public-read-only-no-custody `kline_snapshot` stream to bots. These kline/candle helpers preserve `mock-candle-projection`, `public-read-only-no-custody`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `listedAssetStatus`: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and native Qi direct settlement out of scope in favor of WQI. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 

@@ -607,6 +607,39 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(bounded_trade_messages[0]["snapshot"]["payload"], "trade_projection")
             self.assertEqual(bounded_trade_messages[0]["snapshot"]["custody"], "public-read-only-no-custody")
 
+            one_minute_klines = client.klines.get("QI-QUAI", interval="1m")
+            self.assertEqual(one_minute_klines["marketId"], "QI-QUAI")
+            self.assertEqual(one_minute_klines["interval"], "1m")
+            self.assertEqual(one_minute_klines["candles"], [])
+            self.assertEqual(one_minute_klines["source"], "mock-candle-projection")
+
+            kline_stream = client.klines.open_stream("QI-QUAI", interval="1m", timeout=2)
+            try:
+                kline_message = kline_stream.next()
+                self.assertEqual(kline_message["type"], "snapshot")
+                self.assertEqual(kline_message["transport"], "websocket")
+                kline_snapshot = kline_message["snapshot"]
+                self.assertEqual(kline_snapshot["channel"], "market.QI-QUAI.klines.1m")
+                self.assertEqual(kline_snapshot["visibility"], "public")
+                self.assertEqual(kline_snapshot["payload"], "kline_snapshot")
+                self.assertEqual(kline_snapshot["source"], "mock-candle-projection")
+                self.assertEqual(kline_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(kline_snapshot["data"]["marketId"], "QI-QUAI")
+                self.assertEqual(kline_snapshot["data"]["interval"], "1m")
+                self.assertEqual(kline_snapshot["data"]["candles"], [])
+                self.assertEqual(kline_snapshot["data"]["source"], "mock-candle-projection")
+            finally:
+                kline_stream.close()
+
+            bounded_kline_messages = client.klines.stream("QI-QUAI", interval="15m", limit=1, timeout=2)
+            self.assertEqual(len(bounded_kline_messages), 1)
+            self.assertEqual(bounded_kline_messages[0]["snapshot"]["channel"], "market.QI-QUAI.klines.15m")
+            self.assertEqual(bounded_kline_messages[0]["snapshot"]["payload"], "kline_snapshot")
+            self.assertEqual(bounded_kline_messages[0]["snapshot"]["source"], "mock-candle-projection")
+            self.assertEqual(bounded_kline_messages[0]["snapshot"]["custody"], "public-read-only-no-custody")
+            self.assertEqual(bounded_kline_messages[0]["snapshot"]["data"]["interval"], "15m")
+            self.assertEqual(bounded_kline_messages[0]["snapshot"]["data"]["candles"], [])
+
     def test_python_sdk_consumes_private_tradingvault_deposit_and_withdrawal_history_streams_without_wallet_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

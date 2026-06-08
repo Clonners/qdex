@@ -40,8 +40,19 @@ def _market_trades_channel(market_id):
     return f"market.{market_id}.trades"
 
 
+def _market_klines_channel(market_id, interval="15m"):
+    return f"market.{market_id}.klines.{interval}"
+
+
 def _encode_path_value(value):
     return quote(value, safe="")
+
+
+def _klines_path(market_id, *, interval=None):
+    path = f"/v1/klines/{_encode_path_value(market_id)}"
+    if interval is None:
+        return path
+    return f"{path}?{urlencode({'interval': interval})}"
 
 
 class QDexStream:
@@ -288,6 +299,20 @@ class _OrderbookApi:
 
     def stream(self, market_id, *, limit=1, timeout=None):
         return self._client._read_stream(_market_depth_channel(market_id), limit=limit, timeout=timeout)
+
+
+class _KlinesApi:
+    def __init__(self, client):
+        self._client = client
+
+    def get(self, market_id, *, interval=None):
+        return self._client._request_ok(_klines_path(market_id, interval=interval))
+
+    def open_stream(self, market_id, *, interval="15m", timeout=None):
+        return self._client._open_stream(_market_klines_channel(market_id, interval), timeout=timeout)
+
+    def stream(self, market_id, *, interval="15m", limit=1, timeout=None):
+        return self._client._read_stream(_market_klines_channel(market_id, interval), limit=limit, timeout=timeout)
 
 
 class _ContractsApi:
@@ -565,6 +590,7 @@ class QDexClient:
         self.markets = _MarketsApi(self)
         self.tickers = _TickersApi(self)
         self.orderbook = _OrderbookApi(self)
+        self.klines = _KlinesApi(self)
         self.contracts = _ContractsApi(self)
         self.fees = _FeesApi(self)
         self.account = _AccountApi(self)

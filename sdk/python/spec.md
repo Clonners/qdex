@@ -10,6 +10,11 @@ dex = QDexClient(base_url=base_url, wallet=wallet, delegate_key=delegate_key)
 markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 limit = 1
+one_minute_klines = dex.klines.get(market_id, interval="1m")  # /v1/klines/<MARKET>?interval=1m -> kline_snapshot, mock-candle-projection
+kline_stream = dex.klines.open_stream(market_id, interval="1m")  # /v1/ws?channel=market.<MARKET>.klines.1m -> kline_snapshot, public-read-only-no-custody, mock-candle-projection
+kline_stream_snapshot = kline_stream.next()
+kline_stream.close()
+kline_stream_snapshots = dex.klines.stream(market_id, interval="1m", limit=limit)
 ticker_stream = dex.tickers.open_stream()  # /v1/ws?channel=global.tickers -> ticker_snapshot, public-read-only-no-custody, mock-market-data
 ticker_stream_snapshot = ticker_stream.next()
 ticker_stream.close()
@@ -151,6 +156,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 - `orders.cancel_all(market_id=...)` calls `POST /v1/orders/cancel-all`; in local mock mode it cancels only matcher-open quantity, carries `CANCEL_ALL`, `CANCEL_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`, and does not cancel on-chain NonceManager nonces without a separate owner-signed flow.
 
 ## Contract registry
+
+`klines.get(market_id, interval="1m")` reads public candle projections from `/v1/klines/<MARKET>?interval=1m`; `klines.open_stream(market_id, interval="1m")` and `klines.stream(market_id, interval="1m", limit=limit)` consume bounded public candle snapshots from `/v1/ws?channel=market.<MARKET>.klines.1m`. Kline messages preserve `kline_snapshot`, `public-read-only-no-custody`, `mock-candle-projection`, local mock candle rows, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `tickers.open_stream()` and bounded `tickers.stream(limit=limit)` consume public ticker snapshots from `/v1/ws?channel=global.tickers`; `orderbook.open_stream(market_id)` / `orderbook.stream(market_id, limit=limit)` consume public depth snapshots from `/v1/ws?channel=market.<MARKET>.depth`; and `trades.open_stream(market_id)` / `trades.stream(market_id, limit=limit)` consume public trade projections from `/v1/ws?channel=market.<MARKET>.trades`. These snapshots preserve `ticker_snapshot`, `orderbook_depth`, `trade_projection`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, and `confirmed-settlement-only` semantics; there is no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
