@@ -7,6 +7,7 @@ import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from './delegate-key
 import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
 import { bindFeePolicyLocalApiSmoke } from './fee-policy-binding.js';
 import { bindLiveFeePolicyStreamWithRestSnapshot } from './fee-policy-stream-binding.js';
+import { bindKeyboardShortcutHelpLocalApiSmoke } from './keyboard-shortcuts-smoke-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindLiveKlineStreamWithRestSnapshot } from './kline-stream-binding.js';
@@ -66,6 +67,31 @@ if (mount) {
       console.warn('QDEX command palette skeleton disabled; keeping static read-only/local mock command hints.', fallbackError);
     }
   }
+
+  try {
+    bindKeyboardShortcutHelpLocalApiSmoke({
+      mount,
+      baseUrl,
+      keyboardShortcuts: mockVerticalSliceFixture.keyboardShortcuts,
+      onSmoke: () => {
+        mount.dataset.qdxKeyboardShortcutLocalApiSmoke = 'terminal-keyboard-shortcut-help-local-api-smoke';
+      },
+      onHelpPreview: () => {
+        mount.dataset.qdxKeyboardShortcutHelp = 'help-only';
+      },
+      onError: (error) => {
+        mount.dataset.qdxKeyboardShortcutLocalApiSmoke = 'error';
+        console.warn('QDEX keyboard-shortcut local API smoke failed safely; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+      },
+    }).catch((error) => {
+      mount.dataset.qdxKeyboardShortcutLocalApiSmoke = 'disabled';
+      console.warn('QDEX keyboard-shortcut local API smoke disabled; keeping static help-only shortcut hints.', error);
+    });
+  } catch (error) {
+    mount.dataset.qdxKeyboardShortcutLocalApiSmoke = 'disabled';
+    console.warn('QDEX keyboard-shortcut local API smoke disabled; keeping static read-only/local mock shortcut hints.', error);
+  }
+
 
   try {
     bindAccountOverviewLocalApiSmoke({

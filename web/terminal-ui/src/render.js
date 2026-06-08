@@ -824,6 +824,7 @@ const renderKeyboardShortcutHelpPanel = (keyboardShortcuts) => {
         <article class="panel command-panel keyboard-shortcut-help-panel" data-qdx-keyboard-shortcuts-panel>
           <h2>terminal keyboard-shortcut help</h2>
           <p class="warning">${escapeHtml(panel.safety.notice)}</p>
+          <p class="muted" data-qdx-keyboard-shortcuts-status>Waiting for local API keyboard-shortcut help smoke; help-only-no-dispatch and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.</p>
           <dl class="kv">
             <div><dt>source</dt><dd>${escapeHtml(panel.source)}</dd></div>
             <div><dt>mode</dt><dd>${escapeHtml(panel.mode)}</dd></div>
