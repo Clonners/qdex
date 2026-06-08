@@ -165,11 +165,11 @@ test('terminal UI docs, package check, and campaign status mark fee policy panel
     'campaign status should retain the terminal UI FeeManager stream binding as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI FeeManager fee schedule stream integration smoke'),
+    status.includes('Completed previous run: local API + terminal UI FeeManager fee schedule stream integration smoke'),
     'campaign status should mark the FeeManager stream smoke complete',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers'),
+    status.includes('Next autonomous slice: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should advance past FeeManager stream smoke to SDK/CLI consumers',
   );
 

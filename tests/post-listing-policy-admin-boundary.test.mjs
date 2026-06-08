@@ -111,7 +111,7 @@ test('campaign status records completion-mode continuation plus local listing, b
 
   for (const requiredText of [
     '- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated',
-    '- Current phase: local API + terminal UI FeeManager fee schedule stream integration smoke is complete; `web/terminal-ui/src/fee-policy-stream-binding.js` now reads `GET /v1/fees`, subscribes to public `/v1/ws?channel=fees`, and renders only on REST + WebSocket agreement for the same `feemanager-policy-projection` / `FeeScheduleProjection` safety envelope with `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior; next autonomous slice is read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers',
+    '- Current phase: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers are complete; `dex.fees.openStream()` / `dex.fees.stream({ limit })` and `qdex stream fees` now consume public `/v1/ws?channel=fees` snapshots for the same `feemanager-policy-projection` / `FeeScheduleProjection` safety envelope with `fee_schedule_projection`, `public-read-only-no-custody`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior; next autonomous slice is Python SDK FeeManager fee schedule stream consumers',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
     'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, TypeScript/Python/qdex decision clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
     'Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.',
@@ -155,8 +155,9 @@ test('campaign status records completion-mode continuation plus local listing, b
     'Completed previous run: local API + terminal UI FeeManager fee schedule integration smoke added `web/terminal-ui/src/fee-policy-binding.js` and `local-api-fee-policy-smoke.test.mjs`',
     'Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment added public `fees` stream contract and `/v1/ws?channel=fees` snapshots',
     'Completed previous run: terminal UI binding for the FeeManager fee schedule stream',
-    'Completed this run: local API + terminal UI FeeManager fee schedule stream integration smoke',
-    'Next autonomous slice: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers',
+    'Completed previous run: local API + terminal UI FeeManager fee schedule stream integration smoke',
+    'Completed this run: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers',
+    'Next autonomous slice: Python SDK FeeManager fee schedule stream consumers',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
     'Clonners approved the next local-only runtime listing review queue slice.',

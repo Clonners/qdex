@@ -199,6 +199,45 @@ test('qdex stream delegate-key registrations and revocations commands expose bou
   });
 });
 
+test('qdex stream fees command exposes bounded read-only FeeManager fee schedule snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'stream', 'fees', '--limit', '1']);
+
+    assert.equal(result.command, 'stream fees');
+    assert.equal(result.channel, 'fees');
+    assert.equal(result.transport, 'websocket');
+    assert.equal(result.limit, 1);
+    assert.equal(result.messages.length, 1);
+    assert.equal(result.messages[0].type, 'snapshot');
+    assert.equal(result.messages[0].snapshot.channel, 'fees');
+    assert.equal(result.messages[0].snapshot.visibility, 'public');
+    assert.equal(result.messages[0].snapshot.payload, 'fee_schedule_projection');
+    assert.equal(result.messages[0].snapshot.source, 'feemanager-policy-projection');
+    assert.equal(result.messages[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(result.messages[0].snapshot.data.source, 'feemanager-policy-projection');
+    assert.equal(result.messages[0].snapshot.data.status, 'local-only-not-deployed');
+    assert.deepEqual(result.messages[0].snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.messages[0].snapshot.data.feeSchedules[0].projectionType, 'FeeScheduleProjection');
+    assert.equal(result.messages[0].snapshot.data.feeSchedules[0].eventName, 'FeesUpdated');
+    assert.equal(result.messages[0].snapshot.data.hardMaxFeeBps, 1000);
+    assert.equal(result.messages[0].snapshot.data.feeRecipient, null);
+    assert.equal(result.messages[0].snapshot.data.feeManagerMutation, false);
+    assert.equal(result.messages[0].snapshot.data.tradingVaultMutation, false);
+    assert.equal(result.messages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(result.messages[0].snapshot.data.walletRequired, false);
+    assert.equal(result.messages[0].snapshot.data.fundsMoved, false);
+    assert.equal(result.messages[0].snapshot.data.safety.noFeeAuthorityRuntimeKeys, true);
+    assert.equal(result.messages[0].snapshot.data.safety.noWalletLoading, true);
+    assert.equal(result.messages[0].snapshot.data.safety.noRpcUrlAccess, true);
+    assert.equal(result.messages[0].snapshot.data.safety.noSigning, true);
+    assert.equal(result.messages[0].snapshot.data.safety.noBroadcast, true);
+    assert.equal(result.messages[0].snapshot.data.safety.noDeploys, true);
+    assert.equal(result.messages[0].snapshot.data.safety.noTransactionSubmission, true);
+    assert.equal(result.messages[0].snapshot.data.safety.noFundsMovement, true);
+    assert.match(result.messages[0].snapshot.data.safety.notice, /Read-only FeeManager schedule metadata/i);
+  });
+});
+
 test('qdex balance command prints read-only mock vault balances without wallet or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'balance']);

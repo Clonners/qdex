@@ -200,6 +200,8 @@ export class QDexClient {
 
     this.fees = {
       get: async () => this.#requestOk('/v1/fees'),
+      openStream: (options = {}) => this.streams.open('fees', options),
+      stream: async (options = {}) => this.streams.read('fees', options),
     };
 
     this.account = {

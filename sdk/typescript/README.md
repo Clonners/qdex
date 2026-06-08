@@ -98,6 +98,10 @@ await delegateKeyRegistrationStream.close();
 const delegateKeyRevocationStream = dex.delegateKeys.revocations.openStream({ timeoutMs: 2000 });
 const initialDelegateKeyRevocationSnapshot = await delegateKeyRevocationStream.next();
 await delegateKeyRevocationStream.close();
+const feeScheduleStream = dex.fees.openStream({ timeoutMs: 2000 });
+const initialFeeScheduleSnapshot = await feeScheduleStream.next();
+await feeScheduleStream.close();
+const boundedFeeScheduleSnapshots = await dex.fees.stream({ limit: 1 });
 
 const result = await runMockCrossSmoke(dex, {
   restingSell: createMockSignedOrder({ side: 'sell', amount: '100', price: '5', nonce: '1' }),
@@ -209,6 +213,14 @@ console.log(initialDelegateKeyRevocationSnapshot.snapshot.channel); // /v1/ws?ch
 console.log(initialDelegateKeyRevocationSnapshot.snapshot.projectionType); // DelegateKeyRevokedProjection
 console.log(initialDelegateKeyRevocationSnapshot.snapshot.delegateCanAdmin); // delegateCanAdmin: false
 console.log(initialDelegateKeyRevocationSnapshot.snapshot.delegateKeyRegistryMutation); // delegateKeyRegistryMutation: false
+console.log(initialFeeScheduleSnapshot.snapshot.channel); // /v1/ws?channel=fees
+console.log(initialFeeScheduleSnapshot.snapshot.payload); // fee_schedule_projection
+console.log(initialFeeScheduleSnapshot.snapshot.custody); // public-read-only-no-custody
+console.log(initialFeeScheduleSnapshot.snapshot.data.source); // feemanager-policy-projection
+console.log(initialFeeScheduleSnapshot.snapshot.data.feeSchedules[0].projectionType); // FeeScheduleProjection
+console.log(initialFeeScheduleSnapshot.snapshot.data.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(boundedFeeScheduleSnapshots[0].snapshot.data.feeManagerMutation); // feeManagerMutation: false
+console.log(boundedFeeScheduleSnapshots[0].snapshot.data.tradingVaultMutation); // tradingVaultMutation: false
 console.log(result.fill.projectionType); // IndexedFillProjection
 console.log(result.fill.sourceEventId);
 console.log(result.proof.settlementMode); // mock
@@ -217,6 +229,8 @@ console.log(result.proof.settlementMode); // mock
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects. `contractRegistry.listedAssetStatus.status` is `wrapped-token-listing`; primary quote assets are `WQUAI` and `WQI`. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. Approved community-created tokens are listable only through those approval-gated metadata surfaces, and raw native Qi direct settlement is out of scope. The safety notice preserves: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `dex.fees.get()` calls `GET /v1/fees` and returns read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
+
+`dex.fees.openStream` and `dex.fees.stream` consume public `/v1/ws?channel=fees` snapshots for bounded bot/operator FeeManager policy monitoring. Messages carry `payload: fee_schedule_projection`, `custody: public-read-only-no-custody`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`; the stream helpers do not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, move funds, or expose fee-authority runtime keys.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

@@ -396,6 +396,47 @@ test('TypeScript SDK exposes read-only FeeManager fee schedule metadata without 
   });
 });
 
+test('TypeScript SDK consumes read-only FeeManager fee schedule WebSocket snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const stream = client.fees.openStream({ timeoutMs: 2_000 });
+    const firstSnapshot = await stream.next();
+    await stream.close();
+    const boundedSnapshots = await client.fees.stream({ limit: 1, timeoutMs: 2_000 });
+
+    for (const message of [firstSnapshot, ...boundedSnapshots]) {
+      assert.equal(message.type, 'snapshot');
+      assert.equal(message.snapshot.channel, 'fees');
+      assert.equal(message.snapshot.visibility, 'public');
+      assert.equal(message.snapshot.payload, 'fee_schedule_projection');
+      assert.equal(message.snapshot.source, 'feemanager-policy-projection');
+      assert.equal(message.snapshot.custody, 'public-read-only-no-custody');
+      assert.equal(message.snapshot.data.source, 'feemanager-policy-projection');
+      assert.equal(message.snapshot.data.status, 'local-only-not-deployed');
+      assert.deepEqual(message.snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(message.snapshot.data.feeSchedules[0].projectionType, 'FeeScheduleProjection');
+      assert.equal(message.snapshot.data.feeSchedules[0].eventName, 'FeesUpdated');
+      assert.equal(message.snapshot.data.hardMaxFeeBps, 1000);
+      assert.equal(message.snapshot.data.feeRecipient, null);
+      assert.equal(message.snapshot.data.feeManagerMutation, false);
+      assert.equal(message.snapshot.data.tradingVaultMutation, false);
+      assert.equal(message.snapshot.data.realQuaiTransactions, false);
+      assert.equal(message.snapshot.data.walletRequired, false);
+      assert.equal(message.snapshot.data.fundsMoved, false);
+      assert.equal(message.snapshot.data.safety.noFeeAuthorityRuntimeKeys, true);
+      assert.equal(message.snapshot.data.safety.noWalletLoading, true);
+      assert.equal(message.snapshot.data.safety.noRpcUrlAccess, true);
+      assert.equal(message.snapshot.data.safety.noSigning, true);
+      assert.equal(message.snapshot.data.safety.noBroadcast, true);
+      assert.equal(message.snapshot.data.safety.noDeploys, true);
+      assert.equal(message.snapshot.data.safety.noTransactionSubmission, true);
+      assert.equal(message.snapshot.data.safety.noFundsMovement, true);
+      assert.match(message.snapshot.data.safety.notice, /Read-only FeeManager schedule metadata/i);
+    }
+  });
+});
+
 test('TypeScript SDK exposes read-only relayer settlement-mode gate metadata without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

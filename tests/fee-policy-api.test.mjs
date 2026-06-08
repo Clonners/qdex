@@ -111,11 +111,15 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
     'campaign status should retain the terminal UI FeeManager stream binding as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI FeeManager fee schedule stream integration smoke'),
-    'campaign status should mark the FeeManager stream smoke as this run',
+    status.includes('Completed previous run: local API + terminal UI FeeManager fee schedule stream integration smoke'),
+    'campaign status should move the FeeManager stream smoke to previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers'),
+    status.includes('Completed this run: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers'),
+    'campaign status should mark the FeeManager TypeScript/qdex stream consumers as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should move past FeeManager stream smoke to SDK/CLI stream consumers',
   );
 
