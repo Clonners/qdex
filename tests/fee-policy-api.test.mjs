@@ -103,11 +103,11 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
     'campaign status should retain the local API + terminal UI FeeManager fee schedule smoke as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    status.includes('Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
     'campaign status should record the FeeManager WebSocket snapshot alignment as this run',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream'),
+    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule stream integration smoke'),
     'campaign status should move past FeeManager WebSocket snapshot alignment to terminal UI stream binding',
   );
 

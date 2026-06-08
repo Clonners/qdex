@@ -58,6 +58,8 @@ Read-only FeeManager fee schedule WebSocket snapshot alignment complete: `/v1/ws
 
 The stream snapshot remains metadata-only: `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
+Terminal UI FeeManager fee schedule stream binding complete: `web/terminal-ui/src/live-fee-policy.js` consumes public `/v1/ws?channel=fees` snapshots, validates `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior before rendering the live FeeManager fee schedule stream panel.
+
 ## Next local/source-only surface
 
-After the WebSocket snapshot alignment, the next bounded local/source-only slice is terminal UI binding for the FeeManager fee schedule stream. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.
+After terminal UI binding for the FeeManager fee schedule stream, the next bounded local/source-only slice is a local API + terminal UI FeeManager fee schedule stream integration smoke. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.

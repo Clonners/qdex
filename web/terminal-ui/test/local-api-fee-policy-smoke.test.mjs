@@ -207,11 +207,11 @@ test('fee policy docs, app binding, package check, and campaign status mark the 
     'campaign status should retain this local API FeeManager smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    status.includes('Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
     'campaign status should checkpoint the read-only FeeManager stream alignment slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream'),
+    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule stream integration smoke'),
     'campaign status should advance to terminal UI binding for the FeeManager stream',
   );
 

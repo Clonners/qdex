@@ -511,6 +511,42 @@ const renderFeePolicyPanel = (feePolicy) => {
   `;
 };
 
+const renderFeePolicyStreamPanel = (feePolicyStream) => {
+  if (feePolicyStream === undefined || feePolicyStream === null) {
+    return '';
+  }
+
+  const permissions = (feePolicyStream.permissions ?? []).join(', ');
+  const streamReason = feePolicyStream.streamEvent?.reason ?? 'initial_snapshot';
+
+  return `
+        <article class="panel stream-panel fee-policy-stream-panel">
+          <h2>live FeeManager fee schedule stream</h2>
+          <p class="warning">${escapeHtml(feePolicyStream.safetyNotice)}</p>
+          <p class="warning">${escapeHtml(feePolicyStream.projectionSafetyNotice ?? '')}</p>
+          <dl class="kv">
+            <div><dt>channel</dt><dd>${escapeHtml(feePolicyStream.channel)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(feePolicyStream.source)}</dd></div>
+            <div><dt>stream custody</dt><dd>${escapeHtml(feePolicyStream.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>projection</dt><dd>${escapeHtml(feePolicyStream.projectionType)}</dd></div>
+            <div><dt>event</dt><dd>${escapeHtml(feePolicyStream.eventName)}</dd></div>
+            <div><dt>hard max fee bps</dt><dd>${escapeHtml(feePolicyStream.hardMaxFeeBps)}</dd></div>
+            <div><dt>fee recipient</dt><dd>${escapeHtml(localMockEvidenceLabel(feePolicyStream.feeRecipient))}</dd></div>
+            <div><dt>row count</dt><dd>${escapeHtml(feePolicyStream.rowCount ?? 0)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(feePolicyStream.settlementMode)}</dd></div>
+            <div><dt>feeManagerMutation</dt><dd>${escapeHtml(feePolicyStream.feeManagerMutation)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(feePolicyStream.tradingVaultMutation)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(feePolicyStream.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(feePolicyStream.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(feePolicyStream.fundsMoved)}</dd></div>
+            <div><dt>fee-authority runtime keys</dt><dd>${escapeHtml(feePolicyStream.noFeeAuthorityRuntimeKeys ? 'absent' : 'unsafe')}</dd></div>
+            <div><dt>last event</dt><dd>${escapeHtml(streamReason)}</dd></div>
+          </dl>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -608,6 +644,8 @@ ${renderDelegateKeyOperationPanel(fixture.delegateKeyOperation)}
 ${renderDelegateKeyHistoryPanel(fixture.delegateKeyHistory)}
 
 ${renderFeePolicyPanel(fixture.feePolicy)}
+
+${renderFeePolicyStreamPanel(fixture.feePolicyStream)}
 
 ${renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream)}
 

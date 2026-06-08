@@ -159,11 +159,11 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should retain FeeManager local API smoke as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    status.includes('Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
     'campaign status should checkpoint the FeeManager stream snapshot alignment',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream'),
+    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule stream integration smoke'),
     'campaign status should move past FeeManager stream snapshot alignment to terminal UI binding',
   );
 
