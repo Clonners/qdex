@@ -86,11 +86,11 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain the local API account overview smoke as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI public kline/candle stream integration smoke'),
-    'campaign status should point next work at the local API + terminal UI public kline/candle stream integration smoke after this binding slice',
+    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    'campaign status should retain the local API + terminal UI public kline/candle stream smoke as current completed work',
   );
   assert.ok(
-    status.includes('Current phase: terminal UI public kline/candle panel binding is complete'),
-    'campaign status should describe terminal UI public kline/candle binding as the current completed phase',
+    status.includes('Current phase: local API + terminal UI public kline/candle stream integration smoke is complete'),
+    'campaign status should describe the local API + terminal UI public kline/candle stream smoke as the current completed phase',
   );
 });

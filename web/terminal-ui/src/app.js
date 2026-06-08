@@ -7,7 +7,7 @@ import { bindFeePolicyLocalApiSmoke } from './fee-policy-binding.js';
 import { bindLiveFeePolicyStreamWithRestSnapshot } from './fee-policy-stream-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
-import { bindLiveKlineStream } from './live-klines.js';
+import { bindLiveKlineStreamWithRestSnapshot } from './kline-stream-binding.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
@@ -177,18 +177,28 @@ if (mount) {
   }
 
   try {
-    bindLiveKlineStream({
+    bindLiveKlineStreamWithRestSnapshot({
       mount,
       baseUrl,
       baseFixture: mockVerticalSliceFixture,
       render: renderTradeProofPanel,
-      onError: (error) => {
+      onRestError: (error) => {
+        mount.dataset.qdxKlineRestSnapshot = 'error';
+        console.warn('QDEX public kline/candle REST snapshot unavailable; keeping static read-only fixture with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.', error);
+      },
+      onRestSnapshot: () => {
+        mount.dataset.qdxKlineRestSnapshot = 'mock-candle-projection';
+      },
+      onStreamError: (error) => {
         mount.dataset.qdxKlineStream = 'error';
         console.warn('QDEX live public kline/candle stream unavailable; keeping static read-only fixture with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.', error);
       },
-      onUpdate: () => {
+      onStreamUpdate: () => {
         mount.dataset.qdxKlineStream = 'market.QI-QUAI.klines.1m';
       },
+    }).catch((error) => {
+      mount.dataset.qdxKlineStream = 'disabled';
+      console.warn('QDEX local public kline/candle API/stream smoke disabled; keeping static read-only fixture.', error);
     });
   } catch (error) {
     mount.dataset.qdxKlineStream = 'disabled';

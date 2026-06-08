@@ -121,12 +121,16 @@ test('terminal UI docs, package check, and campaign status mark public kline/can
     'campaign status should move Python SDK public kline consumers to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI public kline/candle panel binding'),
-    'campaign status should checkpoint this terminal UI public kline/candle binding slice',
+    status.includes('Completed previous run: terminal UI public kline/candle panel binding'),
+    'campaign status should retain this terminal UI public kline/candle binding slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI public kline/candle stream integration smoke'),
-    'campaign status should point next work at the local API + terminal UI kline stream smoke',
+    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    'campaign status should checkpoint the REST-confirmed public kline/candle stream smoke slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should move next work to another bounded local/source-only MVP surface',
   );
 
   assert.doesNotMatch(

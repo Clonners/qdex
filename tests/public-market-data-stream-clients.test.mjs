@@ -201,12 +201,12 @@ test('Python SDK docs expose bounded public market-data and kline/candle consume
   }
 });
 
-test('campaign status marks terminal UI public kline/candle binding complete after Python parity', async () => {
+test('campaign status marks local API + terminal UI public kline/candle stream smoke complete after the terminal UI binding', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: terminal UI public kline/candle panel binding is complete'),
-    'campaign status should mark terminal UI public kline/candle binding as current phase',
+    status.includes('Current phase: local API + terminal UI public kline/candle stream integration smoke is complete'),
+    'campaign status should mark local API + terminal UI public kline/candle stream smoke as current phase',
   );
   assert.ok(
     status.includes('Completed previous run: TypeScript SDK and `qdex` CLI public kline/candle consumers'),
@@ -214,15 +214,19 @@ test('campaign status marks terminal UI public kline/candle binding complete aft
   );
   assert.ok(
     status.includes('Completed previous run: Python SDK public kline/candle consumers'),
-    'campaign status should move Python public kline consumers to previous work',
+    'campaign status should retain Python public kline consumers as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI public kline/candle panel binding'),
-    'campaign status should record this run as terminal UI public kline/candle panel binding',
+    status.includes('Completed previous run: terminal UI public kline/candle panel binding'),
+    'campaign status should move terminal UI public kline/candle panel binding to previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI public kline/candle stream integration smoke'),
-    'campaign status should point to the local API + terminal UI public kline/candle stream integration smoke next',
+    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    'campaign status should record this run as the REST-confirmed public kline/candle stream smoke',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should move next work to another safe local/source-only MVP surface',
   );
   assert.doesNotMatch(
     status,

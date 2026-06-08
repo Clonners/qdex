@@ -149,8 +149,8 @@ test('terminal UI docs, account docs, package check, and campaign status mark ac
     'campaign status should retain the local API account overview smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI public kline/candle stream integration smoke'),
-    'campaign status should point next work at the local API + terminal UI public kline/candle stream integration smoke after this binding slice',
+    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    'campaign status should retain the local API + terminal UI public kline/candle stream smoke as current completed work',
   );
 
   assert.doesNotMatch(
