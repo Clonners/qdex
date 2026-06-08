@@ -9,6 +9,7 @@ import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-
 
 const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
 const contractRegistry = await dex.contracts.get();
+const fees = await dex.fees.get();
 const accountBalances = await dex.account.balances();
 const vaultDeposits = await dex.vault.deposits.list();
 const vaultWithdrawals = await dex.vault.withdrawals.list();
@@ -132,7 +133,15 @@ console.log(contractRegistry.listedAssetStatus.status); // wrapped-token-listing
 console.log(contractRegistry.listedAssetStatus.primaryQuoteAssets); // WQUAI, WQI
 console.log(contractRegistry.listedAssetStatus.supportedAssetModel); // erc20-style-vault-token
 console.log(contractRegistry.listedAssetStatus.nativeQiTreatment); // out-of-scope-direct-settlement-use-WQI
-console.log(listingPolicy.source); // listed-asset-marketregistry-policy
+console.log(fees.source); // GET /v1/fees, feemanager-policy-projection
+console.log(fees.feeSchedules[0].projectionType); // FeeScheduleProjection
+console.log(fees.feeSchedules[0].eventName); // eventName: FeesUpdated
+console.log(fees.hardMaxFeeBps); // hardMaxFeeBps: 1000
+console.log(fees.feeRecipient); // feeRecipient: null
+console.log(fees.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(fees.feeManagerMutation); // feeManagerMutation: false
+console.log(fees.tradingVaultMutation); // tradingVaultMutation: false
+console.log(accountBalances.source); // mock-vault-projection
 console.log(listingPolicy.status); // design-only-local-metadata
 console.log(listingPolicy.primaryQuoteAssets); // WQUAI, WQI
 console.log(listingPolicy.supportedAssets[2].symbol); // community-created-erc20-style-token
@@ -206,6 +215,8 @@ console.log(result.proof.settlementMode); // mock
 ```
 
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects. `contractRegistry.listedAssetStatus.status` is `wrapped-token-listing`; primary quote assets are `WQUAI` and `WQI`. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. Approved community-created tokens are listable only through those approval-gated metadata surfaces, and raw native Qi direct settlement is out of scope. The safety notice preserves: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
+
+`dex.fees.get()` calls `GET /v1/fees` and returns read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

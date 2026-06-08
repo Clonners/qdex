@@ -10,6 +10,7 @@ const dex = new QDexClient({ baseUrl, wallet, delegateKey });
 await dex.markets.list();
 await dex.orderbook.get(marketId);
 await dex.contracts.get(); // GET /v1/contracts
+await dex.fees.get(); // GET /v1/fees -> feemanager-policy-projection, FeeScheduleProjection, READ_ONLY
 await dex.account.balances(); // GET /v1/account/balances -> mock-vault-projection, read-only, no wallet loaded, no funds moved
 await dex.vault.deposits.list(); // GET /v1/vault/deposits -> source: tradingvault-event-projection, TradingVaultDepositProjection, READ_ONLY
 await dex.vault.withdrawals.list(); // GET /v1/vault/withdrawals -> source: tradingvault-event-projection, TradingVaultWithdrawalProjection, READ_ONLY
@@ -127,6 +128,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 `orders.openStream()` and `orders.stream()`/`orders.stream({ limit })` consume `/v1/ws?channel=orders` snapshots and live matcher-local order updates. Cancellation events must keep `matcher-local-cancel-only-on-chain-nonce-unchanged`, `CANCEL_ORDER`/`CANCEL_ALL`, `NO_WITHDRAW`, and `NO_ADMIN` visible so bots do not mistake off-chain removal for on-chain `NonceManager` mutation.
 
 `contracts.get()` is read-only contract-registry metadata from `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety; it must not load wallets, send transactions, or imply deployment authority.
+
+`fees.get()` is read-only FeeManager fee schedule metadata from `GET /v1/fees`. It returns `source: feemanager-policy-projection`, `projectionType: FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. This client has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

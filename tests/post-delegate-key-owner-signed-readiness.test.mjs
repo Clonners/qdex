@@ -124,8 +124,9 @@ test('campaign status moves from delegate prepare smoke to the post-delegate rea
     'Completed previous run: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
     'Completed previous run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
     'Completed previous run: Python SDK DelegateKeyRegistry history stream consumers',
-    'Completed this run: read-only FeeManager fee schedule API envelope',
-    'Next autonomous slice: TypeScript/Python/qdex clients for read-only FeeManager fee schedule metadata',
+    'Completed previous run: read-only FeeManager fee schedule API envelope',
+    'Completed this run: read-only FeeManager fee schedule clients',
+    'Next autonomous slice: terminal UI read-only FeeManager fee schedule exposure',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);

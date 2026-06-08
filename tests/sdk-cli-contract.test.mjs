@@ -1242,6 +1242,130 @@ test('SDK and qdex CLI docs expose read-only delegate-key history stream consume
   }
 });
 
+test('SDK and CLI docs expose read-only FeeManager fee schedule clients', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/spec.md',
+      terms: [
+        'fees.get()',
+        'GET /v1/fees',
+        'feemanager-policy-projection',
+        'FeeScheduleProjection',
+        'eventName: FeesUpdated',
+        'hardMaxFeeBps: 1000',
+        'feeRecipient: null',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'feeManagerMutation: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+        'no fee-authority runtime keys',
+      ],
+    },
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'dex.fees.get',
+        'GET /v1/fees',
+        'feemanager-policy-projection',
+        'FeeScheduleProjection',
+        'eventName: FeesUpdated',
+        'hardMaxFeeBps: 1000',
+        'feeRecipient: null',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'feeManagerMutation: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+        'no fee-authority runtime keys',
+      ],
+    },
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        'fees.get()',
+        'GET /v1/fees',
+        'feemanager-policy-projection',
+        'FeeScheduleProjection',
+        'eventName: FeesUpdated',
+        'hardMaxFeeBps: 1000',
+        'feeRecipient: None',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'feeManagerMutation: False',
+        'tradingVaultMutation: False',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+        'no fee-authority runtime keys',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.fees.get',
+        'GET /v1/fees',
+        'feemanager-policy-projection',
+        'FeeScheduleProjection',
+        'eventName: FeesUpdated',
+        'hardMaxFeeBps: 1000',
+        'feeRecipient: None',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'feeManagerMutation: False',
+        'tradingVaultMutation: False',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+        'no fee-authority runtime keys',
+      ],
+    },
+    {
+      path: 'cli/qdex/spec.md',
+      terms: [
+        'qdex fees',
+        'GET /v1/fees',
+        'feemanager-policy-projection',
+        'FeeScheduleProjection',
+        'eventName: FeesUpdated',
+        'hardMaxFeeBps: 1000',
+        'feeRecipient: null',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'feeManagerMutation: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+        'no fee-authority runtime keys',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'qdex fees',
+        'GET /v1/fees',
+        'feemanager-policy-projection',
+        'FeeScheduleProjection',
+        'eventName: FeesUpdated',
+        'hardMaxFeeBps: 1000',
+        'feeRecipient: null',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'feeManagerMutation: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+        'no fee-authority runtime keys',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
 test('SDK and CLI README docs expose read-only relayer gate clients', async () => {
   const docs = [
     {

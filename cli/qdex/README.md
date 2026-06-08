@@ -9,6 +9,7 @@ qdex --base-url http://127.0.0.1:8787 markets
 qdex --base-url http://127.0.0.1:8787 book QI-QUAI
 qdex --base-url http://127.0.0.1:8787 balance
 qdex --base-url http://127.0.0.1:8787 contracts
+qdex --base-url http://127.0.0.1:8787 fees
 qdex --base-url http://127.0.0.1:8787 listings policy
 qdex --base-url http://127.0.0.1:8787 listings review-flow
 qdex --base-url http://127.0.0.1:8787 listings requests
@@ -35,6 +36,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 ```
 
 `qdex contracts` prints the `GET /v1/contracts` registry as local-only metadata: `local-only-not-deployed`, null addresses, no real Quai tx, no wallet required, and no deploy authority. It includes read-only `listedAssetStatus` metadata: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and the safety notice that the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval.
+
+`qdex fees` prints `GET /v1/fees` read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `qdex balance` prints `GET /v1/account/balances` as read-only `mock-vault-projection` metadata: `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, no real Quai tx, no wallet required, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

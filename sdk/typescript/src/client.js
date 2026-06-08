@@ -198,6 +198,10 @@ export class QDexClient {
       get: async () => this.#requestOk('/v1/contracts'),
     };
 
+    this.fees = {
+      get: async () => this.#requestOk('/v1/fees'),
+    };
+
     this.account = {
       get: async () => this.#requestOk('/v1/account'),
       balances: async () => this.#requestOk('/v1/account/balances'),

@@ -290,7 +290,8 @@ test('terminal UI package/app/docs mention the private DelegateKeyRegistry histo
     'Completed previous run: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
     'Completed previous run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
     'Completed previous run: Python SDK DelegateKeyRegistry history stream consumers',
-    'Completed this run: read-only FeeManager fee schedule API envelope',
+    'Completed previous run: read-only FeeManager fee schedule API envelope',
+    'Completed this run: read-only FeeManager fee schedule clients',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

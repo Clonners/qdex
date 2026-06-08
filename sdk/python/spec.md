@@ -10,6 +10,7 @@ dex = QDexClient(base_url=base_url, wallet=wallet, delegate_key=delegate_key)
 markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
+fees = dex.fees.get()  # GET /v1/fees -> feemanager-policy-projection, FeeScheduleProjection, READ_ONLY
 balances = dex.account.balances()  # GET /v1/account/balances -> mock-vault-projection, read-only, no wallet loaded, no funds moved
 vault_deposits = dex.vault.deposits.list()  # GET /v1/vault/deposits -> source: tradingvault-event-projection, TradingVaultDepositProjection, READ_ONLY
 vault_withdrawals = dex.vault.withdrawals.list()  # GET /v1/vault/withdrawals -> source: tradingvault-event-projection, TradingVaultWithdrawalProjection, READ_ONLY
@@ -135,6 +136,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 ## Contract registry
 
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
+
+`fees.get()` is read-only FeeManager fee schedule metadata from `GET /v1/fees`. It returns `source: feemanager-policy-projection`, `projectionType: FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`. This client has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

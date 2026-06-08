@@ -83,12 +83,16 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
     'architecture docs should point to completed FeeManager fee policy API visibility',
   );
   assert.ok(
-    status.includes('Completed this run: read-only FeeManager fee schedule API envelope'),
-    'campaign status should checkpoint the FeeManager fee policy API slice',
+    status.includes('Completed previous run: read-only FeeManager fee schedule API envelope'),
+    'campaign status should retain the FeeManager fee policy API slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: TypeScript/Python/qdex clients for read-only FeeManager fee schedule metadata'),
-    'campaign status should move to read-only FeeManager client exposure after API visibility',
+    status.includes('Completed this run: read-only FeeManager fee schedule clients'),
+    'campaign status should checkpoint the FeeManager SDK/Python/qdex client exposure slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI read-only FeeManager fee schedule exposure'),
+    'campaign status should move to terminal UI fee schedule exposure after client visibility',
   );
 
   assert.doesNotMatch(

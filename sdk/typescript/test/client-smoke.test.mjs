@@ -350,6 +350,52 @@ test('TypeScript SDK lists read-only TradingVault deposit and withdrawal history
   });
 });
 
+test('TypeScript SDK exposes read-only FeeManager fee schedule metadata without fee-authority or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const fees = await client.fees.get();
+
+    assert.equal(fees.source, 'feemanager-policy-projection');
+    assert.equal(fees.status, 'local-only-not-deployed');
+    assert.equal(fees.custody, 'non-custodial-fee-policy');
+    assert.deepEqual(fees.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(fees.hardMaxFeeBps, 1000);
+    assert.equal(fees.feeRecipient, null);
+    assert.equal(fees.feeManagerMutation, false);
+    assert.equal(fees.realQuaiTransactions, false);
+    assert.equal(fees.walletRequired, false);
+    assert.equal(fees.fundsMoved, false);
+    assert.equal(fees.tradingVaultMutation, false);
+    assert.deepEqual(fees.feeSchedules, [
+      {
+        marketId: 'QI-QUAI',
+        projectionType: 'FeeScheduleProjection',
+        eventName: 'FeesUpdated',
+        makerFeeBps: 0,
+        takerFeeBps: 0,
+        maxFeeBps: 1000,
+        feeRecipient: null,
+        settlementMode: 'mock',
+        settlementTx: null,
+        blockNumber: null,
+        blockHash: null,
+        eventIndex: null,
+        explorerUrl: null,
+      },
+    ]);
+    assert.equal(fees.safety.noWalletLoading, true);
+    assert.equal(fees.safety.noRpcUrlAccess, true);
+    assert.equal(fees.safety.noSigning, true);
+    assert.equal(fees.safety.noBroadcast, true);
+    assert.equal(fees.safety.noDeploys, true);
+    assert.equal(fees.safety.noTransactionSubmission, true);
+    assert.equal(fees.safety.noFundsMovement, true);
+    assert.equal(fees.safety.noFeeAuthorityRuntimeKeys, true);
+    assert.match(fees.safety.notice, /Read-only FeeManager schedule metadata/i);
+  });
+});
+
 test('TypeScript SDK exposes read-only relayer settlement-mode gate metadata without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

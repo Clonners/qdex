@@ -487,6 +487,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
   qdex --base-url http://127.0.0.1:8787 balance
   qdex --base-url http://127.0.0.1:8787 contracts
+  qdex --base-url http://127.0.0.1:8787 fees
   qdex --base-url http://127.0.0.1:8787 listings policy
   qdex --base-url http://127.0.0.1:8787 listings review-flow
   qdex --base-url http://127.0.0.1:8787 listings requests
@@ -556,6 +557,15 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         command: 'contracts',
         baseUrl,
         ...(await client.contracts.get()),
+      });
+      return 0;
+    }
+
+    if (command === 'fees') {
+      writeJson(stdout, {
+        command: 'fees',
+        baseUrl,
+        ...(await client.fees.get()),
       });
       return 0;
     }

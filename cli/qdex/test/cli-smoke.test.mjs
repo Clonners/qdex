@@ -217,6 +217,52 @@ test('qdex balance command prints read-only mock vault balances without wallet o
   });
 });
 
+test('qdex fees command prints read-only FeeManager fee schedule metadata without fee-authority or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'fees']);
+
+    assert.equal(result.command, 'fees');
+    assert.equal(result.baseUrl, baseUrl);
+    assert.equal(result.source, 'feemanager-policy-projection');
+    assert.equal(result.status, 'local-only-not-deployed');
+    assert.equal(result.custody, 'non-custodial-fee-policy');
+    assert.deepEqual(result.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.hardMaxFeeBps, 1000);
+    assert.equal(result.feeRecipient, null);
+    assert.equal(result.feeManagerMutation, false);
+    assert.equal(result.realQuaiTransactions, false);
+    assert.equal(result.walletRequired, false);
+    assert.equal(result.fundsMoved, false);
+    assert.equal(result.tradingVaultMutation, false);
+    assert.deepEqual(result.feeSchedules, [
+      {
+        marketId: 'QI-QUAI',
+        projectionType: 'FeeScheduleProjection',
+        eventName: 'FeesUpdated',
+        makerFeeBps: 0,
+        takerFeeBps: 0,
+        maxFeeBps: 1000,
+        feeRecipient: null,
+        settlementMode: 'mock',
+        settlementTx: null,
+        blockNumber: null,
+        blockHash: null,
+        eventIndex: null,
+        explorerUrl: null,
+      },
+    ]);
+    assert.equal(result.safety.noWalletLoading, true);
+    assert.equal(result.safety.noRpcUrlAccess, true);
+    assert.equal(result.safety.noSigning, true);
+    assert.equal(result.safety.noBroadcast, true);
+    assert.equal(result.safety.noDeploys, true);
+    assert.equal(result.safety.noTransactionSubmission, true);
+    assert.equal(result.safety.noFundsMovement, true);
+    assert.equal(result.safety.noFeeAuthorityRuntimeKeys, true);
+    assert.match(result.safety.notice, /Read-only FeeManager schedule metadata/i);
+  });
+});
+
 test('qdex vault prepare commands print owner-wallet placeholders without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const deposit = await runCliJson([

@@ -143,12 +143,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should retain Python SDK stream consumers after TypeScript/qdex parity',
   );
   assert.ok(
-    status.includes('Completed this run: read-only FeeManager fee schedule API envelope'),
-    'campaign status should checkpoint the FeeManager fee policy API slice',
+    status.includes('Completed previous run: read-only FeeManager fee schedule API envelope'),
+    'campaign status should retain the FeeManager fee policy API slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: TypeScript/Python/qdex clients for read-only FeeManager fee schedule metadata'),
-    'campaign status should move past delegate-key stream parity to FeeManager client exposure',
+    status.includes('Completed this run: read-only FeeManager fee schedule clients'),
+    'campaign status should checkpoint the FeeManager SDK/Python/qdex client exposure slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI read-only FeeManager fee schedule exposure'),
+    'campaign status should move past FeeManager client exposure to terminal UI visibility',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

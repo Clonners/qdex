@@ -407,6 +407,53 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(withdrawals["fundsMoved"])
             self.assertFalse(withdrawals["tradingVaultMutation"])
 
+    def test_python_sdk_exposes_read_only_feemanager_fee_schedule_metadata_without_fee_authority_or_tx_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            fees = client.fees.get()
+
+            self.assertEqual(fees["source"], "feemanager-policy-projection")
+            self.assertEqual(fees["status"], "local-only-not-deployed")
+            self.assertEqual(fees["custody"], "non-custodial-fee-policy")
+            self.assertEqual(fees["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(fees["hardMaxFeeBps"], 1000)
+            self.assertIsNone(fees["feeRecipient"])
+            self.assertFalse(fees["feeManagerMutation"])
+            self.assertFalse(fees["realQuaiTransactions"])
+            self.assertFalse(fees["walletRequired"])
+            self.assertFalse(fees["fundsMoved"])
+            self.assertFalse(fees["tradingVaultMutation"])
+            self.assertEqual(
+                fees["feeSchedules"],
+                [
+                    {
+                        "marketId": "QI-QUAI",
+                        "projectionType": "FeeScheduleProjection",
+                        "eventName": "FeesUpdated",
+                        "makerFeeBps": 0,
+                        "takerFeeBps": 0,
+                        "maxFeeBps": 1000,
+                        "feeRecipient": None,
+                        "settlementMode": "mock",
+                        "settlementTx": None,
+                        "blockNumber": None,
+                        "blockHash": None,
+                        "eventIndex": None,
+                        "explorerUrl": None,
+                    }
+                ],
+            )
+            self.assertTrue(fees["safety"]["noWalletLoading"])
+            self.assertTrue(fees["safety"]["noRpcUrlAccess"])
+            self.assertTrue(fees["safety"]["noSigning"])
+            self.assertTrue(fees["safety"]["noBroadcast"])
+            self.assertTrue(fees["safety"]["noDeploys"])
+            self.assertTrue(fees["safety"]["noTransactionSubmission"])
+            self.assertTrue(fees["safety"]["noFundsMovement"])
+            self.assertTrue(fees["safety"]["noFeeAuthorityRuntimeKeys"])
+            self.assertIn("Read-only FeeManager schedule metadata", fees["safety"]["notice"])
+
     def test_python_sdk_consumes_private_tradingvault_deposit_and_withdrawal_history_streams_without_wallet_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

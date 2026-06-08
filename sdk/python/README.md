@@ -13,6 +13,7 @@ dex = QDexClient(base_url=base_url)
 markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
 contracts = dex.contracts.get()
+fees = dex.fees.get()
 balances = dex.account.balances()
 vault_deposits = dex.vault.deposits.list()
 vault_withdrawals = dex.vault.withdrawals.list()
@@ -69,6 +70,14 @@ assert contracts["listedAssetStatus"]["status"] == "wrapped-token-listing"
 assert contracts["listedAssetStatus"]["primaryQuoteAssets"] == ["WQUAI", "WQI"]
 assert contracts["listedAssetStatus"]["supportedAssetModel"] == "erc20-style-vault-token"
 assert contracts["listedAssetStatus"]["nativeQiTreatment"] == "out-of-scope-direct-settlement-use-WQI"
+assert fees["source"] == "feemanager-policy-projection"  # GET /v1/fees
+assert fees["feeSchedules"][0]["projectionType"] == "FeeScheduleProjection"
+assert fees["feeSchedules"][0]["eventName"] == "FeesUpdated"  # eventName: FeesUpdated
+assert fees["hardMaxFeeBps"] == 1000  # hardMaxFeeBps: 1000
+assert fees["feeRecipient"] is None  # feeRecipient: None
+assert fees["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
+assert fees["feeManagerMutation"] is False  # feeManagerMutation: False
+assert fees["tradingVaultMutation"] is False  # tradingVaultMutation: False
 assert balances["source"] == "mock-vault-projection"
 assert balances["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
 assert balances["settlementMode"] == "mock"
@@ -171,6 +180,8 @@ proof = smoke["proof"]
 ```
 
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `listedAssetStatus`: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and native Qi direct settlement out of scope in favor of WQI. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
+
+`dex.fees.get()` calls `GET /v1/fees` and returns read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: False`, and `walletRequired: False`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 
