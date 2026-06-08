@@ -153,6 +153,38 @@ const renderBalanceStreamPanel = (balanceStream, balanceProjection, balances = [
   `;
 };
 
+const renderVaultOperationPanel = (vaultOperation) => {
+  if (vaultOperation === undefined || vaultOperation === null) {
+    return '';
+  }
+
+  const permissions = (vaultOperation.permissions ?? []).join(', ');
+  const safetyNotice = vaultOperation.safety?.notice ?? '';
+
+  return `
+        <article class="panel stream-panel vault-operation-panel">
+          <h2>prepare-only vault operation</h2>
+          <p class="warning">${escapeHtml(safetyNotice)}</p>
+          <p class="warning">${escapeHtml(vaultOperation.message)}</p>
+          <dl class="kv">
+            <div><dt>http status</dt><dd>${escapeHtml(vaultOperation.httpStatus)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(vaultOperation.source)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(vaultOperation.custody)}</dd></div>
+            <div><dt>vault operation</dt><dd>${escapeHtml(vaultOperation.vaultOperation)}</dd></div>
+            <div><dt>operation status</dt><dd>${escapeHtml(vaultOperation.operationStatus)}</dd></div>
+            <div><dt>owner auth</dt><dd>${escapeHtml(vaultOperation.ownerAuthorization)}</dd></div>
+            <div><dt>delegate authority</dt><dd>${escapeHtml(vaultOperation.delegateAuthority)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(vaultOperation.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(vaultOperation.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(vaultOperation.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(vaultOperation.tradingVaultMutation)}</dd></div>
+            <div><dt>approval gate</dt><dd>${escapeHtml(vaultOperation.approvalGate)}</dd></div>
+          </dl>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -243,18 +275,26 @@ ${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
 
 ${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fixture.balances)}
 
+${renderVaultOperationPanel(fixture.vaultOperation)}
+
         <article class="panel command-panel">
           <h2>keyboard</h2>
           <p><kbd>/</kbd> search market · <kbd>b</kbd> buy · <kbd>s</kbd> sell · <kbd>o</kbd> open orders · <kbd>?</kbd> help</p>
           <pre>:sell QI-QUAI 100 @ 5
 :buy QI-QUAI 100 market_ioc slippage=50bps
 :proof trade-000001
-:cancel all</pre>
+:cancel all
+:deposit WQI 10 prepare owner-wallet-only
+:withdraw WQUAI 1 prepare owner-wallet-only</pre>
           <div class="mock-trigger">
             <button type="button" data-qdx-trigger-cross>submit mock cross</button>
             <p class="muted" data-qdx-trigger-status>Posts a local/dev GTC sell plus IOC buy with signed slippage bounds; no real Quai tx/explorer/funds.</p>
             <button type="button" data-qdx-trigger-cancel>create + cancel mock order</button>
             <p class="muted" data-qdx-cancel-status>Posts one local/dev resting order, then matcher-local cancellation does not cancel on-chain nonce; no real Quai tx/explorer/funds.</p>
+            <button type="button" data-qdx-vault-prepare-deposit>prepare vault deposit</button>
+            <p class="muted" data-qdx-vault-deposit-status>Calls prepare-only owner-wallet deposit boundary; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <button type="button" data-qdx-vault-prepare-withdraw>prepare vault withdrawal</button>
+            <p class="muted" data-qdx-vault-withdraw-status>Calls prepare-only owner-wallet withdrawal boundary; delegates cannot deposit or withdraw; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
           </div>
         </article>
 

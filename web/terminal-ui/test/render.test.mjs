@@ -44,17 +44,69 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /:sell QI-QUAI 100 @ 5/);
   assert.match(html, /:buy QI-QUAI 100 market_ioc slippage=50bps/);
   assert.match(html, /:proof trade-000001/);
+  assert.match(html, /:deposit WQI 10 prepare owner-wallet-only/);
+  assert.match(html, /:withdraw WQUAI 1 prepare owner-wallet-only/);
   assert.match(html, /data-qdx-trigger-cross/);
   assert.match(html, /submit mock cross/i);
   assert.match(html, /market_ioc slippage=50bps/i);
   assert.match(html, /data-qdx-trigger-cancel/);
   assert.match(html, /create \+ cancel mock order/i);
   assert.match(html, /matcher-local cancellation does not cancel on-chain nonce/i);
+  assert.match(html, /data-qdx-vault-prepare-deposit/);
+  assert.match(html, /prepare vault deposit/i);
+  assert.match(html, /data-qdx-vault-prepare-withdraw/);
+  assert.match(html, /prepare vault withdrawal/i);
+  assert.match(html, /no wallet\/RPC\/signing\/broadcast\/deploy\/tx\/funds/i);
   assert.match(html, /no real Quai tx\/explorer\/funds/i);
   assert.match(html, /data-qdx-trigger-status/);
   assert.match(html, /data-qdx-cancel-status/);
+  assert.match(html, /data-qdx-vault-deposit-status/);
+  assert.match(html, /data-qdx-vault-withdraw-status/);
   assert.match(html, /&gt; order signed locally/);
   assert.match(html, /&gt; mock settlement reference: mock-settlement-fill-000001/);
+});
+
+test('renderTradeProofPanel surfaces prepare-only vault operation safety when present', () => {
+  const html = renderTradeProofPanel({
+    ...mockVerticalSliceFixture,
+    vaultOperation: {
+      httpStatus: 501,
+      error: 'owner_wallet_vault_deposit_not_implemented',
+      source: 'owner-wallet-vault-operation-placeholder',
+      custody: 'non-custodial-contract-vault',
+      vaultOperation: 'deposit',
+      operationStatus: 'prepare-only-not-implemented',
+      ownerAuthorization: 'owner-wallet-required',
+      permissions: ['NO_WITHDRAW', 'NO_ADMIN'],
+      delegateAuthority: 'delegates-cannot-deposit-or-withdraw',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      fundsMoved: false,
+      tradingVaultMutation: false,
+      approvalGate: 'explicit-approval-required-before-wallet-signing-or-quai-broadcast',
+      safety: {
+        notice: 'Prepare-only owner-wallet TradingVault boundary: no wallet is loaded, no signature is created, no RPC URL is read, no transaction is submitted, and no funds move.',
+      },
+      message: 'TradingVault deposit is owner-wallet-only and not implemented in local mock mode; this prepare-only endpoint does not load wallets, sign, broadcast, submit transactions, mutate TradingVault, or move funds.',
+    },
+  });
+
+  assert.match(html, /prepare-only vault operation/i);
+  assert.match(html, /http status[\s\S]*501/i);
+  assert.match(html, /owner-wallet-vault-operation-placeholder/);
+  assert.match(html, /vault operation[\s\S]*deposit/i);
+  assert.match(html, /owner-wallet-required/);
+  assert.match(html, /delegates-cannot-deposit-or-withdraw/);
+  assert.match(html, /NO_WITHDRAW, NO_ADMIN/);
+  assert.match(html, /real Quai tx[\s\S]*false/i);
+  assert.match(html, /wallet required[\s\S]*false/i);
+  assert.match(html, /funds moved[\s\S]*false/i);
+  assert.match(html, /TradingVault mutation[\s\S]*false/i);
+  assert.match(html, /no wallet is loaded/i);
+  assert.match(html, /no signature is created/i);
+  assert.match(html, /no RPC URL is read/i);
+  assert.match(html, /no transaction is submitted/i);
+  assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
 });
 
 test('renderTradeProofPanel surfaces live fills stream safety when present', () => {

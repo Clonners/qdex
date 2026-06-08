@@ -2,6 +2,7 @@ import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-bindi
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
+import { bindVaultPrepareTrigger } from './vault-prepare-trigger.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
 
@@ -54,6 +55,25 @@ if (mount) {
     mount.dataset.qdxMockCancelTrigger = 'disabled';
     mount.dataset.qdxLiveOrdersStream = 'disabled';
     console.warn('QDEX local cancel/order-stream smoke disabled.', error);
+  }
+
+  try {
+    bindVaultPrepareTrigger({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxVaultPrepareTrigger = 'error';
+        console.warn('QDEX vault prepare trigger failed; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+      },
+      onPrepare: () => {
+        mount.dataset.qdxVaultPrepareTrigger = 'prepare-only';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxVaultPrepareTrigger = 'disabled';
+    console.warn('QDEX vault prepare trigger disabled; keeping owner-wallet boundary prepare-only.', error);
   }
 
   try {
