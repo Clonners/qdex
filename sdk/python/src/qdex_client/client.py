@@ -32,6 +32,14 @@ def _trim_trailing_slash(value):
     return value.rstrip("/")
 
 
+def _market_depth_channel(market_id):
+    return f"market.{market_id}.depth"
+
+
+def _market_trades_channel(market_id):
+    return f"market.{market_id}.trades"
+
+
 def _encode_path_value(value):
     return quote(value, safe="")
 
@@ -261,6 +269,12 @@ class _TickersApi:
     def get(self, market_id):
         return self._client._request_ok(f"/v1/tickers/{_encode_path_value(market_id)}")
 
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("global.tickers", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("global.tickers", limit=limit, timeout=timeout)
+
 
 class _OrderbookApi:
     def __init__(self, client):
@@ -268,6 +282,12 @@ class _OrderbookApi:
 
     def get(self, market_id):
         return self._client._request_ok(f"/v1/orderbook/{_encode_path_value(market_id)}")
+
+    def open_stream(self, market_id, *, timeout=None):
+        return self._client._open_stream(_market_depth_channel(market_id), timeout=timeout)
+
+    def stream(self, market_id, *, limit=1, timeout=None):
+        return self._client._read_stream(_market_depth_channel(market_id), limit=limit, timeout=timeout)
 
 
 class _ContractsApi:
@@ -468,6 +488,12 @@ class _TradesApi:
 
     def list(self, market_id):
         return self._client._request_ok(f"/v1/trades/{_encode_path_value(market_id)}")
+
+    def open_stream(self, market_id, *, timeout=None):
+        return self._client._open_stream(_market_trades_channel(market_id), timeout=timeout)
+
+    def stream(self, market_id, *, limit=1, timeout=None):
+        return self._client._read_stream(_market_trades_channel(market_id), limit=limit, timeout=timeout)
 
 
 class _ProofsApi:

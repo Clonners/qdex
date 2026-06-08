@@ -9,9 +9,21 @@ dex = QDexClient(base_url=base_url, wallet=wallet, delegate_key=delegate_key)
 
 markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
+limit = 1
+ticker_stream = dex.tickers.open_stream()  # /v1/ws?channel=global.tickers -> ticker_snapshot, public-read-only-no-custody, mock-market-data
+ticker_stream_snapshot = ticker_stream.next()
+ticker_stream.close()
+ticker_stream_snapshots = dex.tickers.stream(limit=limit)
+depth_stream = dex.orderbook.open_stream(market_id)  # /v1/ws?channel=market.<MARKET>.depth -> orderbook_depth, public-read-only-no-custody, mock-orderbook
+depth_stream_snapshot = depth_stream.next()
+depth_stream.close()
+depth_stream_snapshots = dex.orderbook.stream(market_id, limit=limit)
+trade_stream = dex.trades.open_stream(market_id)  # /v1/ws?channel=market.<MARKET>.trades -> trade_projection, public-read-only-no-custody, in-memory-indexer-projection, confirmed-settlement-only
+trade_stream_snapshot = trade_stream.next()
+trade_stream.close()
+trade_stream_snapshots = dex.trades.stream(market_id, limit=limit)
 contracts = dex.contracts.get()  # GET /v1/contracts
 fees = dex.fees.get()  # GET /v1/fees -> feemanager-policy-projection, FeeScheduleProjection, READ_ONLY
-limit = 1
 fee_stream = dex.fees.open_stream()  # /v1/ws?channel=fees -> fee_schedule_projection, public-read-only-no-custody
 fee_stream_snapshot = fee_stream.next()
 fee_stream.close()
@@ -139,6 +151,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 - `orders.cancel_all(market_id=...)` calls `POST /v1/orders/cancel-all`; in local mock mode it cancels only matcher-open quantity, carries `CANCEL_ALL`, `CANCEL_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`, and does not cancel on-chain NonceManager nonces without a separate owner-signed flow.
 
 ## Contract registry
+
+`tickers.open_stream()` and bounded `tickers.stream(limit=limit)` consume public ticker snapshots from `/v1/ws?channel=global.tickers`; `orderbook.open_stream(market_id)` / `orderbook.stream(market_id, limit=limit)` consume public depth snapshots from `/v1/ws?channel=market.<MARKET>.depth`; and `trades.open_stream(market_id)` / `trades.stream(market_id, limit=limit)` consume public trade projections from `/v1/ws?channel=market.<MARKET>.trades`. These snapshots preserve `ticker_snapshot`, `orderbook_depth`, `trade_projection`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, and `confirmed-settlement-only` semantics; there is no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
 

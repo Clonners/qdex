@@ -149,8 +149,8 @@ test('terminal UI docs, account docs, package check, and campaign status mark ac
     'campaign status should retain the local API account overview smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK public market-data stream consumers'),
-    'campaign status should point next work at Python public market-data stream parity',
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should stop pointing next work at already-completed Python public market-data stream parity',
   );
 
   assert.doesNotMatch(

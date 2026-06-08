@@ -86,11 +86,11 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain the local API account overview smoke as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK public market-data stream consumers'),
-    'campaign status should point next work at Python public market-data stream parity',
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should stop pointing next work at already-completed Python public market-data stream parity',
   );
   assert.ok(
-    status.includes('Current phase: read-only TypeScript SDK and `qdex` CLI public market-data stream consumers are complete'),
-    'campaign status should describe public market-data stream clients as the current completed phase',
+    status.includes('Current phase: Python SDK public market-data stream consumers are complete'),
+    'campaign status should describe Python public market-data stream clients as the current completed phase',
   );
 });

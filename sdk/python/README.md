@@ -2,7 +2,7 @@
 
 Python client for agents, research scripts and market makers.
 
-Current status: dependency-light mock smoke stub. It mirrors the TypeScript SDK/`qdex smoke` bot loop against the local mock API without adding wallet, transaction, withdrawal, or custody authority.
+Current status: dependency-light mock smoke stub. It mirrors the TypeScript SDK/`qdex smoke` bot loop against the local mock API without adding wallet, transaction, withdrawal, or custody authority. Public market-data streams are bounded local WebSocket readers only: no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 Executable mock surface:
 
@@ -12,6 +12,24 @@ from qdex_client import QDexClient, create_mock_signed_order, run_mock_cross_smo
 dex = QDexClient(base_url=base_url)
 markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
+ticker_stream = dex.tickers.open_stream(timeout=2)  # /v1/ws?channel=global.tickers
+try:
+    initial_ticker_stream_snapshot = ticker_stream.next()
+finally:
+    ticker_stream.close()
+ticker_stream_snapshots = dex.tickers.stream(limit=1, timeout=2)
+depth_stream = dex.orderbook.open_stream("QI-QUAI", timeout=2)  # /v1/ws?channel=market.<MARKET>.depth
+try:
+    initial_depth_stream_snapshot = depth_stream.next()
+finally:
+    depth_stream.close()
+depth_stream_snapshots = dex.orderbook.stream("QI-QUAI", limit=1, timeout=2)
+trade_stream = dex.trades.open_stream("QI-QUAI", timeout=2)  # /v1/ws?channel=market.<MARKET>.trades
+try:
+    initial_trade_stream_snapshot = trade_stream.next()
+finally:
+    trade_stream.close()
+trade_stream_snapshots = dex.trades.stream("QI-QUAI", limit=1, timeout=2)
 contracts = dex.contracts.get()
 fees = dex.fees.get()
 fee_stream = dex.fees.open_stream(timeout=2)
@@ -74,6 +92,20 @@ listing_review_decision = dex.listings.requests.decide_local_review(queued_listi
     "rejectionReason": "metadata-incomplete-local-only",
 })
 assert contracts["listedAssetStatus"]["status"] == "wrapped-token-listing"
+assert initial_ticker_stream_snapshot["snapshot"]["channel"] == "global.tickers"
+assert initial_ticker_stream_snapshot["snapshot"]["payload"] == "ticker_snapshot"
+assert initial_ticker_stream_snapshot["snapshot"]["custody"] == "public-read-only-no-custody"
+assert initial_ticker_stream_snapshot["snapshot"]["data"]["tickers"][0]["source"] == "mock-market-data"
+assert ticker_stream_snapshots[0]["snapshot"]["payload"] == "ticker_snapshot"
+assert initial_depth_stream_snapshot["snapshot"]["payload"] == "orderbook_depth"
+assert initial_depth_stream_snapshot["snapshot"]["custody"] == "public-read-only-no-custody"
+assert initial_depth_stream_snapshot["snapshot"]["data"]["source"] == "mock-orderbook"
+assert depth_stream_snapshots[0]["snapshot"]["payload"] == "orderbook_depth"
+assert initial_trade_stream_snapshot["snapshot"]["payload"] == "trade_projection"
+assert initial_trade_stream_snapshot["snapshot"]["custody"] == "public-read-only-no-custody"
+assert initial_trade_stream_snapshot["snapshot"]["data"]["source"] == "in-memory-indexer-projection"
+assert initial_trade_stream_snapshot["snapshot"]["data"]["settlementStatus"] == "confirmed"  # confirmed-settlement-only
+assert trade_stream_snapshots[0]["snapshot"]["payload"] == "trade_projection"
 assert contracts["listedAssetStatus"]["primaryQuoteAssets"] == ["WQUAI", "WQI"]
 assert contracts["listedAssetStatus"]["supportedAssetModel"] == "erc20-style-vault-token"
 assert contracts["listedAssetStatus"]["nativeQiTreatment"] == "out-of-scope-direct-settlement-use-WQI"

@@ -536,6 +536,77 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(bounded_snapshot["data"]["feeManagerMutation"])
             self.assertFalse(bounded_snapshot["data"]["tradingVaultMutation"])
 
+    def test_python_sdk_consumes_public_market_data_streams_without_wallet_or_custody_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            ticker_stream = client.tickers.open_stream(timeout=2)
+
+            try:
+                ticker_message = ticker_stream.next()
+                self.assertEqual(ticker_message["type"], "snapshot")
+                self.assertEqual(ticker_message["transport"], "websocket")
+                ticker_snapshot = ticker_message["snapshot"]
+                self.assertEqual(ticker_snapshot["channel"], "global.tickers")
+                self.assertEqual(ticker_snapshot["visibility"], "public")
+                self.assertEqual(ticker_snapshot["payload"], "ticker_snapshot")
+                self.assertEqual(ticker_snapshot["source"], "mock-market-data")
+                self.assertEqual(ticker_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["marketId"], "QI-QUAI")
+                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["source"], "mock-market-data")
+                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["volume24h"], "0")
+                self.assertIsNone(ticker_snapshot["data"]["tickers"][0]["lastPrice"])
+                self.assertIsNone(ticker_snapshot["data"]["tickers"][0]["bestBid"])
+                self.assertIsNone(ticker_snapshot["data"]["tickers"][0]["bestAsk"])
+            finally:
+                ticker_stream.close()
+
+            bounded_ticker_messages = client.tickers.stream(limit=1, timeout=2)
+            self.assertEqual(len(bounded_ticker_messages), 1)
+            self.assertEqual(bounded_ticker_messages[0]["snapshot"]["channel"], "global.tickers")
+            self.assertEqual(bounded_ticker_messages[0]["snapshot"]["custody"], "public-read-only-no-custody")
+
+            depth_stream = client.orderbook.open_stream("QI-QUAI", timeout=2)
+            try:
+                depth_message = depth_stream.next()
+                depth_snapshot = depth_message["snapshot"]
+                self.assertEqual(depth_snapshot["channel"], "market.QI-QUAI.depth")
+                self.assertEqual(depth_snapshot["visibility"], "public")
+                self.assertEqual(depth_snapshot["payload"], "orderbook_depth")
+                self.assertEqual(depth_snapshot["source"], "mock-orderbook")
+                self.assertEqual(depth_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(depth_snapshot["data"]["marketId"], "QI-QUAI")
+                self.assertEqual(depth_snapshot["data"]["source"], "mock-orderbook")
+                self.assertEqual(depth_snapshot["data"]["bids"], [])
+                self.assertEqual(depth_snapshot["data"]["asks"], [])
+            finally:
+                depth_stream.close()
+
+            bounded_depth_messages = client.orderbook.stream("QI-QUAI", limit=1, timeout=2)
+            self.assertEqual(len(bounded_depth_messages), 1)
+            self.assertEqual(bounded_depth_messages[0]["snapshot"]["channel"], "market.QI-QUAI.depth")
+            self.assertEqual(bounded_depth_messages[0]["snapshot"]["payload"], "orderbook_depth")
+
+            trades_stream = client.trades.open_stream("QI-QUAI", timeout=2)
+            try:
+                trade_message = trades_stream.next()
+                trade_snapshot = trade_message["snapshot"]
+                self.assertEqual(trade_snapshot["channel"], "market.QI-QUAI.trades")
+                self.assertEqual(trade_snapshot["visibility"], "public")
+                self.assertEqual(trade_snapshot["payload"], "trade_projection")
+                self.assertEqual(trade_snapshot["source"], "in-memory-indexer-projection")
+                self.assertEqual(trade_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(trade_snapshot["data"]["marketId"], "QI-QUAI")
+                self.assertEqual(trade_snapshot["data"]["trades"], [])
+                self.assertEqual(trade_snapshot["data"]["source"], "in-memory-indexer-projection")
+            finally:
+                trades_stream.close()
+
+            bounded_trade_messages = client.trades.stream("QI-QUAI", limit=1, timeout=2)
+            self.assertEqual(len(bounded_trade_messages), 1)
+            self.assertEqual(bounded_trade_messages[0]["snapshot"]["channel"], "market.QI-QUAI.trades")
+            self.assertEqual(bounded_trade_messages[0]["snapshot"]["payload"], "trade_projection")
+            self.assertEqual(bounded_trade_messages[0]["snapshot"]["custody"], "public-read-only-no-custody")
+
     def test_python_sdk_consumes_private_tradingvault_deposit_and_withdrawal_history_streams_without_wallet_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

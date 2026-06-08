@@ -106,24 +106,79 @@ test('TypeScript SDK and qdex docs expose bounded public market-data stream cons
   }
 });
 
-test('campaign status marks public market-data stream clients complete and points to Python parity', async () => {
+test('Python SDK docs expose bounded public market-data stream consumers', async () => {
+  const docs = [
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        'tickers.open_stream()',
+        'tickers.stream(limit=limit)',
+        '/v1/ws?channel=global.tickers',
+        'ticker_snapshot',
+        'public-read-only-no-custody',
+        'mock-market-data',
+        'orderbook.open_stream(market_id)',
+        'orderbook.stream(market_id, limit=limit)',
+        '/v1/ws?channel=market.<MARKET>.depth',
+        'orderbook_depth',
+        'mock-orderbook',
+        'trades.open_stream(market_id)',
+        'trades.stream(market_id, limit=limit)',
+        '/v1/ws?channel=market.<MARKET>.trades',
+        'trade_projection',
+        'in-memory-indexer-projection',
+        'confirmed-settlement-only',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.tickers.open_stream',
+        'dex.tickers.stream',
+        'dex.orderbook.open_stream',
+        'dex.orderbook.stream',
+        'dex.trades.open_stream',
+        'dex.trades.stream',
+        '/v1/ws?channel=global.tickers',
+        '/v1/ws?channel=market.<MARKET>.depth',
+        '/v1/ws?channel=market.<MARKET>.trades',
+        'ticker_snapshot',
+        'orderbook_depth',
+        'trade_projection',
+        'public-read-only-no-custody',
+        'mock-market-data',
+        'mock-orderbook',
+        'in-memory-indexer-projection',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
+test('campaign status marks Python public market-data stream clients complete after parity', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: read-only TypeScript SDK and `qdex` CLI public market-data stream consumers are complete'),
-    'campaign status should mark the public market-data stream consumer slice as current phase',
+    status.includes('Current phase: Python SDK public market-data stream consumers are complete'),
+    'campaign status should mark Python public market-data stream parity as current phase',
   );
   assert.ok(
-    status.includes('Completed this run: read-only TypeScript SDK and `qdex` CLI public market-data stream consumers'),
-    'campaign status should record this run as public market-data stream consumers',
+    status.includes('Completed previous run: read-only TypeScript SDK and `qdex` CLI public market-data stream consumers'),
+    'campaign status should move TypeScript/qdex public market-data streams to previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK public market-data stream consumers'),
-    'campaign status should point the next bounded slice at Python market-data stream parity',
+    status.includes('Completed this run: Python SDK public market-data stream consumers'),
+    'campaign status should record this run as Python public market-data stream consumers',
   );
   assert.ok(
-    status.includes('Completed previous run: qdex public ticker CLI command'),
-    'campaign status should move the qdex public ticker CLI command to previous work',
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should stop pointing at already-completed Python parity',
   );
   assert.doesNotMatch(
     status,
