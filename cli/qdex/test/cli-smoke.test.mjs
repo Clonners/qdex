@@ -144,6 +144,61 @@ test('qdex stream deposits and withdrawals commands expose bounded read-only vau
   });
 });
 
+test('qdex stream delegate-key registrations and revocations commands expose bounded read-only history snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    const registrations = await runCliJson(['--base-url', baseUrl, 'stream', 'delegate-key-registrations', '--limit', '1']);
+
+    assert.equal(registrations.command, 'stream delegate-key-registrations');
+    assert.equal(registrations.channel, 'delegate-key-registrations');
+    assert.equal(registrations.transport, 'websocket');
+    assert.equal(registrations.limit, 1);
+    assert.equal(registrations.messages.length, 1);
+    assert.equal(registrations.messages[0].type, 'snapshot');
+    assert.equal(registrations.messages[0].snapshot.channel, 'delegate-key-registrations');
+    assert.equal(registrations.messages[0].snapshot.visibility, 'private');
+    assert.equal(registrations.messages[0].snapshot.payload, 'delegate_key_registration_projection');
+    assert.equal(registrations.messages[0].snapshot.source, 'delegatekeyregistry-event-projection');
+    assert.equal(registrations.messages[0].snapshot.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(registrations.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(registrations.messages[0].snapshot.data.registrations, []);
+    assert.equal(registrations.messages[0].snapshot.data.projectionType, 'DelegateKeyRegisteredProjection');
+    assert.equal(registrations.messages[0].snapshot.data.eventName, 'DelegateKeyRegistered');
+    assert.equal(registrations.messages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(registrations.messages[0].snapshot.data.settlementTx, null);
+    assert.equal(registrations.messages[0].snapshot.data.explorerUrl, null);
+    assert.equal(registrations.messages[0].snapshot.data.delegateCanWithdraw, false);
+    assert.equal(registrations.messages[0].snapshot.data.delegateCanAdmin, false);
+    assert.equal(registrations.messages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(registrations.messages[0].snapshot.data.walletRequired, false);
+    assert.equal(registrations.messages[0].snapshot.data.fundsMoved, false);
+    assert.equal(registrations.messages[0].snapshot.data.delegateKeyRegistryMutation, false);
+
+    const revocations = await runCliJson(['--base-url', baseUrl, 'stream', 'delegate-key-revocations', '--limit', '1']);
+
+    assert.equal(revocations.command, 'stream delegate-key-revocations');
+    assert.equal(revocations.channel, 'delegate-key-revocations');
+    assert.equal(revocations.transport, 'websocket');
+    assert.equal(revocations.messages.length, 1);
+    assert.equal(revocations.messages[0].snapshot.channel, 'delegate-key-revocations');
+    assert.equal(revocations.messages[0].snapshot.visibility, 'private');
+    assert.equal(revocations.messages[0].snapshot.payload, 'delegate_key_revocation_projection');
+    assert.equal(revocations.messages[0].snapshot.source, 'delegatekeyregistry-event-projection');
+    assert.deepEqual(revocations.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(revocations.messages[0].snapshot.data.revocations, []);
+    assert.equal(revocations.messages[0].snapshot.data.projectionType, 'DelegateKeyRevokedProjection');
+    assert.equal(revocations.messages[0].snapshot.data.eventName, 'DelegateKeyRevoked');
+    assert.equal(revocations.messages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(revocations.messages[0].snapshot.data.settlementTx, null);
+    assert.equal(revocations.messages[0].snapshot.data.explorerUrl, null);
+    assert.equal(revocations.messages[0].snapshot.data.delegateCanWithdraw, false);
+    assert.equal(revocations.messages[0].snapshot.data.delegateCanAdmin, false);
+    assert.equal(revocations.messages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(revocations.messages[0].snapshot.data.walletRequired, false);
+    assert.equal(revocations.messages[0].snapshot.data.fundsMoved, false);
+    assert.equal(revocations.messages[0].snapshot.data.delegateKeyRegistryMutation, false);
+  });
+});
+
 test('qdex balance command prints read-only mock vault balances without wallet or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'balance']);

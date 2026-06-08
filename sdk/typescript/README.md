@@ -91,6 +91,12 @@ await depositHistoryStream.close();
 const withdrawalHistoryStream = dex.vault.withdrawals.openStream({ timeoutMs: 2000 });
 const initialWithdrawalHistorySnapshot = await withdrawalHistoryStream.next();
 await withdrawalHistoryStream.close();
+const delegateKeyRegistrationStream = dex.delegateKeys.registrations.openStream({ timeoutMs: 2000 });
+const initialDelegateKeyRegistrationSnapshot = await delegateKeyRegistrationStream.next();
+await delegateKeyRegistrationStream.close();
+const delegateKeyRevocationStream = dex.delegateKeys.revocations.openStream({ timeoutMs: 2000 });
+const initialDelegateKeyRevocationSnapshot = await delegateKeyRevocationStream.next();
+await delegateKeyRevocationStream.close();
 
 const result = await runMockCrossSmoke(dex, {
   restingSell: createMockSignedOrder({ side: 'sell', amount: '100', price: '5', nonce: '1' }),
@@ -186,6 +192,14 @@ console.log(initialDepositHistorySnapshot.snapshot.projectionType); // TradingVa
 console.log(initialWithdrawalHistorySnapshot.snapshot.channel); // /v1/ws?channel=withdrawals
 console.log(initialWithdrawalHistorySnapshot.snapshot.projectionType); // TradingVaultWithdrawalProjection
 console.log(initialWithdrawalHistorySnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(initialDelegateKeyRegistrationSnapshot.snapshot.channel); // /v1/ws?channel=delegate-key-registrations
+console.log(initialDelegateKeyRegistrationSnapshot.snapshot.source); // delegatekeyregistry-event-projection
+console.log(initialDelegateKeyRegistrationSnapshot.snapshot.projectionType); // DelegateKeyRegisteredProjection
+console.log(initialDelegateKeyRegistrationSnapshot.snapshot.delegateCanWithdraw); // delegateCanWithdraw: false
+console.log(initialDelegateKeyRevocationSnapshot.snapshot.channel); // /v1/ws?channel=delegate-key-revocations
+console.log(initialDelegateKeyRevocationSnapshot.snapshot.projectionType); // DelegateKeyRevokedProjection
+console.log(initialDelegateKeyRevocationSnapshot.snapshot.delegateCanAdmin); // delegateCanAdmin: false
+console.log(initialDelegateKeyRevocationSnapshot.snapshot.delegateKeyRegistryMutation); // delegateKeyRegistryMutation: false
 console.log(result.fill.projectionType); // IndexedFillProjection
 console.log(result.fill.sourceEventId);
 console.log(result.proof.settlementMode); // mock
@@ -218,6 +232,8 @@ console.log(result.proof.settlementMode); // mock
 `dex.delegateKeys.prepareRegister()` and `dex.delegateKeys.prepareRevoke()` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and return intentional 501 owner-signed delegate/API key placeholder bodies (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The envelopes preserve `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; these clients have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
 
 `dex.delegateKeys.listRegistrations()` and `dex.delegateKeys.listRevocations()` call `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` and return read-only DelegateKeyRegistry event history envelopes. They expose `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: false`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`dex.delegateKeys.registrations.openStream` / `dex.delegateKeys.revocations.openStream` and the bounded `stream({ limit })` helpers consume private DelegateKeyRegistry history snapshots from `/v1/ws?channel=delegate-key-registrations` and `/v1/ws?channel=delegate-key-revocations`. The stream output preserves `delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, and `delegateKeyRegistryMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `fills.openStream()` consumes the local `/v1/ws?channel=fills` WebSocket transport. Private stream snapshots remain read-only and carry `NO_WITHDRAW`/`NO_ADMIN` permissions.
 

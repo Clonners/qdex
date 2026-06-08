@@ -834,6 +834,63 @@ test('TypeScript SDK consumes private TradingVault deposit and withdrawal histor
   });
 });
 
+test('TypeScript SDK consumes private DelegateKeyRegistry history streams without withdrawal or admin authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+    const registrationsStream = client.delegateKeys.registrations.openStream({ timeoutMs: 2_000 });
+
+    try {
+      const registrationMessage = await registrationsStream.next();
+      assert.equal(registrationMessage.type, 'snapshot');
+      assert.equal(registrationMessage.transport, 'websocket');
+      assert.equal(registrationMessage.snapshot.channel, 'delegate-key-registrations');
+      assert.equal(registrationMessage.snapshot.visibility, 'private');
+      assert.equal(registrationMessage.snapshot.payload, 'delegate_key_registration_projection');
+      assert.equal(registrationMessage.snapshot.source, 'delegatekeyregistry-event-projection');
+      assert.equal(registrationMessage.snapshot.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(registrationMessage.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(registrationMessage.snapshot.data.registrations, []);
+      assert.equal(registrationMessage.snapshot.data.projectionType, 'DelegateKeyRegisteredProjection');
+      assert.equal(registrationMessage.snapshot.data.eventName, 'DelegateKeyRegistered');
+      assert.equal(registrationMessage.snapshot.data.settlementMode, 'mock');
+      assert.equal(registrationMessage.snapshot.data.settlementTx, null);
+      assert.equal(registrationMessage.snapshot.data.blockNumber, null);
+      assert.equal(registrationMessage.snapshot.data.blockHash, null);
+      assert.equal(registrationMessage.snapshot.data.eventIndex, null);
+      assert.equal(registrationMessage.snapshot.data.explorerUrl, null);
+      assert.equal(registrationMessage.snapshot.data.delegateCanWithdraw, false);
+      assert.equal(registrationMessage.snapshot.data.delegateCanAdmin, false);
+      assert.equal(registrationMessage.snapshot.data.realQuaiTransactions, false);
+      assert.equal(registrationMessage.snapshot.data.walletRequired, false);
+      assert.equal(registrationMessage.snapshot.data.fundsMoved, false);
+      assert.equal(registrationMessage.snapshot.data.delegateKeyRegistryMutation, false);
+    } finally {
+      await registrationsStream.close();
+    }
+
+    const revocationMessages = await client.delegateKeys.revocations.stream({ limit: 1, timeoutMs: 2_000 });
+    assert.equal(revocationMessages.length, 1);
+    assert.equal(revocationMessages[0].type, 'snapshot');
+    assert.equal(revocationMessages[0].snapshot.channel, 'delegate-key-revocations');
+    assert.equal(revocationMessages[0].snapshot.visibility, 'private');
+    assert.equal(revocationMessages[0].snapshot.payload, 'delegate_key_revocation_projection');
+    assert.equal(revocationMessages[0].snapshot.source, 'delegatekeyregistry-event-projection');
+    assert.deepEqual(revocationMessages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(revocationMessages[0].snapshot.data.revocations, []);
+    assert.equal(revocationMessages[0].snapshot.data.projectionType, 'DelegateKeyRevokedProjection');
+    assert.equal(revocationMessages[0].snapshot.data.eventName, 'DelegateKeyRevoked');
+    assert.equal(revocationMessages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(revocationMessages[0].snapshot.data.settlementTx, null);
+    assert.equal(revocationMessages[0].snapshot.data.explorerUrl, null);
+    assert.equal(revocationMessages[0].snapshot.data.delegateCanWithdraw, false);
+    assert.equal(revocationMessages[0].snapshot.data.delegateCanAdmin, false);
+    assert.equal(revocationMessages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(revocationMessages[0].snapshot.data.walletRequired, false);
+    assert.equal(revocationMessages[0].snapshot.data.fundsMoved, false);
+    assert.equal(revocationMessages[0].snapshot.data.delegateKeyRegistryMutation, false);
+  });
+});
+
 test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippage bounds', () => {
   const order = createMockSignedOrder({
     side: 'sell',

@@ -306,6 +306,14 @@ export class QDexClient {
       list: async () => this.#requestOk('/v1/delegate-keys'),
       listRegistrations: async () => this.#requestOk('/v1/delegate-keys/registrations'),
       listRevocations: async () => this.#requestOk('/v1/delegate-keys/revocations'),
+      registrations: {
+        openStream: (options = {}) => this.streams.open('delegate-key-registrations', options),
+        stream: async (options = {}) => this.streams.read('delegate-key-registrations', options),
+      },
+      revocations: {
+        openStream: (options = {}) => this.streams.open('delegate-key-revocations', options),
+        stream: async (options = {}) => this.streams.read('delegate-key-revocations', options),
+      },
       prepareRegister: async (request) => this.#requestExpectedStatus('/v1/delegate-keys', {
         method: 'POST',
         body: request,

@@ -179,7 +179,11 @@ Completed: local API + terminal UI DelegateKeyRegistry history stream integratio
 
 The stream smoke now uses `web/terminal-ui/src/delegate-key-history-stream-binding.js` to read `GET /v1/delegate-keys/registrations` plus `GET /v1/delegate-keys/revocations`, then bind `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations` only as REST-confirmed read-only projection/cache metadata. It preserves `delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, mock-null event evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, no live `DelegateKeyRegistry` mutation, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next bounded local/source-only slice: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers, still with no live `DelegateKeyRegistry` mutation or wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers.
+
+The SDK/CLI stream consumers expose TypeScript `delegateKeys.registrations.openStream()` / `delegateKeys.revocations.openStream()`, bounded `delegateKeys.registrations.stream({ limit })` / `delegateKeys.revocations.stream({ limit })`, and CLI `qdex stream delegate-key-registrations` / `qdex stream delegate-key-revocations`. They consume `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations` only as private read-only `delegatekeyregistry-event-projection` snapshots with `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, no live `DelegateKeyRegistry` mutation, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: Python SDK DelegateKeyRegistry history stream consumers, still with no live `DelegateKeyRegistry` mutation or wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

@@ -1114,6 +1114,94 @@ test('SDK and CLI docs expose read-only delegate-key registration and revocation
   }
 });
 
+test('TypeScript SDK and qdex CLI docs expose read-only delegate-key history stream consumers', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/spec.md',
+      terms: [
+        'delegateKeys.registrations.openStream()',
+        'delegateKeys.revocations.openStream()',
+        'delegateKeys.registrations.stream({ limit })',
+        'delegateKeys.revocations.stream({ limit })',
+        '/v1/ws?channel=delegate-key-registrations',
+        '/v1/ws?channel=delegate-key-revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateCanWithdraw: false',
+        'delegateCanAdmin: false',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'dex.delegateKeys.registrations.openStream',
+        'dex.delegateKeys.revocations.openStream',
+        '/v1/ws?channel=delegate-key-registrations',
+        '/v1/ws?channel=delegate-key-revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateCanWithdraw: false',
+        'delegateCanAdmin: false',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/spec.md',
+      terms: [
+        'qdex stream delegate-key-registrations',
+        'qdex stream delegate-key-revocations',
+        '/v1/ws?channel=delegate-key-registrations',
+        '/v1/ws?channel=delegate-key-revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateCanWithdraw: false',
+        'delegateCanAdmin: false',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'qdex stream delegate-key-registrations',
+        'qdex stream delegate-key-revocations',
+        '/v1/ws?channel=delegate-key-registrations',
+        '/v1/ws?channel=delegate-key-revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateCanWithdraw: false',
+        'delegateCanAdmin: false',
+        'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
 test('SDK and CLI README docs expose read-only relayer gate clients', async () => {
   const docs = [
     {

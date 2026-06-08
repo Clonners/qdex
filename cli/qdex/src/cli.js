@@ -509,6 +509,8 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 stream orders [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream deposits [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream withdrawals [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream delegate-key-registrations [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations [--limit 1]
   qdex --base-url http://127.0.0.1:8787 smoke
 `;
 
@@ -757,14 +759,18 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       return 0;
     }
 
-    if (command === 'stream' && (rest[0] === 'fills' || rest[0] === 'orders' || rest[0] === 'deposits' || rest[0] === 'withdrawals')) {
+    if (command === 'stream' && (rest[0] === 'fills' || rest[0] === 'orders' || rest[0] === 'deposits' || rest[0] === 'withdrawals' || rest[0] === 'delegate-key-registrations' || rest[0] === 'delegate-key-revocations')) {
       const channel = rest[0];
       const options = parseStreamOptions(rest.slice(1));
       const streamClient = channel === 'deposits'
         ? client.vault.deposits
         : channel === 'withdrawals'
           ? client.vault.withdrawals
-          : client[channel];
+          : channel === 'delegate-key-registrations'
+            ? client.delegateKeys.registrations
+            : channel === 'delegate-key-revocations'
+              ? client.delegateKeys.revocations
+              : client[channel];
       const messages = await streamClient.stream(options);
       writeJson(stdout, {
         command: `stream ${channel}`,
