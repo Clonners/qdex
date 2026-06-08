@@ -110,4 +110,4 @@ tradingVaultMutation: false
 
 The history endpoints may return empty local/mock arrays until real event evidence exists. They are read-only projection/cache surfaces and preserve no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, TradingVault mutation, or funds movement.
 
-Next local/source-only step: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history, still backed by the same mock-null evidence envelope and still without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed local/source-only client exposure: TypeScript/Python SDK `dex.vault.deposits.list()` / `dex.vault.withdrawals.list()` and CLI `qdex vault deposits` / `qdex vault withdrawals` now consume the same `tradingvault-event-projection` envelopes. Next local/source-only step: terminal UI read-only vault history panel, still backed by the same mock-null evidence envelope and still without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.

@@ -203,6 +203,46 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 withdrawal_body["safety"]["notice"],
             )
 
+    def test_python_sdk_lists_read_only_tradingvault_deposit_and_withdrawal_history_without_wallet_or_mutation_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            deposits = client.vault.deposits.list()
+            self.assertEqual(deposits["deposits"], [])
+            self.assertEqual(deposits["source"], "tradingvault-event-projection")
+            self.assertEqual(deposits["projectionType"], "TradingVaultDepositProjection")
+            self.assertEqual(deposits["eventName"], "Deposit")
+            self.assertEqual(deposits["custody"], "non-custodial-contract-vault")
+            self.assertEqual(deposits["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(deposits["settlementMode"], "mock")
+            self.assertIsNone(deposits["settlementTx"])
+            self.assertIsNone(deposits["blockNumber"])
+            self.assertIsNone(deposits["blockHash"])
+            self.assertIsNone(deposits["eventIndex"])
+            self.assertIsNone(deposits["explorerUrl"])
+            self.assertFalse(deposits["realQuaiTransactions"])
+            self.assertFalse(deposits["walletRequired"])
+            self.assertFalse(deposits["fundsMoved"])
+            self.assertFalse(deposits["tradingVaultMutation"])
+            self.assertIn("mock rows have no real Quai transaction, no wallet loaded, no funds moved", deposits["safetyNotice"])
+
+            withdrawals = client.vault.withdrawals.list()
+            self.assertEqual(withdrawals["withdrawals"], [])
+            self.assertEqual(withdrawals["source"], "tradingvault-event-projection")
+            self.assertEqual(withdrawals["projectionType"], "TradingVaultWithdrawalProjection")
+            self.assertEqual(withdrawals["eventName"], "Withdraw")
+            self.assertEqual(withdrawals["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(withdrawals["settlementMode"], "mock")
+            self.assertIsNone(withdrawals["settlementTx"])
+            self.assertIsNone(withdrawals["blockNumber"])
+            self.assertIsNone(withdrawals["blockHash"])
+            self.assertIsNone(withdrawals["eventIndex"])
+            self.assertIsNone(withdrawals["explorerUrl"])
+            self.assertFalse(withdrawals["realQuaiTransactions"])
+            self.assertFalse(withdrawals["walletRequired"])
+            self.assertFalse(withdrawals["fundsMoved"])
+            self.assertFalse(withdrawals["tradingVaultMutation"])
+
     def test_python_sdk_exposes_read_only_relayer_settlement_mode_gate_metadata_without_wallet_or_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

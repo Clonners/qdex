@@ -10,6 +10,8 @@ import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-
 const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
 const contractRegistry = await dex.contracts.get();
 const accountBalances = await dex.account.balances();
+const vaultDeposits = await dex.vault.deposits.list();
+const vaultWithdrawals = await dex.vault.withdrawals.list();
 const vaultDepositPrepare = await dex.vault.deposits.prepare({
   owner: '0x1111111111111111111111111111111111111111',
   assetSymbol: 'WQI',
@@ -78,6 +80,16 @@ console.log(contractRegistry.deploymentStatus); // local-only-not-deployed
 console.log(accountBalances.source); // mock-vault-projection
 console.log(accountBalances.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
 console.log(accountBalances.settlementMode); // mock
+console.log(vaultDeposits.source); // source: tradingvault-event-projection
+console.log(vaultDeposits.projectionType); // TradingVaultDepositProjection
+console.log(vaultDeposits.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(vaultDeposits.settlementMode); // settlementMode: mock
+console.log(vaultDeposits.realQuaiTransactions); // realQuaiTransactions: false
+console.log(vaultDeposits.walletRequired); // walletRequired: false
+console.log(vaultDeposits.fundsMoved); // fundsMoved: false
+console.log(vaultDeposits.tradingVaultMutation); // tradingVaultMutation: false
+console.log(vaultWithdrawals.source); // GET /v1/vault/withdrawals, source: tradingvault-event-projection
+console.log(vaultWithdrawals.projectionType); // TradingVaultWithdrawalProjection
 console.log(vaultDepositPrepare.status); // 501
 console.log(vaultDepositPrepare.body.error); // owner_wallet_vault_deposit_not_implemented
 console.log(vaultDepositPrepare.body.source); // owner-wallet-vault-operation-placeholder
@@ -143,6 +155,8 @@ console.log(result.proof.settlementMode); // mock
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects. `contractRegistry.listedAssetStatus.status` is `wrapped-token-listing`; primary quote assets are `WQUAI` and `WQI`. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. Approved community-created tokens are listable only through those approval-gated metadata surfaces, and raw native Qi direct settlement is out of scope. The safety notice preserves: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+
+`dex.vault.deposits.list()` and `dex.vault.withdrawals.list()` call `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals` and return read-only `source: tradingvault-event-projection` history envelopes. They expose `TradingVaultDepositProjection` / `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false` with mock-null event evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `dex.vault.deposits.prepare()` and `dex.vault.withdrawals.prepare()` call `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` and return the intentional 501 owner-wallet placeholders (`owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented`). The envelope preserves `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: false`, and `tradingVaultMutation: false`; the SDK treats the placeholder as a boundary response with no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 

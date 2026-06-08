@@ -119,6 +119,9 @@ class _VaultDepositsApi:
     def __init__(self, client):
         self._client = client
 
+    def list(self):
+        return self._client._request_ok("/v1/vault/deposits")
+
     def prepare(self, request):
         return self._client._request_expected_status(
             "/v1/vault/deposits/prepare",
@@ -131,6 +134,9 @@ class _VaultDepositsApi:
 class _VaultWithdrawalsApi:
     def __init__(self, client):
         self._client = client
+
+    def list(self):
+        return self._client._request_ok("/v1/vault/withdrawals")
 
     def prepare(self, request):
         return self._client._request_expected_status(

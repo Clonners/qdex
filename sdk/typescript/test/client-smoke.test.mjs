@@ -208,6 +208,48 @@ test('TypeScript SDK exposes prepare-only owner-wallet vault operation placehold
   });
 });
 
+test('TypeScript SDK lists read-only TradingVault deposit and withdrawal history without wallet or mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const deposits = await client.vault.deposits.list();
+    assert.deepEqual(deposits.deposits, []);
+    assert.equal(deposits.source, 'tradingvault-event-projection');
+    assert.equal(deposits.projectionType, 'TradingVaultDepositProjection');
+    assert.equal(deposits.eventName, 'Deposit');
+    assert.equal(deposits.custody, 'non-custodial-contract-vault');
+    assert.deepEqual(deposits.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(deposits.settlementMode, 'mock');
+    assert.equal(deposits.settlementTx, null);
+    assert.equal(deposits.blockNumber, null);
+    assert.equal(deposits.blockHash, null);
+    assert.equal(deposits.eventIndex, null);
+    assert.equal(deposits.explorerUrl, null);
+    assert.equal(deposits.realQuaiTransactions, false);
+    assert.equal(deposits.walletRequired, false);
+    assert.equal(deposits.fundsMoved, false);
+    assert.equal(deposits.tradingVaultMutation, false);
+    assert.match(deposits.safetyNotice, /mock rows have no real Quai transaction, no wallet loaded, no funds moved/);
+
+    const withdrawals = await client.vault.withdrawals.list();
+    assert.deepEqual(withdrawals.withdrawals, []);
+    assert.equal(withdrawals.source, 'tradingvault-event-projection');
+    assert.equal(withdrawals.projectionType, 'TradingVaultWithdrawalProjection');
+    assert.equal(withdrawals.eventName, 'Withdraw');
+    assert.deepEqual(withdrawals.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(withdrawals.settlementMode, 'mock');
+    assert.equal(withdrawals.settlementTx, null);
+    assert.equal(withdrawals.blockNumber, null);
+    assert.equal(withdrawals.blockHash, null);
+    assert.equal(withdrawals.eventIndex, null);
+    assert.equal(withdrawals.explorerUrl, null);
+    assert.equal(withdrawals.realQuaiTransactions, false);
+    assert.equal(withdrawals.walletRequired, false);
+    assert.equal(withdrawals.fundsMoved, false);
+    assert.equal(withdrawals.tradingVaultMutation, false);
+  });
+});
+
 test('TypeScript SDK exposes read-only relayer settlement-mode gate metadata without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

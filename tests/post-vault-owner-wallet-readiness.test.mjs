@@ -57,8 +57,10 @@ test('post-vault owner-wallet readiness plan pins completed prepare surfaces and
     '`NO_ADMIN`',
     '## Disallowed autonomous work',
     'no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, real contract address claims, relayer jobs, TradingVault mutation, or funds movement',
-    '## Next bounded local/source-only slice',
-    'read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet before any owner-wallet transaction behavior',
+    '## Completed local/source-only vault history clients',
+    'Completed: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history.',
+    'SDK `dex.vault.deposits.list()` / `dex.vault.withdrawals.list()` and CLI `qdex vault deposits` / `qdex vault withdrawals`',
+    'Next bounded local/source-only slice: terminal UI read-only vault history panel',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }

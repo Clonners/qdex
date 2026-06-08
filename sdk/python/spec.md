@@ -11,6 +11,8 @@ markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
 balances = dex.account.balances()  # GET /v1/account/balances -> mock-vault-projection, read-only, no wallet loaded, no funds moved
+vault_deposits = dex.vault.deposits.list()  # GET /v1/vault/deposits -> source: tradingvault-event-projection, TradingVaultDepositProjection, READ_ONLY
+vault_withdrawals = dex.vault.withdrawals.list()  # GET /v1/vault/withdrawals -> source: tradingvault-event-projection, TradingVaultWithdrawalProjection, READ_ONLY
 vault_deposit_prepare = dex.vault.deposits.prepare({
     'owner': '0xowner',
     'assetSymbol': 'WQI',
@@ -103,6 +105,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
 
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+
+`dex.vault.deposits.list()` and `dex.vault.withdrawals.list()` expose read-only TradingVault event history from `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`. The envelopes return `source: tradingvault-event-projection`, `projectionType: TradingVaultDepositProjection` / `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: False`, `walletRequired: False`, `fundsMoved: False`, and `tradingVaultMutation: False` with mock-null tx/block/event/explorer evidence. These clients preserve no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate TradingVault.
 
 `vault.deposits.prepare()` and `vault.withdrawals.prepare()` expose the owner-wallet TradingVault prepare-only boundary through `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare`. They intentionally return the API placeholder envelopes `owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented` with `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: False`, and `tradingVaultMutation: False`. The clients treat HTTP 501 as a boundary response and preserve no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 

@@ -96,11 +96,96 @@ test('vault docs and campaign status mark read-only history API visibility witho
     'architecture docs should point to completed history API envelopes',
   );
   assert.ok(
-    status.includes('Completed this run: read-only vault deposit/withdrawal history API envelopes'),
-    'campaign status should checkpoint this slice',
+    status.includes('Completed previous run: read-only vault deposit/withdrawal history API envelopes'),
+    'campaign status should retain the vault history API checkpoint',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history'),
-    'campaign status should name the next bounded local/source-only vault client slice',
+    status.includes('Completed this run: read-only TypeScript/Python/qdex vault history clients'),
+    'campaign status should checkpoint the vault history client slice',
+  );
+});
+
+test('vault history SDK and CLI docs expose read-only clients without wallet behavior', async () => {
+  const tsSpec = await readText('sdk/typescript/spec.md');
+  const tsReadme = await readText('sdk/typescript/README.md');
+  const pySpec = await readText('sdk/python/spec.md');
+  const pyReadme = await readText('sdk/python/README.md');
+  const cliSpec = await readText('cli/qdex/spec.md');
+  const cliReadme = await readText('cli/qdex/README.md');
+  const status = await readText('CAMPAIGN_STATUS.md');
+
+  for (const requiredText of [
+    'dex.vault.deposits.list()',
+    'dex.vault.withdrawals.list()',
+    'GET /v1/vault/deposits',
+    'GET /v1/vault/withdrawals',
+    'source: tradingvault-event-projection',
+    'TradingVaultDepositProjection',
+    'TradingVaultWithdrawalProjection',
+    'READ_ONLY',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'settlementMode: mock',
+    'realQuaiTransactions: false',
+    'walletRequired: false',
+    'fundsMoved: false',
+    'tradingVaultMutation: false',
+    'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+  ]) {
+    assert.ok(tsSpec.includes(requiredText), `sdk/typescript/spec.md should include ${requiredText}`);
+    assert.ok(tsReadme.includes(requiredText), `sdk/typescript/README.md should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'dex.vault.deposits.list()',
+    'dex.vault.withdrawals.list()',
+    'GET /v1/vault/deposits',
+    'GET /v1/vault/withdrawals',
+    'source: tradingvault-event-projection',
+    'TradingVaultDepositProjection',
+    'TradingVaultWithdrawalProjection',
+    'READ_ONLY',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'settlementMode: mock',
+    'realQuaiTransactions: False',
+    'walletRequired: False',
+    'fundsMoved: False',
+    'tradingVaultMutation: False',
+    'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+  ]) {
+    assert.ok(pySpec.includes(requiredText), `sdk/python/spec.md should include ${requiredText}`);
+    assert.ok(pyReadme.includes(requiredText), `sdk/python/README.md should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'qdex vault deposits',
+    'qdex vault withdrawals',
+    'GET /v1/vault/deposits',
+    'GET /v1/vault/withdrawals',
+    'source: tradingvault-event-projection',
+    'TradingVaultDepositProjection',
+    'TradingVaultWithdrawalProjection',
+    'READ_ONLY',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'settlementMode: mock',
+    'realQuaiTransactions: false',
+    'walletRequired: false',
+    'fundsMoved: false',
+    'tradingVaultMutation: false',
+    'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+  ]) {
+    assert.ok(cliSpec.includes(requiredText), `cli/qdex/spec.md should include ${requiredText}`);
+    assert.ok(cliReadme.includes(requiredText), `cli/qdex/README.md should include ${requiredText}`);
+  }
+
+  assert.ok(
+    status.includes('Completed this run: read-only TypeScript/Python/qdex vault history clients'),
+    'campaign status should checkpoint the vault history client slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI read-only vault history panel'),
+    'campaign status should name the next bounded local/source-only vault history UI slice',
   );
 });

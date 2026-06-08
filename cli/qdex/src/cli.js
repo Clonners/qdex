@@ -407,6 +407,8 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
+  qdex --base-url http://127.0.0.1:8787 vault deposits
+  qdex --base-url http://127.0.0.1:8787 vault withdrawals
   qdex --base-url http://127.0.0.1:8787 vault deposit --prepare --owner <0xowner> --asset-symbol WQI --amount 10 --chain-id <id> --vault-contract-ref local-only-not-deployed
   qdex --base-url http://127.0.0.1:8787 vault withdraw --prepare --owner <0xowner> --asset-symbol WQUAI --amount 1 --chain-id <id> --vault-contract-ref local-only-not-deployed
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
@@ -569,6 +571,19 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         httpStatus: result.status,
         ...result.body,
         status: result.status,
+      });
+      return 0;
+    }
+
+    if (command === 'vault' && (rest[0] === 'deposits' || rest[0] === 'withdrawals')) {
+      const collection = rest[0];
+      const envelope = collection === 'deposits'
+        ? await client.vault.deposits.list()
+        : await client.vault.withdrawals.list();
+      writeJson(stdout, {
+        command: `vault ${collection}`,
+        baseUrl,
+        ...envelope,
       });
       return 0;
     }

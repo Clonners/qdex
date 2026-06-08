@@ -136,9 +136,13 @@ GET /v1/vault/withdrawals
 
 Those responses are metadata/projection envelopes only: `source: tradingvault-event-projection`, `settlementMode: mock`, empty local arrays until event evidence exists, null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
 
-## Next bounded local/source-only slice
+## Completed local/source-only vault history clients
 
-Next bounded local/source-only slice: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history, still backed by `TradingVaultDepositProjection` and `TradingVaultWithdrawalProjection`, mock-null evidence, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history.
+
+The client surfaces now expose TypeScript/Python SDK `dex.vault.deposits.list()` / `dex.vault.withdrawals.list()` and CLI `qdex vault deposits` / `qdex vault withdrawals`. They consume the existing `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals` envelopes with `source: tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
+
+Next bounded local/source-only slice: terminal UI read-only vault history panel, still backed by `TradingVaultDepositProjection` and `TradingVaultWithdrawalProjection`, mock-null evidence, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

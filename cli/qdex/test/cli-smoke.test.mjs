@@ -192,6 +192,50 @@ test('qdex vault prepare commands print owner-wallet placeholders without wallet
   });
 });
 
+test('qdex vault history commands print read-only event projections without wallet or mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const deposits = await runCliJson(['--base-url', baseUrl, 'vault', 'deposits']);
+
+    assert.equal(deposits.command, 'vault deposits');
+    assert.deepEqual(deposits.deposits, []);
+    assert.equal(deposits.source, 'tradingvault-event-projection');
+    assert.equal(deposits.projectionType, 'TradingVaultDepositProjection');
+    assert.equal(deposits.eventName, 'Deposit');
+    assert.equal(deposits.custody, 'non-custodial-contract-vault');
+    assert.deepEqual(deposits.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(deposits.settlementMode, 'mock');
+    assert.equal(deposits.settlementTx, null);
+    assert.equal(deposits.blockNumber, null);
+    assert.equal(deposits.blockHash, null);
+    assert.equal(deposits.eventIndex, null);
+    assert.equal(deposits.explorerUrl, null);
+    assert.equal(deposits.realQuaiTransactions, false);
+    assert.equal(deposits.walletRequired, false);
+    assert.equal(deposits.fundsMoved, false);
+    assert.equal(deposits.tradingVaultMutation, false);
+    assert.match(deposits.safetyNotice, /no real Quai transaction, no wallet loaded, no funds moved/);
+
+    const withdrawals = await runCliJson(['--base-url', baseUrl, 'vault', 'withdrawals']);
+
+    assert.equal(withdrawals.command, 'vault withdrawals');
+    assert.deepEqual(withdrawals.withdrawals, []);
+    assert.equal(withdrawals.source, 'tradingvault-event-projection');
+    assert.equal(withdrawals.projectionType, 'TradingVaultWithdrawalProjection');
+    assert.equal(withdrawals.eventName, 'Withdraw');
+    assert.deepEqual(withdrawals.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(withdrawals.settlementMode, 'mock');
+    assert.equal(withdrawals.settlementTx, null);
+    assert.equal(withdrawals.blockNumber, null);
+    assert.equal(withdrawals.blockHash, null);
+    assert.equal(withdrawals.eventIndex, null);
+    assert.equal(withdrawals.explorerUrl, null);
+    assert.equal(withdrawals.realQuaiTransactions, false);
+    assert.equal(withdrawals.walletRequired, false);
+    assert.equal(withdrawals.fundsMoved, false);
+    assert.equal(withdrawals.tradingVaultMutation, false);
+  });
+});
+
 test('qdex contracts command prints local-only registry metadata without wallet or tx claims', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'contracts']);
