@@ -521,7 +521,7 @@ components:
     AccountOverview:
       type: object
       description: Read-only mock/local account overview; API state is projection/cache, not custody authority.
-      required: [account, source, custody, session, permissions, balances, orders, fills, settlementMode, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safety]
+      required: [account, source, projectionType, custody, session, permissions, balances, orders, fills, settlementMode, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safety]
       properties:
         account:
           type: object
@@ -530,6 +530,9 @@ components:
         source:
           type: string
           enum: [mock-account-overview]
+        projectionType:
+          type: string
+          enum: [LocalAccountOverviewProjection]
         custody:
           type: string
           enum: [non-custodial-contract-vault]

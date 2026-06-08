@@ -78,15 +78,19 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain account overview clients as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only account overview panel'),
-    'campaign status should mark terminal UI account overview panel as this run',
+    status.includes('Completed previous run: terminal UI read-only account overview panel'),
+    'campaign status should retain the terminal UI account overview panel as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI account overview integration smoke'),
-    'campaign status should point next work at local API + terminal UI account overview smoke',
+    status.includes('Completed this run: local API + terminal UI account overview integration smoke'),
+    'campaign status should mark the local API account overview smoke as this run',
   );
   assert.ok(
-    status.includes('Current phase: terminal UI read-only account overview panel is complete'),
-    'campaign status should describe the current terminal UI panel-complete phase',
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should point next work at another bounded local/source-only MVP surface',
+  );
+  assert.ok(
+    status.includes('Current phase: local API + terminal UI account overview integration smoke is complete'),
+    'campaign status should describe the account overview local API smoke as the current completed phase',
   );
 });

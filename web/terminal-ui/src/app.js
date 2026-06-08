@@ -1,3 +1,4 @@
+import { bindAccountOverviewLocalApiSmoke } from './account-overview-binding.js';
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
 import { bindDelegateKeyHistoryLocalApiSmoke } from './delegate-key-history-binding.js';
 import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from './delegate-key-history-stream-binding.js';
@@ -18,6 +19,28 @@ if (mount) {
   const baseUrl = mount.dataset.qdxStreamBaseUrl || globalThis.QDEX_STREAM_BASE_URL || 'http://127.0.0.1:8787';
 
   mount.innerHTML = renderTradeProofPanel(mockVerticalSliceFixture);
+
+  try {
+    bindAccountOverviewLocalApiSmoke({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onAccountOverview: () => {
+        mount.dataset.qdxAccountOverviewSmoke = 'mock-account-overview';
+      },
+      onError: (error) => {
+        mount.dataset.qdxAccountOverviewSmoke = 'error';
+        console.warn('QDEX account overview REST smoke failed; keeping static read-only fixture with no wallet, RPC, signing, broadcast, transaction, or funds behavior.', error);
+      },
+    }).catch((error) => {
+      mount.dataset.qdxAccountOverviewSmoke = 'disabled';
+      console.warn('QDEX account overview REST smoke disabled; keeping static read-only fixture.', error);
+    });
+  } catch (error) {
+    mount.dataset.qdxAccountOverviewSmoke = 'disabled';
+    console.warn('QDEX account overview REST smoke disabled; keeping static read-only fixture.', error);
+  }
 
   try {
     bindMockOrderTrigger({

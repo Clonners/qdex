@@ -29,8 +29,9 @@ test('OpenAPI exposes read-only local account overview metadata', async () => {
 
   for (const requiredText of [
     'description: Read-only mock/local account overview',
-    'required: [account, source, custody, session, permissions, balances, orders, fills, settlementMode, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safety]',
+    'required: [account, source, projectionType, custody, session, permissions, balances, orders, fills, settlementMode, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safety]',
     'enum: [mock-account-overview]',
+    'enum: [LocalAccountOverviewProjection]',
     'enum: [non-custodial-contract-vault]',
     'enum: [mock-local-no-wallet-session]',
     '$ref: "#/components/schemas/AccountBalances"',
@@ -66,7 +67,8 @@ test('account docs and campaign status pin the read-only overview API and client
     'no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement',
     'TypeScript SDK `account.get()`, Python SDK `account.get()`, and `qdex account` call `GET /v1/account`',
     'Terminal UI exposure complete: `web/terminal-ui/src/account-overview-panel.js`',
-    'The next bounded local/source-only slice is a local API + terminal UI account overview integration smoke',
+    'Local API + terminal UI account overview integration smoke complete',
+    'The next bounded local/source-only slice is another bounded local/source-only MVP surface',
   ]) {
     assert.ok(accountDoc.includes(requiredText), `docs/account.md should include ${requiredText}`);
   }
@@ -88,11 +90,15 @@ test('account docs and campaign status pin the read-only overview API and client
     'campaign status should retain the account overview clients as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only account overview panel'),
-    'campaign status should mark the terminal UI account overview panel as this run',
+    status.includes('Completed previous run: terminal UI read-only account overview panel'),
+    'campaign status should retain the terminal UI account overview panel as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI account overview integration smoke'),
-    'campaign status should point next work at local API + terminal UI account overview smoke',
+    status.includes('Completed this run: local API + terminal UI account overview integration smoke'),
+    'campaign status should mark the local API account overview smoke as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should point next work at another bounded local/source-only MVP surface',
   );
 });

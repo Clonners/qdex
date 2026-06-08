@@ -39,6 +39,7 @@ test('GET /v1/account exposes a read-only local account overview without wallet 
     assert.equal(response.status, 200);
     assert.equal(response.body.account, null);
     assert.equal(response.body.source, 'mock-account-overview');
+    assert.equal(response.body.projectionType, 'LocalAccountOverviewProjection');
     assert.equal(response.body.custody, 'non-custodial-contract-vault');
     assert.deepEqual(response.body.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
     assert.deepEqual(response.body.session, {

@@ -79,6 +79,7 @@ export const createMockAccountOverview = ({
 } = {}) => ({
   account: null,
   source: MOCK_ACCOUNT_OVERVIEW_SOURCE,
+  projectionType: 'LocalAccountOverviewProjection',
   custody: 'non-custodial-contract-vault',
   session: {
     mode: 'mock-local-no-wallet-session',
