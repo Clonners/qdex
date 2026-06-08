@@ -92,12 +92,12 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'post-delegate readiness plan should mark the history API envelope slice complete',
   );
   assert.ok(
-    contracts.includes('read-only DelegateKeyRegistry history API envelopes and the terminal UI read-only delegate-key history panel now expose `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`'),
-    'contracts docs should point to completed delegate-key history API envelopes and terminal UI panel',
+    contracts.includes('read-only DelegateKeyRegistry history API envelopes, the terminal UI read-only delegate-key history panel, and the local API + terminal UI delegate-key history smoke now expose `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`'),
+    'contracts docs should point to completed delegate-key history API envelopes, terminal UI panel, and REST smoke',
   );
   assert.ok(
-    architecture.includes('Read-only DelegateKeyRegistry history API surfaces and the terminal UI read-only delegate-key history panel now expose `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`'),
-    'architecture docs should point to completed delegate-key history API envelopes and terminal UI panel',
+    architecture.includes('Read-only DelegateKeyRegistry history API surfaces, the terminal UI read-only delegate-key history panel, and the local API + terminal UI delegate-key history smoke now expose `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`'),
+    'architecture docs should point to completed delegate-key history API envelopes, terminal UI panel, and REST smoke',
   );
   assert.ok(
     status.includes('Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
@@ -112,12 +112,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should move to delegate-key history client exposure after API visibility',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only delegate-key history panel'),
-    'campaign status should checkpoint the terminal UI delegate-key history panel after client exposure',
+    status.includes('Completed previous run: terminal UI read-only delegate-key history panel'),
+    'campaign status should retain the terminal UI delegate-key history panel after client exposure',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI delegate-key history integration smoke'),
-    'campaign status should point beyond the static terminal UI panel to the REST integration smoke',
+    status.includes('Completed this run: local API + terminal UI delegate-key history integration smoke'),
+    'campaign status should checkpoint the delegate-key history REST smoke after the static panel',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
+    'campaign status should point beyond the REST smoke to the stream alignment boundary',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

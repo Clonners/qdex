@@ -66,7 +66,8 @@ test('post-delegate-key owner-signed readiness plan pins completed prepare surfa
     'Completed: read-only delegate-key registration/revocation history API envelopes',
     'Completed: read-only TypeScript/Python/qdex delegate-key history clients for `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`',
     'Completed: terminal UI read-only delegate-key history panel for those projection envelopes',
-    'Next bounded local/source-only slice: local API + terminal UI delegate-key history integration smoke',
+    'Completed: local API + terminal UI delegate-key history integration smoke',
+    'Next bounded local/source-only slice: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }
@@ -111,8 +112,9 @@ test('campaign status moves from delegate prepare smoke to the post-delegate rea
     'Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet added `DelegateKeyRegisteredProjection` and `DelegateKeyRevokedProjection`',
     'Completed previous run: read-only delegate-key registration/revocation history API envelopes',
     'Completed previous run: read-only TypeScript/Python/qdex delegate-key history clients',
-    'Completed this run: terminal UI read-only delegate-key history panel',
-    'Next autonomous slice: local API + terminal UI delegate-key history integration smoke',
+    'Completed previous run: terminal UI read-only delegate-key history panel',
+    'Completed this run: local API + terminal UI delegate-key history integration smoke',
+    'Next autonomous slice: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);

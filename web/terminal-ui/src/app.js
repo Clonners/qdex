@@ -1,4 +1,5 @@
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
+import { bindDelegateKeyHistoryLocalApiSmoke } from './delegate-key-history-binding.js';
 import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
@@ -95,6 +96,28 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxDelegateKeyPrepareTrigger = 'disabled';
     console.warn('QDEX delegate/API key prepare trigger disabled; keeping owner-signed boundary prepare-only.', error);
+  }
+
+  try {
+    bindDelegateKeyHistoryLocalApiSmoke({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onHistory: () => {
+        mount.dataset.qdxDelegateKeyHistorySmoke = 'delegatekeyregistry-event-projection';
+      },
+      onError: (error) => {
+        mount.dataset.qdxDelegateKeyHistorySmoke = 'error';
+        console.warn('QDEX delegate/API key history REST smoke failed; keeping static read-only fixture with no live DelegateKeyRegistry mutation.', error);
+      },
+    }).catch((error) => {
+      mount.dataset.qdxDelegateKeyHistorySmoke = 'disabled';
+      console.warn('QDEX delegate/API key history REST smoke disabled; keeping static read-only fixture.', error);
+    });
+  } catch (error) {
+    mount.dataset.qdxDelegateKeyHistorySmoke = 'disabled';
+    console.warn('QDEX delegate/API key history REST smoke disabled; keeping static read-only fixture.', error);
   }
 
   try {

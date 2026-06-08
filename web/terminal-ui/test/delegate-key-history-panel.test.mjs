@@ -140,12 +140,16 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should retain the delegate-key history client checkpoint as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only delegate-key history panel'),
-    'campaign status should record the terminal UI delegate-key history panel as this run',
+    status.includes('Completed previous run: terminal UI read-only delegate-key history panel'),
+    'campaign status should retain the terminal UI delegate-key history panel as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI delegate-key history integration smoke'),
-    'campaign status should point to the REST integration smoke after the static panel',
+    status.includes('Completed this run: local API + terminal UI delegate-key history integration smoke'),
+    'campaign status should record the delegate-key history REST smoke as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
+    'campaign status should point to the delegate-key history stream alignment after the REST smoke',
   );
   assert.doesNotMatch(
     `${readme}\n${status}`,

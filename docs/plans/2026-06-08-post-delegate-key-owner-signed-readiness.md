@@ -163,7 +163,11 @@ Completed: terminal UI read-only delegate-key history panel for those projection
 
 The terminal UI now exposes `web/terminal-ui/src/delegate-key-history-panel.js`, `mockVerticalSliceFixture.delegateKeyHistory`, and renderer coverage for empty/mock `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection` rows. It displays `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, and mock-null event evidence without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next bounded local/source-only slice: local API + terminal UI delegate-key history integration smoke for `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`, with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: local API + terminal UI delegate-key history integration smoke for `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`.
+
+The smoke binding uses `web/terminal-ui/src/delegate-key-history-binding.js` to fetch both REST envelopes from local `createApiServer()`, normalize them through the terminal UI history panel, treat empty mock arrays as valid state, and render only `delegatekeyregistry-event-projection` metadata with `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, mock-null event evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment for the same read-only history envelopes, with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 
