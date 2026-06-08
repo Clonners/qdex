@@ -5,6 +5,10 @@ import {
   MOCK_VAULT_PROJECTION_SOURCE,
   createMockVaultBalanceProjection,
 } from './mock-dex.js';
+import {
+  TRADINGVAULT_EVENT_PROJECTION_SOURCE,
+  createVaultHistoryProjectionEnvelope,
+} from './vault-operations.js';
 
 const PUBLIC_CUSTODY_NOTE = 'public-read-only-no-custody';
 const PRIVATE_STREAM_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
@@ -76,8 +80,16 @@ const privateContracts = () => [
     source: INDEXER_SOURCE,
     finality: 'confirmed-settlement-only',
   }),
-  privateContract({ channel: 'deposits', payload: 'deposit_projection', source: 'mock-vault-projection' }),
-  privateContract({ channel: 'withdrawals', payload: 'withdrawal_projection', source: 'mock-vault-projection' }),
+  privateContract({
+    channel: 'deposits',
+    payload: 'deposit_projection',
+    source: TRADINGVAULT_EVENT_PROJECTION_SOURCE,
+  }),
+  privateContract({
+    channel: 'withdrawals',
+    payload: 'withdrawal_projection',
+    source: TRADINGVAULT_EVENT_PROJECTION_SOURCE,
+  }),
 ];
 
 export const listStreamContracts = ({ marketId = MARKET_ID } = {}) => ({
@@ -270,15 +282,14 @@ export const createStreamSnapshot = ({ channel, state } = {}) => {
   }
 
   if (channel === 'deposits' || channel === 'withdrawals') {
+    const operation = channel === 'deposits' ? 'deposit' : 'withdrawal';
+    const data = createVaultHistoryProjectionEnvelope(operation);
+
     return privateSnapshot({
       channel,
       payload: channel === 'deposits' ? 'deposit_projection' : 'withdrawal_projection',
-      source: 'mock-vault-projection',
-      data: {
-        [channel]: [],
-        source: 'mock-vault-projection',
-        custody: 'non-custodial-contract-vault',
-      },
+      source: data.source,
+      data,
     });
   }
 

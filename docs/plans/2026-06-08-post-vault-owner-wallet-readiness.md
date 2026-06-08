@@ -154,7 +154,13 @@ Completed: local API + terminal UI vault history integration smoke.
 
 `src/vault-history-binding.js` now reads `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`, feeds both REST envelopes through the terminal UI normalizer/renderer, and only renders the panel when REST + UI agree on `source: tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, empty local/mock arrays as valid state, mock-null tx/block/event/explorer evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
 
-Next bounded local/source-only slice: align private `deposits`/`withdrawals` WebSocket snapshots with the same TradingVault event-projection envelope, still with mock-null evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+## Completed local/source-only vault history stream alignment
+
+Completed: private `deposits`/`withdrawals` WebSocket snapshots now reuse the TradingVault event-projection envelope.
+
+`/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals` now emit private read-only snapshots backed by the same `createVaultHistoryProjectionEnvelope()` shape as `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`: `source: tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, empty local/mock arrays as valid state, null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
+
+Next bounded local/source-only slice: bind terminal UI to private `deposits`/`withdrawals` vault history streams, still with mock-null evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

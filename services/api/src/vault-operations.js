@@ -1,3 +1,5 @@
+export const TRADINGVAULT_EVENT_PROJECTION_SOURCE = 'tradingvault-event-projection';
+
 const VAULT_OPERATION_MESSAGES = Object.freeze({
   deposit:
     'TradingVault deposit is owner-wallet-only and not implemented in local mock mode; this prepare-only endpoint does not load wallets, sign, broadcast, submit transactions, mutate TradingVault, or move funds.',
@@ -60,7 +62,7 @@ export const createVaultHistoryProjectionEnvelope = (operation) => {
 
   return {
     [config.collection]: [],
-    source: 'tradingvault-event-projection',
+    source: TRADINGVAULT_EVENT_PROJECTION_SOURCE,
     projectionType: config.projectionType,
     eventName: config.eventName,
     custody: 'non-custodial-contract-vault',

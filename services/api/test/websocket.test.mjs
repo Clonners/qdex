@@ -190,6 +190,56 @@ test('WebSocket transport sends private fill snapshots without withdrawal author
   }, { state });
 });
 
+test('WebSocket transport sends private TradingVault deposit and withdrawal history snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    for (const expectation of [
+      {
+        channel: 'deposits',
+        payload: 'deposit_projection',
+        collection: 'deposits',
+        projectionType: 'TradingVaultDepositProjection',
+        eventName: 'Deposit',
+      },
+      {
+        channel: 'withdrawals',
+        payload: 'withdrawal_projection',
+        collection: 'withdrawals',
+        projectionType: 'TradingVaultWithdrawalProjection',
+        eventName: 'Withdraw',
+      },
+    ]) {
+      const message = await readWebSocketSnapshot(baseUrl, expectation.channel);
+
+      assert.equal(message.type, 'snapshot');
+      assert.equal(message.transport, 'websocket');
+      assert.equal(message.snapshot.channel, expectation.channel);
+      assert.equal(message.snapshot.visibility, 'private');
+      assert.equal(message.snapshot.payload, expectation.payload);
+      assert.equal(message.snapshot.source, 'tradingvault-event-projection');
+      assert.equal(message.snapshot.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(message.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(message.snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+
+      assert.deepEqual(message.snapshot.data[expectation.collection], []);
+      assert.equal(message.snapshot.data.source, 'tradingvault-event-projection');
+      assert.equal(message.snapshot.data.projectionType, expectation.projectionType);
+      assert.equal(message.snapshot.data.eventName, expectation.eventName);
+      assert.equal(message.snapshot.data.custody, 'non-custodial-contract-vault');
+      assert.deepEqual(message.snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(message.snapshot.data.settlementMode, 'mock');
+      assert.equal(message.snapshot.data.settlementTx, null);
+      assert.equal(message.snapshot.data.blockNumber, null);
+      assert.equal(message.snapshot.data.blockHash, null);
+      assert.equal(message.snapshot.data.eventIndex, null);
+      assert.equal(message.snapshot.data.explorerUrl, null);
+      assert.equal(message.snapshot.data.realQuaiTransactions, false);
+      assert.equal(message.snapshot.data.walletRequired, false);
+      assert.equal(message.snapshot.data.fundsMoved, false);
+      assert.equal(message.snapshot.data.tradingVaultMutation, false);
+    }
+  });
+});
+
 test('WebSocket transport fanouts live snapshots after mock orderbook and fill mutations', async () => {
   await withServer(async (baseUrl) => {
     const httpBaseUrl = baseUrl.replace('ws://', 'http://');

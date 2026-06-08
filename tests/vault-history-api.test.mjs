@@ -88,12 +88,12 @@ test('vault docs and campaign status mark read-only history API visibility witho
     'post-vault readiness plan should mark the history API envelope slice complete',
   );
   assert.ok(
-    contracts.includes('read-only vault history API envelopes now expose `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`'),
-    'contracts docs should point to completed history API envelopes',
+    contracts.includes('read-only vault history REST/stream envelopes now expose `GET /v1/vault/deposits`, `GET /v1/vault/withdrawals`, `/v1/ws?channel=deposits`, and `/v1/ws?channel=withdrawals`'),
+    'contracts docs should point to completed history REST and stream envelopes',
   );
   assert.ok(
-    architecture.includes('read-only vault history API envelopes now expose `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`'),
-    'architecture docs should point to completed history API envelopes',
+    architecture.includes('read-only vault history REST and private stream surfaces now expose `GET /v1/vault/deposits`, `GET /v1/vault/withdrawals`, `/v1/ws?channel=deposits`, and `/v1/ws?channel=withdrawals`'),
+    'architecture docs should point to completed history REST and stream surfaces',
   );
   assert.ok(
     status.includes('Completed previous run: read-only vault deposit/withdrawal history API envelopes'),
@@ -108,8 +108,12 @@ test('vault docs and campaign status mark read-only history API visibility witho
     'campaign status should retain the terminal UI vault history panel checkpoint',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI vault history integration smoke'),
-    'campaign status should checkpoint the local API + terminal UI vault history smoke slice',
+    status.includes('Completed previous run: local API + terminal UI vault history integration smoke'),
+    'campaign status should retain the local API + terminal UI vault history smoke slice',
+  );
+  assert.ok(
+    status.includes('Completed this run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
+    'campaign status should checkpoint the private vault history stream alignment slice',
   );
 });
 
@@ -197,11 +201,15 @@ test('vault history SDK and CLI docs expose read-only clients without wallet beh
     'campaign status should retain the terminal UI vault history panel checkpoint',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI vault history integration smoke'),
-    'campaign status should checkpoint the local API + terminal UI vault history smoke slice',
+    status.includes('Completed previous run: local API + terminal UI vault history integration smoke'),
+    'campaign status should retain the local API + terminal UI vault history smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: align private `deposits`/`withdrawals` WebSocket snapshots'),
-    'campaign status should name the next bounded local/source-only vault history stream alignment slice',
+    status.includes('Completed this run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
+    'campaign status should checkpoint the bounded local/source-only vault history stream alignment slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: bind terminal UI to private `deposits`/`withdrawals` vault history streams'),
+    'campaign status should name the next bounded local/source-only vault history stream binding slice',
   );
 });

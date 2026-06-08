@@ -72,6 +72,20 @@ test('stream channel registry pins public market data and custody-safe private s
   assert.deepEqual(fillsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
   assert.equal(fillsContract.source, 'in-memory-indexer-projection');
   assert.equal(fillsContract.finality, 'confirmed-settlement-only');
+
+  const depositsContract = contracts.private.find((contract) => contract.channel === 'deposits');
+  assert.equal(depositsContract.payload, 'deposit_projection');
+  assert.equal(depositsContract.source, 'tradingvault-event-projection');
+  assert.deepEqual(depositsContract.requiredPermissions, ['READ_ONLY']);
+  assert.deepEqual(depositsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
+  assert.deepEqual(depositsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
+
+  const withdrawalsContract = contracts.private.find((contract) => contract.channel === 'withdrawals');
+  assert.equal(withdrawalsContract.payload, 'withdrawal_projection');
+  assert.equal(withdrawalsContract.source, 'tradingvault-event-projection');
+  assert.deepEqual(withdrawalsContract.requiredPermissions, ['READ_ONLY']);
+  assert.deepEqual(withdrawalsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
+  assert.deepEqual(withdrawalsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
 });
 
 test('stream snapshots expose public depth/trades and private fills from indexed mock projections', () => {
@@ -155,4 +169,58 @@ test('stream snapshots expose public depth/trades and private fills from indexed
     walletRequired: false,
     safetyNotice: 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
   });
+});
+
+test('private deposit and withdrawal stream snapshots reuse TradingVault event-projection envelopes', () => {
+  const state = createMockDexState();
+
+  const expectations = [
+    {
+      channel: 'deposits',
+      payload: 'deposit_projection',
+      collection: 'deposits',
+      projectionType: 'TradingVaultDepositProjection',
+      eventName: 'Deposit',
+    },
+    {
+      channel: 'withdrawals',
+      payload: 'withdrawal_projection',
+      collection: 'withdrawals',
+      projectionType: 'TradingVaultWithdrawalProjection',
+      eventName: 'Withdraw',
+    },
+  ];
+
+  for (const expectation of expectations) {
+    const snapshot = createStreamSnapshot({ channel: expectation.channel, state });
+
+    assert.equal(snapshot.channel, expectation.channel);
+    assert.equal(snapshot.visibility, 'private');
+    assert.equal(snapshot.payload, expectation.payload);
+    assert.equal(snapshot.source, 'tradingvault-event-projection');
+    assert.equal(snapshot.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+
+    assert.deepEqual(snapshot.data[expectation.collection], []);
+    assert.equal(snapshot.data.source, 'tradingvault-event-projection');
+    assert.equal(snapshot.data.projectionType, expectation.projectionType);
+    assert.equal(snapshot.data.eventName, expectation.eventName);
+    assert.equal(snapshot.data.custody, 'non-custodial-contract-vault');
+    assert.deepEqual(snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(snapshot.data.settlementMode, 'mock');
+    assert.equal(snapshot.data.settlementTx, null);
+    assert.equal(snapshot.data.blockNumber, null);
+    assert.equal(snapshot.data.blockHash, null);
+    assert.equal(snapshot.data.eventIndex, null);
+    assert.equal(snapshot.data.explorerUrl, null);
+    assert.equal(snapshot.data.realQuaiTransactions, false);
+    assert.equal(snapshot.data.walletRequired, false);
+    assert.equal(snapshot.data.fundsMoved, false);
+    assert.equal(snapshot.data.tradingVaultMutation, false);
+    assert.match(snapshot.data.safetyNotice, /mock rows have no real Quai transaction/);
+    assert.match(snapshot.data.safetyNotice, /no wallet loaded/);
+    assert.match(snapshot.data.safetyNotice, /no funds moved/);
+    assert.match(snapshot.data.safetyNotice, /no delegate withdrawal\/admin authority/);
+  }
 });

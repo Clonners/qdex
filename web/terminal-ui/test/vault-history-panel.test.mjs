@@ -119,12 +119,16 @@ test('terminal UI docs and campaign status mark vault history smoke complete and
     'campaign status should retain the terminal UI vault history panel checkpoint',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI vault history integration smoke'),
-    'campaign status should checkpoint the local API + terminal UI vault history smoke slice',
+    status.includes('Completed previous run: local API + terminal UI vault history integration smoke'),
+    'campaign status should retain the local API + terminal UI vault history smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: align private `deposits`/`withdrawals` WebSocket snapshots'),
-    'campaign status should move to the next bounded local/source-only vault history stream alignment slice',
+    status.includes('Completed this run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
+    'campaign status should checkpoint the bounded local/source-only vault history stream alignment slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: bind terminal UI to private `deposits`/`withdrawals` vault history streams'),
+    'campaign status should move to the next bounded local/source-only vault history stream binding slice',
   );
   assert.doesNotMatch(
     `${readme}\n${status}`,
