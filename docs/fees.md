@@ -60,6 +60,8 @@ The stream snapshot remains metadata-only: `FeeScheduleProjection`, `eventName: 
 
 Terminal UI FeeManager fee schedule stream binding complete: `web/terminal-ui/src/live-fee-policy.js` consumes public `/v1/ws?channel=fees` snapshots, validates `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior before rendering the live FeeManager fee schedule stream panel.
 
+Local API + terminal UI FeeManager fee schedule stream integration smoke complete: `web/terminal-ui/src/fee-policy-stream-binding.js` reads `GET /v1/fees`, subscribes to `/v1/ws?channel=fees`, and renders only on REST + WebSocket agreement for `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
 ## Next local/source-only surface
 
-After terminal UI binding for the FeeManager fee schedule stream, the next bounded local/source-only slice is a local API + terminal UI FeeManager fee schedule stream integration smoke. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.
+After the FeeManager fee schedule stream smoke, the next bounded local/source-only slice is read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.

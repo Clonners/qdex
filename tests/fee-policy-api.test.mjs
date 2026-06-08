@@ -104,11 +104,19 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
   );
   assert.ok(
     status.includes('Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
-    'campaign status should record the FeeManager WebSocket snapshot alignment as this run',
+    'campaign status should retain the FeeManager WebSocket snapshot alignment as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule stream integration smoke'),
-    'campaign status should move past FeeManager WebSocket snapshot alignment to terminal UI stream binding',
+    status.includes('Completed previous run: terminal UI binding for the FeeManager fee schedule stream'),
+    'campaign status should retain the terminal UI FeeManager stream binding as previous work',
+  );
+  assert.ok(
+    status.includes('Completed this run: local API + terminal UI FeeManager fee schedule stream integration smoke'),
+    'campaign status should mark the FeeManager stream smoke as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers'),
+    'campaign status should move past FeeManager stream smoke to SDK/CLI stream consumers',
   );
 
   assert.doesNotMatch(

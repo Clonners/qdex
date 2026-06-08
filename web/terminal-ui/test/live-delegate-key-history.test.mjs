@@ -295,7 +295,9 @@ test('terminal UI package/app/docs mention the private DelegateKeyRegistry histo
     'Completed previous run: terminal UI read-only FeeManager fee schedule exposure',
     'Completed previous run: local API + terminal UI FeeManager fee schedule integration smoke',
     'Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment',
-    'Next autonomous slice: local API + terminal UI FeeManager fee schedule stream integration smoke',
+    'Completed previous run: terminal UI binding for the FeeManager fee schedule stream',
+    'Completed this run: local API + terminal UI FeeManager fee schedule stream integration smoke',
+    'Next autonomous slice: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

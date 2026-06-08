@@ -3,7 +3,7 @@ import { bindDelegateKeyHistoryLocalApiSmoke } from './delegate-key-history-bind
 import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from './delegate-key-history-stream-binding.js';
 import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
 import { bindFeePolicyLocalApiSmoke } from './fee-policy-binding.js';
-import { bindLiveFeePolicyStream } from './live-fee-policy.js';
+import { bindLiveFeePolicyStreamWithRestSnapshot } from './fee-policy-stream-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
@@ -124,18 +124,28 @@ if (mount) {
   }
 
   try {
-    bindLiveFeePolicyStream({
+    bindLiveFeePolicyStreamWithRestSnapshot({
       mount,
       baseUrl,
       baseFixture: mockVerticalSliceFixture,
       render: renderTradeProofPanel,
-      onError: (error) => {
+      onRestError: (error) => {
+        mount.dataset.qdxFeePolicyRestSnapshot = 'error';
+        console.warn('QDEX FeeManager fee schedule REST snapshot unavailable; keeping static read-only fixture with no fee-authority runtime keys.', error);
+      },
+      onRestSnapshot: () => {
+        mount.dataset.qdxFeePolicyRestSnapshot = 'feemanager-policy-projection';
+      },
+      onStreamError: (error) => {
         mount.dataset.qdxFeePolicyStream = 'error';
         console.warn('QDEX live FeeManager fee schedule stream unavailable; keeping static read-only fixture with no fee-authority runtime keys.', error);
       },
-      onUpdate: () => {
+      onStreamUpdate: () => {
         mount.dataset.qdxFeePolicyStream = 'fees';
       },
+    }).catch((error) => {
+      mount.dataset.qdxFeePolicyStream = 'disabled';
+      console.warn('QDEX local FeeManager fee schedule API/stream smoke disabled; keeping static read-only fixture.', error);
     });
   } catch (error) {
     mount.dataset.qdxFeePolicyStream = 'disabled';

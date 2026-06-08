@@ -163,8 +163,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should checkpoint the FeeManager stream snapshot alignment',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule stream integration smoke'),
-    'campaign status should move past FeeManager stream snapshot alignment to terminal UI binding',
+    status.includes('Completed previous run: terminal UI binding for the FeeManager fee schedule stream'),
+    'campaign status should retain terminal UI FeeManager stream binding as previous work',
+  );
+  assert.ok(
+    status.includes('Completed this run: local API + terminal UI FeeManager fee schedule stream integration smoke'),
+    'campaign status should checkpoint the FeeManager stream integration smoke',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers'),
+    'campaign status should move past FeeManager stream smoke to SDK/CLI stream consumers',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

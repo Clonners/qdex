@@ -211,8 +211,16 @@ test('fee policy docs, app binding, package check, and campaign status mark the 
     'campaign status should checkpoint the read-only FeeManager stream alignment slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule stream integration smoke'),
-    'campaign status should advance to terminal UI binding for the FeeManager stream',
+    status.includes('Completed previous run: terminal UI binding for the FeeManager fee schedule stream'),
+    'campaign status should retain terminal UI FeeManager stream binding as previous work',
+  );
+  assert.ok(
+    status.includes('Completed this run: local API + terminal UI FeeManager fee schedule stream integration smoke'),
+    'campaign status should checkpoint the FeeManager stream smoke as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers'),
+    'campaign status should advance past FeeManager stream smoke to SDK/CLI consumers',
   );
 
   assert.doesNotMatch(
