@@ -104,11 +104,11 @@ Also do not add:
 - admin/operator withdrawal paths,
 - balance changes based on optimistic local state.
 
-## Next bounded local/source-only slice
+## Completed local/source-only projection slice
 
-Recommended next autonomous slice: read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet before any owner-wallet transaction behavior.
+Completed: read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet before any owner-wallet transaction behavior.
 
-That slice should stay source/docs/tests only and can define, without runtime chain access:
+That slice stayed source/docs/tests only and defined, without runtime chain access:
 
 ```text
 TradingVaultDepositProjection
@@ -121,7 +121,11 @@ real rows require settlementTx, blockNumber, blockHash, eventIndex, explorerUrl
 permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
 ```
 
-The goal of that next slice is to make future deposit/withdrawal history event-shaped before any endpoint or terminal panel can imply real fund movement.
+The completed schema makes future deposit/withdrawal history event-shaped before any endpoint or terminal panel can imply real fund movement.
+
+## Next bounded local/source-only slice
+
+Next bounded local/source-only slice: read-only vault deposit/withdrawal history API envelopes backed by `TradingVaultDepositProjection` and `TradingVaultWithdrawalProjection`, still with mock rows using null settlementTx/block/explorer evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

@@ -83,8 +83,8 @@ test('vault docs and core docs link the post-vault readiness plan', async () => 
       `${label} should name the post-vault owner-wallet readiness boundary`,
     );
     assert.ok(
-      text.includes('read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet'),
-      `${label} should point the next local slice to event-projection schema rather than wallet behavior`,
+      text.includes('read-only TradingVault `Deposit`/`Withdraw` projection schema'),
+      `${label} should point to the completed event-projection schema rather than wallet behavior`,
     );
     assert.doesNotMatch(
       text,

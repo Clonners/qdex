@@ -482,6 +482,128 @@ components:
         safetyNotice:
           type: string
           description: Mock vault projection only; no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+    TradingVaultDepositProjection:
+      type: object
+      description: Read-only TradingVault Deposit event projection. Mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. Projection rows are read-only event truth with no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+      required: [projectionType, sourceEventId, eventName, owner, token, amount, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, permissions, custody, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safetyNotice]
+      properties:
+        projectionType:
+          type: string
+          enum: [TradingVaultDepositProjection]
+        sourceEventId:
+          type: string
+          description: Normalized indexer event id for the source Deposit event.
+        eventName:
+          type: string
+          enum: [Deposit]
+        owner:
+          type: string
+        token:
+          type: string
+        amount:
+          type: string
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        custody:
+          type: string
+          enum: [non-custodial-contract-vault]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          description: Deposit projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed history display.
+    TradingVaultWithdrawalProjection:
+      type: object
+      description: Read-only TradingVault Withdraw event projection. Mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. Projection rows are read-only event truth with no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+      required: [projectionType, sourceEventId, eventName, owner, token, amount, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, permissions, custody, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safetyNotice]
+      properties:
+        projectionType:
+          type: string
+          enum: [TradingVaultWithdrawalProjection]
+        sourceEventId:
+          type: string
+          description: Normalized indexer event id for the source Withdraw event.
+        eventName:
+          type: string
+          enum: [Withdraw]
+        owner:
+          type: string
+        token:
+          type: string
+        amount:
+          type: string
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        custody:
+          type: string
+          enum: [non-custodial-contract-vault]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          description: Withdrawal projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed history display.
     VaultOperationPrepareRequest:
       type: object
       description: owner wallet must authorize the future deposit/withdrawal; local prepare mode carries intent metadata only and no signing/RPC/tx fields.

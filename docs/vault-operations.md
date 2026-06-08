@@ -60,4 +60,25 @@ Until then, the API is documentation/discovery only and stays `prepare-only-not-
 
 The post-vault owner-wallet readiness plan is pinned in `docs/plans/2026-06-08-post-vault-owner-wallet-readiness.md`. It maps the completed mock-vault balance stream, prepare-only API endpoints, SDK/Python/qdex clients, terminal UI panel, and local API/UI smoke to the explicit owner-wallet approval gate without adding wallet behavior.
 
-Next local/source-only step: read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet before any owner-wallet transaction behavior. That projection work should keep `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, TradingVault mutation, or funds movement.
+## Read-only TradingVault event projections
+
+The read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet is now pinned in `services/indexer/schema.md` and `docs/api-openapi.yaml` before any owner-wallet transaction behavior exists.
+
+Projection row names:
+
+```text
+TradingVaultDepositProjection
+TradingVaultWithdrawalProjection
+```
+
+Required projection rules:
+
+- event-truth rows only: `Deposit` creates `TradingVaultDepositProjection`; `Withdraw` creates `TradingVaultWithdrawalProjection`.
+- mock rows keep settlementTx/blockNumber/blockHash/eventIndex/explorerUrl null and must remain visibly mock/local-only.
+- real rows require settlementTx, blockNumber, blockHash, eventIndex, explorerUrl before any future confirmed deposit/withdrawal history display.
+- every row carries `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN`.
+- projection rows are read models only; they do not create wallet requests, submit transactions, mutate `TradingVault`, or move funds.
+
+This projection schema preserves no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, TradingVault mutation, or funds movement.
+
+Next local/source-only step: read-only vault deposit/withdrawal history API envelopes backed by these projection schemas, still with null mock tx/block/explorer fields until real event evidence is approved.

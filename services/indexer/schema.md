@@ -161,6 +161,50 @@ source: contract_event | mock_event
 
 `vault_balances` is not a custody ledger. It is a read model rebuilt from deposit, withdrawal, lock, unlock, and settlement events. If a reorg invalidates events, balances are rewound and replayed.
 
+### TradingVault Deposit/Withdraw event projections
+
+Purpose: define event-shaped rows for future read-only deposit/withdrawal history surfaces before any owner-wallet transaction behavior exists.
+
+Projection types:
+
+```text
+TradingVaultDepositProjection
+TradingVaultWithdrawalProjection
+```
+
+Shared required fields:
+
+```text
+projectionType: TradingVaultDepositProjection | TradingVaultWithdrawalProjection
+sourceEventId
+eventName: Deposit | Withdraw
+owner
+token
+amount
+settlementMode: mock | quai_contract
+settlementTx
+blockNumber
+blockHash
+eventIndex
+explorerUrl
+permissions: READ_ONLY | NO_WITHDRAW | NO_ADMIN
+custody: non-custodial-contract-vault
+realQuaiTransactions
+walletRequired: false
+fundsMovedByProjection: false
+tradingVaultMutationByProjection: false
+safetyNotice
+```
+
+Rules:
+
+- `TradingVaultDepositProjection` rows are projected only from normalized `Deposit` source events.
+- `TradingVaultWithdrawalProjection` rows are projected only from normalized `Withdraw` source events.
+- mock rows keep settlementTx = null, blockNumber = null, blockHash = null, eventIndex = null, and explorerUrl = null; mock safety copy must say no real Quai transaction and no funds moved.
+- real rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before any history/proof UI treats them as confirmed contract event truth.
+- The projection is read-only event truth, not custody authority; it cannot create wallet requests, sign, submit, relay, mutate `TradingVault`, or move funds.
+- Every row preserves `permissions: READ_ONLY | NO_WITHDRAW | NO_ADMIN`; delegate/API keys still have no withdrawal/admin authority.
+
 ### orders
 
 Projection of order intent and lifecycle metadata.
