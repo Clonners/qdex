@@ -131,7 +131,7 @@ test('delegate docs, readiness plan, and campaign status mark projection schema 
     'campaign status should checkpoint the DelegateKeyRegistry projection schema slice',
   );
   assert.ok(
-    status.includes('Completed this run: read-only TypeScript/Python/qdex delegate-key history clients'),
+    status.includes('Completed previous run: read-only TypeScript/Python/qdex delegate-key history clients'),
     'campaign status should preserve the latest delegate-key history client checkpoint after the schema/API ratchets',
   );
 

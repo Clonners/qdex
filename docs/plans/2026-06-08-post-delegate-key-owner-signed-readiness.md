@@ -159,7 +159,11 @@ Completed: read-only TypeScript/Python/qdex delegate-key history clients for `GE
 
 The clients now expose TypeScript SDK `delegateKeys.listRegistrations()` / `delegateKeys.listRevocations()`, Python SDK `delegate_keys.list_registrations()` / `delegate_keys.list_revocations()`, and `qdex api registrations` / `qdex api revocations`, all backed by empty/mock local projection rows with `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateKeyRegistryMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next bounded local/source-only slice: terminal UI read-only delegate-key history panel for the same projection envelopes, with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: terminal UI read-only delegate-key history panel for those projection envelopes.
+
+The terminal UI now exposes `web/terminal-ui/src/delegate-key-history-panel.js`, `mockVerticalSliceFixture.delegateKeyHistory`, and renderer coverage for empty/mock `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection` rows. It displays `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, and mock-null event evidence without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: local API + terminal UI delegate-key history integration smoke for `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`, with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

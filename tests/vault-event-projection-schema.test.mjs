@@ -155,7 +155,7 @@ test('vault docs, post-vault plan, and campaign status mark projection schema co
     'campaign status should checkpoint the DelegateKeyRegistry projection schema ratchet',
   );
   assert.ok(
-    status.includes('Completed this run: read-only TypeScript/Python/qdex delegate-key history clients'),
+    status.includes('Completed previous run: read-only TypeScript/Python/qdex delegate-key history clients'),
     'campaign status should retain the completed read-only delegate-key history clients checkpoint',
   );
 

@@ -1,3 +1,4 @@
+import { createMockDelegateKeyHistoryFixture } from './delegate-key-history-panel.js';
 import { createMockVaultHistoryFixture } from './vault-history-panel.js';
 
 export const mockVerticalSliceFixture = Object.freeze({
@@ -84,6 +85,7 @@ export const mockVerticalSliceFixture = Object.freeze({
     createdFromEventId: 'event-000001',
   }),
   vaultHistory: createMockVaultHistoryFixture(),
+  delegateKeyHistory: createMockDelegateKeyHistoryFixture(),
   custody: Object.freeze({
     note: 'non-custodial-no-withdrawal-authority',
     withdrawalAuthority: 'owner-wallet-only',

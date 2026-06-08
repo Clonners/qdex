@@ -1,3 +1,4 @@
+import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-panel.js';
 import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
 
 const escapeHtml = (value) => String(value)
@@ -338,6 +339,78 @@ ${renderVaultHistorySection({
   `;
 };
 
+const renderDelegateKeyHistoryRows = (rows = [], emptyLabel) => {
+  if (rows.length === 0) {
+    return `<li class="muted">${escapeHtml(emptyLabel)}</li>`;
+  }
+
+  return rows.map((row) => `
+    <li>
+      <span>${escapeHtml(row.eventName ?? row.projectionType ?? 'DelegateKeyRegistry event')}</span>
+      <span>${escapeHtml(row.delegate ?? row.keyId ?? 'delegate-key')}</span>
+      <span>${escapeHtml(row.allowedMarketsHash ?? row.maxNotional ?? 'metadata-only')}</span>
+      <code>${escapeHtml(row.sourceEventId ?? 'mock-event-pending')}</code>
+    </li>
+  `).join('');
+};
+
+const renderDelegateKeyHistorySection = ({ title, envelope, rows, emptyLabel }) => {
+  const permissions = (envelope.permissions ?? []).join(', ');
+
+  return `
+          <section class="delegate-key-history-section">
+            <h3>${escapeHtml(title)}</h3>
+            <p class="warning">${escapeHtml(envelope.safetyNotice)}</p>
+            <dl class="kv">
+              <div><dt>source</dt><dd>${escapeHtml(envelope.source)}</dd></div>
+              <div><dt>projection</dt><dd>${escapeHtml(envelope.projectionType)}</dd></div>
+              <div><dt>event</dt><dd>${escapeHtml(envelope.eventName)}</dd></div>
+              <div><dt>custody</dt><dd>${escapeHtml(envelope.custody)}</dd></div>
+              <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+              <div><dt>settlementMode</dt><dd>${escapeHtml(envelope.settlementMode)}</dd></div>
+              <div><dt>settlement tx</dt><dd><code>${escapeHtml(mockEvidenceLabel(envelope.settlementTx))}</code></dd></div>
+              <div><dt>block</dt><dd>${escapeHtml(mockEvidenceLabel(envelope.blockNumber))}</dd></div>
+              <div><dt>event index</dt><dd>${escapeHtml(mockEvidenceLabel(envelope.eventIndex))}</dd></div>
+              <div><dt>explorer</dt><dd>${escapeHtml(mockEvidenceLabel(envelope.explorerUrl))}</dd></div>
+              <div><dt>delegate can withdraw</dt><dd>${escapeHtml(envelope.delegateCanWithdraw)}</dd></div>
+              <div><dt>delegate can admin</dt><dd>${escapeHtml(envelope.delegateCanAdmin)}</dd></div>
+              <div><dt>real Quai tx</dt><dd>${escapeHtml(envelope.realQuaiTransactions)}</dd></div>
+              <div><dt>wallet required</dt><dd>${escapeHtml(envelope.walletRequired)}</dd></div>
+              <div><dt>funds moved</dt><dd>${escapeHtml(envelope.fundsMoved)}</dd></div>
+              <div><dt>TradingVault mutation</dt><dd>${escapeHtml(envelope.tradingVaultMutation)}</dd></div>
+              <div><dt>DelegateKeyRegistry mutation</dt><dd>${escapeHtml(envelope.delegateKeyRegistryMutation)}</dd></div>
+            </dl>
+            <ul>${renderDelegateKeyHistoryRows(rows, emptyLabel)}</ul>
+          </section>
+  `;
+};
+
+const renderDelegateKeyHistoryPanel = (delegateKeyHistory) => {
+  if (delegateKeyHistory === undefined || delegateKeyHistory === null) {
+    return '';
+  }
+
+  const history = normalizeDelegateKeyHistoryPanelFixture(delegateKeyHistory);
+
+  return `
+        <article class="panel stream-panel delegate-key-history-panel">
+          <h2>read-only delegate/API key history</h2>
+${renderDelegateKeyHistorySection({
+    title: 'DelegateKeyRegistered history',
+    envelope: history.registrations,
+    rows: history.registrations.registrations,
+    emptyLabel: 'no delegate-key registration history rows yet',
+  })}
+${renderDelegateKeyHistorySection({
+    title: 'DelegateKeyRevoked history',
+    envelope: history.revocations,
+    rows: history.revocations.revocations,
+    emptyLabel: 'no delegate-key revocation history rows yet',
+  })}
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -431,6 +504,8 @@ ${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fix
 ${renderVaultOperationPanel(fixture.vaultOperation)}
 
 ${renderDelegateKeyOperationPanel(fixture.delegateKeyOperation)}
+
+${renderDelegateKeyHistoryPanel(fixture.delegateKeyHistory)}
 
 ${renderVaultHistoryStreamPanel(fixture.vaultHistoryStream)}
 
