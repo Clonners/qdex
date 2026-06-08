@@ -183,7 +183,11 @@ Completed: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history s
 
 The SDK/CLI stream consumers expose TypeScript `delegateKeys.registrations.openStream()` / `delegateKeys.revocations.openStream()`, bounded `delegateKeys.registrations.stream({ limit })` / `delegateKeys.revocations.stream({ limit })`, and CLI `qdex stream delegate-key-registrations` / `qdex stream delegate-key-revocations`. They consume `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations` only as private read-only `delegatekeyregistry-event-projection` snapshots with `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, no live `DelegateKeyRegistry` mutation, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next bounded local/source-only slice: Python SDK DelegateKeyRegistry history stream consumers, still with no live `DelegateKeyRegistry` mutation or wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: Python SDK DelegateKeyRegistry history stream consumers.
+
+The Python SDK stream consumers expose `dex.delegate_keys.registrations.open_stream()` / `dex.delegate_keys.revocations.open_stream()` plus bounded `delegate_keys.registrations.stream(limit=...)` / `delegate_keys.revocations.stream(limit=...)`. They consume `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations` only as private read-only `delegatekeyregistry-event-projection` snapshots with `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, no live `DelegateKeyRegistry` mutation, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: another bounded MVP surface; live `DelegateKeyRegistry` mutation remains approval-gated with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior approved.
 
 ---
 

@@ -288,8 +288,8 @@ test('terminal UI package/app/docs mention the private DelegateKeyRegistry histo
     'Completed previous run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment',
     'Completed previous run: terminal UI private DelegateKeyRegistry history stream binding',
     'Completed previous run: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
-    'Completed this run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
-    'Next autonomous slice: Python SDK DelegateKeyRegistry history stream consumers',
+    'Completed previous run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
+    'Completed this run: Python SDK DelegateKeyRegistry history stream consumers',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
@@ -307,7 +307,11 @@ test('terminal UI package/app/docs mention the private DelegateKeyRegistry histo
     'post-delegate readiness plan should mark TypeScript/qdex stream consumers complete',
   );
   assert.ok(
-    plan.includes('Next bounded local/source-only slice: Python SDK DelegateKeyRegistry history stream consumers'),
-    'post-delegate readiness plan should point to Python SDK stream consumers after TypeScript/qdex',
+    plan.includes('Completed: Python SDK DelegateKeyRegistry history stream consumers'),
+    'post-delegate readiness plan should mark Python stream consumers complete',
+  );
+  assert.ok(
+    plan.includes('Next bounded local/source-only slice: another bounded MVP surface; live `DelegateKeyRegistry` mutation remains approval-gated'),
+    'post-delegate readiness plan should move past Python SDK stream consumers after parity is complete',
   );
 });

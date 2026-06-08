@@ -135,12 +135,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should retain the REST-confirmed terminal UI stream smoke as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers'),
+    status.includes('Completed previous run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers'),
     'campaign status should checkpoint the TypeScript SDK/qdex DelegateKeyRegistry stream consumers',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK DelegateKeyRegistry history stream consumers'),
-    'campaign status should point beyond TypeScript/qdex to Python SDK stream consumers',
+    status.includes('Completed this run: Python SDK DelegateKeyRegistry history stream consumers'),
+    'campaign status should checkpoint Python SDK stream consumers after TypeScript/qdex parity',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    'campaign status should move past delegate-key stream parity to the next bounded source-only surface',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

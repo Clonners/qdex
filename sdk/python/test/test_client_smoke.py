@@ -304,6 +304,69 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(revocations["delegateCanAdmin"])
             self.assertIn("Read-only DelegateKeyRegistry DelegateKeyRevoked history projection", revocations["safetyNotice"])
 
+    def test_python_sdk_consumes_private_delegatekeyregistry_registration_and_revocation_history_streams_without_wallet_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            registrations_stream = client.delegate_keys.registrations.open_stream(timeout=2)
+
+            try:
+                registration_message = registrations_stream.next()
+                self.assertEqual(registration_message["type"], "snapshot")
+                self.assertEqual(registration_message["transport"], "websocket")
+                registration_snapshot = registration_message["snapshot"]
+                self.assertEqual(registration_snapshot["channel"], "delegate-key-registrations")
+                self.assertEqual(registration_snapshot["visibility"], "private")
+                self.assertEqual(registration_snapshot["payload"], "delegate_key_registration_projection")
+                self.assertEqual(registration_snapshot["source"], "delegatekeyregistry-event-projection")
+                self.assertEqual(registration_snapshot["custody"], "non-custodial-no-withdrawal-authority")
+                self.assertEqual(registration_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+                self.assertEqual(
+                    registration_snapshot["safetyNotice"],
+                    "Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.",
+                )
+                self.assertEqual(registration_snapshot["data"]["registrations"], [])
+                self.assertEqual(registration_snapshot["data"]["projectionType"], "DelegateKeyRegisteredProjection")
+                self.assertEqual(registration_snapshot["data"]["eventName"], "DelegateKeyRegistered")
+                self.assertEqual(registration_snapshot["data"]["settlementMode"], "mock")
+                self.assertIsNone(registration_snapshot["data"]["settlementTx"])
+                self.assertIsNone(registration_snapshot["data"]["blockNumber"])
+                self.assertIsNone(registration_snapshot["data"]["blockHash"])
+                self.assertIsNone(registration_snapshot["data"]["eventIndex"])
+                self.assertIsNone(registration_snapshot["data"]["explorerUrl"])
+                self.assertFalse(registration_snapshot["data"]["realQuaiTransactions"])
+                self.assertFalse(registration_snapshot["data"]["walletRequired"])
+                self.assertFalse(registration_snapshot["data"]["fundsMoved"])
+                self.assertFalse(registration_snapshot["data"]["tradingVaultMutation"])
+                self.assertFalse(registration_snapshot["data"]["delegateKeyRegistryMutation"])
+                self.assertFalse(registration_snapshot["data"]["delegateCanWithdraw"])
+                self.assertFalse(registration_snapshot["data"]["delegateCanAdmin"])
+            finally:
+                registrations_stream.close()
+
+            revocation_messages = client.delegate_keys.revocations.stream(limit=1, timeout=2)
+            self.assertEqual(len(revocation_messages), 1)
+            revocation_message = revocation_messages[0]
+            self.assertEqual(revocation_message["type"], "snapshot")
+            revocation_snapshot = revocation_message["snapshot"]
+            self.assertEqual(revocation_snapshot["channel"], "delegate-key-revocations")
+            self.assertEqual(revocation_snapshot["visibility"], "private")
+            self.assertEqual(revocation_snapshot["payload"], "delegate_key_revocation_projection")
+            self.assertEqual(revocation_snapshot["source"], "delegatekeyregistry-event-projection")
+            self.assertEqual(revocation_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(revocation_snapshot["data"]["revocations"], [])
+            self.assertEqual(revocation_snapshot["data"]["projectionType"], "DelegateKeyRevokedProjection")
+            self.assertEqual(revocation_snapshot["data"]["eventName"], "DelegateKeyRevoked")
+            self.assertEqual(revocation_snapshot["data"]["settlementMode"], "mock")
+            self.assertIsNone(revocation_snapshot["data"]["settlementTx"])
+            self.assertIsNone(revocation_snapshot["data"]["explorerUrl"])
+            self.assertFalse(revocation_snapshot["data"]["realQuaiTransactions"])
+            self.assertFalse(revocation_snapshot["data"]["walletRequired"])
+            self.assertFalse(revocation_snapshot["data"]["fundsMoved"])
+            self.assertFalse(revocation_snapshot["data"]["tradingVaultMutation"])
+            self.assertFalse(revocation_snapshot["data"]["delegateKeyRegistryMutation"])
+            self.assertFalse(revocation_snapshot["data"]["delegateCanWithdraw"])
+            self.assertFalse(revocation_snapshot["data"]["delegateCanAdmin"])
+
     def test_python_sdk_lists_read_only_tradingvault_deposit_and_withdrawal_history_without_wallet_or_mutation_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

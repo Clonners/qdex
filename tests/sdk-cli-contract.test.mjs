@@ -1114,7 +1114,7 @@ test('SDK and CLI docs expose read-only delegate-key registration and revocation
   }
 });
 
-test('TypeScript SDK and qdex CLI docs expose read-only delegate-key history stream consumers', async () => {
+test('SDK and qdex CLI docs expose read-only delegate-key history stream consumers', async () => {
   const docs = [
     {
       path: 'sdk/typescript/spec.md',
@@ -1153,6 +1153,46 @@ test('TypeScript SDK and qdex CLI docs expose read-only delegate-key history str
         'delegateCanWithdraw: false',
         'delegateCanAdmin: false',
         'delegateKeyRegistryMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        'delegate_keys.registrations.open_stream()',
+        'delegate_keys.revocations.open_stream()',
+        'delegate_keys.registrations.stream(limit=limit)',
+        'delegate_keys.revocations.stream(limit=limit)',
+        '/v1/ws?channel=delegate-key-registrations',
+        '/v1/ws?channel=delegate-key-revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateCanWithdraw: False',
+        'delegateCanAdmin: False',
+        'delegateKeyRegistryMutation: False',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.delegate_keys.registrations.open_stream',
+        'dex.delegate_keys.revocations.open_stream',
+        '/v1/ws?channel=delegate-key-registrations',
+        '/v1/ws?channel=delegate-key-revocations',
+        'delegatekeyregistry-event-projection',
+        'DelegateKeyRegisteredProjection',
+        'DelegateKeyRevokedProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'delegateCanWithdraw: False',
+        'delegateCanAdmin: False',
+        'delegateKeyRegistryMutation: False',
         'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
       ],
     },

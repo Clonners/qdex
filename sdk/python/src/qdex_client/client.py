@@ -464,9 +464,33 @@ class _ProofsApi:
         return self._client._request_ok(f"/v1/proofs/trades/{_encode_path_value(trade_id)}")
 
 
+class _DelegateKeyRegistrationsApi:
+    def __init__(self, client):
+        self._client = client
+
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("delegate-key-registrations", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("delegate-key-registrations", limit=limit, timeout=timeout)
+
+
+class _DelegateKeyRevocationsApi:
+    def __init__(self, client):
+        self._client = client
+
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("delegate-key-revocations", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("delegate-key-revocations", limit=limit, timeout=timeout)
+
+
 class _DelegateKeysApi:
     def __init__(self, client):
         self._client = client
+        self.registrations = _DelegateKeyRegistrationsApi(client)
+        self.revocations = _DelegateKeyRevocationsApi(client)
 
     def list(self):
         return self._client._request_ok("/v1/delegate-keys")

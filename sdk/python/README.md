@@ -156,6 +156,12 @@ delegate_key_revocation_prepare = dex.delegate_keys.prepare_revoke("bot-mm-1", {
 })
 delegate_key_registrations = dex.delegate_keys.list_registrations()
 delegate_key_revocations = dex.delegate_keys.list_revocations()
+delegate_key_registration_stream = dex.delegate_keys.registrations.open_stream(timeout=2)
+try:
+    initial_delegate_key_registration_stream_snapshot = delegate_key_registration_stream.next()
+finally:
+    delegate_key_registration_stream.close()
+delegate_key_revocation_stream_snapshots = dex.delegate_keys.revocations.stream(limit=1, timeout=2)
 
 resting_sell = create_mock_signed_order(side="sell", amount="100", price="5", nonce="1")
 crossing_buy = create_mock_signed_order(side="buy", amount="100", price="6", nonce="2")
@@ -193,3 +199,5 @@ Mock proofs intentionally keep `settlementMode: mock`, `settlementTx: None`, no 
 `dex.delegate_keys.prepare_register()` and `dex.delegate_keys.prepare_revoke()` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and return intentional 501 owner-signed delegate/API key placeholder bodies (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The envelopes preserve `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; these clients have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
 
 `dex.delegate_keys.list_registrations()` and `dex.delegate_keys.list_revocations()` call `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` and return read-only DelegateKeyRegistry event history envelopes. They expose `source: delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: False`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`dex.delegate_keys.registrations.open_stream()` and `dex.delegate_keys.revocations.open_stream()` consume private DelegateKeyRegistry history snapshots from `/v1/ws?channel=delegate-key-registrations` and `/v1/ws?channel=delegate-key-revocations`. Bounded `dex.delegate_keys.registrations.stream(limit=limit)` and `dex.delegate_keys.revocations.stream(limit=limit)` helpers expose the same `delegatekeyregistry-event-projection` snapshots with `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: False`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; there is no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and no live DelegateKeyRegistry or TradingVault mutation.

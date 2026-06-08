@@ -223,12 +223,12 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should retain the local API + terminal UI delegate-key stream smoke as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers'),
-    'campaign status should record the bot/operator delegate-key history stream consumers as this run',
+    status.includes('Completed previous run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers'),
+    'campaign status should retain the TypeScript/qdex DelegateKeyRegistry stream consumers as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK DelegateKeyRegistry history stream consumers'),
-    'campaign status should point to Python SDK delegate-key history stream consumers next',
+    status.includes('Completed this run: Python SDK DelegateKeyRegistry history stream consumers'),
+    'campaign status should checkpoint Python SDK delegate-key history stream consumers',
   );
   assert.ok(
     delegateDoc.includes('Completed local/source-only stream smoke: `web/terminal-ui/src/delegate-key-history-stream-binding.js`'),

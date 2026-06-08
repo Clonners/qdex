@@ -71,7 +71,8 @@ test('post-delegate-key owner-signed readiness plan pins completed prepare surfa
     'Completed: terminal UI binding for private DelegateKeyRegistry history streams',
     'Completed: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
     'Completed: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
-    'Next bounded local/source-only slice: Python SDK DelegateKeyRegistry history stream consumers',
+    'Completed: Python SDK DelegateKeyRegistry history stream consumers',
+    'Next bounded local/source-only slice: another bounded MVP surface; live `DelegateKeyRegistry` mutation remains approval-gated',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }
@@ -121,8 +122,9 @@ test('campaign status moves from delegate prepare smoke to the post-delegate rea
     'Completed previous run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment',
     'Completed previous run: terminal UI private DelegateKeyRegistry history stream binding',
     'Completed previous run: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
-    'Completed this run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
-    'Next autonomous slice: Python SDK DelegateKeyRegistry history stream consumers',
+    'Completed previous run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
+    'Completed this run: Python SDK DelegateKeyRegistry history stream consumers',
+    'Next autonomous slice: another bounded local/source-only MVP surface',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
