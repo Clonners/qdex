@@ -143,12 +143,16 @@ test('vault docs, post-vault plan, and campaign status mark projection schema co
     'campaign status should retain the bounded local/source-only terminal UI delegate-key exposure slice',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI delegate/API key prepare smoke'),
-    'campaign status should checkpoint the local API + terminal UI delegate-key smoke slice',
+    status.includes('Completed previous run: local API + terminal UI delegate/API key prepare smoke'),
+    'campaign status should retain the local API + terminal UI delegate-key smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: post-delegate-key owner-signed readiness docs'),
-    'campaign status should move to post-delegate-key owner-signed readiness docs after local smoke',
+    status.includes('Completed this run: post-delegate-key owner-signed readiness docs'),
+    'campaign status should checkpoint the post-delegate-key owner-signed readiness docs slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
+    'campaign status should move to the DelegateKeyRegistry projection schema ratchet after readiness docs',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet|Recommended next autonomous slice: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet/;
