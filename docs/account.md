@@ -41,6 +41,8 @@ Delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`; account overview visibili
 
 Read-only account overview API visibility and bot/operator client exposure are complete for the local API/OpenAPI/docs/SDK/CLI layer. TypeScript SDK `account.get()`, Python SDK `account.get()`, and `qdex account` call `GET /v1/account` and preserve the same `mock-account-overview`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior safety envelope.
 
-The next bounded local/source-only slice is a terminal UI read-only account overview panel that renders the same envelope without wallet or funds behavior.
+Terminal UI exposure complete: `web/terminal-ui/src/account-overview-panel.js` renders the same `GET /v1/account` envelope as a read-only account overview panel with `LocalAccountOverviewProjection`, `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, and explicit no-wallet/no-funds/no-delegate-withdrawal-admin safety copy.
+
+The next bounded local/source-only slice is a local API + terminal UI account overview integration smoke that reads `GET /v1/account` and renders only if REST + panel agree on the same read-only safety envelope.
 
 Still out of scope without explicit approval: wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live owner-wallet sessions, real token addresses, `TradingVault` mutation, or funds movement.

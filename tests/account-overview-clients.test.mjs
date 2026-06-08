@@ -66,7 +66,7 @@ test('SDK and qdex docs expose the read-only account overview clients', async ()
   }
 });
 
-test('campaign status records account overview clients as the completed bounded slice', async () => {
+test('campaign status records account overview terminal UI panel as the completed bounded slice', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
@@ -74,15 +74,19 @@ test('campaign status records account overview clients as the completed bounded 
     'campaign status should move the account overview API envelope to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: TypeScript/Python/qdex read-only account overview clients'),
-    'campaign status should mark account overview clients as this run',
+    status.includes('Completed previous run: TypeScript/Python/qdex read-only account overview clients'),
+    'campaign status should retain account overview clients as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI read-only account overview panel'),
-    'campaign status should point next work at terminal UI account overview exposure',
+    status.includes('Completed this run: terminal UI read-only account overview panel'),
+    'campaign status should mark terminal UI account overview panel as this run',
   );
   assert.ok(
-    status.includes('Current phase: read-only account overview clients are complete'),
-    'campaign status should describe the current client-complete phase',
+    status.includes('Next autonomous slice: local API + terminal UI account overview integration smoke'),
+    'campaign status should point next work at local API + terminal UI account overview smoke',
+  );
+  assert.ok(
+    status.includes('Current phase: terminal UI read-only account overview panel is complete'),
+    'campaign status should describe the current terminal UI panel-complete phase',
   );
 });

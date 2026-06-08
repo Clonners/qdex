@@ -1,3 +1,4 @@
+import { normalizeAccountOverviewPanelFixture } from './account-overview-panel.js';
 import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-panel.js';
 import { normalizeFeePolicyPanelFixture } from './fee-policy-panel.js';
 import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
@@ -316,6 +317,72 @@ const renderDelegateKeyOperationPanel = (delegateKeyOperation) => {
 };
 
 const mockEvidenceLabel = (value) => value ?? 'null (mock)';
+
+const renderAccountOverviewRows = (rows = [], emptyLabel, rowLabel = 'row') => {
+  if (rows.length === 0) {
+    return `<li class="muted">${escapeHtml(emptyLabel)}</li>`;
+  }
+
+  return rows.map((row) => `
+    <li>
+      <span>${escapeHtml(row.marketId ?? row.token ?? row.symbol ?? rowLabel)}</span>
+      <span>${escapeHtml(row.status ?? row.available ?? row.amount ?? '0')}</span>
+      <code>${escapeHtml(row.orderHash ?? row.fillId ?? row.sourceEventId ?? rowLabel)}</code>
+    </li>
+  `).join('');
+};
+
+const renderAccountOverviewPanel = (accountOverview) => {
+  if (accountOverview === undefined || accountOverview === null) {
+    return '';
+  }
+
+  const overview = normalizeAccountOverviewPanelFixture(accountOverview);
+  const permissions = (overview.permissions ?? []).join(', ');
+  const balanceRows = overview.balances.balances ?? [];
+  const orderRows = overview.orders.open ?? [];
+  const fillRows = overview.fills.items ?? [];
+  const accountLabel = overview.account === null ? 'null (local/mock)' : overview.account;
+
+  return `
+        <article class="panel stream-panel account-overview-panel">
+          <h2>read-only account overview</h2>
+          <p class="warning">${escapeHtml(overview.safety.notice)}</p>
+          <p class="warning">Mock account overview only: no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.</p>
+          <dl class="kv">
+            <div><dt>account</dt><dd>${escapeHtml(accountLabel)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(overview.source)}</dd></div>
+            <div><dt>projection</dt><dd>${escapeHtml(overview.projectionType)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(overview.custody)}</dd></div>
+            <div><dt>session</dt><dd>${escapeHtml(overview.session.mode)}</dd></div>
+            <div><dt>authenticated</dt><dd>${escapeHtml(overview.session.authenticated)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>balances source</dt><dd>${escapeHtml(overview.balances.source)}</dd></div>
+            <div><dt>orders source</dt><dd>${escapeHtml(overview.orders.source)}</dd></div>
+            <div><dt>matcher-local orders</dt><dd>${escapeHtml(overview.orders.matcherLocalOnly)}</dd></div>
+            <div><dt>fills source</dt><dd>${escapeHtml(overview.fills.source)}</dd></div>
+            <div><dt>fill projection</dt><dd>${escapeHtml(overview.fills.projectionType)}</dd></div>
+            <div><dt>confirmed-only fills</dt><dd>${escapeHtml(overview.fills.confirmedOnly)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(overview.settlementMode)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(overview.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(overview.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(overview.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(overview.tradingVaultMutation)}</dd></div>
+            <div><dt>delegate can withdraw</dt><dd>${escapeHtml(overview.safety.delegateCanWithdraw)}</dd></div>
+            <div><dt>delegate can admin</dt><dd>${escapeHtml(overview.safety.delegateCanAdmin)}</dd></div>
+            <div><dt>balance rows</dt><dd>${escapeHtml(balanceRows.length)}</dd></div>
+            <div><dt>open orders</dt><dd>${escapeHtml(orderRows.length)}</dd></div>
+            <div><dt>confirmed fills</dt><dd>${escapeHtml(fillRows.length)}</dd></div>
+          </dl>
+          <h3>mock vault balances</h3>
+          <ul>${renderAccountOverviewRows(balanceRows, 'no mock account balances yet', 'balance')}</ul>
+          <h3>matcher-local open orders</h3>
+          <ul>${renderAccountOverviewRows(orderRows, 'no matcher-local open orders yet', 'order')}</ul>
+          <h3>confirmed indexed fills</h3>
+          <ul>${renderAccountOverviewRows(fillRows, 'no confirmed IndexedFillProjection rows yet', 'fill')}</ul>
+        </article>
+  `;
+};
 
 const renderVaultHistoryRows = (rows = [], emptyLabel) => {
   if (rows.length === 0) {
@@ -636,6 +703,8 @@ ${renderLiveStreamPanel(fixture.liveStream)}
 ${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
 
 ${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fixture.balances)}
+
+${renderAccountOverviewPanel(fixture.accountOverview)}
 
 ${renderVaultOperationPanel(fixture.vaultOperation)}
 

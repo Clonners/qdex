@@ -65,7 +65,8 @@ test('account docs and campaign status pin the read-only overview API and client
     'NO_ADMIN',
     'no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement',
     'TypeScript SDK `account.get()`, Python SDK `account.get()`, and `qdex account` call `GET /v1/account`',
-    'The next bounded local/source-only slice is a terminal UI read-only account overview panel',
+    'Terminal UI exposure complete: `web/terminal-ui/src/account-overview-panel.js`',
+    'The next bounded local/source-only slice is a local API + terminal UI account overview integration smoke',
   ]) {
     assert.ok(accountDoc.includes(requiredText), `docs/account.md should include ${requiredText}`);
   }
@@ -83,11 +84,15 @@ test('account docs and campaign status pin the read-only overview API and client
     'campaign status should move the account overview API envelope to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: TypeScript/Python/qdex read-only account overview clients'),
-    'campaign status should mark the account overview clients as this run',
+    status.includes('Completed previous run: TypeScript/Python/qdex read-only account overview clients'),
+    'campaign status should retain the account overview clients as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI read-only account overview panel'),
-    'campaign status should point next work at terminal UI account overview exposure',
+    status.includes('Completed this run: terminal UI read-only account overview panel'),
+    'campaign status should mark the terminal UI account overview panel as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: local API + terminal UI account overview integration smoke'),
+    'campaign status should point next work at local API + terminal UI account overview smoke',
   );
 });

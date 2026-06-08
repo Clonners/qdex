@@ -1,3 +1,4 @@
+import { createMockAccountOverviewFixture } from './account-overview-panel.js';
 import { createMockDelegateKeyHistoryFixture } from './delegate-key-history-panel.js';
 import { createMockFeePolicyFixture } from './fee-policy-panel.js';
 import { createMockVaultHistoryFixture } from './vault-history-panel.js';
@@ -85,6 +86,7 @@ export const mockVerticalSliceFixture = Object.freeze({
     }),
     createdFromEventId: 'event-000001',
   }),
+  accountOverview: createMockAccountOverviewFixture(),
   vaultHistory: createMockVaultHistoryFixture(),
   delegateKeyHistory: createMockDelegateKeyHistoryFixture(),
   feePolicy: createMockFeePolicyFixture(),
