@@ -421,6 +421,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/FillListResponse"
+  /v1/delegate-keys/registrations:
+    get:
+      tags: [private]
+      summary: List read-only DelegateKeyRegistry registration history
+      description: "source: delegatekeyregistry-event-projection; settlementMode: mock; mock rows keep settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl."
+      responses:
+        "200":
+          description: Read-only DelegateKeyRegistry registration history; local/mock rows may be empty until event evidence exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegateKeyRegistrationHistoryResponse"
+  /v1/delegate-keys/revocations:
+    get:
+      tags: [private]
+      summary: List read-only DelegateKeyRegistry revocation history
+      description: "source: delegatekeyregistry-event-projection; settlementMode: mock; mock rows keep settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl."
+      responses:
+        "200":
+          description: Read-only DelegateKeyRegistry revocation history; local/mock rows may be empty until event evidence exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegateKeyRevocationHistoryResponse"
   /v1/delegate-keys:
     get:
       tags: [private]
@@ -2496,6 +2520,142 @@ components:
         safetyNotice:
           type: string
           description: DelegateKeyRevoked projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed registry display.
+    DelegateKeyRegistrationHistoryResponse:
+      type: object
+      description: "Read-only DelegateKeyRegistry DelegateKeyRegistered history envelope. source: delegatekeyregistry-event-projection; settlementMode: mock; mock evidence fields stay null until real event truth exists."
+      required: [registrations, source, projectionType, eventName, custody, permissions, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, delegateCanWithdraw, delegateCanAdmin, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, delegateKeyRegistryMutation, safetyNotice]
+      properties:
+        registrations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DelegateKeyRegisteredProjection"
+        source:
+          type: string
+          enum: [delegatekeyregistry-event-projection]
+        projectionType:
+          type: string
+          enum: [DelegateKeyRegisteredProjection]
+        eventName:
+          type: string
+          enum: [DelegateKeyRegistered]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        settlementMode:
+          type: string
+          enum: [mock]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        delegateCanWithdraw:
+          type: boolean
+          enum: [false]
+        delegateCanAdmin:
+          type: boolean
+          enum: [false]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        delegateKeyRegistryMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          example: "Read-only DelegateKeyRegistry DelegateKeyRegistered history projection: mock rows have no real Quai transaction, no wallet loaded, no live DelegateKeyRegistry mutation, no funds moved, and no delegate withdrawal/admin authority."
+    DelegateKeyRevocationHistoryResponse:
+      type: object
+      description: "Read-only DelegateKeyRegistry DelegateKeyRevoked history envelope. source: delegatekeyregistry-event-projection; settlementMode: mock; mock evidence fields stay null until real event truth exists."
+      required: [revocations, source, projectionType, eventName, custody, permissions, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, delegateCanWithdraw, delegateCanAdmin, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, delegateKeyRegistryMutation, safetyNotice]
+      properties:
+        revocations:
+          type: array
+          items:
+            $ref: "#/components/schemas/DelegateKeyRevokedProjection"
+        source:
+          type: string
+          enum: [delegatekeyregistry-event-projection]
+        projectionType:
+          type: string
+          enum: [DelegateKeyRevokedProjection]
+        eventName:
+          type: string
+          enum: [DelegateKeyRevoked]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        settlementMode:
+          type: string
+          enum: [mock]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        delegateCanWithdraw:
+          type: boolean
+          enum: [false]
+        delegateCanAdmin:
+          type: boolean
+          enum: [false]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        delegateKeyRegistryMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          example: "Read-only DelegateKeyRegistry DelegateKeyRevoked history projection: mock rows have no real Quai transaction, no wallet loaded, no live DelegateKeyRegistry mutation, no funds moved, and no delegate withdrawal/admin authority."
     DelegateKeyListResponse:
       type: object
       description: Read-only delegate/API key registry projection. Local MVP mode exposes metadata only and no key material.

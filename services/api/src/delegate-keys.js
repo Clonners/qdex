@@ -7,6 +7,8 @@ const DEFAULT_DELEGATE_PERMISSIONS = Object.freeze([
   'NO_ADMIN',
 ]);
 
+export const DELEGATE_KEY_EVENT_PROJECTION_SOURCE = 'delegatekeyregistry-event-projection';
+
 const REQUIRED_DELEGATE_FIELDS = Object.freeze([
   'delegate',
   'expiresAt',
@@ -14,6 +16,19 @@ const REQUIRED_DELEGATE_FIELDS = Object.freeze([
   'maxNotional',
   'permissions',
 ]);
+
+const DELEGATE_KEY_HISTORY_CONFIG = Object.freeze({
+  registration: Object.freeze({
+    collection: 'registrations',
+    projectionType: 'DelegateKeyRegisteredProjection',
+    eventName: 'DelegateKeyRegistered',
+  }),
+  revocation: Object.freeze({
+    collection: 'revocations',
+    projectionType: 'DelegateKeyRevokedProjection',
+    eventName: 'DelegateKeyRevoked',
+  }),
+});
 
 const prepareBase = Object.freeze({
   source: 'delegate-key-owner-signed-prepare-boundary',
@@ -48,6 +63,40 @@ export const createDelegateKeyListResponse = () => ({
       'Delegate/API keys are trade-only metadata in local mode; they cannot withdraw, administer contracts, move funds, or mutate TradingVault balances.',
   },
 });
+
+const createDelegateKeyHistorySafetyNotice = (eventName) => (
+  `Read-only DelegateKeyRegistry ${eventName} history projection: mock rows have no real Quai transaction, no wallet loaded, no live DelegateKeyRegistry mutation, no funds moved, and no delegate withdrawal/admin authority.`
+);
+
+export const createDelegateKeyHistoryProjectionEnvelope = (operation) => {
+  const config = DELEGATE_KEY_HISTORY_CONFIG[operation];
+  if (config === undefined) {
+    throw new Error(`Unsupported delegate-key history operation: ${operation}`);
+  }
+
+  return {
+    [config.collection]: [],
+    source: DELEGATE_KEY_EVENT_PROJECTION_SOURCE,
+    projectionType: config.projectionType,
+    eventName: config.eventName,
+    custody: 'non-custodial-no-withdrawal-authority',
+    permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+    settlementMode: 'mock',
+    settlementTx: null,
+    blockNumber: null,
+    blockHash: null,
+    eventIndex: null,
+    explorerUrl: null,
+    delegateCanWithdraw: false,
+    delegateCanAdmin: false,
+    realQuaiTransactions: false,
+    walletRequired: false,
+    fundsMoved: false,
+    tradingVaultMutation: false,
+    delegateKeyRegistryMutation: false,
+    safetyNotice: createDelegateKeyHistorySafetyNotice(config.eventName),
+  };
+};
 
 export const createDelegateKeyPreparePlaceholder = (operation, keyId = null) => {
   if (operation === 'revoke_delegate_key') {

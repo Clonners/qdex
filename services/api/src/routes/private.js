@@ -1,4 +1,5 @@
 import {
+  createDelegateKeyHistoryProjectionEnvelope,
   createDelegateKeyListResponse,
   createDelegateKeyPreparePlaceholder,
 } from '../delegate-keys.js';
@@ -113,6 +114,14 @@ export const handlePrivateRoute = (context) => {
       trades: [],
       source: 'mock-account-trade-projection',
     });
+  }
+
+  if (method === 'GET' && pathname === '/v1/delegate-keys/registrations') {
+    return jsonResult(200, createDelegateKeyHistoryProjectionEnvelope('registration'));
+  }
+
+  if (method === 'GET' && pathname === '/v1/delegate-keys/revocations') {
+    return jsonResult(200, createDelegateKeyHistoryProjectionEnvelope('revocation'));
   }
 
   if (method === 'GET' && pathname === '/v1/delegate-keys') {

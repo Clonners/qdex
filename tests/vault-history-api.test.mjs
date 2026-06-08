@@ -245,7 +245,7 @@ test('vault history SDK and CLI docs expose read-only clients without wallet beh
     'campaign status should retain the post-delegate-key owner-signed readiness docs slice',
   );
   assert.ok(
-    status.includes('Completed this run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
+    status.includes('Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
     'campaign status should checkpoint the DelegateKeyRegistry projection schema ratchet',
   );
 });

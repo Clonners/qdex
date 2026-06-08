@@ -8,11 +8,13 @@ Current safe delegate/API key surfaces are local/source-only:
 
 ```text
 GET /v1/delegate-keys
+GET /v1/delegate-keys/registrations
+GET /v1/delegate-keys/revocations
 POST /v1/delegate-keys
 DELETE /v1/delegate-keys/{keyId}
 ```
 
-`GET /v1/delegate-keys` returns read-only `delegate-key-registry-projection` metadata with empty local rows until event evidence exists. `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` intentionally return owner-signed `501` prepare placeholders with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, and `ownerAuthorization: owner-wallet-signature-required`.
+`GET /v1/delegate-keys` returns read-only `delegate-key-registry-projection` metadata with empty local rows until event evidence exists. `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` return read-only `delegatekeyregistry-event-projection` history envelopes backed by the event projection schema. `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` intentionally return owner-signed `501` prepare placeholders with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, and `ownerAuthorization: owner-wallet-signature-required`.
 
 Bot/operator clients already expose the prepare boundary without claiming a live registry mutation:
 
@@ -80,4 +82,30 @@ delegateKeyRegistryMutationByProjection: false
 
 The projection schema is local/source-only and read-only. It preserves event-truth rows only and must not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `DelegateKeyRegistry`, mutate TradingVault balances, or move funds. In short: no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement.
 
-Next local/source-only step: read-only delegate-key registration/revocation history API envelopes backed by this projection schema, still with empty/mock rows as valid local state and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+## Read-only DelegateKeyRegistry history API
+
+The read-only history API envelopes are now wired for the projection schema:
+
+```text
+GET /v1/delegate-keys/registrations
+GET /v1/delegate-keys/revocations
+source: delegatekeyregistry-event-projection
+projectionType: DelegateKeyRegisteredProjection | DelegateKeyRevokedProjection
+eventName: DelegateKeyRegistered | DelegateKeyRevoked
+settlementMode: mock
+settlementTx: null
+blockNumber: null
+blockHash: null
+eventIndex: null
+explorerUrl: null
+permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
+delegateCanWithdraw: false
+delegateCanAdmin: false
+fundsMoved: false
+tradingVaultMutation: false
+delegateKeyRegistryMutation: false
+```
+
+Empty registration/revocation arrays are valid local/mock state until real `DelegateKeyRegistry` event evidence exists. These envelopes are projection/cache surfaces only: no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement.
+
+Next local/source-only step: TypeScript/Python/qdex clients for the read-only delegate-key history endpoints, still treating empty mock rows as valid state and without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.

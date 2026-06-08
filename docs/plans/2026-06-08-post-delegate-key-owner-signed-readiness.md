@@ -134,7 +134,28 @@ permissions: READ_ONLY, PLACE_ORDER, CANCEL_ORDER, CANCEL_ALL, NO_WITHDRAW, NO_A
 
 The projection schema remains docs/spec/source-only until approved event evidence exists. It must not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `DelegateKeyRegistry`, mutate TradingVault balances, or move funds.
 
-Next bounded local/source-only slice: read-only delegate-key registration/revocation history API envelopes, still backed by empty/mock local projection rows and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+## Completed history API slice
+
+Completed: read-only delegate-key registration/revocation history API envelopes.
+
+The API now exposes empty/mock history envelopes for future event truth without adding owner-signed behavior:
+
+```text
+GET /v1/delegate-keys/registrations
+GET /v1/delegate-keys/revocations
+source: delegatekeyregistry-event-projection
+projectionType: DelegateKeyRegisteredProjection | DelegateKeyRevokedProjection
+settlementMode: mock
+mock rows keep settlementTx/blockNumber/blockHash/eventIndex/explorerUrl null
+permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
+delegateCanWithdraw: false
+delegateCanAdmin: false
+delegateKeyRegistryMutation: false
+```
+
+The history API is local/source-only and read-only. It must not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `DelegateKeyRegistry`, mutate TradingVault balances, or move funds.
+
+Next bounded local/source-only slice: TypeScript/Python/qdex clients for the read-only delegate-key history endpoints, still backed by empty/mock local projection rows and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

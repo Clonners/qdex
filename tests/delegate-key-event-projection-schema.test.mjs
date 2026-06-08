@@ -127,11 +127,11 @@ test('delegate docs, readiness plan, and campaign status mark projection schema 
     'campaign status should retain the post-delegate-key readiness checkpoint as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
+    status.includes('Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
     'campaign status should checkpoint the DelegateKeyRegistry projection schema slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only delegate-key registration/revocation history API envelopes'),
+    status.includes('Next autonomous slice: read-only TypeScript/Python/qdex delegate-key history clients'),
     'campaign status should move to delegate-key history API visibility after the schema ratchet',
   );
 

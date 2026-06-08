@@ -63,7 +63,8 @@ test('post-delegate-key owner-signed readiness plan pins completed prepare surfa
     'no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, real contract address claims, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement',
     '## Completed projection schema slice',
     'Completed: read-only DelegateKeyRegistry `DelegateKeyRegistered`/`DelegateKeyRevoked` projection schema ratchet',
-    'Next bounded local/source-only slice: read-only delegate-key registration/revocation history API envelopes',
+    'Completed: read-only delegate-key registration/revocation history API envelopes',
+    'Next bounded local/source-only slice: TypeScript/Python/qdex clients for the read-only delegate-key history endpoints',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }
@@ -105,8 +106,9 @@ test('campaign status moves from delegate prepare smoke to the post-delegate rea
   for (const requiredText of [
     'Completed previous run: local API + terminal UI delegate/API key prepare smoke',
     'Completed previous run: post-delegate-key owner-signed readiness docs added `docs/plans/2026-06-08-post-delegate-key-owner-signed-readiness.md` plus delegate/core doc links',
-    'Completed this run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet added `DelegateKeyRegisteredProjection` and `DelegateKeyRevokedProjection`',
-    'Next autonomous slice: read-only delegate-key registration/revocation history API envelopes',
+    'Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet added `DelegateKeyRegisteredProjection` and `DelegateKeyRevokedProjection`',
+    'Completed this run: read-only delegate-key registration/revocation history API envelopes',
+    'Next autonomous slice: read-only TypeScript/Python/qdex delegate-key history clients',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
