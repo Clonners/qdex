@@ -1,3 +1,5 @@
+import { createMockVaultHistoryFixture } from './vault-history-panel.js';
+
 export const mockVerticalSliceFixture = Object.freeze({
   sources: Object.freeze({
     fills: 'in-memory-indexer-projection',
@@ -81,6 +83,7 @@ export const mockVerticalSliceFixture = Object.freeze({
     }),
     createdFromEventId: 'event-000001',
   }),
+  vaultHistory: createMockVaultHistoryFixture(),
   custody: Object.freeze({
     note: 'non-custodial-no-withdrawal-authority',
     withdrawalAuthority: 'owner-wallet-only',

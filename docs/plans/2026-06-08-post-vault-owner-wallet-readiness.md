@@ -140,9 +140,15 @@ Those responses are metadata/projection envelopes only: `source: tradingvault-ev
 
 Completed: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history.
 
-The client surfaces now expose TypeScript/Python SDK `dex.vault.deposits.list()` / `dex.vault.withdrawals.list()` and CLI `qdex vault deposits` / `qdex vault withdrawals`. They consume the existing `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals` envelopes with `source: tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
+The client surfaces now expose TypeScript/Python SDK `dex.vault.deposits.list()` / `dex.vault.withdrawals.list()` and CLI `qdex vault deposits` / `qdex vault withdrawals`. They consume the existing `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals` envelopes with `source: tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next bounded local/source-only slice: terminal UI read-only vault history panel, still backed by `TradingVaultDepositProjection` and `TradingVaultWithdrawalProjection`, mock-null evidence, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+## Completed local/source-only terminal UI vault history panel
+
+Completed: terminal UI read-only vault history panel.
+
+The terminal UI static fixture now renders read-only TradingVault deposit/withdrawal history from `tradingvault-event-projection` envelopes with `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, empty local/mock arrays as valid state, mock-null tx/block/event/explorer evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: local API + terminal UI vault history integration smoke, still backed by `GET /v1/vault/deposits`, `GET /v1/vault/withdrawals`, mock-null evidence, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

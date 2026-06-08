@@ -60,7 +60,9 @@ test('post-vault owner-wallet readiness plan pins completed prepare surfaces and
     '## Completed local/source-only vault history clients',
     'Completed: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history.',
     'SDK `dex.vault.deposits.list()` / `dex.vault.withdrawals.list()` and CLI `qdex vault deposits` / `qdex vault withdrawals`',
-    'Next bounded local/source-only slice: terminal UI read-only vault history panel',
+    '## Completed local/source-only terminal UI vault history panel',
+    'Completed: terminal UI read-only vault history panel.',
+    'Next bounded local/source-only slice: local API + terminal UI vault history integration smoke',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }

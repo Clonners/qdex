@@ -107,8 +107,8 @@ test('vault docs, post-vault plan, and campaign status mark projection schema co
     'campaign status should retain the projection schema checkpoint',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI read-only vault history panel'),
-    'campaign status should move past history API/client envelopes to the next bounded local/source-only vault UI slice',
+    status.includes('Next autonomous slice: local API + terminal UI vault history integration smoke'),
+    'campaign status should move past terminal UI vault history panel to the next bounded local/source-only vault history smoke slice',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet|Recommended next autonomous slice: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet/;

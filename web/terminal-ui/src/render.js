@@ -1,3 +1,5 @@
+import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
+
 const escapeHtml = (value) => String(value)
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -185,6 +187,77 @@ const renderVaultOperationPanel = (vaultOperation) => {
   `;
 };
 
+const mockEvidenceLabel = (value) => value ?? 'null (mock)';
+
+const renderVaultHistoryRows = (rows = [], emptyLabel) => {
+  if (rows.length === 0) {
+    return `<li class="muted">${escapeHtml(emptyLabel)}</li>`;
+  }
+
+  return rows.map((row) => `
+    <li>
+      <span>${escapeHtml(row.eventName ?? row.projectionType ?? 'TradingVault event')}</span>
+      <span>${escapeHtml(row.token ?? 'token')}</span>
+      <span>${escapeHtml(row.amount ?? '0')}</span>
+      <code>${escapeHtml(row.sourceEventId ?? 'mock-event-pending')}</code>
+    </li>
+  `).join('');
+};
+
+const renderVaultHistorySection = ({ title, envelope, rows, emptyLabel }) => {
+  const permissions = (envelope.permissions ?? []).join(', ');
+
+  return `
+          <section class="vault-history-section">
+            <h3>${escapeHtml(title)}</h3>
+            <p class="warning">${escapeHtml(envelope.safetyNotice)}</p>
+            <dl class="kv">
+              <div><dt>source</dt><dd>${escapeHtml(envelope.source)}</dd></div>
+              <div><dt>projection</dt><dd>${escapeHtml(envelope.projectionType)}</dd></div>
+              <div><dt>event</dt><dd>${escapeHtml(envelope.eventName)}</dd></div>
+              <div><dt>custody</dt><dd>${escapeHtml(envelope.custody)}</dd></div>
+              <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+              <div><dt>settlementMode</dt><dd>${escapeHtml(envelope.settlementMode)}</dd></div>
+              <div><dt>settlement tx</dt><dd><code>${escapeHtml(mockEvidenceLabel(envelope.settlementTx))}</code></dd></div>
+              <div><dt>block</dt><dd>${escapeHtml(mockEvidenceLabel(envelope.blockNumber))}</dd></div>
+              <div><dt>event index</dt><dd>${escapeHtml(mockEvidenceLabel(envelope.eventIndex))}</dd></div>
+              <div><dt>explorer</dt><dd>${escapeHtml(mockEvidenceLabel(envelope.explorerUrl))}</dd></div>
+              <div><dt>real Quai tx</dt><dd>${escapeHtml(envelope.realQuaiTransactions)}</dd></div>
+              <div><dt>wallet required</dt><dd>${escapeHtml(envelope.walletRequired)}</dd></div>
+              <div><dt>funds moved</dt><dd>${escapeHtml(envelope.fundsMoved)}</dd></div>
+              <div><dt>TradingVault mutation</dt><dd>${escapeHtml(envelope.tradingVaultMutation)}</dd></div>
+            </dl>
+            <ul>${renderVaultHistoryRows(rows, emptyLabel)}</ul>
+          </section>
+  `;
+};
+
+const renderVaultHistoryPanel = (vaultHistory) => {
+  if (vaultHistory === undefined || vaultHistory === null) {
+    return '';
+  }
+
+  const history = normalizeVaultHistoryPanelFixture(vaultHistory);
+
+  return `
+        <article class="panel stream-panel vault-history-panel">
+          <h2>read-only vault history</h2>
+${renderVaultHistorySection({
+    title: 'TradingVault Deposit history',
+    envelope: history.deposits,
+    rows: history.deposits.deposits,
+    emptyLabel: 'no vault deposit history rows yet',
+  })}
+${renderVaultHistorySection({
+    title: 'TradingVault Withdraw history',
+    envelope: history.withdrawals,
+    rows: history.withdrawals.withdrawals,
+    emptyLabel: 'no vault withdrawal history rows yet',
+  })}
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -276,6 +349,8 @@ ${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
 ${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fixture.balances)}
 
 ${renderVaultOperationPanel(fixture.vaultOperation)}
+
+${renderVaultHistoryPanel(fixture.vaultHistory)}
 
         <article class="panel command-panel">
           <h2>keyboard</h2>
