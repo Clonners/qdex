@@ -233,11 +233,15 @@ test('vault history SDK and CLI docs expose read-only clients without wallet beh
     'campaign status should retain the bounded local/source-only delegate-key client exposure slice',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI prepare-only delegate/API key panel/binding'),
-    'campaign status should checkpoint the bounded local/source-only terminal UI delegate-key exposure slice',
+    status.includes('Completed previous run: terminal UI prepare-only delegate/API key panel/binding'),
+    'campaign status should retain the bounded local/source-only terminal UI delegate-key exposure slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI delegate/API key prepare smoke'),
-    'campaign status should move to local API + terminal UI delegate-key smoke after panel/binding',
+    status.includes('Completed this run: local API + terminal UI delegate/API key prepare smoke'),
+    'campaign status should checkpoint the local API + terminal UI delegate-key smoke slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: post-delegate-key owner-signed readiness docs'),
+    'campaign status should move to post-delegate-key owner-signed readiness docs after local smoke',
   );
 });

@@ -1,5 +1,5 @@
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
-import { bindDelegateKeyPrepareTrigger } from './delegate-key-prepare-trigger.js';
+import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
@@ -79,7 +79,7 @@ if (mount) {
   }
 
   try {
-    bindDelegateKeyPrepareTrigger({
+    bindDelegateKeyPrepareTriggerWithLocalApiSmoke({
       mount,
       baseUrl,
       baseFixture: mockVerticalSliceFixture,
