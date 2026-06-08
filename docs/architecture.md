@@ -56,6 +56,8 @@
 - Final fills: settlement contract events.
 - UI/API balances: indexed cache derived from contract events.
 
+Read-only account overview now exposes `GET /v1/account` as local/source-only metadata that composes `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, and confirmed-only `IndexedFillProjection` rows. It uses `source: mock-account-overview`, `mock-local-no-wallet-session`, `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement.
+
 ## Non-custodial invariant
 
 The operator may run matching, relaying, listing and indexing infrastructure, but must not have a code path that can withdraw user funds.

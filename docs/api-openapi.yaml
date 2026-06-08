@@ -243,10 +243,15 @@ paths:
   /v1/account:
     get:
       tags: [private]
-      summary: Current account profile
+      summary: Read-only local account overview
+      description: "Mock account overview only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority."
       responses:
         "200":
-          description: Account data
+          description: Read-only local account overview envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountOverview"
   /v1/account/balances:
     get:
       tags: [private]
@@ -513,6 +518,121 @@ paths:
                 $ref: "#/components/schemas/TradeProofNotFound"
 components:
   schemas:
+    AccountOverview:
+      type: object
+      description: Read-only mock/local account overview; API state is projection/cache, not custody authority.
+      required: [account, source, custody, session, permissions, balances, orders, fills, settlementMode, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safety]
+      properties:
+        account:
+          type: object
+          nullable: true
+          description: Null in local/dev mode because no wallet session is loaded by this endpoint.
+        source:
+          type: string
+          enum: [mock-account-overview]
+        custody:
+          type: string
+          enum: [non-custodial-contract-vault]
+        session:
+          type: object
+          required: [mode, authenticated, walletRequired]
+          properties:
+            mode:
+              type: string
+              enum: [mock-local-no-wallet-session]
+            authenticated:
+              type: boolean
+              enum: [false]
+            walletRequired:
+              type: boolean
+              enum: [false]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        balances:
+          $ref: "#/components/schemas/AccountBalances"
+        orders:
+          type: object
+          required: [open, source, matcherLocalOnly]
+          properties:
+            open:
+              type: array
+              items:
+                type: object
+            source:
+              type: string
+              enum: [mock-order-projection]
+            matcherLocalOnly:
+              type: boolean
+              enum: [true]
+        fills:
+          type: object
+          required: [items, source, projectionType, confirmedOnly]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/IndexedFillProjection"
+            source:
+              type: string
+              enum: [in-memory-indexer-projection]
+            projectionType:
+              type: string
+              enum: [IndexedFillProjection]
+            confirmedOnly:
+              type: boolean
+              enum: [true]
+        settlementMode:
+          type: string
+          enum: [mock]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safety:
+          type: object
+          required: [noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noFundsMovement, delegateCanWithdraw, delegateCanAdmin, notice]
+          properties:
+            noWalletLoading:
+              type: boolean
+              enum: [true]
+            noRpcUrlAccess:
+              type: boolean
+              enum: [true]
+            noSigning:
+              type: boolean
+              enum: [true]
+            noBroadcast:
+              type: boolean
+              enum: [true]
+            noDeploys:
+              type: boolean
+              enum: [true]
+            noTransactionSubmission:
+              type: boolean
+              enum: [true]
+            noFundsMovement:
+              type: boolean
+              enum: [true]
+            delegateCanWithdraw:
+              type: boolean
+              enum: [false]
+            delegateCanAdmin:
+              type: boolean
+              enum: [false]
+            notice:
+              type: string
+              description: Mock account overview only; no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
     AccountBalances:
       type: object
       description: Read-only mock vault balance projection; API state is projection/cache, not custody authority.

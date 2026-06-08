@@ -9,6 +9,8 @@ export const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
 export const INDEXER_SOURCE = 'in-memory-indexer-projection';
 export const MOCK_VAULT_PROJECTION_SOURCE = 'mock-vault-projection';
 export const MOCK_VAULT_BALANCE_SAFETY_NOTICE = 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.';
+export const MOCK_ACCOUNT_OVERVIEW_SOURCE = 'mock-account-overview';
+export const MOCK_ACCOUNT_OVERVIEW_SAFETY_NOTICE = 'Mock account overview only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.';
 
 const MOCK_VAULT_BALANCE_PROJECTION = {
   balances: [],
@@ -69,6 +71,51 @@ const canonicalOrder = (order) => ({
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 export const createMockVaultBalanceProjection = () => clone(MOCK_VAULT_BALANCE_PROJECTION);
+
+export const createMockAccountOverview = ({
+  orders = [],
+  fills = [],
+  projectionSource = INDEXER_SOURCE,
+} = {}) => ({
+  account: null,
+  source: MOCK_ACCOUNT_OVERVIEW_SOURCE,
+  custody: 'non-custodial-contract-vault',
+  session: {
+    mode: 'mock-local-no-wallet-session',
+    authenticated: false,
+    walletRequired: false,
+  },
+  permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+  balances: createMockVaultBalanceProjection(),
+  orders: {
+    open: clone(orders),
+    source: 'mock-order-projection',
+    matcherLocalOnly: true,
+  },
+  fills: {
+    items: clone(fills),
+    source: projectionSource,
+    projectionType: 'IndexedFillProjection',
+    confirmedOnly: true,
+  },
+  settlementMode: 'mock',
+  realQuaiTransactions: false,
+  walletRequired: false,
+  fundsMoved: false,
+  tradingVaultMutation: false,
+  safety: {
+    noWalletLoading: true,
+    noRpcUrlAccess: true,
+    noSigning: true,
+    noBroadcast: true,
+    noDeploys: true,
+    noTransactionSubmission: true,
+    noFundsMovement: true,
+    delegateCanWithdraw: false,
+    delegateCanAdmin: false,
+    notice: MOCK_ACCOUNT_OVERVIEW_SAFETY_NOTICE,
+  },
+});
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isDecimalString = (value) => typeof value === 'string' && /^[0-9]+$/.test(value);

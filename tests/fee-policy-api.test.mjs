@@ -119,7 +119,7 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
     'campaign status should mark the FeeManager TypeScript/qdex stream consumers as this run',
   );
   assert.ok(
-    status.includes('Completed this run: Python SDK FeeManager fee schedule stream consumers'),
+    status.includes('Completed previous run: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should move past FeeManager stream smoke to SDK/CLI stream consumers',
   );
 

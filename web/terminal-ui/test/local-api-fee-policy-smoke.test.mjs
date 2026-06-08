@@ -219,7 +219,7 @@ test('fee policy docs, app binding, package check, and campaign status mark the 
     'campaign status should checkpoint the FeeManager stream smoke as this run',
   );
   assert.ok(
-    status.includes('Completed this run: Python SDK FeeManager fee schedule stream consumers'),
+    status.includes('Completed previous run: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should advance past FeeManager stream smoke to SDK/CLI consumers',
   );
 
