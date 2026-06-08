@@ -235,8 +235,16 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should retain the FeeManager fee policy API slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only FeeManager fee schedule clients'),
-    'campaign status should checkpoint the FeeManager SDK/Python/qdex client exposure slice',
+    status.includes('Completed previous run: read-only FeeManager fee schedule clients'),
+    'campaign status should retain the FeeManager SDK/Python/qdex client exposure slice as previous work',
+  );
+  assert.ok(
+    status.includes('Completed this run: terminal UI read-only FeeManager fee schedule exposure'),
+    'campaign status should checkpoint the terminal UI FeeManager fee schedule panel slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule integration smoke'),
+    'campaign status should move to the local API + terminal UI FeeManager fee schedule smoke after static panel exposure',
   );
   assert.ok(
     delegateDoc.includes('Completed local/source-only stream smoke: `web/terminal-ui/src/delegate-key-history-stream-binding.js`'),

@@ -1,4 +1,5 @@
 import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-panel.js';
+import { normalizeFeePolicyPanelFixture } from './fee-policy-panel.js';
 import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
 
 const escapeHtml = (value) => String(value)
@@ -457,6 +458,59 @@ ${renderDelegateKeyHistorySection({
   `;
 };
 
+const localMockEvidenceLabel = (value) => value ?? 'null (local/mock)';
+
+const renderFeeScheduleRows = (rows = []) => rows.map((row) => `
+    <li>
+      <span>${escapeHtml(row.marketId)}</span>
+      <span>maker fee bps ${escapeHtml(row.makerFeeBps)}</span>
+      <span>taker fee bps ${escapeHtml(row.takerFeeBps)}</span>
+      <code>${escapeHtml(row.eventName)}</code>
+    </li>
+  `).join('');
+
+const renderFeePolicyPanel = (feePolicy) => {
+  if (feePolicy === undefined || feePolicy === null) {
+    return '';
+  }
+
+  const policy = normalizeFeePolicyPanelFixture(feePolicy);
+  const permissions = (policy.permissions ?? []).join(', ');
+  const rows = policy.feeSchedules ?? [];
+  const firstSchedule = rows[0] ?? {};
+
+  return `
+        <article class="panel stream-panel fee-policy-panel">
+          <h2>read-only FeeManager fee schedule</h2>
+          <p class="warning">${escapeHtml(policy.safety.notice)}</p>
+          <dl class="kv">
+            <div><dt>source</dt><dd>${escapeHtml(policy.source)}</dd></div>
+            <div><dt>status</dt><dd>${escapeHtml(policy.status)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(policy.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>hard max fee bps</dt><dd>${escapeHtml(policy.hardMaxFeeBps)}</dd></div>
+            <div><dt>fee recipient</dt><dd>${escapeHtml(localMockEvidenceLabel(policy.feeRecipient))}</dd></div>
+            <div><dt>feeManagerMutation</dt><dd>${escapeHtml(policy.feeManagerMutation)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(policy.tradingVaultMutation)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(policy.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(policy.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(policy.fundsMoved)}</dd></div>
+          </dl>
+          <h3>FeeScheduleProjection</h3>
+          <dl class="kv">
+            <div><dt>projection</dt><dd>${escapeHtml(firstSchedule.projectionType ?? 'FeeScheduleProjection')}</dd></div>
+            <div><dt>event</dt><dd>${escapeHtml(firstSchedule.eventName ?? 'FeesUpdated')}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(firstSchedule.settlementMode ?? 'mock')}</dd></div>
+            <div><dt>settlement tx</dt><dd><code>${escapeHtml(localMockEvidenceLabel(firstSchedule.settlementTx))}</code></dd></div>
+            <div><dt>block</dt><dd>${escapeHtml(localMockEvidenceLabel(firstSchedule.blockNumber))}</dd></div>
+            <div><dt>event index</dt><dd>${escapeHtml(localMockEvidenceLabel(firstSchedule.eventIndex))}</dd></div>
+            <div><dt>explorer</dt><dd>${escapeHtml(localMockEvidenceLabel(firstSchedule.explorerUrl))}</dd></div>
+          </dl>
+          <ul>${renderFeeScheduleRows(rows)}</ul>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -552,6 +606,8 @@ ${renderVaultOperationPanel(fixture.vaultOperation)}
 ${renderDelegateKeyOperationPanel(fixture.delegateKeyOperation)}
 
 ${renderDelegateKeyHistoryPanel(fixture.delegateKeyHistory)}
+
+${renderFeePolicyPanel(fixture.feePolicy)}
 
 ${renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream)}
 

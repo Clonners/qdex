@@ -46,6 +46,10 @@ This surface is read-only. It performs no wallet loading, RPC URL access, signin
 
 The fee metadata cannot grant withdrawal/admin power. Delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`, and fee policy visibility does not create a `FeeManager.updateFees` runtime path.
 
+## Terminal UI surface
+
+Terminal UI exposure complete: `web/terminal-ui/src/fee-policy-panel.js` mirrors `GET /v1/fees` as read-only FeeManager metadata in the static terminal fixture. It renders `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
 ## Next local/source-only surface
 
-After this API envelope, the bounded client slice is TypeScript/Python SDK plus `qdex` CLI read-only consumers for `GET /v1/fees`. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.
+After the static terminal UI panel, the bounded local/source-only slice is a local API + terminal UI FeeManager fee schedule integration smoke that reads `GET /v1/fees` and renders only if the REST envelope matches the same read-only safety metadata. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.
