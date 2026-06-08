@@ -55,3 +55,9 @@ A later real Quai deposit/withdrawal flow needs explicit Clonners approval plus:
 5. UI/API proof copy that separates prepare state from confirmed contract event truth.
 
 Until then, the API is documentation/discovery only and stays `prepare-only-not-implemented`.
+
+## Post-vault readiness
+
+The post-vault owner-wallet readiness plan is pinned in `docs/plans/2026-06-08-post-vault-owner-wallet-readiness.md`. It maps the completed mock-vault balance stream, prepare-only API endpoints, SDK/Python/qdex clients, terminal UI panel, and local API/UI smoke to the explicit owner-wallet approval gate without adding wallet behavior.
+
+Next local/source-only step: read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet before any owner-wallet transaction behavior. That projection work should keep `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, and no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, TradingVault mutation, or funds movement.

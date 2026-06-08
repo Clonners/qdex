@@ -64,6 +64,8 @@ Withdrawals require the user's wallet or a separately approved high-trust path. 
 
 The first owner-wallet vault operation boundary is prepare-only: [`docs/vault-operations.md`](./vault-operations.md) documents `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare`. Those routes are discovery/placeholders only; they keep `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`, and they do not load wallets, read RPC URLs, sign, broadcast, submit transactions, deploy, or move funds.
 
+The post-vault owner-wallet readiness plan is pinned in `docs/plans/2026-06-08-post-vault-owner-wallet-readiness.md`. The next safe local/source-only vault slice is a read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet before any owner-wallet transaction behavior; API/UI state must continue to distinguish prepare placeholders from confirmed contract event truth.
+
 ## Post-mock MVP readiness
 
 The current mock loop is a local executable MVP, not real Quai settlement. Post-mock MVP readiness work must keep `settlementMode: mock`, null proof tx/block/explorer fields, and `local-only-not-deployed` contract metadata until approved contract evidence replaces the mock plane.

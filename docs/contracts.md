@@ -24,6 +24,8 @@ No autonomous deployment, transaction, wallet, external RPC, or real-funds activ
 
 TradingVault owner-wallet prepare boundary: [`docs/vault-operations.md`](./vault-operations.md) pins `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` as prepare-only owner-wallet-required API surfaces. They return local `501` placeholder envelopes with `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`; no wallet loading, RPC URL access, signing, broadcast, transaction submission, deploy, real contract address, or funds movement is introduced until explicit approval.
 
+The post-vault owner-wallet readiness plan is pinned in `docs/plans/2026-06-08-post-vault-owner-wallet-readiness.md` and maps the completed mock balance and prepare-only vault surfaces to the approval gate. The next local/source-only contract/API planning slice should be a read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet before any owner-wallet transaction behavior, preserving event truth and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
 Post-mock readiness / owner-signed nonce-cancel plan: [`docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md`](./plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md) separates matcher-local cancellation from contract-facing `NonceManager` cancellation and keeps real Quai replacement work approval-gated.
 
 The local dependency shape is now:
