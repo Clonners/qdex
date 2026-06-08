@@ -1,6 +1,7 @@
 import { bindAccountOverviewLocalApiSmoke } from './account-overview-binding.js';
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
 import { bindCommandPaletteSkeleton } from './command-palette.js';
+import { bindCommandPaletteLocalApiSmoke } from './command-palette-smoke-binding.js';
 import { bindDelegateKeyHistoryLocalApiSmoke } from './delegate-key-history-binding.js';
 import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from './delegate-key-history-stream-binding.js';
 import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
@@ -23,21 +24,47 @@ if (mount) {
 
   mount.innerHTML = renderTradeProofPanel(mockVerticalSliceFixture);
 
+  const bindCommandPaletteFallback = () => bindCommandPaletteSkeleton({
+    mount,
+    palette: mockVerticalSliceFixture.commandPalette,
+    onPreview: () => {
+      mount.dataset.qdxCommandPalette = 'preview-only';
+    },
+    onError: (error) => {
+      mount.dataset.qdxCommandPalette = 'error';
+      console.warn('QDEX command palette preview failed safely; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+    },
+  });
+
   try {
-    bindCommandPaletteSkeleton({
+    bindCommandPaletteLocalApiSmoke({
       mount,
+      baseUrl,
       palette: mockVerticalSliceFixture.commandPalette,
+      onSmoke: () => {
+        mount.dataset.qdxCommandPaletteLocalApiSmoke = 'terminal-command-palette-local-api-smoke';
+      },
       onPreview: () => {
         mount.dataset.qdxCommandPalette = 'preview-only';
       },
       onError: (error) => {
-        mount.dataset.qdxCommandPalette = 'error';
-        console.warn('QDEX command palette preview failed safely; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+        mount.dataset.qdxCommandPaletteLocalApiSmoke = 'error';
+        console.warn('QDEX command-palette local API smoke failed safely; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
       },
+    }).catch((error) => {
+      mount.dataset.qdxCommandPaletteLocalApiSmoke = 'disabled';
+      console.warn('QDEX command-palette local API smoke disabled; falling back to static preview-only command hints.', error);
+      bindCommandPaletteFallback();
     });
   } catch (error) {
-    mount.dataset.qdxCommandPalette = 'disabled';
-    console.warn('QDEX command palette skeleton disabled; keeping static read-only/local mock command hints.', error);
+    mount.dataset.qdxCommandPaletteLocalApiSmoke = 'disabled';
+    console.warn('QDEX command-palette local API smoke disabled; keeping static read-only/local mock command hints.', error);
+    try {
+      bindCommandPaletteFallback();
+    } catch (fallbackError) {
+      mount.dataset.qdxCommandPalette = 'disabled';
+      console.warn('QDEX command palette skeleton disabled; keeping static read-only/local mock command hints.', fallbackError);
+    }
   }
 
   try {

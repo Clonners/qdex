@@ -90,7 +90,7 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain the local API + terminal UI public kline/candle stream smoke as current completed work',
   );
   assert.ok(
-    status.includes('Current phase: terminal UI command-palette skeleton for read-only/local mock actions is complete'),
-    'campaign status should describe the terminal UI command-palette skeleton as the current completed phase',
+    status.includes('Current phase: local API + terminal UI command-palette smoke for read-only/local mock actions is complete'),
+    'campaign status should describe the terminal UI command-palette smoke as the current completed phase',
   );
 });
