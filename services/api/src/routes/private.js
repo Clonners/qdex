@@ -1,5 +1,8 @@
 import { createMockVaultBalanceProjection } from '../mock-dex.js';
-import { createVaultOperationPreparePlaceholder } from '../vault-operations.js';
+import {
+  createVaultHistoryProjectionEnvelope,
+  createVaultOperationPreparePlaceholder,
+} from '../vault-operations.js';
 import { jsonResult, notImplemented } from '../http.js';
 
 const pathValue = (pathname, prefix) => {
@@ -49,6 +52,14 @@ export const handlePrivateRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/account/balances') {
     return jsonResult(200, createMockVaultBalanceProjection());
+  }
+
+  if (method === 'GET' && pathname === '/v1/vault/deposits') {
+    return jsonResult(200, createVaultHistoryProjectionEnvelope('deposit'));
+  }
+
+  if (method === 'GET' && pathname === '/v1/vault/withdrawals') {
+    return jsonResult(200, createVaultHistoryProjectionEnvelope('withdrawal'));
   }
 
   if (method === 'POST' && pathname === '/v1/vault/deposits/prepare') {

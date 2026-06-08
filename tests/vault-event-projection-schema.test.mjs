@@ -103,12 +103,12 @@ test('vault docs, post-vault plan, and campaign status mark projection schema co
     'architecture docs should point to completed event-projection schema',
   );
   assert.ok(
-    status.includes('Completed this run: read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet'),
-    'campaign status should checkpoint this slice',
+    status.includes('Added read-only TradingVault `Deposit`/`Withdraw` projection schema ratchet'),
+    'campaign status should retain the projection schema checkpoint',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only vault deposit/withdrawal history API envelopes'),
-    'campaign status should name the next bounded local/source-only vault slice',
+    status.includes('Next autonomous slice: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history'),
+    'campaign status should move past history API envelopes to the next bounded local/source-only vault client slice',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet|Recommended next autonomous slice: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet/;

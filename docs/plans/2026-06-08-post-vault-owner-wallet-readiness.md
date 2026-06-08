@@ -123,9 +123,22 @@ permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
 
 The completed schema makes future deposit/withdrawal history event-shaped before any endpoint or terminal panel can imply real fund movement.
 
+## Completed local/source-only history API slice
+
+Completed: read-only vault deposit/withdrawal history API envelopes.
+
+The API now exposes:
+
+```text
+GET /v1/vault/deposits
+GET /v1/vault/withdrawals
+```
+
+Those responses are metadata/projection envelopes only: `source: tradingvault-event-projection`, `settlementMode: mock`, empty local arrays until event evidence exists, null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
+
 ## Next bounded local/source-only slice
 
-Next bounded local/source-only slice: read-only vault deposit/withdrawal history API envelopes backed by `TradingVaultDepositProjection` and `TradingVaultWithdrawalProjection`, still with mock rows using null settlementTx/block/explorer evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Next bounded local/source-only slice: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history, still backed by `TradingVaultDepositProjection` and `TradingVaultWithdrawalProjection`, mock-null evidence, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

@@ -81,4 +81,33 @@ Required projection rules:
 
 This projection schema preserves no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, TradingVault mutation, or funds movement.
 
-Next local/source-only step: read-only vault deposit/withdrawal history API envelopes backed by these projection schemas, still with null mock tx/block/explorer fields until real event evidence is approved.
+## Read-only vault history API
+
+The read-only vault history API now exposes event-shaped history envelopes without owner-wallet behavior:
+
+```text
+GET /v1/vault/deposits
+GET /v1/vault/withdrawals
+```
+
+Every response is a local/source-only projection envelope backed by the projection schemas:
+
+```text
+source: tradingvault-event-projection
+projectionType: TradingVaultDepositProjection | TradingVaultWithdrawalProjection
+settlementMode: mock
+settlementTx: null
+blockNumber: null
+blockHash: null
+eventIndex: null
+explorerUrl: null
+permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
+realQuaiTransactions: false
+walletRequired: false
+fundsMoved: false
+tradingVaultMutation: false
+```
+
+The history endpoints may return empty local/mock arrays until real event evidence exists. They are read-only projection/cache surfaces and preserve no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, real token addresses, TradingVault mutation, or funds movement.
+
+Next local/source-only step: read-only TypeScript/Python/qdex clients for vault deposit/withdrawal history, still backed by the same mock-null evidence envelope and still without wallet/RPC/signing/broadcast/deploy/tx/funds behavior.

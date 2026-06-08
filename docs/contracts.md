@@ -89,6 +89,8 @@ event BalanceUnlocked(address indexed user, address indexed token, uint256 amoun
 event SettlementBalanceMoved(address indexed debitUser, address indexed creditUser, address indexed token, uint256 amount, bytes32 fillId);
 ```
 
+The read-only TradingVault `Deposit`/`Withdraw` projection schema is now pinned, and read-only vault history API envelopes now expose `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`. Those API responses are projection/cache surfaces only: `source: tradingvault-event-projection`, `settlementMode: mock`, null mock tx/block/explorer evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. They do not load wallets, read RPC URLs, sign, broadcast, deploy, mutate the vault, or move funds.
+
 ## Settlement
 
 Executes matched trades.

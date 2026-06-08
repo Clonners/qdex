@@ -254,6 +254,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccountBalances"
+  /v1/vault/deposits:
+    get:
+      tags: [private]
+      summary: List read-only TradingVault deposit history
+      description: "Read-only TradingVault deposit history from source: tradingvault-event-projection. mock rows keep settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. settlementMode: mock; no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement."
+      responses:
+        "200":
+          description: Read-only TradingVault Deposit event history envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradingVaultDepositHistoryResponse"
+  /v1/vault/withdrawals:
+    get:
+      tags: [private]
+      summary: List read-only TradingVault withdrawal history
+      description: "Read-only TradingVault withdrawal history from source: tradingvault-event-projection. mock rows keep settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. settlementMode: mock; no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement."
+      responses:
+        "200":
+          description: Read-only TradingVault Withdraw event history envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradingVaultWithdrawalHistoryResponse"
   /v1/vault/deposits/prepare:
     post:
       tags: [private]
@@ -604,6 +628,124 @@ components:
         safetyNotice:
           type: string
           description: Withdrawal projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed history display.
+    TradingVaultDepositHistoryResponse:
+      type: object
+      description: "Read-only TradingVault Deposit history envelope. source: tradingvault-event-projection; settlementMode: mock; mock evidence fields stay null until real event truth exists."
+      required: [deposits, source, projectionType, eventName, custody, permissions, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safetyNotice]
+      properties:
+        deposits:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradingVaultDepositProjection"
+        source:
+          type: string
+          enum: [tradingvault-event-projection]
+        projectionType:
+          type: string
+          enum: [TradingVaultDepositProjection]
+        eventName:
+          type: string
+          enum: [Deposit]
+        custody:
+          type: string
+          enum: [non-custodial-contract-vault]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        settlementMode:
+          type: string
+          enum: [mock]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          enum: ["Read-only TradingVault Deposit history projection: mock rows have no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority."]
+    TradingVaultWithdrawalHistoryResponse:
+      type: object
+      description: "Read-only TradingVault Withdraw history envelope. source: tradingvault-event-projection; settlementMode: mock; mock evidence fields stay null until real event truth exists."
+      required: [withdrawals, source, projectionType, eventName, custody, permissions, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safetyNotice]
+      properties:
+        withdrawals:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradingVaultWithdrawalProjection"
+        source:
+          type: string
+          enum: [tradingvault-event-projection]
+        projectionType:
+          type: string
+          enum: [TradingVaultWithdrawalProjection]
+        eventName:
+          type: string
+          enum: [Withdraw]
+        custody:
+          type: string
+          enum: [non-custodial-contract-vault]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        settlementMode:
+          type: string
+          enum: [mock]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          enum: ["Read-only TradingVault Withdraw history projection: mock rows have no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority."]
     VaultOperationPrepareRequest:
       type: object
       description: owner wallet must authorize the future deposit/withdrawal; local prepare mode carries intent metadata only and no signing/RPC/tx fields.
