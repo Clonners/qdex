@@ -70,6 +70,10 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
     'NO_WITHDRAW',
     'NO_ADMIN',
     'no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, fee-authority runtime keys, TradingVault mutation, or funds movement',
+    'Public WebSocket snapshot surface',
+    '/v1/ws?channel=fees',
+    'fee_schedule_projection',
+    'public-read-only-no-custody',
   ]) {
     assert.ok(feesDoc.includes(requiredText), `docs/fees.md should include ${requiredText}`);
   }
@@ -95,8 +99,16 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
     'campaign status should retain the terminal UI FeeManager fee schedule panel slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment'),
-    'campaign status should move past the local API + terminal UI FeeManager fee schedule smoke after terminal UI visibility',
+    status.includes('Completed previous run: local API + terminal UI FeeManager fee schedule integration smoke'),
+    'campaign status should retain the local API + terminal UI FeeManager fee schedule smoke as previous work',
+  );
+  assert.ok(
+    status.includes('Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    'campaign status should record the FeeManager WebSocket snapshot alignment as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream'),
+    'campaign status should move past FeeManager WebSocket snapshot alignment to terminal UI stream binding',
   );
 
   assert.doesNotMatch(

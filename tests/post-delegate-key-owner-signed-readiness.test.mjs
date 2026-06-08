@@ -127,8 +127,9 @@ test('campaign status moves from delegate prepare smoke to the post-delegate rea
     'Completed previous run: read-only FeeManager fee schedule API envelope',
     'Completed previous run: read-only FeeManager fee schedule clients',
     'Completed previous run: terminal UI read-only FeeManager fee schedule exposure',
-    'Completed this run: local API + terminal UI FeeManager fee schedule integration smoke',
-    'Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment',
+    'Completed previous run: local API + terminal UI FeeManager fee schedule integration smoke',
+    'Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment',
+    'Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);

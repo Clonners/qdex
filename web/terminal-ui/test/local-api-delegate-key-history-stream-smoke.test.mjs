@@ -243,8 +243,16 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should retain the terminal UI FeeManager fee schedule panel slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment'),
-    'campaign status should move past the local API + terminal UI FeeManager fee schedule smoke after static panel exposure',
+    status.includes('Completed previous run: local API + terminal UI FeeManager fee schedule integration smoke'),
+    'campaign status should retain the local API + terminal UI FeeManager fee schedule smoke as previous work',
+  );
+  assert.ok(
+    status.includes('Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    'campaign status should checkpoint the read-only FeeManager stream alignment slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream'),
+    'campaign status should move past FeeManager stream alignment to terminal UI binding',
   );
   assert.ok(
     delegateDoc.includes('Completed local/source-only stream smoke: `web/terminal-ui/src/delegate-key-history-stream-binding.js`'),

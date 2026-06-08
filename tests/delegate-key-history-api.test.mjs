@@ -155,8 +155,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should retain the terminal UI FeeManager fee schedule panel slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment'),
-    'campaign status should move past FeeManager local API smoke to read-only stream alignment',
+    status.includes('Completed previous run: local API + terminal UI FeeManager fee schedule integration smoke'),
+    'campaign status should retain FeeManager local API smoke as previous work',
+  );
+  assert.ok(
+    status.includes('Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    'campaign status should checkpoint the FeeManager stream snapshot alignment',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream'),
+    'campaign status should move past FeeManager stream snapshot alignment to terminal UI binding',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

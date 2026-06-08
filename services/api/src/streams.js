@@ -3,6 +3,10 @@ import {
   createDelegateKeyHistoryProjectionEnvelope,
 } from './delegate-keys.js';
 import {
+  FEEMANAGER_POLICY_PROJECTION_SOURCE,
+  createFeeScheduleResponse,
+} from './fee-policy.js';
+import {
   CUSTODY_NOTE,
   INDEXER_SOURCE,
   MARKET_ID,
@@ -29,6 +33,12 @@ const publicContractsForMarket = (marketId) => [
     visibility: 'public',
     payload: 'ticker_snapshot',
     source: 'mock-market-data',
+  },
+  {
+    channel: 'fees',
+    visibility: 'public',
+    payload: 'fee_schedule_projection',
+    source: FEEMANAGER_POLICY_PROJECTION_SOURCE,
   },
   {
     channel: `market.${marketId}.depth`,
@@ -176,6 +186,17 @@ export const createStreamSnapshot = ({ channel, state } = {}) => {
       source: 'mock-market-data',
       custody: PUBLIC_CUSTODY_NOTE,
       data: publicTickerSnapshot(),
+    });
+  }
+
+  if (channel === 'fees') {
+    return snapshotEnvelope({
+      channel,
+      visibility: 'public',
+      payload: 'fee_schedule_projection',
+      source: FEEMANAGER_POLICY_PROJECTION_SOURCE,
+      custody: PUBLIC_CUSTODY_NOTE,
+      data: createFeeScheduleResponse(),
     });
   }
 

@@ -190,6 +190,47 @@ test('WebSocket transport sends private fill snapshots without withdrawal author
   }, { state });
 });
 
+test('WebSocket transport sends public FeeManager fee schedule snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    const message = await readWebSocketSnapshot(baseUrl, 'fees');
+
+    assert.equal(message.type, 'snapshot');
+    assert.equal(message.transport, 'websocket');
+    assert.equal(message.snapshot.channel, 'fees');
+    assert.equal(message.snapshot.visibility, 'public');
+    assert.equal(message.snapshot.payload, 'fee_schedule_projection');
+    assert.equal(message.snapshot.source, 'feemanager-policy-projection');
+    assert.equal(message.snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(message.snapshot.data.source, 'feemanager-policy-projection');
+    assert.deepEqual(message.snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(message.snapshot.data.hardMaxFeeBps, 1000);
+    assert.equal(message.snapshot.data.feeRecipient, null);
+    assert.equal(message.snapshot.data.feeManagerMutation, false);
+    assert.equal(message.snapshot.data.tradingVaultMutation, false);
+    assert.equal(message.snapshot.data.realQuaiTransactions, false);
+    assert.equal(message.snapshot.data.walletRequired, false);
+    assert.equal(message.snapshot.data.fundsMoved, false);
+    assert.equal(message.snapshot.data.safety.noFeeAuthorityRuntimeKeys, true);
+    assert.deepEqual(message.snapshot.data.feeSchedules, [
+      {
+        marketId: 'QI-QUAI',
+        projectionType: 'FeeScheduleProjection',
+        eventName: 'FeesUpdated',
+        makerFeeBps: 0,
+        takerFeeBps: 0,
+        maxFeeBps: 1000,
+        feeRecipient: null,
+        settlementMode: 'mock',
+        settlementTx: null,
+        blockNumber: null,
+        blockHash: null,
+        eventIndex: null,
+        explorerUrl: null,
+      },
+    ]);
+  });
+});
+
 test('WebSocket transport sends private TradingVault deposit and withdrawal history snapshots', async () => {
   await withServer(async (baseUrl) => {
     for (const expectation of [

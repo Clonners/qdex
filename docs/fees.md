@@ -52,6 +52,12 @@ Terminal UI exposure complete: `web/terminal-ui/src/fee-policy-panel.js` mirrors
 
 Local API + terminal UI FeeManager fee schedule integration smoke complete (`local API + terminal UI FeeManager fee schedule integration smoke`): `web/terminal-ui/src/fee-policy-binding.js` reads `GET /v1/fees`, requires `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior before rendering the terminal FeeManager panel.
 
+## Public WebSocket snapshot surface
+
+Read-only FeeManager fee schedule WebSocket snapshot alignment complete: `/v1/ws?channel=fees` publishes public `fee_schedule_projection` snapshots with `source: feemanager-policy-projection`, `custody: public-read-only-no-custody`, and the same `FeeScheduleResponse` envelope as `GET /v1/fees`.
+
+The stream snapshot remains metadata-only: `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, `tradingVaultMutation: false`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, no fee-authority runtime keys, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
 ## Next local/source-only surface
 
-After the local API smoke, the next bounded local/source-only slice is read-only FeeManager fee schedule WebSocket snapshot alignment. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.
+After the WebSocket snapshot alignment, the next bounded local/source-only slice is terminal UI binding for the FeeManager fee schedule stream. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.

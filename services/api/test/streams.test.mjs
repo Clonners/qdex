@@ -50,6 +50,7 @@ test('stream channel registry pins public market data and custody-safe private s
 
   assert.deepEqual(contracts.public.map((contract) => contract.channel), [
     'global.tickers',
+    'fees',
     'market.QI-QUAI.depth',
     'market.QI-QUAI.trades',
     'market.QI-QUAI.klines.1m',
@@ -74,6 +75,11 @@ test('stream channel registry pins public market data and custody-safe private s
   assert.deepEqual(fillsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
   assert.equal(fillsContract.source, 'in-memory-indexer-projection');
   assert.equal(fillsContract.finality, 'confirmed-settlement-only');
+
+  const feesContract = contracts.public.find((contract) => contract.channel === 'fees');
+  assert.equal(feesContract.visibility, 'public');
+  assert.equal(feesContract.payload, 'fee_schedule_projection');
+  assert.equal(feesContract.source, 'feemanager-policy-projection');
 
   const depositsContract = contracts.private.find((contract) => contract.channel === 'deposits');
   assert.equal(depositsContract.payload, 'deposit_projection');
@@ -189,6 +195,55 @@ test('stream snapshots expose public depth/trades and private fills from indexed
     walletRequired: false,
     safetyNotice: 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
   });
+});
+
+test('public FeeManager fee schedule stream snapshot reuses the read-only policy envelope', () => {
+  const state = createMockDexState();
+  const snapshot = createStreamSnapshot({ channel: 'fees', state });
+
+  assert.equal(snapshot.channel, 'fees');
+  assert.equal(snapshot.visibility, 'public');
+  assert.equal(snapshot.payload, 'fee_schedule_projection');
+  assert.equal(snapshot.source, 'feemanager-policy-projection');
+  assert.equal(snapshot.custody, 'public-read-only-no-custody');
+
+  assert.equal(snapshot.data.source, 'feemanager-policy-projection');
+  assert.equal(snapshot.data.status, 'local-only-not-deployed');
+  assert.equal(snapshot.data.custody, 'non-custodial-fee-policy');
+  assert.deepEqual(snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+  assert.equal(snapshot.data.hardMaxFeeBps, 1000);
+  assert.equal(snapshot.data.feeRecipient, null);
+  assert.equal(snapshot.data.feeManagerMutation, false);
+  assert.equal(snapshot.data.tradingVaultMutation, false);
+  assert.equal(snapshot.data.realQuaiTransactions, false);
+  assert.equal(snapshot.data.walletRequired, false);
+  assert.equal(snapshot.data.fundsMoved, false);
+  assert.equal(snapshot.data.safety.noFeeAuthorityRuntimeKeys, true);
+  assert.equal(snapshot.data.safety.noWalletLoading, true);
+  assert.equal(snapshot.data.safety.noRpcUrlAccess, true);
+  assert.equal(snapshot.data.safety.noSigning, true);
+  assert.equal(snapshot.data.safety.noBroadcast, true);
+  assert.equal(snapshot.data.safety.noDeploys, true);
+  assert.equal(snapshot.data.safety.noTransactionSubmission, true);
+  assert.equal(snapshot.data.safety.noFundsMovement, true);
+
+  assert.deepEqual(snapshot.data.feeSchedules, [
+    {
+      marketId: 'QI-QUAI',
+      projectionType: 'FeeScheduleProjection',
+      eventName: 'FeesUpdated',
+      makerFeeBps: 0,
+      takerFeeBps: 0,
+      maxFeeBps: 1000,
+      feeRecipient: null,
+      settlementMode: 'mock',
+      settlementTx: null,
+      blockNumber: null,
+      blockHash: null,
+      eventIndex: null,
+      explorerUrl: null,
+    },
+  ]);
 });
 
 test('private deposit and withdrawal stream snapshots reuse TradingVault event-projection envelopes', () => {

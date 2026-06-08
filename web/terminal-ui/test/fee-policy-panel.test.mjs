@@ -157,8 +157,12 @@ test('terminal UI docs, package check, and campaign status mark fee policy panel
     'campaign status should retain this terminal UI FeeManager panel slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment'),
-    'campaign status should advance past the local API + terminal UI FeeManager fee schedule smoke',
+    status.includes('Completed this run: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    'campaign status should checkpoint the FeeManager WebSocket snapshot alignment',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI binding for the FeeManager fee schedule stream'),
+    'campaign status should advance past FeeManager WebSocket snapshots to terminal UI stream binding',
   );
 
   assert.doesNotMatch(
