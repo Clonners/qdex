@@ -10,6 +10,7 @@ import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-
 const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
 const contractRegistry = await dex.contracts.get();
 const fees = await dex.fees.get();
+const accountOverview = await dex.account.get();
 const accountBalances = await dex.account.balances();
 const vaultDeposits = await dex.vault.deposits.list();
 const vaultWithdrawals = await dex.vault.withdrawals.list();
@@ -145,6 +146,18 @@ console.log(fees.feeRecipient); // feeRecipient: null
 console.log(fees.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
 console.log(fees.feeManagerMutation); // feeManagerMutation: false
 console.log(fees.tradingVaultMutation); // tradingVaultMutation: false
+console.log(fees.safety.notice); // read-only FeeManager metadata
+console.log(accountOverview.source); // mock-account-overview
+console.log(accountOverview.session.mode); // mock-local-no-wallet-session
+console.log(accountOverview.balances.source); // mock-vault-projection
+console.log(accountOverview.orders.source); // mock-order-projection
+console.log(accountOverview.fills.projectionType); // IndexedFillProjection
+console.log(accountOverview.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(accountOverview.settlementMode); // settlementMode: mock
+console.log(accountOverview.realQuaiTransactions); // realQuaiTransactions: false
+console.log(accountOverview.walletRequired); // walletRequired: false
+console.log(accountOverview.fundsMoved); // fundsMoved: false
+console.log(accountOverview.tradingVaultMutation); // tradingVaultMutation: false
 console.log(accountBalances.source); // mock-vault-projection
 console.log(listingPolicy.status); // design-only-local-metadata
 console.log(listingPolicy.primaryQuoteAssets); // WQUAI, WQI
@@ -231,6 +244,8 @@ console.log(result.proof.settlementMode); // mock
 `dex.fees.get()` calls `GET /v1/fees` and returns read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `dex.fees.openStream` and `dex.fees.stream` consume public `/v1/ws?channel=fees` snapshots for bounded bot/operator FeeManager policy monitoring. Messages carry `payload: fee_schedule_projection`, `custody: public-read-only-no-custody`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`; the stream helpers do not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, move funds, or expose fee-authority runtime keys.
+
+`dex.account.get()` calls `GET /v1/account` and returns the read-only `mock-account-overview` envelope with `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

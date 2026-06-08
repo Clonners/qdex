@@ -256,6 +256,46 @@ test('qdex balance command prints read-only mock vault balances without wallet o
   });
 });
 
+test('qdex account command prints read-only local account overview without wallet or custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'account']);
+
+    assert.equal(result.command, 'account');
+    assert.equal(result.baseUrl, baseUrl);
+    assert.equal(result.account, null);
+    assert.equal(result.source, 'mock-account-overview');
+    assert.equal(result.custody, 'non-custodial-contract-vault');
+    assert.equal(result.session.mode, 'mock-local-no-wallet-session');
+    assert.equal(result.session.authenticated, false);
+    assert.equal(result.session.walletRequired, false);
+    assert.deepEqual(result.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.balances.source, 'mock-vault-projection');
+    assert.deepEqual(result.balances.balances, []);
+    assert.equal(result.orders.source, 'mock-order-projection');
+    assert.equal(result.orders.matcherLocalOnly, true);
+    assert.deepEqual(result.orders.open, []);
+    assert.equal(result.fills.source, 'in-memory-indexer-projection');
+    assert.equal(result.fills.projectionType, 'IndexedFillProjection');
+    assert.equal(result.fills.confirmedOnly, true);
+    assert.deepEqual(result.fills.items, []);
+    assert.equal(result.settlementMode, 'mock');
+    assert.equal(result.realQuaiTransactions, false);
+    assert.equal(result.walletRequired, false);
+    assert.equal(result.fundsMoved, false);
+    assert.equal(result.tradingVaultMutation, false);
+    assert.equal(result.safety.noWalletLoading, true);
+    assert.equal(result.safety.noRpcUrlAccess, true);
+    assert.equal(result.safety.noSigning, true);
+    assert.equal(result.safety.noBroadcast, true);
+    assert.equal(result.safety.noDeploys, true);
+    assert.equal(result.safety.noTransactionSubmission, true);
+    assert.equal(result.safety.noFundsMovement, true);
+    assert.equal(result.safety.delegateCanWithdraw, false);
+    assert.equal(result.safety.delegateCanAdmin, false);
+    assert.match(result.safety.notice, /no real Quai transaction, no wallet loaded, no funds moved/);
+  });
+});
+
 test('qdex fees command prints read-only FeeManager fee schedule metadata without fee-authority or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'fees']);

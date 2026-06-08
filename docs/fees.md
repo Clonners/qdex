@@ -68,4 +68,4 @@ Python SDK FeeManager fee schedule stream consumers complete: `dex.fees.open_str
 
 ## Next local/source-only surface
 
-After the Python SDK FeeManager fee schedule stream consumer slice, the campaign advanced to the read-only account overview API envelope (`GET /v1/account`) as another local/source-only MVP surface. The next bounded local/source-only slice is TypeScript/Python/qdex read-only account overview clients. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.
+After the Python SDK FeeManager fee schedule stream consumer slice, the campaign advanced to the read-only account overview API envelope (`GET /v1/account`) and then TypeScript/Python/qdex read-only account overview clients as local/source-only MVP surfaces. The next bounded local/source-only slice is terminal UI read-only account overview exposure. Runtime fee updates, live fee authority keys, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, real token addresses, and funds movement remain approval-gated.

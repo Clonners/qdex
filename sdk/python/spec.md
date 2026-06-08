@@ -16,6 +16,7 @@ fee_stream = dex.fees.open_stream()  # /v1/ws?channel=fees -> fee_schedule_proje
 fee_stream_snapshot = fee_stream.next()
 fee_stream.close()
 fee_stream_snapshots = dex.fees.stream(limit=limit)
+overview = dex.account.get()  # GET /v1/account -> mock-account-overview, LocalAccountOverviewProjection, READ_ONLY
 balances = dex.account.balances()  # GET /v1/account/balances -> mock-vault-projection, read-only, no wallet loaded, no funds moved
 vault_deposits = dex.vault.deposits.list()  # GET /v1/vault/deposits -> source: tradingvault-event-projection, TradingVaultDepositProjection, READ_ONLY
 vault_withdrawals = dex.vault.withdrawals.list()  # GET /v1/vault/withdrawals -> source: tradingvault-event-projection, TradingVaultWithdrawalProjection, READ_ONLY
@@ -144,6 +145,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 `fees.get()` is read-only FeeManager fee schedule metadata from `GET /v1/fees`. It returns `source: feemanager-policy-projection`, `projectionType: FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`. This client has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `fees.open_stream()` and bounded `fees.stream(limit=limit)` consume public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Stream snapshots carry `fee_schedule_projection`, `public-read-only-no-custody`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`; there is no fee-authority runtime key, wallet/RPC/signing/broadcast/deploy/tx/funds behavior, or live FeeManager/TradingVault mutation authority.
+
+`account.get()` is a read-only local account overview from `GET /v1/account`. It returns `source: mock-account-overview`, `session.mode: mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`; it has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

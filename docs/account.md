@@ -39,6 +39,8 @@ Delegate/API keys remain `NO_WITHDRAW` and `NO_ADMIN`; account overview visibili
 
 ## Current and next slices
 
-Read-only account overview API visibility is complete for the local API/OpenAPI/docs layer. The next bounded local/source-only slice is TypeScript/Python/qdex read-only account overview clients that call `GET /v1/account` and preserve the same safety envelope.
+Read-only account overview API visibility and bot/operator client exposure are complete for the local API/OpenAPI/docs/SDK/CLI layer. TypeScript SDK `account.get()`, Python SDK `account.get()`, and `qdex account` call `GET /v1/account` and preserve the same `mock-account-overview`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior safety envelope.
+
+The next bounded local/source-only slice is a terminal UI read-only account overview panel that renders the same envelope without wallet or funds behavior.
 
 Still out of scope without explicit approval: wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live owner-wallet sessions, real token addresses, `TradingVault` mutation, or funds movement.

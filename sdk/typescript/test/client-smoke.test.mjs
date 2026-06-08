@@ -153,6 +153,46 @@ test('TypeScript SDK exposes read-only mock vault balances without wallet or wit
   });
 });
 
+test('TypeScript SDK exposes read-only local account overview without wallet or custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const account = await client.account.get();
+
+    assert.equal(account.account, null);
+    assert.equal(account.source, 'mock-account-overview');
+    assert.equal(account.custody, 'non-custodial-contract-vault');
+    assert.equal(account.session.mode, 'mock-local-no-wallet-session');
+    assert.equal(account.session.authenticated, false);
+    assert.equal(account.session.walletRequired, false);
+    assert.deepEqual(account.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(account.balances.source, 'mock-vault-projection');
+    assert.deepEqual(account.balances.balances, []);
+    assert.equal(account.orders.source, 'mock-order-projection');
+    assert.equal(account.orders.matcherLocalOnly, true);
+    assert.deepEqual(account.orders.open, []);
+    assert.equal(account.fills.source, 'in-memory-indexer-projection');
+    assert.equal(account.fills.projectionType, 'IndexedFillProjection');
+    assert.equal(account.fills.confirmedOnly, true);
+    assert.deepEqual(account.fills.items, []);
+    assert.equal(account.settlementMode, 'mock');
+    assert.equal(account.realQuaiTransactions, false);
+    assert.equal(account.walletRequired, false);
+    assert.equal(account.fundsMoved, false);
+    assert.equal(account.tradingVaultMutation, false);
+    assert.equal(account.safety.noWalletLoading, true);
+    assert.equal(account.safety.noRpcUrlAccess, true);
+    assert.equal(account.safety.noSigning, true);
+    assert.equal(account.safety.noBroadcast, true);
+    assert.equal(account.safety.noDeploys, true);
+    assert.equal(account.safety.noTransactionSubmission, true);
+    assert.equal(account.safety.noFundsMovement, true);
+    assert.equal(account.safety.delegateCanWithdraw, false);
+    assert.equal(account.safety.delegateCanAdmin, false);
+    assert.match(account.safety.notice, /no real Quai transaction, no wallet loaded, no funds moved/);
+  });
+});
+
 test('TypeScript SDK exposes prepare-only owner-wallet vault operation placeholders without tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

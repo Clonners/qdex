@@ -20,6 +20,7 @@ try:
 finally:
     fee_stream.close()
 fee_stream_snapshots = dex.fees.stream(limit=1, timeout=2)
+account_overview = dex.account.get()
 balances = dex.account.balances()
 vault_deposits = dex.vault.deposits.list()
 vault_withdrawals = dex.vault.withdrawals.list()
@@ -91,6 +92,17 @@ assert initial_fee_stream_snapshot["snapshot"]["data"]["source"] == "feemanager-
 assert initial_fee_stream_snapshot["snapshot"]["data"]["feeSchedules"][0]["projectionType"] == "FeeScheduleProjection"
 assert initial_fee_stream_snapshot["snapshot"]["data"]["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
 assert fee_stream_snapshots[0]["snapshot"]["data"]["hardMaxFeeBps"] == 1000
+assert account_overview["source"] == "mock-account-overview"
+assert account_overview["session"]["mode"] == "mock-local-no-wallet-session"
+assert account_overview["balances"]["source"] == "mock-vault-projection"
+assert account_overview["orders"]["source"] == "mock-order-projection"
+assert account_overview["fills"]["projectionType"] == "IndexedFillProjection"
+assert account_overview["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
+assert account_overview["settlementMode"] == "mock"  # settlementMode: mock
+assert account_overview["realQuaiTransactions"] is False  # realQuaiTransactions: false
+assert account_overview["walletRequired"] is False  # walletRequired: false
+assert account_overview["fundsMoved"] is False  # fundsMoved: false
+assert account_overview["tradingVaultMutation"] is False  # tradingVaultMutation: false
 assert balances["source"] == "mock-vault-projection"
 assert balances["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
 assert balances["settlementMode"] == "mock"
@@ -197,6 +209,8 @@ proof = smoke["proof"]
 `dex.fees.get()` calls `GET /v1/fees` and returns read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `dex.fees.open_stream()` consumes public `/v1/ws?channel=fees` snapshots, and bounded `dex.fees.stream(limit=limit)` exposes the same public-read-only-no-custody stream to bots. Each snapshot preserves `fee_schedule_projection`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`; there is no fee-authority runtime key, wallet/RPC/signing/broadcast/deploy/tx/funds behavior, or live FeeManager/TradingVault mutation authority.
+
+`dex.account.get()` calls `GET /v1/account` and returns the read-only `mock-account-overview` envelope with `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: False`, and `walletRequired: False`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

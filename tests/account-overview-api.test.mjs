@@ -47,7 +47,7 @@ test('OpenAPI exposes read-only local account overview metadata', async () => {
   }
 });
 
-test('account docs and campaign status pin the read-only overview as the current completed slice', async () => {
+test('account docs and campaign status pin the read-only overview API and client completion boundary', async () => {
   const accountDoc = await readText('docs/account.md');
   const architecture = await readText('docs/architecture.md');
   const status = await readText('CAMPAIGN_STATUS.md');
@@ -64,6 +64,8 @@ test('account docs and campaign status pin the read-only overview as the current
     'NO_WITHDRAW',
     'NO_ADMIN',
     'no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement',
+    'TypeScript SDK `account.get()`, Python SDK `account.get()`, and `qdex account` call `GET /v1/account`',
+    'The next bounded local/source-only slice is a terminal UI read-only account overview panel',
   ]) {
     assert.ok(accountDoc.includes(requiredText), `docs/account.md should include ${requiredText}`);
   }
@@ -74,14 +76,18 @@ test('account docs and campaign status pin the read-only overview as the current
   );
   assert.ok(
     status.includes('Completed previous run: Python SDK FeeManager fee schedule stream consumers'),
-    'campaign status should move the Python FeeManager stream consumer slice to previous work',
+    'campaign status should keep the Python FeeManager stream consumer slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: read-only account overview API envelope'),
-    'campaign status should mark the account overview API envelope as this run',
+    status.includes('Completed previous run: read-only account overview API envelope'),
+    'campaign status should move the account overview API envelope to previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: TypeScript/Python/qdex read-only account overview clients'),
-    'campaign status should point next work at read-only account overview clients',
+    status.includes('Completed this run: TypeScript/Python/qdex read-only account overview clients'),
+    'campaign status should mark the account overview clients as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI read-only account overview panel'),
+    'campaign status should point next work at terminal UI account overview exposure',
   );
 });

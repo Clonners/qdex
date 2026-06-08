@@ -149,6 +149,44 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(balances["walletRequired"])
             self.assertIn("no wallet loaded, no funds moved", balances["safetyNotice"])
 
+    def test_python_sdk_exposes_read_only_local_account_overview_without_wallet_or_custody_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            account = client.account.get()
+
+            self.assertIsNone(account["account"])
+            self.assertEqual(account["source"], "mock-account-overview")
+            self.assertEqual(account["custody"], "non-custodial-contract-vault")
+            self.assertEqual(account["session"]["mode"], "mock-local-no-wallet-session")
+            self.assertFalse(account["session"]["authenticated"])
+            self.assertFalse(account["session"]["walletRequired"])
+            self.assertEqual(account["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(account["balances"]["source"], "mock-vault-projection")
+            self.assertEqual(account["balances"]["balances"], [])
+            self.assertEqual(account["orders"]["source"], "mock-order-projection")
+            self.assertTrue(account["orders"]["matcherLocalOnly"])
+            self.assertEqual(account["orders"]["open"], [])
+            self.assertEqual(account["fills"]["source"], "in-memory-indexer-projection")
+            self.assertEqual(account["fills"]["projectionType"], "IndexedFillProjection")
+            self.assertTrue(account["fills"]["confirmedOnly"])
+            self.assertEqual(account["fills"]["items"], [])
+            self.assertEqual(account["settlementMode"], "mock")
+            self.assertFalse(account["realQuaiTransactions"])
+            self.assertFalse(account["walletRequired"])
+            self.assertFalse(account["fundsMoved"])
+            self.assertFalse(account["tradingVaultMutation"])
+            self.assertTrue(account["safety"]["noWalletLoading"])
+            self.assertTrue(account["safety"]["noRpcUrlAccess"])
+            self.assertTrue(account["safety"]["noSigning"])
+            self.assertTrue(account["safety"]["noBroadcast"])
+            self.assertTrue(account["safety"]["noDeploys"])
+            self.assertTrue(account["safety"]["noTransactionSubmission"])
+            self.assertTrue(account["safety"]["noFundsMovement"])
+            self.assertFalse(account["safety"]["delegateCanWithdraw"])
+            self.assertFalse(account["safety"]["delegateCanAdmin"])
+            self.assertIn("no real Quai transaction, no wallet loaded, no funds moved", account["safety"]["notice"])
+
     def test_python_sdk_exposes_prepare_only_owner_wallet_vault_operation_placeholders_without_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)
