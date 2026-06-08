@@ -1013,11 +1013,21 @@ test('qdex cancel --all removes mock resting orders without nonce or withdrawal 
   });
 });
 
-test('qdex read-only commands return market and book JSON from the API', async () => {
+test('qdex read-only commands return market, ticker, and book JSON from the API', async () => {
   await withServer(async (baseUrl) => {
     const markets = await runCliJson(['--base-url', baseUrl, 'markets']);
     assert.equal(markets.command, 'markets');
     assert.equal(markets.markets[0].id, 'QI-QUAI');
+
+    const ticker = await runCliJson(['--base-url', baseUrl, 'ticker', 'QI-QUAI']);
+    assert.equal(ticker.command, 'ticker');
+    assert.equal(ticker.baseUrl, baseUrl);
+    assert.equal(ticker.marketId, 'QI-QUAI');
+    assert.equal(ticker.source, 'mock-market-data');
+    assert.equal(ticker.lastPrice, null);
+    assert.equal(ticker.bestBid, null);
+    assert.equal(ticker.bestAsk, null);
+    assert.equal(ticker.volume24h, '0');
 
     const book = await runCliJson(['--base-url', baseUrl, 'book', 'QI-QUAI']);
     assert.equal(book.command, 'book');

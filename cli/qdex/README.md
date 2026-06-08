@@ -6,6 +6,7 @@ Implemented smoke/read-only stubs:
 
 ```bash
 qdex --base-url http://127.0.0.1:8787 markets
+qdex --base-url http://127.0.0.1:8787 ticker QI-QUAI
 qdex --base-url http://127.0.0.1:8787 book QI-QUAI
 qdex --base-url http://127.0.0.1:8787 account
 qdex --base-url http://127.0.0.1:8787 balance
@@ -44,6 +45,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 `qdex stream fees` consumes bounded public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Output messages carry `fee_schedule_projection`, `public-read-only-no-custody`, `feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `qdex account` prints `GET /v1/account` as read-only `mock-account-overview` metadata: `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
+
+`qdex ticker QI-QUAI` prints `GET /v1/tickers/QI-QUAI` public read-only mock market-data metadata (`source: mock-market-data`, null `lastPrice`/`bestBid`/`bestAsk`, and `volume24h: "0"`) with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex balance` prints `GET /v1/account/balances` as read-only `mock-vault-projection` metadata: `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, no real Quai tx, no wallet required, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

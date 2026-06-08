@@ -145,12 +145,12 @@ test('terminal UI docs, account docs, package check, and campaign status mark ac
     'campaign status should retain this terminal UI account overview panel slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI account overview integration smoke'),
-    'campaign status should mark the local API account overview smoke slice complete',
+    status.includes('Completed previous run: local API + terminal UI account overview integration smoke'),
+    'campaign status should retain the local API account overview smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should point next work at another local/source-only MVP surface',
+    status.includes('Next autonomous slice: read-only public market-data stream consumers'),
+    'campaign status should point next work at public market-data stream consumers',
   );
 
   assert.doesNotMatch(

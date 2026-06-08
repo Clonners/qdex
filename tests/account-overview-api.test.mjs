@@ -94,11 +94,11 @@ test('account docs and campaign status pin the read-only overview API and client
     'campaign status should retain the terminal UI account overview panel as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI account overview integration smoke'),
-    'campaign status should mark the local API account overview smoke as this run',
+    status.includes('Completed previous run: local API + terminal UI account overview integration smoke'),
+    'campaign status should retain the local API account overview smoke as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should point next work at another bounded local/source-only MVP surface',
+    status.includes('Next autonomous slice: read-only public market-data stream consumers'),
+    'campaign status should point next work at public market-data stream consumers',
   );
 });
