@@ -7,6 +7,7 @@ import { bindFeePolicyLocalApiSmoke } from './fee-policy-binding.js';
 import { bindLiveFeePolicyStreamWithRestSnapshot } from './fee-policy-stream-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
+import { bindLiveKlineStream } from './live-klines.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
@@ -173,6 +174,25 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxFeePolicyStream = 'disabled';
     console.warn('QDEX live FeeManager fee schedule stream disabled; keeping static read-only fixture.', error);
+  }
+
+  try {
+    bindLiveKlineStream({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxKlineStream = 'error';
+        console.warn('QDEX live public kline/candle stream unavailable; keeping static read-only fixture with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.', error);
+      },
+      onUpdate: () => {
+        mount.dataset.qdxKlineStream = 'market.QI-QUAI.klines.1m';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxKlineStream = 'disabled';
+    console.warn('QDEX live public kline/candle stream disabled; keeping static read-only fixture.', error);
   }
 
   try {

@@ -210,8 +210,8 @@ test('account docs, browser app, package check, and campaign status mark the loc
     'campaign status should retain this local API account overview smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI public kline/candle panel binding'),
-    'campaign status should point next work at terminal UI public kline/candle panel binding after Python kline consumers',
+    status.includes('Next autonomous slice: local API + terminal UI public kline/candle stream integration smoke'),
+    'campaign status should point next work at the local API + terminal UI public kline/candle stream integration smoke after this binding slice',
   );
 
   assert.doesNotMatch(

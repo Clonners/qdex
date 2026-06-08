@@ -1,6 +1,7 @@
 import { normalizeAccountOverviewPanelFixture } from './account-overview-panel.js';
 import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-panel.js';
 import { normalizeFeePolicyPanelFixture } from './fee-policy-panel.js';
+import { normalizeKlinePanelFixture } from './kline-panel.js';
 import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
 
 const escapeHtml = (value) => String(value)
@@ -614,6 +615,84 @@ const renderFeePolicyStreamPanel = (feePolicyStream) => {
   `;
 };
 
+const renderKlineRows = (candles = []) => {
+  if (candles.length === 0) {
+    return '<li class="muted">no local/mock candle rows yet</li>';
+  }
+
+  return candles.map((candle) => `
+    <li>
+      <span>${escapeHtml(candle.openTime ?? candle.timestamp ?? 'local-candle')}</span>
+      <span>${escapeHtml(candle.open ?? '0')}</span>
+      <span>${escapeHtml(candle.close ?? '0')}</span>
+    </li>
+  `).join('');
+};
+
+const renderKlinePanel = (klines) => {
+  if (klines === undefined || klines === null) {
+    return '';
+  }
+
+  const panel = normalizeKlinePanelFixture(klines);
+  const permissions = (panel.permissions ?? []).join(', ');
+
+  return `
+        <article class="panel stream-panel kline-panel">
+          <h2>read-only public kline/candle panel</h2>
+          <p class="warning">${escapeHtml(panel.safety.notice)}</p>
+          <dl class="kv">
+            <div><dt>market</dt><dd>${escapeHtml(panel.marketId)}</dd></div>
+            <div><dt>interval</dt><dd>${escapeHtml(panel.interval)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(panel.source)}</dd></div>
+            <div><dt>payload</dt><dd>${escapeHtml(panel.payload)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(panel.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>candles</dt><dd>${escapeHtml(panel.candles.length)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(panel.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(panel.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(panel.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(panel.tradingVaultMutation)}</dd></div>
+            <div><dt>custody authority</dt><dd>${escapeHtml(panel.safety.noCustodyAuthority ? 'no custody authority' : 'unsafe')}</dd></div>
+          </dl>
+          <h3>kline_snapshot rows</h3>
+          <ul>${renderKlineRows(panel.candles)}</ul>
+        </article>
+  `;
+};
+
+const renderKlineStreamPanel = (klineStream) => {
+  if (klineStream === undefined || klineStream === null) {
+    return '';
+  }
+
+  const permissions = (klineStream.permissions ?? []).join(', ');
+  const streamReason = klineStream.streamEvent?.reason ?? 'initial_snapshot';
+
+  return `
+        <article class="panel stream-panel kline-stream-panel">
+          <h2>live public kline/candle stream</h2>
+          <p class="warning">${escapeHtml(klineStream.safetyNotice)}</p>
+          <p class="warning">${escapeHtml(klineStream.projectionSafetyNotice ?? '')}</p>
+          <dl class="kv">
+            <div><dt>channel</dt><dd>${escapeHtml(klineStream.channel)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(klineStream.source)}</dd></div>
+            <div><dt>payload</dt><dd>${escapeHtml(klineStream.payload)}</dd></div>
+            <div><dt>stream custody</dt><dd>${escapeHtml(klineStream.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>market</dt><dd>${escapeHtml(klineStream.marketId)}</dd></div>
+            <div><dt>interval</dt><dd>${escapeHtml(klineStream.interval)}</dd></div>
+            <div><dt>candles</dt><dd>${escapeHtml(klineStream.candleCount ?? 0)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(klineStream.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(klineStream.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(klineStream.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(klineStream.tradingVaultMutation)}</dd></div>
+            <div><dt>last event</dt><dd>${escapeHtml(streamReason)}</dd></div>
+          </dl>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -714,7 +793,11 @@ ${renderDelegateKeyHistoryPanel(fixture.delegateKeyHistory)}
 
 ${renderFeePolicyPanel(fixture.feePolicy)}
 
+${renderKlinePanel(fixture.klines)}
+
 ${renderFeePolicyStreamPanel(fixture.feePolicyStream)}
+
+${renderKlineStreamPanel(fixture.klineStream)}
 
 ${renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream)}
 

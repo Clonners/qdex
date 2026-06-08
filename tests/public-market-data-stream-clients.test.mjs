@@ -201,24 +201,28 @@ test('Python SDK docs expose bounded public market-data and kline/candle consume
   }
 });
 
-test('campaign status marks Python public kline/candle SDK consumers complete after parity', async () => {
+test('campaign status marks terminal UI public kline/candle binding complete after Python parity', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: Python SDK public kline/candle consumers are complete'),
-    'campaign status should mark Python public kline consumers as current phase',
+    status.includes('Current phase: terminal UI public kline/candle panel binding is complete'),
+    'campaign status should mark terminal UI public kline/candle binding as current phase',
   );
   assert.ok(
     status.includes('Completed previous run: TypeScript SDK and `qdex` CLI public kline/candle consumers'),
-    'campaign status should move TypeScript/qdex public kline consumers to previous work',
+    'campaign status should retain TypeScript/qdex public kline consumers as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: Python SDK public kline/candle consumers'),
-    'campaign status should record this run as Python public kline consumers',
+    status.includes('Completed previous run: Python SDK public kline/candle consumers'),
+    'campaign status should move Python public kline consumers to previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI public kline/candle panel binding'),
-    'campaign status should point to terminal UI public kline/candle panel binding next',
+    status.includes('Completed this run: terminal UI public kline/candle panel binding'),
+    'campaign status should record this run as terminal UI public kline/candle panel binding',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: local API + terminal UI public kline/candle stream integration smoke'),
+    'campaign status should point to the local API + terminal UI public kline/candle stream integration smoke next',
   );
   assert.doesNotMatch(
     status,
