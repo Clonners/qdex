@@ -11,6 +11,11 @@ markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
 fees = dex.fees.get()  # GET /v1/fees -> feemanager-policy-projection, FeeScheduleProjection, READ_ONLY
+limit = 1
+fee_stream = dex.fees.open_stream()  # /v1/ws?channel=fees -> fee_schedule_projection, public-read-only-no-custody
+fee_stream_snapshot = fee_stream.next()
+fee_stream.close()
+fee_stream_snapshots = dex.fees.stream(limit=limit)
 balances = dex.account.balances()  # GET /v1/account/balances -> mock-vault-projection, read-only, no wallet loaded, no funds moved
 vault_deposits = dex.vault.deposits.list()  # GET /v1/vault/deposits -> source: tradingvault-event-projection, TradingVaultDepositProjection, READ_ONLY
 vault_withdrawals = dex.vault.withdrawals.list()  # GET /v1/vault/withdrawals -> source: tradingvault-event-projection, TradingVaultWithdrawalProjection, READ_ONLY
@@ -20,7 +25,6 @@ deposit_history_stream.close()
 withdrawal_history_stream = dex.vault.withdrawals.open_stream()  # /v1/ws?channel=withdrawals
 withdrawal_history_snapshot = withdrawal_history_stream.next()
 withdrawal_history_stream.close()
-limit = 1
 vault_deposit_stream_snapshots = dex.vault.deposits.stream(limit=limit)
 vault_withdrawal_stream_snapshots = dex.vault.withdrawals.stream(limit=limit)
 vault_deposit_prepare = dex.vault.deposits.prepare({
@@ -138,6 +142,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
 
 `fees.get()` is read-only FeeManager fee schedule metadata from `GET /v1/fees`. It returns `source: feemanager-policy-projection`, `projectionType: FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`. This client has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
+
+`fees.open_stream()` and bounded `fees.stream(limit=limit)` consume public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Stream snapshots carry `fee_schedule_projection`, `public-read-only-no-custody`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`; there is no fee-authority runtime key, wallet/RPC/signing/broadcast/deploy/tx/funds behavior, or live FeeManager/TradingVault mutation authority.
 
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

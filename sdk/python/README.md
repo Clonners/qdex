@@ -14,6 +14,12 @@ markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
 contracts = dex.contracts.get()
 fees = dex.fees.get()
+fee_stream = dex.fees.open_stream(timeout=2)
+try:
+    initial_fee_stream_snapshot = fee_stream.next()
+finally:
+    fee_stream.close()
+fee_stream_snapshots = dex.fees.stream(limit=1, timeout=2)
 balances = dex.account.balances()
 vault_deposits = dex.vault.deposits.list()
 vault_withdrawals = dex.vault.withdrawals.list()
@@ -78,6 +84,13 @@ assert fees["feeRecipient"] is None  # feeRecipient: None
 assert fees["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
 assert fees["feeManagerMutation"] is False  # feeManagerMutation: False
 assert fees["tradingVaultMutation"] is False  # tradingVaultMutation: False
+assert initial_fee_stream_snapshot["snapshot"]["channel"] == "fees"  # /v1/ws?channel=fees
+assert initial_fee_stream_snapshot["snapshot"]["payload"] == "fee_schedule_projection"
+assert initial_fee_stream_snapshot["snapshot"]["custody"] == "public-read-only-no-custody"
+assert initial_fee_stream_snapshot["snapshot"]["data"]["source"] == "feemanager-policy-projection"
+assert initial_fee_stream_snapshot["snapshot"]["data"]["feeSchedules"][0]["projectionType"] == "FeeScheduleProjection"
+assert initial_fee_stream_snapshot["snapshot"]["data"]["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
+assert fee_stream_snapshots[0]["snapshot"]["data"]["hardMaxFeeBps"] == 1000
 assert balances["source"] == "mock-vault-projection"
 assert balances["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
 assert balances["settlementMode"] == "mock"
@@ -182,6 +195,8 @@ proof = smoke["proof"]
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `listedAssetStatus`: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and native Qi direct settlement out of scope in favor of WQI. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `dex.fees.get()` calls `GET /v1/fees` and returns read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
+
+`dex.fees.open_stream()` consumes public `/v1/ws?channel=fees` snapshots, and bounded `dex.fees.stream(limit=limit)` exposes the same public-read-only-no-custody stream to bots. Each snapshot preserves `fee_schedule_projection`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: None`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: False`, and `tradingVaultMutation: False`; there is no fee-authority runtime key, wallet/RPC/signing/broadcast/deploy/tx/funds behavior, or live FeeManager/TradingVault mutation authority.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: False`, and `walletRequired: False`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

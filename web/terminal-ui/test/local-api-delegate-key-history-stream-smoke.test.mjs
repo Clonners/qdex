@@ -259,7 +259,7 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should checkpoint the FeeManager stream smoke as this run',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK FeeManager fee schedule stream consumers'),
+    status.includes('Completed this run: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should move past FeeManager stream smoke to SDK/CLI consumers',
   );
   assert.ok(

@@ -217,7 +217,7 @@ test('terminal UI docs, package check, and campaign status mark FeeManager strea
     'campaign status should mark the FeeManager stream smoke as this run',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK FeeManager fee schedule stream consumers'),
+    status.includes('Completed this run: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should move the next bounded slice to bot/operator FeeManager stream consumers',
   );
   assert.ok(

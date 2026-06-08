@@ -454,6 +454,50 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertTrue(fees["safety"]["noFeeAuthorityRuntimeKeys"])
             self.assertIn("Read-only FeeManager schedule metadata", fees["safety"]["notice"])
 
+    def test_python_sdk_consumes_public_feemanager_fee_schedule_stream_without_fee_authority_or_tx_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            fees_stream = client.fees.open_stream(timeout=2)
+
+            try:
+                message = fees_stream.next()
+                self.assertEqual(message["type"], "snapshot")
+                self.assertEqual(message["transport"], "websocket")
+                snapshot = message["snapshot"]
+                self.assertEqual(snapshot["channel"], "fees")
+                self.assertEqual(snapshot["visibility"], "public")
+                self.assertEqual(snapshot["payload"], "fee_schedule_projection")
+                self.assertEqual(snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(snapshot["source"], "feemanager-policy-projection")
+                self.assertEqual(snapshot["data"]["source"], "feemanager-policy-projection")
+                self.assertEqual(snapshot["data"]["status"], "local-only-not-deployed")
+                self.assertEqual(snapshot["data"]["custody"], "non-custodial-fee-policy")
+                self.assertEqual(snapshot["data"]["feeSchedules"][0]["projectionType"], "FeeScheduleProjection")
+                self.assertEqual(snapshot["data"]["feeSchedules"][0]["eventName"], "FeesUpdated")
+                self.assertEqual(snapshot["data"]["feeSchedules"][0]["maxFeeBps"], 1000)
+                self.assertEqual(snapshot["data"]["hardMaxFeeBps"], 1000)
+                self.assertIsNone(snapshot["data"]["feeRecipient"])
+                self.assertFalse(snapshot["data"]["feeManagerMutation"])
+                self.assertFalse(snapshot["data"]["realQuaiTransactions"])
+                self.assertFalse(snapshot["data"]["walletRequired"])
+                self.assertFalse(snapshot["data"]["fundsMoved"])
+                self.assertFalse(snapshot["data"]["tradingVaultMutation"])
+                self.assertTrue(snapshot["data"]["safety"]["noFeeAuthorityRuntimeKeys"])
+                self.assertIn("no fee-authority key", snapshot["data"]["safety"]["notice"])
+            finally:
+                fees_stream.close()
+
+            messages = client.fees.stream(limit=1, timeout=2)
+            self.assertEqual(len(messages), 1)
+            bounded_snapshot = messages[0]["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "fees")
+            self.assertEqual(bounded_snapshot["payload"], "fee_schedule_projection")
+            self.assertEqual(bounded_snapshot["custody"], "public-read-only-no-custody")
+            self.assertEqual(bounded_snapshot["data"]["feeSchedules"][0]["projectionType"], "FeeScheduleProjection")
+            self.assertEqual(bounded_snapshot["data"]["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(bounded_snapshot["data"]["feeManagerMutation"])
+            self.assertFalse(bounded_snapshot["data"]["tradingVaultMutation"])
+
     def test_python_sdk_consumes_private_tradingvault_deposit_and_withdrawal_history_streams_without_wallet_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

@@ -285,6 +285,12 @@ class _FeesApi:
     def get(self):
         return self._client._request_ok("/v1/fees")
 
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("fees", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("fees", limit=limit, timeout=timeout)
+
 
 class _AccountApi:
     def __init__(self, client):

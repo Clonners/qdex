@@ -267,7 +267,7 @@ test('terminal UI package/app/docs/status mention the public FeeManager fee sche
     'Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment',
     'Completed previous run: terminal UI binding for the FeeManager fee schedule stream',
     'Completed previous run: local API + terminal UI FeeManager fee schedule stream integration smoke',
-    'Next autonomous slice: Python SDK FeeManager fee schedule stream consumers',
+    'Completed this run: Python SDK FeeManager fee schedule stream consumers',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

@@ -169,7 +169,7 @@ test('terminal UI docs, package check, and campaign status mark fee policy panel
     'campaign status should mark the FeeManager stream smoke complete',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK FeeManager fee schedule stream consumers'),
+    status.includes('Completed this run: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should advance past FeeManager stream smoke to SDK/CLI consumers',
   );
 

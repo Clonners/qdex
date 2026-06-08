@@ -171,7 +171,7 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should checkpoint the FeeManager stream integration smoke',
   );
   assert.ok(
-    status.includes('Next autonomous slice: Python SDK FeeManager fee schedule stream consumers'),
+    status.includes('Completed this run: Python SDK FeeManager fee schedule stream consumers'),
     'campaign status should move past FeeManager stream smoke to SDK/CLI stream consumers',
   );
 
