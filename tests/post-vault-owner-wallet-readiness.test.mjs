@@ -62,7 +62,10 @@ test('post-vault owner-wallet readiness plan pins completed prepare surfaces and
     'SDK `dex.vault.deposits.list()` / `dex.vault.withdrawals.list()` and CLI `qdex vault deposits` / `qdex vault withdrawals`',
     '## Completed local/source-only terminal UI vault history panel',
     'Completed: terminal UI read-only vault history panel.',
-    'Next bounded local/source-only slice: local API + terminal UI vault history integration smoke',
+    '## Completed local/source-only vault history integration smoke',
+    'Completed: local API + terminal UI vault history integration smoke.',
+    '`src/vault-history-binding.js` now reads `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`',
+    'Next bounded local/source-only slice: align private `deposits`/`withdrawals` WebSocket snapshots with the same TradingVault event-projection envelope',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }

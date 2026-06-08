@@ -2,6 +2,7 @@ import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-bindi
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
+import { bindVaultHistoryLocalApiSmoke } from './vault-history-binding.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
@@ -74,6 +75,28 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxVaultPrepareTrigger = 'disabled';
     console.warn('QDEX vault prepare trigger disabled; keeping owner-wallet boundary prepare-only.', error);
+  }
+
+  try {
+    bindVaultHistoryLocalApiSmoke({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxVaultHistorySmoke = 'error';
+        console.warn('QDEX vault history smoke failed; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+      },
+      onHistory: () => {
+        mount.dataset.qdxVaultHistorySmoke = 'tradingvault-event-projection';
+      },
+    }).catch((error) => {
+      mount.dataset.qdxVaultHistorySmoke = 'disabled';
+      console.warn('QDEX local vault history API/UI smoke disabled; keeping static read-only fixture.', error);
+    });
+  } catch (error) {
+    mount.dataset.qdxVaultHistorySmoke = 'disabled';
+    console.warn('QDEX vault history smoke disabled; keeping static read-only fixture.', error);
   }
 
   try {

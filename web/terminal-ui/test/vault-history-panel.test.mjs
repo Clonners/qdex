@@ -87,13 +87,17 @@ test('renderTradeProofPanel renders read-only vault history without implying wal
   assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
 });
 
-test('terminal UI docs and campaign status mark vault history panel complete and keep next slice local-only', async () => {
+test('terminal UI docs and campaign status mark vault history smoke complete and keep next slice local-only', async () => {
   const readme = await readText('web/terminal-ui/README.md');
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
     'src/vault-history-panel.js',
+    'src/vault-history-binding.js',
     'read-only TradingVault deposit/withdrawal history panel',
+    'local API + terminal UI vault history smoke',
+    'GET /v1/vault/deposits',
+    'GET /v1/vault/withdrawals',
     'source: tradingvault-event-projection',
     'TradingVaultDepositProjection',
     'TradingVaultWithdrawalProjection',
@@ -111,12 +115,16 @@ test('terminal UI docs and campaign status mark vault history panel complete and
   }
 
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only vault history panel'),
-    'campaign status should checkpoint the terminal UI vault history panel slice',
+    status.includes('Completed previous run: terminal UI read-only vault history panel'),
+    'campaign status should retain the terminal UI vault history panel checkpoint',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI vault history integration smoke'),
-    'campaign status should move to the next bounded local/source-only vault history smoke slice',
+    status.includes('Completed this run: local API + terminal UI vault history integration smoke'),
+    'campaign status should checkpoint the local API + terminal UI vault history smoke slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: align private `deposits`/`withdrawals` WebSocket snapshots'),
+    'campaign status should move to the next bounded local/source-only vault history stream alignment slice',
   );
   assert.doesNotMatch(
     `${readme}\n${status}`,
