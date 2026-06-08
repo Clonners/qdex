@@ -2,7 +2,7 @@ import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-bindi
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
-import { bindVaultPrepareTrigger } from './vault-prepare-trigger.js';
+import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
 
@@ -58,7 +58,7 @@ if (mount) {
   }
 
   try {
-    bindVaultPrepareTrigger({
+    bindVaultPrepareTriggerWithLocalApiSmoke({
       mount,
       baseUrl,
       baseFixture: mockVerticalSliceFixture,
