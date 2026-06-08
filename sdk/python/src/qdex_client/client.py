@@ -1,6 +1,11 @@
+import base64
+import hashlib
 import json
+import os
+import socket
+import ssl
 from urllib.error import HTTPError
-from urllib.parse import quote
+from urllib.parse import quote, urlencode, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
 
@@ -19,12 +24,181 @@ class QDexHttpError(Exception):
         self.body = body
 
 
+class QDexStreamError(Exception):
+    pass
+
+
 def _trim_trailing_slash(value):
     return value.rstrip("/")
 
 
 def _encode_path_value(value):
     return quote(value, safe="")
+
+
+class QDexStream:
+    def __init__(self, *, channel, url, timeout=5):
+        self.channel = channel
+        self.url = url
+        self.timeout = timeout
+        self.closed = False
+        self._buffer = b""
+        self._socket = self._connect(url, timeout)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+
+    def next(self, *, timeout=None):
+        if self.closed:
+            raise QDexStreamError(f"QDex WebSocket stream is closed for {self.channel}.")
+        if timeout is not None:
+            self._socket.settimeout(timeout)
+
+        while True:
+            first_byte, second_byte = self._read_exact(2)
+            opcode = first_byte & 0x0F
+            masked = (second_byte & 0x80) != 0
+            payload_length = second_byte & 0x7F
+
+            if payload_length == 126:
+                payload_length = int.from_bytes(self._read_exact(2), "big")
+            elif payload_length == 127:
+                payload_length = int.from_bytes(self._read_exact(8), "big")
+
+            mask_key = self._read_exact(4) if masked else None
+            payload = bytearray(self._read_exact(payload_length))
+            if mask_key is not None:
+                for index in range(len(payload)):
+                    payload[index] ^= mask_key[index % 4]
+
+            if opcode == 0x1:
+                return json.loads(bytes(payload).decode("utf-8"))
+            if opcode == 0x8:
+                self.closed = True
+                raise QDexStreamError(f"QDex WebSocket stream closed for {self.channel}.")
+            if opcode == 0x9:
+                self._send_frame(0xA, bytes(payload))
+                continue
+            if opcode == 0xA:
+                continue
+            raise QDexStreamError(f"Unsupported WebSocket opcode {opcode} for {self.channel}.")
+
+    def close(self):
+        if self.closed:
+            return
+        self.closed = True
+        try:
+            self._send_frame(0x8, b"")
+        except OSError:
+            pass
+        try:
+            self._socket.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+        self._socket.close()
+
+    def _connect(self, url, timeout):
+        parts = urlsplit(url)
+        if parts.scheme not in {"ws", "wss"}:
+            raise ValueError("QDex stream URL must use ws:// or wss://")
+
+        host = parts.hostname
+        if host is None:
+            raise ValueError("QDex stream URL must include a host")
+        port = parts.port or (443 if parts.scheme == "wss" else 80)
+        path = parts.path or "/"
+        if parts.query:
+            path = f"{path}?{parts.query}"
+
+        raw_socket = socket.create_connection((host, port), timeout=timeout)
+        raw_socket.settimeout(timeout)
+        stream_socket = ssl.create_default_context().wrap_socket(raw_socket, server_hostname=host) if parts.scheme == "wss" else raw_socket
+
+        key = base64.b64encode(os.urandom(16)).decode("ascii")
+        request = "\r\n".join(
+            [
+                f"GET {path} HTTP/1.1",
+                f"Host: {parts.netloc}",
+                "Upgrade: websocket",
+                "Connection: Upgrade",
+                f"Sec-WebSocket-Key: {key}",
+                "Sec-WebSocket-Version: 13",
+                "",
+                "",
+            ]
+        )
+        stream_socket.sendall(request.encode("ascii"))
+        self._socket = stream_socket
+        self._verify_handshake(key)
+        return stream_socket
+
+    def _verify_handshake(self, key):
+        response = b""
+        while b"\r\n\r\n" not in response:
+            chunk = self._socket.recv(4096)
+            if chunk == b"":
+                raise QDexStreamError(f"QDex WebSocket handshake closed early for {self.channel}.")
+            response += chunk
+
+        headers_raw, self._buffer = response.split(b"\r\n\r\n", 1)
+        lines = headers_raw.decode("iso-8859-1").split("\r\n")
+        if len(lines) == 0 or " 101 " not in lines[0]:
+            status = lines[0] if lines else "empty response"
+            raise QDexStreamError(f"QDex WebSocket upgrade failed for {self.channel}: {status}")
+
+        headers = {}
+        for line in lines[1:]:
+            if ":" not in line:
+                continue
+            name, value = line.split(":", 1)
+            headers[name.strip().lower()] = value.strip()
+
+        expected_accept = base64.b64encode(
+            hashlib.sha1(f"{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11".encode("ascii")).digest()
+        ).decode("ascii")
+        if headers.get("sec-websocket-accept") != expected_accept:
+            raise QDexStreamError(f"QDex WebSocket upgrade returned an invalid accept header for {self.channel}.")
+
+    def _read_exact(self, size):
+        if size == 0:
+            return b""
+
+        chunks = []
+        remaining = size
+        if self._buffer:
+            chunk = self._buffer[:remaining]
+            self._buffer = self._buffer[remaining:]
+            chunks.append(chunk)
+            remaining -= len(chunk)
+
+        while remaining > 0:
+            chunk = self._socket.recv(remaining)
+            if chunk == b"":
+                raise QDexStreamError(f"QDex WebSocket stream closed while reading {self.channel}.")
+            chunks.append(chunk)
+            remaining -= len(chunk)
+
+        return b"".join(chunks)
+
+    def _send_frame(self, opcode, payload=b""):
+        payload = bytes(payload)
+        header = bytearray([0x80 | opcode])
+        mask_bit = 0x80
+        if len(payload) <= 125:
+            header.append(mask_bit | len(payload))
+        elif len(payload) <= 65_535:
+            header.append(mask_bit | 126)
+            header.extend(len(payload).to_bytes(2, "big"))
+        else:
+            header.append(mask_bit | 127)
+            header.extend(len(payload).to_bytes(8, "big"))
+
+        mask_key = os.urandom(4)
+        masked_payload = bytes(byte ^ mask_key[index % 4] for index, byte in enumerate(payload))
+        self._socket.sendall(bytes(header) + mask_key + masked_payload)
 
 
 def create_mock_signed_order(**overrides):
@@ -122,6 +296,12 @@ class _VaultDepositsApi:
     def list(self):
         return self._client._request_ok("/v1/vault/deposits")
 
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("deposits", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("deposits", limit=limit, timeout=timeout)
+
     def prepare(self, request):
         return self._client._request_expected_status(
             "/v1/vault/deposits/prepare",
@@ -137,6 +317,12 @@ class _VaultWithdrawalsApi:
 
     def list(self):
         return self._client._request_ok("/v1/vault/withdrawals")
+
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("withdrawals", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("withdrawals", limit=limit, timeout=timeout)
 
     def prepare(self, request):
         return self._client._request_expected_status(
@@ -304,6 +490,31 @@ class QDexClient:
         self.trades = _TradesApi(self)
         self.proofs = _ProofsApi(self)
         self.delegate_keys = _DelegateKeysApi(self)
+
+    def _stream_url(self, channel):
+        parts = urlsplit(self.base_url)
+        scheme = "wss" if parts.scheme == "https" else "ws"
+        return urlunsplit((scheme, parts.netloc, "/v1/ws", urlencode({"channel": channel}), ""))
+
+    def _open_stream(self, channel, *, timeout=None):
+        return QDexStream(
+            channel=channel,
+            url=self._stream_url(channel),
+            timeout=self.timeout if timeout is None else timeout,
+        )
+
+    def _read_stream(self, channel, *, limit=1, timeout=None):
+        if not isinstance(limit, int) or limit < 1:
+            raise TypeError("QDex stream read limit must be a positive integer.")
+
+        stream = self._open_stream(channel, timeout=timeout)
+        messages = []
+        try:
+            while len(messages) < limit:
+                messages.append(stream.next(timeout=timeout))
+        finally:
+            stream.close()
+        return messages
 
     def _request_ok(self, path, *, method="GET", body=None):
         response = self._request(path, method=method, body=body)

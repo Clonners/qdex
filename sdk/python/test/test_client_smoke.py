@@ -243,6 +243,63 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(withdrawals["fundsMoved"])
             self.assertFalse(withdrawals["tradingVaultMutation"])
 
+    def test_python_sdk_consumes_private_tradingvault_deposit_and_withdrawal_history_streams_without_wallet_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            deposits_stream = client.vault.deposits.open_stream(timeout=2)
+
+            try:
+                deposit_message = deposits_stream.next()
+                self.assertEqual(deposit_message["type"], "snapshot")
+                self.assertEqual(deposit_message["transport"], "websocket")
+                deposit_snapshot = deposit_message["snapshot"]
+                self.assertEqual(deposit_snapshot["channel"], "deposits")
+                self.assertEqual(deposit_snapshot["visibility"], "private")
+                self.assertEqual(deposit_snapshot["payload"], "deposit_projection")
+                self.assertEqual(deposit_snapshot["source"], "tradingvault-event-projection")
+                self.assertEqual(deposit_snapshot["custody"], "non-custodial-no-withdrawal-authority")
+                self.assertEqual(deposit_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+                self.assertEqual(
+                    deposit_snapshot["safetyNotice"],
+                    "Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.",
+                )
+                self.assertEqual(deposit_snapshot["data"]["deposits"], [])
+                self.assertEqual(deposit_snapshot["data"]["projectionType"], "TradingVaultDepositProjection")
+                self.assertEqual(deposit_snapshot["data"]["eventName"], "Deposit")
+                self.assertEqual(deposit_snapshot["data"]["settlementMode"], "mock")
+                self.assertIsNone(deposit_snapshot["data"]["settlementTx"])
+                self.assertIsNone(deposit_snapshot["data"]["blockNumber"])
+                self.assertIsNone(deposit_snapshot["data"]["blockHash"])
+                self.assertIsNone(deposit_snapshot["data"]["eventIndex"])
+                self.assertIsNone(deposit_snapshot["data"]["explorerUrl"])
+                self.assertFalse(deposit_snapshot["data"]["realQuaiTransactions"])
+                self.assertFalse(deposit_snapshot["data"]["walletRequired"])
+                self.assertFalse(deposit_snapshot["data"]["fundsMoved"])
+                self.assertFalse(deposit_snapshot["data"]["tradingVaultMutation"])
+            finally:
+                deposits_stream.close()
+
+            withdrawal_messages = client.vault.withdrawals.stream(limit=1, timeout=2)
+            self.assertEqual(len(withdrawal_messages), 1)
+            withdrawal_message = withdrawal_messages[0]
+            self.assertEqual(withdrawal_message["type"], "snapshot")
+            withdrawal_snapshot = withdrawal_message["snapshot"]
+            self.assertEqual(withdrawal_snapshot["channel"], "withdrawals")
+            self.assertEqual(withdrawal_snapshot["visibility"], "private")
+            self.assertEqual(withdrawal_snapshot["payload"], "withdrawal_projection")
+            self.assertEqual(withdrawal_snapshot["source"], "tradingvault-event-projection")
+            self.assertEqual(withdrawal_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(withdrawal_snapshot["data"]["withdrawals"], [])
+            self.assertEqual(withdrawal_snapshot["data"]["projectionType"], "TradingVaultWithdrawalProjection")
+            self.assertEqual(withdrawal_snapshot["data"]["eventName"], "Withdraw")
+            self.assertEqual(withdrawal_snapshot["data"]["settlementMode"], "mock")
+            self.assertIsNone(withdrawal_snapshot["data"]["settlementTx"])
+            self.assertIsNone(withdrawal_snapshot["data"]["explorerUrl"])
+            self.assertFalse(withdrawal_snapshot["data"]["realQuaiTransactions"])
+            self.assertFalse(withdrawal_snapshot["data"]["walletRequired"])
+            self.assertFalse(withdrawal_snapshot["data"]["fundsMoved"])
+            self.assertFalse(withdrawal_snapshot["data"]["tradingVaultMutation"])
+
     def test_python_sdk_exposes_read_only_relayer_settlement_mode_gate_metadata_without_wallet_or_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

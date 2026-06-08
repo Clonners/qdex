@@ -16,6 +16,12 @@ contracts = dex.contracts.get()
 balances = dex.account.balances()
 vault_deposits = dex.vault.deposits.list()
 vault_withdrawals = dex.vault.withdrawals.list()
+vault_deposit_stream = dex.vault.deposits.open_stream(timeout=2)
+try:
+    initial_deposit_stream_snapshot = vault_deposit_stream.next()
+finally:
+    vault_deposit_stream.close()
+vault_withdrawal_stream_snapshots = dex.vault.withdrawals.stream(limit=1, timeout=2)
 vault_deposit_prepare = dex.vault.deposits.prepare({
     "owner": "0x1111111111111111111111111111111111111111",
     "assetSymbol": "WQI",
@@ -75,6 +81,14 @@ assert vault_deposits["walletRequired"] is False  # walletRequired: False
 assert vault_deposits["fundsMoved"] is False  # fundsMoved: False
 assert vault_deposits["tradingVaultMutation"] is False  # tradingVaultMutation: False
 assert vault_withdrawals["projectionType"] == "TradingVaultWithdrawalProjection"  # GET /v1/vault/withdrawals
+assert initial_deposit_stream_snapshot["snapshot"]["source"] == "tradingvault-event-projection"  # /v1/ws?channel=deposits
+assert initial_deposit_stream_snapshot["snapshot"]["data"]["projectionType"] == "TradingVaultDepositProjection"
+assert initial_deposit_stream_snapshot["snapshot"]["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
+assert initial_deposit_stream_snapshot["snapshot"]["data"]["settlementMode"] == "mock"  # settlementMode: mock
+assert initial_deposit_stream_snapshot["snapshot"]["data"]["fundsMoved"] is False  # fundsMoved: False
+assert initial_deposit_stream_snapshot["snapshot"]["data"]["tradingVaultMutation"] is False  # tradingVaultMutation: False
+assert vault_withdrawal_stream_snapshots[0]["snapshot"]["channel"] == "withdrawals"  # /v1/ws?channel=withdrawals
+assert vault_withdrawal_stream_snapshots[0]["snapshot"]["data"]["projectionType"] == "TradingVaultWithdrawalProjection"
 assert vault_deposit_prepare["status"] == 501
 assert vault_deposit_prepare["body"]["error"] == "owner_wallet_vault_deposit_not_implemented"
 assert vault_deposit_prepare["body"]["source"] == "owner-wallet-vault-operation-placeholder"
@@ -140,6 +154,8 @@ proof = smoke["proof"]
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: False`, and `walletRequired: False`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 
 `dex.vault.deposits.list()` and `dex.vault.withdrawals.list()` call `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals` and return read-only `source: tradingvault-event-projection` history envelopes. They expose `TradingVaultDepositProjection` / `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: False`, `walletRequired: False`, `fundsMoved: False`, and `tradingVaultMutation: False` with mock-null event evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`dex.vault.deposits.open_stream()` and `dex.vault.withdrawals.open_stream()` consume private vault history snapshots from `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals`. Bounded `dex.vault.deposits.stream(limit=limit)` and `dex.vault.withdrawals.stream(limit=limit)` helpers expose the same `tradingvault-event-projection` snapshots with `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `fundsMoved: False`, and `tradingVaultMutation: False`; there is no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `dex.vault.deposits.prepare()` and `dex.vault.withdrawals.prepare()` call `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` and return the intentional 501 owner-wallet placeholders (`owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented`). The envelope preserves `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: False`, and `tradingVaultMutation: False`; the SDK treats the placeholder as a boundary response with no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 

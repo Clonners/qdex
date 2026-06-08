@@ -963,7 +963,7 @@ test('SDK and CLI README docs expose read-only relayer gate clients', async () =
   }
 });
 
-test('TypeScript SDK and qdex CLI docs expose read-only vault history stream consumers', async () => {
+test('SDK and qdex CLI docs expose read-only vault history stream consumers', async () => {
   const docs = [
     {
       path: 'sdk/typescript/spec.md',
@@ -1002,6 +1002,46 @@ test('TypeScript SDK and qdex CLI docs expose read-only vault history stream con
         'settlementMode: mock',
         'fundsMoved: false',
         'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        'vault.deposits.open_stream()',
+        'vault.withdrawals.open_stream()',
+        'vault.deposits.stream(limit=limit)',
+        'vault.withdrawals.stream(limit=limit)',
+        '/v1/ws?channel=deposits',
+        '/v1/ws?channel=withdrawals',
+        'tradingvault-event-projection',
+        'TradingVaultDepositProjection',
+        'TradingVaultWithdrawalProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'settlementMode: mock',
+        'fundsMoved: False',
+        'tradingVaultMutation: False',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.vault.deposits.open_stream',
+        'dex.vault.withdrawals.open_stream',
+        '/v1/ws?channel=deposits',
+        '/v1/ws?channel=withdrawals',
+        'tradingvault-event-projection',
+        'TradingVaultDepositProjection',
+        'TradingVaultWithdrawalProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'settlementMode: mock',
+        'fundsMoved: False',
+        'tradingVaultMutation: False',
         'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
       ],
     },
