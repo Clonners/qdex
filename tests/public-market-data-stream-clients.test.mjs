@@ -205,7 +205,7 @@ test('campaign status marks terminal UI public market-data stream binding comple
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: terminal UI keyboard-shortcut help panel for read-only/local mock actions is complete'),
+    status.includes('Current phase: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions is complete'),
     'campaign status should mark terminal UI keyboard-shortcut help as current phase',
   );
   assert.ok(
@@ -225,7 +225,7 @@ test('campaign status marks terminal UI public market-data stream binding comple
     'campaign status should record this run as the REST-confirmed public kline/candle stream smoke',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions'),
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
     'campaign status should move next work to another safe local/source-only MVP surface',
   );
   assert.doesNotMatch(

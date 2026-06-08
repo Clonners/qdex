@@ -90,7 +90,7 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain the local API + terminal UI public kline/candle stream smoke as current completed work',
   );
   assert.ok(
-    status.includes('Current phase: terminal UI keyboard-shortcut help panel for read-only/local mock actions is complete'),
+    status.includes('Current phase: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions is complete'),
     'campaign status should describe the terminal UI keyboard-shortcut help as the current completed phase',
   );
 });

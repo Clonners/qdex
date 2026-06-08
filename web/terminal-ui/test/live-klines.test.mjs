@@ -220,7 +220,7 @@ test('terminal UI package/app/docs/status mention the public kline/candle stream
     'Completed previous run: Python SDK public kline/candle consumers',
     'Completed previous run: terminal UI public kline/candle panel binding',
     'Completed previous run: local API + terminal UI public kline/candle stream integration smoke',
-    'Next autonomous slice: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions',
+    'Next autonomous slice: another bounded local/source-only MVP surface',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

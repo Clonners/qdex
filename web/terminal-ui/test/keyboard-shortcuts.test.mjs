@@ -163,11 +163,11 @@ test('terminal UI docs, package check, and campaign status mark keyboard-shortcu
     'campaign status should move the command-palette smoke slice to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI keyboard-shortcut help panel for read-only/local mock actions'),
+    status.includes('Completed previous run: terminal UI keyboard-shortcut help panel for read-only/local mock actions'),
     'campaign status should checkpoint the keyboard-shortcut help slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions'),
+    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
     'campaign status should move next work to the bounded local/source-only keyboard help smoke',
   );
 
