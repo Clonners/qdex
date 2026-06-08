@@ -1,4 +1,5 @@
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
+import { bindLiveBalanceStream } from './live-balances.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
@@ -72,5 +73,24 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxLiveStream = 'disabled';
     console.warn('QDEX live fills stream disabled; keeping static mock fixture.', error);
+  }
+
+  try {
+    bindLiveBalanceStream({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxLiveBalancesStream = 'error';
+        console.warn('QDEX live balances stream unavailable; keeping static mock fixture.', error);
+      },
+      onUpdate: () => {
+        mount.dataset.qdxLiveBalancesStream = 'balances';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxLiveBalancesStream = 'disabled';
+    console.warn('QDEX live balances stream disabled; keeping static mock fixture.', error);
   }
 }

@@ -126,3 +126,45 @@ test('renderTradeProofPanel surfaces live orders stream matcher-local cancellati
   assert.match(html, /no real Quai transaction/i);
   assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
 });
+
+test('renderTradeProofPanel surfaces live balances stream mock-vault safety when present', () => {
+  const html = renderTradeProofPanel({
+    ...mockVerticalSliceFixture,
+    balances: [],
+    balanceProjection: {
+      balances: [],
+      source: 'mock-vault-projection',
+      custody: 'non-custodial-contract-vault',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+      withdrawalAuthority: 'owner-wallet-only',
+      settlementMode: 'mock',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      safetyNotice: 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+    },
+    balanceStream: {
+      channel: 'balances',
+      source: 'mock-vault-projection',
+      custody: 'non-custodial-no-withdrawal-authority',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+      safetyNotice: 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.',
+      streamEvent: {
+        reason: 'initial_snapshot',
+      },
+    },
+  });
+
+  assert.match(html, /live balances stream/i);
+  assert.match(html, /channel[\s\S]*balances/i);
+  assert.match(html, /mock-vault-projection/);
+  assert.match(html, /non-custodial-contract-vault/);
+  assert.match(html, /READ_ONLY, NO_WITHDRAW, NO_ADMIN/);
+  assert.match(html, /withdrawals[\s\S]*owner-wallet-only/i);
+  assert.match(html, /settlementMode[\s\S]*mock/i);
+  assert.match(html, /real Quai tx[\s\S]*false/i);
+  assert.match(html, /wallet required[\s\S]*false/i);
+  assert.match(html, /no wallet loaded, no funds moved/i);
+  assert.match(html, /no delegate withdrawal\/admin authority/i);
+  assert.match(html, /no mock vault balances yet/i);
+  assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
+});

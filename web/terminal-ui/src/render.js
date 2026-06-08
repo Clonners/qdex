@@ -101,6 +101,58 @@ const renderOrderStreamPanel = (orderStream, orders = []) => {
   `;
 };
 
+const renderBalanceRows = (balances = []) => {
+  if (balances.length === 0) {
+    return '<li class="muted">no mock vault balances yet</li>';
+  }
+
+  return balances.map((balance) => `
+    <li>
+      <span>${escapeHtml(balance.token ?? balance.symbol ?? 'token')}</span>
+      <span>${escapeHtml(balance.available ?? '0')}</span>
+      <span>${escapeHtml(balance.locked ?? balance.total ?? '0')}</span>
+    </li>
+  `).join('');
+};
+
+const renderBalanceStreamPanel = (balanceStream, balanceProjection, balances = []) => {
+  if (balanceStream === undefined || balanceStream === null) {
+    return '';
+  }
+
+  const projection = balanceProjection ?? {};
+  const permissions = (balanceStream.permissions ?? projection.permissions ?? []).join(', ');
+  const streamReason = balanceStream.streamEvent?.reason ?? 'initial_snapshot';
+  const projectionSafetyNotice = balanceStream.projectionSafetyNotice ?? projection.safetyNotice ?? '';
+  const withdrawalAuthority = balanceStream.withdrawalAuthority ?? projection.withdrawalAuthority ?? 'owner-wallet-only';
+  const settlementMode = balanceStream.settlementMode ?? projection.settlementMode ?? 'mock';
+  const realQuaiTransactions = balanceStream.realQuaiTransactions ?? projection.realQuaiTransactions ?? false;
+  const walletRequired = balanceStream.walletRequired ?? projection.walletRequired ?? false;
+  const projectionCustody = projection.custody ?? 'non-custodial-contract-vault';
+
+  return `
+        <article class="panel stream-panel balance-panel">
+          <h2>live balances stream</h2>
+          <p class="warning">${escapeHtml(balanceStream.safetyNotice)}</p>
+          <p class="warning">${escapeHtml(projectionSafetyNotice)}</p>
+          <dl class="kv">
+            <div><dt>channel</dt><dd>${escapeHtml(balanceStream.channel)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(balanceStream.source)}</dd></div>
+            <div><dt>stream custody</dt><dd>${escapeHtml(balanceStream.custody)}</dd></div>
+            <div><dt>vault custody</dt><dd>${escapeHtml(projectionCustody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>withdrawals</dt><dd>${escapeHtml(withdrawalAuthority)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(settlementMode)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(walletRequired)}</dd></div>
+            <div><dt>last event</dt><dd>${escapeHtml(streamReason)}</dd></div>
+          </dl>
+          <h3>private vault balance projection</h3>
+          <ul>${renderBalanceRows(balances)}</ul>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -188,6 +240,8 @@ export const renderTradeProofPanel = (fixture) => {
 ${renderLiveStreamPanel(fixture.liveStream)}
 
 ${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
+
+${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fixture.balances)}
 
         <article class="panel command-panel">
           <h2>keyboard</h2>
