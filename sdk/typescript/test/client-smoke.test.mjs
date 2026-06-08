@@ -680,6 +680,60 @@ test('TypeScript SDK consumes private orders stream for matcher-local cancellati
   });
 });
 
+test('TypeScript SDK consumes private TradingVault deposit and withdrawal history streams without wallet authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+    const depositsStream = client.vault.deposits.openStream({ timeoutMs: 2_000 });
+
+    try {
+      const depositMessage = await depositsStream.next();
+      assert.equal(depositMessage.type, 'snapshot');
+      assert.equal(depositMessage.transport, 'websocket');
+      assert.equal(depositMessage.snapshot.channel, 'deposits');
+      assert.equal(depositMessage.snapshot.visibility, 'private');
+      assert.equal(depositMessage.snapshot.payload, 'deposit_projection');
+      assert.equal(depositMessage.snapshot.source, 'tradingvault-event-projection');
+      assert.equal(depositMessage.snapshot.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(depositMessage.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(depositMessage.snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+      assert.deepEqual(depositMessage.snapshot.data.deposits, []);
+      assert.equal(depositMessage.snapshot.data.projectionType, 'TradingVaultDepositProjection');
+      assert.equal(depositMessage.snapshot.data.eventName, 'Deposit');
+      assert.equal(depositMessage.snapshot.data.settlementMode, 'mock');
+      assert.equal(depositMessage.snapshot.data.settlementTx, null);
+      assert.equal(depositMessage.snapshot.data.blockNumber, null);
+      assert.equal(depositMessage.snapshot.data.blockHash, null);
+      assert.equal(depositMessage.snapshot.data.eventIndex, null);
+      assert.equal(depositMessage.snapshot.data.explorerUrl, null);
+      assert.equal(depositMessage.snapshot.data.realQuaiTransactions, false);
+      assert.equal(depositMessage.snapshot.data.walletRequired, false);
+      assert.equal(depositMessage.snapshot.data.fundsMoved, false);
+      assert.equal(depositMessage.snapshot.data.tradingVaultMutation, false);
+    } finally {
+      await depositsStream.close();
+    }
+
+    const withdrawalMessages = await client.vault.withdrawals.stream({ limit: 1, timeoutMs: 2_000 });
+    assert.equal(withdrawalMessages.length, 1);
+    assert.equal(withdrawalMessages[0].type, 'snapshot');
+    assert.equal(withdrawalMessages[0].snapshot.channel, 'withdrawals');
+    assert.equal(withdrawalMessages[0].snapshot.visibility, 'private');
+    assert.equal(withdrawalMessages[0].snapshot.payload, 'withdrawal_projection');
+    assert.equal(withdrawalMessages[0].snapshot.source, 'tradingvault-event-projection');
+    assert.deepEqual(withdrawalMessages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(withdrawalMessages[0].snapshot.data.withdrawals, []);
+    assert.equal(withdrawalMessages[0].snapshot.data.projectionType, 'TradingVaultWithdrawalProjection');
+    assert.equal(withdrawalMessages[0].snapshot.data.eventName, 'Withdraw');
+    assert.equal(withdrawalMessages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(withdrawalMessages[0].snapshot.data.settlementTx, null);
+    assert.equal(withdrawalMessages[0].snapshot.data.explorerUrl, null);
+    assert.equal(withdrawalMessages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(withdrawalMessages[0].snapshot.data.walletRequired, false);
+    assert.equal(withdrawalMessages[0].snapshot.data.fundsMoved, false);
+    assert.equal(withdrawalMessages[0].snapshot.data.tradingVaultMutation, false);
+  });
+});
+
 test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippage bounds', () => {
   const order = createMockSignedOrder({
     side: 'sell',

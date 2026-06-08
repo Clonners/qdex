@@ -70,6 +70,12 @@ await fillsStream.close();
 const ordersStream = dex.orders.openStream({ timeoutMs: 2000 });
 const initialOrdersSnapshot = await ordersStream.next();
 await ordersStream.close();
+const depositHistoryStream = dex.vault.deposits.openStream({ timeoutMs: 2000 });
+const initialDepositHistorySnapshot = await depositHistoryStream.next();
+await depositHistoryStream.close();
+const withdrawalHistoryStream = dex.vault.withdrawals.openStream({ timeoutMs: 2000 });
+const initialWithdrawalHistorySnapshot = await withdrawalHistoryStream.next();
+await withdrawalHistoryStream.close();
 
 const result = await runMockCrossSmoke(dex, {
   restingSell: createMockSignedOrder({ side: 'sell', amount: '100', price: '5', nonce: '1' }),
@@ -147,6 +153,12 @@ console.log(nonceCancelPrepare.body.nonceManager); // owner-signed-required
 console.log(nonceCancelPrepare.body.permissions); // NO_WITHDRAW, NO_ADMIN
 console.log(initialFillsSnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
 console.log(initialOrdersSnapshot.snapshot.channel); // orders
+console.log(initialDepositHistorySnapshot.snapshot.channel); // /v1/ws?channel=deposits
+console.log(initialDepositHistorySnapshot.snapshot.source); // tradingvault-event-projection
+console.log(initialDepositHistorySnapshot.snapshot.projectionType); // TradingVaultDepositProjection
+console.log(initialWithdrawalHistorySnapshot.snapshot.channel); // /v1/ws?channel=withdrawals
+console.log(initialWithdrawalHistorySnapshot.snapshot.projectionType); // TradingVaultWithdrawalProjection
+console.log(initialWithdrawalHistorySnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
 console.log(result.fill.projectionType); // IndexedFillProjection
 console.log(result.fill.sourceEventId);
 console.log(result.proof.settlementMode); // mock
@@ -157,6 +169,8 @@ console.log(result.proof.settlementMode); // mock
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 
 `dex.vault.deposits.list()` and `dex.vault.withdrawals.list()` call `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals` and return read-only `source: tradingvault-event-projection` history envelopes. They expose `TradingVaultDepositProjection` / `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false` with mock-null event evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`dex.vault.deposits.openStream` and `dex.vault.withdrawals.openStream` consume private vault history snapshots from `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals`. Bounded `stream({ limit })` helpers expose the same `tradingvault-event-projection` snapshots with `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `fundsMoved: false`, and `tradingVaultMutation: false`; there is no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `dex.vault.deposits.prepare()` and `dex.vault.withdrawals.prepare()` call `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` and return the intentional 501 owner-wallet placeholders (`owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented`). The envelope preserves `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: false`, and `tradingVaultMutation: false`; the SDK treats the placeholder as a boundary response with no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 

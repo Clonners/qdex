@@ -87,6 +87,14 @@ await fillsStream.close();
 const ordersStream = dex.orders.openStream({ timeoutMs: 2000 }); // /v1/ws?channel=orders
 const ordersSnapshot = await ordersStream.next();
 await ordersStream.close();
+const depositHistoryStream = dex.vault.deposits.openStream(); // /v1/ws?channel=deposits
+const depositHistorySnapshot = await depositHistoryStream.next();
+await depositHistoryStream.close();
+const withdrawalHistoryStream = dex.vault.withdrawals.openStream(); // /v1/ws?channel=withdrawals
+const withdrawalHistorySnapshot = await withdrawalHistoryStream.next();
+await withdrawalHistoryStream.close();
+await dex.vault.deposits.stream({ limit });
+await dex.vault.withdrawals.stream({ limit });
 const proof: TradeProof = await dex.proofs.trade(tradeId); // GET /v1/proofs/trades/:tradeId
 await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 ```
@@ -100,6 +108,8 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 
 `vault.deposits.list()` and `vault.withdrawals.list()` expose read-only TradingVault event history from `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`. The envelopes return `source: tradingvault-event-projection`, `projectionType: TradingVaultDepositProjection` / `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false` with mock-null tx/block/event/explorer evidence. These clients preserve no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate TradingVault.
+
+`vault.deposits.openStream()` / `vault.withdrawals.openStream()` and `vault.deposits.stream({ limit })` / `vault.withdrawals.stream({ limit })` consume private vault history snapshots from `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals`. Stream snapshots preserve `source: tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `fundsMoved: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `vault.deposits.prepare()` and `vault.withdrawals.prepare()` expose the owner-wallet TradingVault prepare-only boundary through `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare`. They intentionally return the API placeholder envelopes `owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented` with `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: false`, and `tradingVaultMutation: false`. The clients treat HTTP 501 as a boundary response and preserve no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 

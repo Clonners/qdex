@@ -23,6 +23,8 @@ qdex --base-url http://127.0.0.1:8787 vault deposit --prepare --owner 0xowner --
 qdex --base-url http://127.0.0.1:8787 vault withdraw --prepare --owner 0xowner --asset-symbol WQUAI --amount 1 --chain-id 0 --vault-contract-ref local-only-not-deployed
 qdex --base-url http://127.0.0.1:8787 stream fills --limit 1
 qdex --base-url http://127.0.0.1:8787 stream orders --limit 1
+qdex --base-url http://127.0.0.1:8787 stream deposits --limit 1
+qdex --base-url http://127.0.0.1:8787 stream withdrawals --limit 1
 qdex --base-url http://127.0.0.1:8787 smoke
 ```
 
@@ -51,5 +53,7 @@ qdex --base-url http://127.0.0.1:8787 smoke
 `qdex stream fills` consumes `/v1/ws?channel=fills` and prints bounded WebSocket snapshot messages. Private stream output is read-only and preserves `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN` permission metadata.
 
 `qdex stream orders` consumes `/v1/ws?channel=orders` for bounded order/cancel monitors. Matcher-local cancellation stream events keep `matcher-local-cancel-only-on-chain-nonce-unchanged` wording visible and never imply withdrawal/admin authority.
+
+`qdex stream deposits` and `qdex stream withdrawals` consume `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals` for bounded private TradingVault history snapshots. The stream output preserves `tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `fundsMoved: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex smoke` submits two deterministic mock signed orders, verifies the indexed fill/proof loop, and prints explicit public fill projection fields (`projectionType: IndexedFillProjection`, `sourceEventId`) plus mock-settlement safety fields (`settlementMode: mock`, `settlementTx: null`, `explorerUrl: null`, no real Quai tx/no funds moved). The fill rows are not matcher/relayer FillPacket handoffs. Delegate/API-key safety remains `NO_WITHDRAW`/`NO_ADMIN` by default.

@@ -27,6 +27,8 @@ qdex order sell QI-QUAI --quote-amount 100 --market --slippage-bps 50
 qdex cancel --all
 qdex stream fills
 qdex stream orders
+qdex stream deposits
+qdex stream withdrawals
 qdex proof trade <trade-id>
 qdex api create-key bot-mm-1 --scope trade --expires 7d
 ```
@@ -39,6 +41,7 @@ qdex api create-key bot-mm-1 --scope trade --expires 7d
 - `--slippage-bps` maps to signed slippage protection, not unlimited market execution.
 - `stream fills --limit N` consumes local WebSocket snapshots from `/v1/ws?channel=fills` and keeps private stream permissions read-only: `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`.
 - `stream orders --limit N` consumes local WebSocket snapshots from `/v1/ws?channel=orders` and surfaces live matcher-local order/cancel updates for bots without withdrawal/admin authority.
+- `qdex stream deposits` and `qdex stream withdrawals` consume private TradingVault history snapshots from `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals`. They print `tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `fundsMoved: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 - Order cancellation stream events must preserve `matcher-local-cancel-only-on-chain-nonce-unchanged`, `CANCEL_ORDER`/`CANCEL_ALL`, `NO_WITHDRAW`, and `NO_ADMIN` wording so operators do not confuse off-chain removal with on-chain `NonceManager` mutation.
 - Fills stream from confirmed/mock-confirmed projections; proofs use `GET /v1/proofs/trades/:tradeId`.
 - `qdex cancel --all` calls `POST /v1/orders/cancel-all`; in local mock mode it cancels only matcher-open quantity, keeps `CANCEL_ALL`, `CANCEL_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN` visible, and does not cancel on-chain NonceManager nonces without a separate owner-signed flow.

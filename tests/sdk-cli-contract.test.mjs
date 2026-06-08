@@ -962,3 +962,91 @@ test('SDK and CLI README docs expose read-only relayer gate clients', async () =
     assertIncludesAll(text, doc.terms, doc.path);
   }
 });
+
+test('TypeScript SDK and qdex CLI docs expose read-only vault history stream consumers', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/spec.md',
+      terms: [
+        'vault.deposits.openStream()',
+        'vault.withdrawals.openStream()',
+        'vault.deposits.stream({ limit })',
+        'vault.withdrawals.stream({ limit })',
+        '/v1/ws?channel=deposits',
+        '/v1/ws?channel=withdrawals',
+        'tradingvault-event-projection',
+        'TradingVaultDepositProjection',
+        'TradingVaultWithdrawalProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'settlementMode: mock',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'dex.vault.deposits.openStream',
+        'dex.vault.withdrawals.openStream',
+        '/v1/ws?channel=deposits',
+        '/v1/ws?channel=withdrawals',
+        'tradingvault-event-projection',
+        'TradingVaultDepositProjection',
+        'TradingVaultWithdrawalProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'settlementMode: mock',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/spec.md',
+      terms: [
+        'qdex stream deposits',
+        'qdex stream withdrawals',
+        '/v1/ws?channel=deposits',
+        '/v1/ws?channel=withdrawals',
+        'tradingvault-event-projection',
+        'TradingVaultDepositProjection',
+        'TradingVaultWithdrawalProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'settlementMode: mock',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'qdex stream deposits',
+        'qdex stream withdrawals',
+        '/v1/ws?channel=deposits',
+        '/v1/ws?channel=withdrawals',
+        'tradingvault-event-projection',
+        'TradingVaultDepositProjection',
+        'TradingVaultWithdrawalProjection',
+        'READ_ONLY',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'settlementMode: mock',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/signing/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});

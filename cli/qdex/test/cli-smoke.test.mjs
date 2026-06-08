@@ -94,6 +94,56 @@ test('qdex stream orders command exposes bounded read-only order snapshots for c
   });
 });
 
+test('qdex stream deposits and withdrawals commands expose bounded read-only vault history snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    const deposits = await runCliJson(['--base-url', baseUrl, 'stream', 'deposits', '--limit', '1']);
+
+    assert.equal(deposits.command, 'stream deposits');
+    assert.equal(deposits.channel, 'deposits');
+    assert.equal(deposits.transport, 'websocket');
+    assert.equal(deposits.limit, 1);
+    assert.equal(deposits.messages.length, 1);
+    assert.equal(deposits.messages[0].type, 'snapshot');
+    assert.equal(deposits.messages[0].snapshot.channel, 'deposits');
+    assert.equal(deposits.messages[0].snapshot.visibility, 'private');
+    assert.equal(deposits.messages[0].snapshot.payload, 'deposit_projection');
+    assert.equal(deposits.messages[0].snapshot.source, 'tradingvault-event-projection');
+    assert.equal(deposits.messages[0].snapshot.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(deposits.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(deposits.messages[0].snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+    assert.deepEqual(deposits.messages[0].snapshot.data.deposits, []);
+    assert.equal(deposits.messages[0].snapshot.data.projectionType, 'TradingVaultDepositProjection');
+    assert.equal(deposits.messages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(deposits.messages[0].snapshot.data.settlementTx, null);
+    assert.equal(deposits.messages[0].snapshot.data.explorerUrl, null);
+    assert.equal(deposits.messages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(deposits.messages[0].snapshot.data.walletRequired, false);
+    assert.equal(deposits.messages[0].snapshot.data.fundsMoved, false);
+    assert.equal(deposits.messages[0].snapshot.data.tradingVaultMutation, false);
+
+    const withdrawals = await runCliJson(['--base-url', baseUrl, 'stream', 'withdrawals', '--limit', '1']);
+
+    assert.equal(withdrawals.command, 'stream withdrawals');
+    assert.equal(withdrawals.channel, 'withdrawals');
+    assert.equal(withdrawals.transport, 'websocket');
+    assert.equal(withdrawals.messages.length, 1);
+    assert.equal(withdrawals.messages[0].snapshot.channel, 'withdrawals');
+    assert.equal(withdrawals.messages[0].snapshot.visibility, 'private');
+    assert.equal(withdrawals.messages[0].snapshot.payload, 'withdrawal_projection');
+    assert.equal(withdrawals.messages[0].snapshot.source, 'tradingvault-event-projection');
+    assert.deepEqual(withdrawals.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(withdrawals.messages[0].snapshot.data.withdrawals, []);
+    assert.equal(withdrawals.messages[0].snapshot.data.projectionType, 'TradingVaultWithdrawalProjection');
+    assert.equal(withdrawals.messages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(withdrawals.messages[0].snapshot.data.settlementTx, null);
+    assert.equal(withdrawals.messages[0].snapshot.data.explorerUrl, null);
+    assert.equal(withdrawals.messages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(withdrawals.messages[0].snapshot.data.walletRequired, false);
+    assert.equal(withdrawals.messages[0].snapshot.data.fundsMoved, false);
+    assert.equal(withdrawals.messages[0].snapshot.data.tradingVaultMutation, false);
+  });
+});
+
 test('qdex balance command prints read-only mock vault balances without wallet or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'balance']);

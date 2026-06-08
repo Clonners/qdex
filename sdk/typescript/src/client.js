@@ -206,6 +206,8 @@ export class QDexClient {
     this.vault = {
       deposits: {
         list: async () => this.#requestOk('/v1/vault/deposits'),
+        openStream: (options = {}) => this.streams.open('deposits', options),
+        stream: async (options = {}) => this.streams.read('deposits', options),
         prepare: async (request) => this.#requestExpectedStatus('/v1/vault/deposits/prepare', {
           method: 'POST',
           body: { ...request, operation: 'deposit' },
@@ -214,6 +216,8 @@ export class QDexClient {
       },
       withdrawals: {
         list: async () => this.#requestOk('/v1/vault/withdrawals'),
+        openStream: (options = {}) => this.streams.open('withdrawals', options),
+        stream: async (options = {}) => this.streams.read('withdrawals', options),
         prepare: async (request) => this.#requestExpectedStatus('/v1/vault/withdrawals/prepare', {
           method: 'POST',
           body: { ...request, operation: 'withdrawal' },
