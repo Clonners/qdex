@@ -204,7 +204,7 @@ test('terminal UI docs, package check, and campaign status mark public kline str
     'campaign status should mark the local API + terminal UI kline stream smoke as this run',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI keyboard-shortcut help panel for read-only/local mock actions'),
+    status.includes('Next autonomous slice: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions'),
     'campaign status should move next work to another bounded local/source-only MVP surface',
   );
   assert.ok(

@@ -2,6 +2,7 @@ import { normalizeAccountOverviewPanelFixture } from './account-overview-panel.j
 import { normalizeCommandPaletteFixture } from './command-palette.js';
 import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-panel.js';
 import { normalizeFeePolicyPanelFixture } from './fee-policy-panel.js';
+import { normalizeKeyboardShortcutHelpFixture } from './keyboard-shortcuts.js';
 import { normalizeKlinePanelFixture } from './kline-panel.js';
 import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
 
@@ -792,6 +793,84 @@ const renderCommandPalettePanel = (commandPalette) => {
   `;
 };
 
+const renderKeyboardShortcutRows = (shortcuts = []) => shortcuts.map((shortcut) => `
+  <li>
+    <span><kbd>${escapeHtml(shortcut.key)}</kbd> ${escapeHtml(shortcut.label)}</span>
+    <span class="muted">${escapeHtml(`${shortcut.key} ${shortcut.label}`)}</span>
+    <span>${escapeHtml(shortcut.actionType)}</span>
+    <span>${escapeHtml(shortcut.surface)}</span>
+    <span>${escapeHtml(shortcut.dispatchMode)}</span>
+  </li>
+`).join('');
+
+const renderKeyboardCommandHintRows = (commandHints = []) => commandHints.map((hint) => `
+  <li>
+    <code>${escapeHtml(hint.command)}</code>
+    <span>${escapeHtml(hint.actionType)}</span>
+    <span>${escapeHtml(hint.surface)}</span>
+    <span>${escapeHtml(hint.dispatchMode)}</span>
+  </li>
+`).join('');
+
+const renderKeyboardShortcutHelpPanel = (keyboardShortcuts) => {
+  if (keyboardShortcuts === undefined || keyboardShortcuts === null) {
+    return '';
+  }
+
+  const panel = normalizeKeyboardShortcutHelpFixture(keyboardShortcuts);
+  const permissions = (panel.permissions ?? []).join(', ');
+
+  return `
+        <article class="panel command-panel keyboard-shortcut-help-panel" data-qdx-keyboard-shortcuts-panel>
+          <h2>terminal keyboard-shortcut help</h2>
+          <p class="warning">${escapeHtml(panel.safety.notice)}</p>
+          <dl class="kv">
+            <div><dt>source</dt><dd>${escapeHtml(panel.source)}</dd></div>
+            <div><dt>mode</dt><dd>${escapeHtml(panel.mode)}</dd></div>
+            <div><dt>dispatch</dt><dd>${escapeHtml(panel.dispatchMode)}</dd></div>
+            <div><dt>panel trigger</dt><dd>${escapeHtml(panel.panelTrigger)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(panel.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(panel.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(panel.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(panel.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(panel.tradingVaultMutation)}</dd></div>
+            <div><dt>MarketRegistry mutation</dt><dd>${escapeHtml(panel.marketRegistryMutation)}</dd></div>
+            <div><dt>DelegateKeyRegistry mutation</dt><dd>${escapeHtml(panel.delegateKeyRegistryMutation)}</dd></div>
+            <div><dt>delegate can withdraw</dt><dd>${escapeHtml(panel.delegateCanWithdraw)}</dd></div>
+            <div><dt>delegate can admin</dt><dd>${escapeHtml(panel.delegateCanAdmin)}</dd></div>
+          </dl>
+          <h3>shortcuts</h3>
+          <ul>${renderKeyboardShortcutRows(panel.shortcuts)}</ul>
+          <h3>command hints</h3>
+          <ul>${renderKeyboardCommandHintRows(panel.commandHints)}</ul>
+          <p class="warning">Matcher-local cancellation does not mutate on-chain NonceManager nonces. Owner-wallet prepare hints remain no wallet/RPC/signing/broadcast/deploy/tx/funds behavior. Delegate/API key hints keep delegate can withdraw false and delegate can admin false.</p>
+          <pre>:sell QI-QUAI 100 @ 5
+:buy QI-QUAI 100 market_ioc slippage=50bps
+:proof trade-000001
+:cancel all matcher-local
+:deposit WQI 10 prepare owner-wallet-only
+:withdraw WQUAI 1 prepare owner-wallet-only
+:api create-key bot-mm-1 prepare owner-wallet-signature-required NO_WITHDRAW
+:api revoke-key bot-mm-1 prepare owner-wallet-signature-required NO_ADMIN</pre>
+          <div class="mock-trigger">
+            <button type="button" data-qdx-trigger-cross>submit mock cross</button>
+            <p class="muted" data-qdx-trigger-status>Posts a local/dev GTC sell plus IOC buy with signed slippage bounds; no real Quai tx/explorer/funds.</p>
+            <button type="button" data-qdx-trigger-cancel>create + cancel mock order</button>
+            <p class="muted" data-qdx-cancel-status>Posts one local/dev resting order, then matcher-local cancellation does not cancel on-chain nonce; no real Quai tx/explorer/funds.</p>
+            <button type="button" data-qdx-vault-prepare-deposit>prepare vault deposit</button>
+            <p class="muted" data-qdx-vault-deposit-status>Calls prepare-only owner-wallet deposit boundary; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <button type="button" data-qdx-vault-prepare-withdraw>prepare vault withdrawal</button>
+            <p class="muted" data-qdx-vault-withdraw-status>Calls prepare-only owner-wallet withdrawal boundary; delegates cannot deposit or withdraw; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <button type="button" data-qdx-delegate-key-prepare-register>prepare delegate/API key</button>
+            <p class="muted" data-qdx-delegate-key-register-status>Calls prepare-only owner-signed delegate/API key boundary; owner-wallet-signature-required; NO_WITHDRAW/NO_ADMIN; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <button type="button" data-qdx-delegate-key-prepare-revoke>prepare delegate/API revoke</button>
+            <p class="muted" data-qdx-delegate-key-revoke-status>Calls prepare-only owner-signed delegate/API key revocation; no live DelegateKeyRegistry mutation, no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+          </div>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -908,32 +987,7 @@ ${renderVaultHistoryPanel(fixture.vaultHistory)}
 
 ${renderCommandPalettePanel(fixture.commandPalette)}
 
-        <article class="panel command-panel">
-          <h2>keyboard</h2>
-          <p><kbd>/</kbd> search market · <kbd>b</kbd> buy · <kbd>s</kbd> sell · <kbd>o</kbd> open orders · <kbd>?</kbd> help</p>
-          <pre>:sell QI-QUAI 100 @ 5
-:buy QI-QUAI 100 market_ioc slippage=50bps
-:proof trade-000001
-:cancel all
-:deposit WQI 10 prepare owner-wallet-only
-:withdraw WQUAI 1 prepare owner-wallet-only
-:api create-key bot-mm-1 prepare owner-wallet-signature-required NO_WITHDRAW
-:api revoke-key bot-mm-1 prepare owner-wallet-signature-required NO_ADMIN</pre>
-          <div class="mock-trigger">
-            <button type="button" data-qdx-trigger-cross>submit mock cross</button>
-            <p class="muted" data-qdx-trigger-status>Posts a local/dev GTC sell plus IOC buy with signed slippage bounds; no real Quai tx/explorer/funds.</p>
-            <button type="button" data-qdx-trigger-cancel>create + cancel mock order</button>
-            <p class="muted" data-qdx-cancel-status>Posts one local/dev resting order, then matcher-local cancellation does not cancel on-chain nonce; no real Quai tx/explorer/funds.</p>
-            <button type="button" data-qdx-vault-prepare-deposit>prepare vault deposit</button>
-            <p class="muted" data-qdx-vault-deposit-status>Calls prepare-only owner-wallet deposit boundary; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
-            <button type="button" data-qdx-vault-prepare-withdraw>prepare vault withdrawal</button>
-            <p class="muted" data-qdx-vault-withdraw-status>Calls prepare-only owner-wallet withdrawal boundary; delegates cannot deposit or withdraw; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
-            <button type="button" data-qdx-delegate-key-prepare-register>prepare delegate/API key</button>
-            <p class="muted" data-qdx-delegate-key-register-status>Calls prepare-only owner-signed delegate/API key boundary; owner-wallet-signature-required; NO_WITHDRAW/NO_ADMIN; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
-            <button type="button" data-qdx-delegate-key-prepare-revoke>prepare delegate/API revoke</button>
-            <p class="muted" data-qdx-delegate-key-revoke-status>Calls prepare-only owner-signed delegate/API key revocation; no live DelegateKeyRegistry mutation, no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
-          </div>
-        </article>
+${renderKeyboardShortcutHelpPanel(fixture.keyboardShortcuts)}
 
         <article class="panel log-panel">
           <h2>execution log</h2>

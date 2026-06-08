@@ -296,7 +296,7 @@ test('terminal UI package/app/docs/status mention the public market-data stream 
     'Completed previous run: local API + terminal UI public kline/candle stream integration smoke',
     'Completed previous run: terminal UI public market-data stream binding',
     'Completed previous run: local API + terminal UI public market-data stream integration smoke',
-    'Next autonomous slice: terminal UI keyboard-shortcut help panel for read-only/local mock actions',
+    'Next autonomous slice: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

@@ -251,11 +251,11 @@ test('terminal UI docs, package check, and campaign status mark command-palette 
     'campaign status should retain the command-palette skeleton slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI command-palette smoke for read-only/local mock actions'),
-    'campaign status should checkpoint the command-palette local API smoke slice',
+    status.includes('Completed previous run: local API + terminal UI command-palette smoke for read-only/local mock actions'),
+    'campaign status should retain the command-palette local API smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI keyboard-shortcut help panel for read-only/local mock actions'),
+    status.includes('Next autonomous slice: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions'),
     'campaign status should move next work to another bounded local/source-only UI surface',
   );
 

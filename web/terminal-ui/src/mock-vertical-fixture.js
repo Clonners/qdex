@@ -2,6 +2,7 @@ import { createMockAccountOverviewFixture } from './account-overview-panel.js';
 import { createMockCommandPaletteFixture } from './command-palette.js';
 import { createMockDelegateKeyHistoryFixture } from './delegate-key-history-panel.js';
 import { createMockFeePolicyFixture } from './fee-policy-panel.js';
+import { createMockKeyboardShortcutHelpFixture } from './keyboard-shortcuts.js';
 import { createMockKlineFixture } from './kline-panel.js';
 import { createMockVaultHistoryFixture } from './vault-history-panel.js';
 
@@ -90,6 +91,7 @@ export const mockVerticalSliceFixture = Object.freeze({
   }),
   accountOverview: createMockAccountOverviewFixture(),
   commandPalette: createMockCommandPaletteFixture(),
+  keyboardShortcuts: createMockKeyboardShortcutHelpFixture(),
   vaultHistory: createMockVaultHistoryFixture(),
   delegateKeyHistory: createMockDelegateKeyHistoryFixture(),
   feePolicy: createMockFeePolicyFixture(),
