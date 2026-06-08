@@ -87,6 +87,94 @@ const parseStreamOptions = (args) => {
   return { limit, timeoutMs };
 };
 
+const parseDelegateKeyOptions = (args, mode) => {
+  const request = {};
+  const allowedMarkets = [];
+  const permissions = [];
+  let prepare = false;
+
+  for (let index = 0; index < args.length;) {
+    const arg = args[index];
+
+    if (arg === '--prepare') {
+      prepare = true;
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--owner') {
+      request.owner = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--delegate') {
+      request.delegate = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--allowed-market') {
+      allowedMarkets.push(args[index + 1]);
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--max-notional') {
+      request.maxNotional = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--expires-at') {
+      request.expiresAt = parsePositiveInteger(args[index + 1], '--expires-at');
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--permission') {
+      permissions.push(args[index + 1]);
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--signature') {
+      request.signature = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    throw new Error(`unknown api ${mode} option: ${arg}`);
+  }
+
+  if (!prepare) {
+    throw new Error(`api ${mode} requires --prepare; this CLI does not load wallets, sign, broadcast, mutate DelegateKeyRegistry, or move funds.`);
+  }
+
+  for (const requiredField of ['owner', 'signature']) {
+    if (request[requiredField] === undefined) {
+      throw new Error(`api ${mode} --prepare requires ${requiredField}.`);
+    }
+  }
+
+  if (mode === 'create-key') {
+    for (const requiredField of ['delegate', 'maxNotional', 'expiresAt']) {
+      if (request[requiredField] === undefined) {
+        throw new Error(`api create-key --prepare requires ${requiredField}.`);
+      }
+    }
+
+    if (allowedMarkets.length === 0) {
+      throw new Error('api create-key --prepare requires at least one --allowed-market.');
+    }
+
+    request.allowedMarkets = allowedMarkets;
+    request.permissions = Array.from(new Set([...permissions, 'NO_WITHDRAW', 'NO_ADMIN']));
+  }
+
+  return request;
+};
+
 const parseNonceCancelOptions = (args) => {
   const request = {};
   const nonceRange = {};
@@ -407,6 +495,8 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
+  qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner <0xowner> --delegate <0xdelegate> --allowed-market QI-QUAI --max-notional 1000 --expires-at <unix> --permission PLACE_ORDER --signature <0xsig>
+  qdex --base-url http://127.0.0.1:8787 api revoke-key bot-mm-1 --prepare --owner <0xowner> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 vault deposits
   qdex --base-url http://127.0.0.1:8787 vault withdrawals
   qdex --base-url http://127.0.0.1:8787 vault deposit --prepare --owner <0xowner> --asset-symbol WQI --amount 10 --chain-id <id> --vault-contract-ref local-only-not-deployed
@@ -557,6 +647,43 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         baseUrl,
         status: result.status,
         ...result.body,
+      });
+      return 0;
+    }
+
+    if (command === 'api' && rest[0] === 'create-key') {
+      const keyId = rest[1];
+      if (keyId === undefined) {
+        throw new Error('api create-key requires <key-id>.');
+      }
+
+      const request = parseDelegateKeyOptions(rest.slice(2), 'create-key');
+      const result = await client.delegateKeys.prepareRegister({ keyId, ...request });
+      writeJson(stdout, {
+        command: 'api create-key prepare',
+        baseUrl,
+        keyId,
+        httpStatus: result.status,
+        ...result.body,
+        status: result.status,
+      });
+      return 0;
+    }
+
+    if (command === 'api' && rest[0] === 'revoke-key') {
+      const keyId = rest[1];
+      if (keyId === undefined) {
+        throw new Error('api revoke-key requires <key-id>.');
+      }
+
+      const request = parseDelegateKeyOptions(rest.slice(2), 'revoke-key');
+      const result = await client.delegateKeys.prepareRevoke(keyId, request);
+      writeJson(stdout, {
+        command: 'api revoke-key prepare',
+        baseUrl,
+        httpStatus: result.status,
+        ...result.body,
+        status: result.status,
       });
       return 0;
     }

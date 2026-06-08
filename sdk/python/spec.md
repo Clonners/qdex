@@ -73,6 +73,19 @@ nonce_cancel_prepare = dex.nonces.prepare_cancel({
     'expiresAt': 1780003600,
     'signature': '0xowner-signature',
 })  # POST /v1/nonces/cancel -> owner_signed_nonce_cancel_not_implemented while prepare-only
+delegate_key_prepare = dex.delegate_keys.prepare_register({
+    'owner': '0xowner',
+    'delegate': '0xdelegate',
+    'allowedMarkets': ['QI-QUAI'],
+    'maxNotional': '1000',
+    'permissions': ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
+    'expiresAt': 1780003600,
+    'signature': '0xowner-signature',
+})  # POST /v1/delegate-keys -> delegate_key_registration_not_implemented / prepare-only-owner-signed-required
+delegate_key_revocation_prepare = dex.delegate_keys.prepare_revoke('bot-mm-1', {
+    'owner': '0xowner',
+    'signature': '0xowner-signature',
+})  # DELETE /v1/delegate-keys/{keyId} -> delegate_key_revocation_not_implemented / owner-wallet-signature-required
 
 limit_order: SignedOrder = dex.orders.create_limit_order(
     market_id='QI-QUAI',
@@ -148,6 +161,8 @@ The Python SDK must not load wallets, send transactions, read RPC URLs, infer re
 ## Owner-signed nonce cancellation
 
 `nonces.prepare_cancel()` is a prepare-only client for `POST /v1/nonces/cancel`. It intentionally surfaces the API placeholder response `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local `orders.cancel_all`.
+
+`delegate_keys.prepare_register()` and `delegate_keys.prepare_revoke()` expose prepare-only owner-signed delegate/API key boundaries through `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`. They intentionally surface `delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented` with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; they have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and no live DelegateKeyRegistry or TradingVault mutation.
 
 ## Delegate/API key safety
 

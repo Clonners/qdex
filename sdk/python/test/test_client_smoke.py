@@ -203,6 +203,59 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 withdrawal_body["safety"]["notice"],
             )
 
+    def test_python_sdk_exposes_prepare_only_delegate_key_registration_and_revocation_clients_without_wallet_or_admin_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            delegate_request = {
+                "owner": "0x1111111111111111111111111111111111111111",
+                "delegate": "0x3333333333333333333333333333333333333333",
+                "allowedMarkets": ["QI-QUAI"],
+                "maxNotional": "1000",
+                "permissions": ["PLACE_ORDER", "CANCEL_ORDER", "CANCEL_ALL", "NO_WITHDRAW", "NO_ADMIN"],
+                "expiresAt": 1780003600,
+                "signature": "0xowner-signed-placeholder",
+            }
+
+            registration = client.delegate_keys.prepare_register(delegate_request)
+            self.assertEqual(registration["status"], 501)
+            body = registration["body"]
+            self.assertEqual(body["error"], "delegate_key_registration_not_implemented")
+            self.assertEqual(body["source"], "delegate-key-owner-signed-prepare-boundary")
+            self.assertEqual(body["operation"], "register_delegate_key")
+            self.assertEqual(body["operationStatus"], "prepare-only-owner-signed-required")
+            self.assertEqual(body["ownerAuthorization"], "owner-wallet-signature-required")
+            self.assertEqual(body["permissions"], ["PLACE_ORDER", "CANCEL_ORDER", "CANCEL_ALL", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(body["delegateCanWithdraw"])
+            self.assertFalse(body["delegateCanAdmin"])
+            self.assertFalse(body["realQuaiTransactions"])
+            self.assertFalse(body["walletRequired"])
+            self.assertFalse(body["fundsMoved"])
+            self.assertFalse(body["tradingVaultMutation"])
+            self.assertIn("No delegate key is registered", body["message"])
+            self.assertIn(
+                "not wired to wallet loading, signing, broadcast, deploy, transaction helpers, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement",
+                body["message"],
+            )
+
+            revocation = client.delegate_keys.prepare_revoke(
+                "bot-mm-1",
+                {"owner": delegate_request["owner"], "signature": delegate_request["signature"]},
+            )
+            self.assertEqual(revocation["status"], 501)
+            revoke_body = revocation["body"]
+            self.assertEqual(revoke_body["error"], "delegate_key_revocation_not_implemented")
+            self.assertEqual(revoke_body["source"], "delegate-key-owner-signed-prepare-boundary")
+            self.assertEqual(revoke_body["operation"], "revoke_delegate_key")
+            self.assertEqual(revoke_body["keyId"], "bot-mm-1")
+            self.assertEqual(revoke_body["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertFalse(revoke_body["delegateCanWithdraw"])
+            self.assertFalse(revoke_body["delegateCanAdmin"])
+            self.assertFalse(revoke_body["realQuaiTransactions"])
+            self.assertFalse(revoke_body["walletRequired"])
+            self.assertFalse(revoke_body["fundsMoved"])
+            self.assertFalse(revoke_body["tradingVaultMutation"])
+            self.assertIn("No delegate key is revoked", revoke_body["message"])
+
     def test_python_sdk_lists_read_only_tradingvault_deposit_and_withdrawal_history_without_wallet_or_mutation_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

@@ -208,6 +208,56 @@ test('TypeScript SDK exposes prepare-only owner-wallet vault operation placehold
   });
 });
 
+test('TypeScript SDK exposes prepare-only delegate key registration and revocation clients without wallet or admin authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+    const delegateRequest = {
+      owner: '0x1111111111111111111111111111111111111111',
+      delegate: '0x3333333333333333333333333333333333333333',
+      allowedMarkets: ['QI-QUAI'],
+      maxNotional: '1000',
+      permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
+      expiresAt: 1780003600,
+      signature: '0xowner-signed-placeholder',
+    };
+
+    const registration = await client.delegateKeys.prepareRegister(delegateRequest);
+    assert.equal(registration.status, 501);
+    assert.equal(registration.body.error, 'delegate_key_registration_not_implemented');
+    assert.equal(registration.body.source, 'delegate-key-owner-signed-prepare-boundary');
+    assert.equal(registration.body.operation, 'register_delegate_key');
+    assert.equal(registration.body.operationStatus, 'prepare-only-owner-signed-required');
+    assert.equal(registration.body.ownerAuthorization, 'owner-wallet-signature-required');
+    assert.deepEqual(registration.body.permissions, ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(registration.body.delegateCanWithdraw, false);
+    assert.equal(registration.body.delegateCanAdmin, false);
+    assert.equal(registration.body.realQuaiTransactions, false);
+    assert.equal(registration.body.walletRequired, false);
+    assert.equal(registration.body.fundsMoved, false);
+    assert.equal(registration.body.tradingVaultMutation, false);
+    assert.match(registration.body.message, /No delegate key is registered/i);
+    assert.match(registration.body.message, /not wired to wallet loading, signing, broadcast, deploy, transaction helpers, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement/i);
+
+    const revocation = await client.delegateKeys.prepareRevoke('bot-mm-1', {
+      owner: delegateRequest.owner,
+      signature: delegateRequest.signature,
+    });
+    assert.equal(revocation.status, 501);
+    assert.equal(revocation.body.error, 'delegate_key_revocation_not_implemented');
+    assert.equal(revocation.body.source, 'delegate-key-owner-signed-prepare-boundary');
+    assert.equal(revocation.body.operation, 'revoke_delegate_key');
+    assert.equal(revocation.body.keyId, 'bot-mm-1');
+    assert.deepEqual(revocation.body.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(revocation.body.delegateCanWithdraw, false);
+    assert.equal(revocation.body.delegateCanAdmin, false);
+    assert.equal(revocation.body.realQuaiTransactions, false);
+    assert.equal(revocation.body.walletRequired, false);
+    assert.equal(revocation.body.fundsMoved, false);
+    assert.equal(revocation.body.tradingVaultMutation, false);
+    assert.match(revocation.body.message, /No delegate key is revoked/i);
+  });
+});
+
 test('TypeScript SDK lists read-only TradingVault deposit and withdrawal history without wallet or mutation authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

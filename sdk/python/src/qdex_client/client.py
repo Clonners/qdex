@@ -471,6 +471,22 @@ class _DelegateKeysApi:
     def list(self):
         return self._client._request_ok("/v1/delegate-keys")
 
+    def prepare_register(self, request):
+        return self._client._request_expected_status(
+            "/v1/delegate-keys",
+            expected_status=501,
+            method="POST",
+            body=request,
+        )
+
+    def prepare_revoke(self, key_id, request=None):
+        return self._client._request_expected_status(
+            f"/v1/delegate-keys/{_encode_path_value(key_id)}",
+            expected_status=501,
+            method="DELETE",
+            body=request or {},
+        )
+
 
 class QDexClient:
     def __init__(self, *, base_url=DEFAULT_BASE_URL, timeout=5):

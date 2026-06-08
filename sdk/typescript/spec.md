@@ -63,6 +63,19 @@ await dex.nonces.prepareCancel({
   expiresAt: 1780003600,
   signature: '0xowner-signature',
 }); // POST /v1/nonces/cancel -> owner_signed_nonce_cancel_not_implemented while prepare-only
+await dex.delegateKeys.prepareRegister({
+  owner: '0xowner',
+  delegate: '0xdelegate',
+  allowedMarkets: ['QI-QUAI'],
+  maxNotional: '1000',
+  permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
+  expiresAt: 1780003600,
+  signature: '0xowner-signature',
+}); // POST /v1/delegate-keys -> delegate_key_registration_not_implemented / prepare-only-owner-signed-required
+await dex.delegateKeys.prepareRevoke('bot-mm-1', {
+  owner: '0xowner',
+  signature: '0xowner-signature',
+}); // DELETE /v1/delegate-keys/{keyId} -> delegate_key_revocation_not_implemented / owner-wallet-signature-required
 
 const limitOrder: SignedOrder = await dex.orders.createLimitOrder({
   marketId: 'QI-QUAI',
@@ -128,6 +141,8 @@ The contract registry also exposes `listedAssetStatus`: `status: wrapped-token-l
 `relayer.settlementModeGate.get()` is read-only relayer gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 `nonces.prepareCancel()` is a prepare-only client for `POST /v1/nonces/cancel`. It intentionally surfaces the API placeholder response `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local `orders.cancelAll`.
+
+`delegateKeys.prepareRegister()` and `delegateKeys.prepareRevoke()` expose prepare-only owner-signed delegate/API key boundaries through `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`. They intentionally surface `delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented` with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; they have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and no live DelegateKeyRegistry or TradingVault mutation.
 
 ## Order semantics
 

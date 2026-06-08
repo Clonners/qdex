@@ -677,6 +677,84 @@ test('qdex nonces cancel --prepare prints owner-signed placeholder without walle
   });
 });
 
+test('qdex api create-key/revoke-key --prepare prints owner-signed delegate-key placeholders without wallet or admin authority', async () => {
+  await withServer(async (baseUrl) => {
+    const registration = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'api',
+      'create-key',
+      'bot-mm-1',
+      '--prepare',
+      '--owner',
+      '0x1111111111111111111111111111111111111111',
+      '--delegate',
+      '0x3333333333333333333333333333333333333333',
+      '--allowed-market',
+      'QI-QUAI',
+      '--max-notional',
+      '1000',
+      '--expires-at',
+      '1780003600',
+      '--permission',
+      'PLACE_ORDER',
+      '--permission',
+      'CANCEL_ORDER',
+      '--permission',
+      'CANCEL_ALL',
+      '--signature',
+      '0xowner-signed-placeholder',
+    ]);
+
+    assert.equal(registration.command, 'api create-key prepare');
+    assert.equal(registration.keyId, 'bot-mm-1');
+    assert.equal(registration.status, 501);
+    assert.equal(registration.httpStatus, 501);
+    assert.equal(registration.error, 'delegate_key_registration_not_implemented');
+    assert.equal(registration.source, 'delegate-key-owner-signed-prepare-boundary');
+    assert.equal(registration.operation, 'register_delegate_key');
+    assert.equal(registration.operationStatus, 'prepare-only-owner-signed-required');
+    assert.equal(registration.ownerAuthorization, 'owner-wallet-signature-required');
+    assert.deepEqual(registration.permissions, ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(registration.delegateCanWithdraw, false);
+    assert.equal(registration.delegateCanAdmin, false);
+    assert.equal(registration.realQuaiTransactions, false);
+    assert.equal(registration.walletRequired, false);
+    assert.equal(registration.fundsMoved, false);
+    assert.equal(registration.tradingVaultMutation, false);
+    assert.match(registration.message, /No delegate key is registered/i);
+
+    const revocation = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'api',
+      'revoke-key',
+      'bot-mm-1',
+      '--prepare',
+      '--owner',
+      '0x1111111111111111111111111111111111111111',
+      '--signature',
+      '0xowner-signed-placeholder',
+    ]);
+
+    assert.equal(revocation.command, 'api revoke-key prepare');
+    assert.equal(revocation.keyId, 'bot-mm-1');
+    assert.equal(revocation.status, 501);
+    assert.equal(revocation.httpStatus, 501);
+    assert.equal(revocation.error, 'delegate_key_revocation_not_implemented');
+    assert.equal(revocation.source, 'delegate-key-owner-signed-prepare-boundary');
+    assert.equal(revocation.operation, 'revoke_delegate_key');
+    assert.deepEqual(revocation.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(revocation.delegateCanWithdraw, false);
+    assert.equal(revocation.delegateCanAdmin, false);
+    assert.equal(revocation.realQuaiTransactions, false);
+    assert.equal(revocation.walletRequired, false);
+    assert.equal(revocation.fundsMoved, false);
+    assert.equal(revocation.tradingVaultMutation, false);
+    assert.match(revocation.message, /No delegate key is revoked/i);
+  });
+});
+
 test('qdex cancel --all removes mock resting orders without nonce or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

@@ -304,6 +304,16 @@ export class QDexClient {
 
     this.delegateKeys = {
       list: async () => this.#requestOk('/v1/delegate-keys'),
+      prepareRegister: async (request) => this.#requestExpectedStatus('/v1/delegate-keys', {
+        method: 'POST',
+        body: request,
+        expectedStatus: 501,
+      }),
+      prepareRevoke: async (keyId, request = {}) => this.#requestExpectedStatus(`/v1/delegate-keys/${encodeURIComponent(keyId)}`, {
+        method: 'DELETE',
+        body: request,
+        expectedStatus: 501,
+      }),
     };
 
     this.streams = {

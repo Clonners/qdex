@@ -64,6 +64,19 @@ const nonceCancelPrepare = await dex.nonces.prepareCancel({
   expiresAt: 1780003600,
   signature: '0xowner-signed-placeholder',
 });
+const delegateKeyPrepare = await dex.delegateKeys.prepareRegister({
+  owner: '0x1111111111111111111111111111111111111111',
+  delegate: '0x3333333333333333333333333333333333333333',
+  allowedMarkets: ['QI-QUAI'],
+  maxNotional: '1000',
+  permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
+  expiresAt: 1780003600,
+  signature: '0xowner-signed-placeholder',
+});
+const delegateKeyRevocationPrepare = await dex.delegateKeys.prepareRevoke('bot-mm-1', {
+  owner: '0x1111111111111111111111111111111111111111',
+  signature: '0xowner-signed-placeholder',
+});
 const fillsStream = dex.fills.openStream({ timeoutMs: 2000 });
 const initialFillsSnapshot = await fillsStream.next();
 await fillsStream.close();
@@ -151,6 +164,14 @@ console.log(nonceCancelPrepare.status); // 501
 console.log(nonceCancelPrepare.body.error); // owner_signed_nonce_cancel_not_implemented
 console.log(nonceCancelPrepare.body.nonceManager); // owner-signed-required
 console.log(nonceCancelPrepare.body.permissions); // NO_WITHDRAW, NO_ADMIN
+console.log(delegateKeyPrepare.status); // 501
+console.log(delegateKeyPrepare.body.error); // delegate_key_registration_not_implemented
+console.log(delegateKeyPrepare.body.source); // delegate-key-owner-signed-prepare-boundary
+console.log(delegateKeyPrepare.body.operationStatus); // prepare-only-owner-signed-required
+console.log(delegateKeyPrepare.body.ownerAuthorization); // owner-wallet-signature-required
+console.log(delegateKeyPrepare.body.delegateCanWithdraw); // delegateCanWithdraw: false
+console.log(delegateKeyPrepare.body.delegateCanAdmin); // delegateCanAdmin: false
+console.log(delegateKeyRevocationPrepare.body.error); // delegate_key_revocation_not_implemented
 console.log(initialFillsSnapshot.snapshot.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
 console.log(initialOrdersSnapshot.snapshot.channel); // orders
 console.log(initialDepositHistorySnapshot.snapshot.channel); // /v1/ws?channel=deposits
@@ -187,6 +208,8 @@ console.log(result.proof.settlementMode); // mock
 `dex.relayer.settlementModeGate.get()` calls `GET /v1/relayer/settlement-mode-gate` and returns read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus the blocked `quai_contract` reason `real_quai_approval_gate_blocked`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 `dex.nonces.prepareCancel()` calls `POST /v1/nonces/cancel` and returns the prepare-only 501 placeholder body (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
+
+`dex.delegateKeys.prepareRegister()` and `dex.delegateKeys.prepareRevoke()` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and return intentional 501 owner-signed delegate/API key placeholder bodies (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The envelopes preserve `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; these clients have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
 
 `fills.openStream()` consumes the local `/v1/ws?channel=fills` WebSocket transport. Private stream snapshots remain read-only and carry `NO_WITHDRAW`/`NO_ADMIN` permissions.
 

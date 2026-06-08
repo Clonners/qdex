@@ -141,6 +141,19 @@ nonce_cancel_prepare = dex.nonces.prepare_cancel({
     "expiresAt": 1780003600,
     "signature": "0xowner-signed-placeholder",
 })
+delegate_key_prepare = dex.delegate_keys.prepare_register({
+    "owner": "0x1111111111111111111111111111111111111111",
+    "delegate": "0x3333333333333333333333333333333333333333",
+    "allowedMarkets": ["QI-QUAI"],
+    "maxNotional": "1000",
+    "permissions": ["PLACE_ORDER", "CANCEL_ORDER", "CANCEL_ALL", "NO_WITHDRAW", "NO_ADMIN"],
+    "expiresAt": 1780003600,
+    "signature": "0xowner-signed-placeholder",
+})
+delegate_key_revocation_prepare = dex.delegate_keys.prepare_revoke("bot-mm-1", {
+    "owner": "0x1111111111111111111111111111111111111111",
+    "signature": "0xowner-signed-placeholder",
+})
 
 resting_sell = create_mock_signed_order(side="sell", amount="100", price="5", nonce="1")
 crossing_buy = create_mock_signed_order(side="buy", amount="100", price="6", nonce="2")
@@ -174,3 +187,5 @@ proof = smoke["proof"]
 Mock proofs intentionally keep `settlementMode: mock`, `settlementTx: None`, no explorer URL, and explicit no-funds-moved safety copy.
 
 `dex.nonces.prepare_cancel()` calls `POST /v1/nonces/cancel` and returns the prepare-only 501 placeholder body (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
+
+`dex.delegate_keys.prepare_register()` and `dex.delegate_keys.prepare_revoke()` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and return intentional 501 owner-signed delegate/API key placeholder bodies (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The envelopes preserve `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; these clients have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
