@@ -153,12 +153,12 @@ test('terminal UI docs, package check, and campaign status mark fee policy panel
     'campaign status should retain the FeeManager client exposure checkpoint as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only FeeManager fee schedule exposure'),
-    'campaign status should checkpoint this terminal UI FeeManager panel slice',
+    status.includes('Completed previous run: terminal UI read-only FeeManager fee schedule exposure'),
+    'campaign status should retain this terminal UI FeeManager panel slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule integration smoke'),
-    'campaign status should advance to the local API + terminal UI FeeManager fee schedule smoke',
+    status.includes('Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    'campaign status should advance past the local API + terminal UI FeeManager fee schedule smoke',
   );
 
   assert.doesNotMatch(

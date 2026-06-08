@@ -151,12 +151,12 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should retain the FeeManager SDK/Python/qdex client exposure slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only FeeManager fee schedule exposure'),
-    'campaign status should checkpoint the terminal UI FeeManager fee schedule panel slice',
+    status.includes('Completed previous run: terminal UI read-only FeeManager fee schedule exposure'),
+    'campaign status should retain the terminal UI FeeManager fee schedule panel slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule integration smoke'),
-    'campaign status should move past FeeManager terminal UI visibility to local API + terminal UI smoke',
+    status.includes('Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    'campaign status should move past FeeManager local API smoke to read-only stream alignment',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

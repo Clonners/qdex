@@ -91,12 +91,12 @@ test('FeeManager docs and campaign status pin read-only fee policy without runti
     'campaign status should retain the FeeManager SDK/Python/qdex client exposure slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI read-only FeeManager fee schedule exposure'),
-    'campaign status should checkpoint the terminal UI FeeManager fee schedule panel slice',
+    status.includes('Completed previous run: terminal UI read-only FeeManager fee schedule exposure'),
+    'campaign status should retain the terminal UI FeeManager fee schedule panel slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI FeeManager fee schedule integration smoke'),
-    'campaign status should move to the local API + terminal UI FeeManager fee schedule smoke after terminal UI visibility',
+    status.includes('Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment'),
+    'campaign status should move past the local API + terminal UI FeeManager fee schedule smoke after terminal UI visibility',
   );
 
   assert.doesNotMatch(

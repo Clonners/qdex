@@ -2,6 +2,7 @@ import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-bindi
 import { bindDelegateKeyHistoryLocalApiSmoke } from './delegate-key-history-binding.js';
 import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from './delegate-key-history-stream-binding.js';
 import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
+import { bindFeePolicyLocalApiSmoke } from './fee-policy-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
@@ -97,6 +98,28 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxDelegateKeyPrepareTrigger = 'disabled';
     console.warn('QDEX delegate/API key prepare trigger disabled; keeping owner-signed boundary prepare-only.', error);
+  }
+
+  try {
+    bindFeePolicyLocalApiSmoke({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onFeePolicy: () => {
+        mount.dataset.qdxFeePolicySmoke = 'feemanager-policy-projection';
+      },
+      onError: (error) => {
+        mount.dataset.qdxFeePolicySmoke = 'error';
+        console.warn('QDEX FeeManager fee schedule REST smoke failed; keeping static read-only fixture with no fee-authority runtime keys.', error);
+      },
+    }).catch((error) => {
+      mount.dataset.qdxFeePolicySmoke = 'disabled';
+      console.warn('QDEX FeeManager fee schedule REST smoke disabled; keeping static read-only fixture.', error);
+    });
+  } catch (error) {
+    mount.dataset.qdxFeePolicySmoke = 'disabled';
+    console.warn('QDEX FeeManager fee schedule REST smoke disabled; keeping static read-only fixture.', error);
   }
 
   try {

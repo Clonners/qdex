@@ -292,8 +292,9 @@ test('terminal UI package/app/docs mention the private DelegateKeyRegistry histo
     'Completed previous run: Python SDK DelegateKeyRegistry history stream consumers',
     'Completed previous run: read-only FeeManager fee schedule API envelope',
     'Completed previous run: read-only FeeManager fee schedule clients',
-    'Completed this run: terminal UI read-only FeeManager fee schedule exposure',
-    'Next autonomous slice: local API + terminal UI FeeManager fee schedule integration smoke',
+    'Completed previous run: terminal UI read-only FeeManager fee schedule exposure',
+    'Completed this run: local API + terminal UI FeeManager fee schedule integration smoke',
+    'Next autonomous slice: read-only FeeManager fee schedule WebSocket snapshot alignment',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
