@@ -286,8 +286,9 @@ test('terminal UI package/app/docs mention the private DelegateKeyRegistry histo
 
   for (const requiredText of [
     'Completed previous run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment',
-    'Completed this run: terminal UI private DelegateKeyRegistry history stream binding',
-    'Next autonomous slice: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
+    'Completed previous run: terminal UI private DelegateKeyRegistry history stream binding',
+    'Completed this run: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
+    'Next autonomous slice: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
@@ -297,7 +298,11 @@ test('terminal UI package/app/docs mention the private DelegateKeyRegistry histo
     'post-delegate readiness plan should mark the terminal UI stream binding complete',
   );
   assert.ok(
-    plan.includes('Next bounded local/source-only slice: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
-    'post-delegate readiness plan should point to the REST-confirmed stream smoke after terminal UI stream binding',
+    plan.includes('Completed: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
+    'post-delegate readiness plan should mark the REST-confirmed stream smoke complete',
+  );
+  assert.ok(
+    plan.includes('Next bounded local/source-only slice: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers'),
+    'post-delegate readiness plan should point to bot/operator stream consumers after the stream smoke',
   );
 });

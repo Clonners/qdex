@@ -1,6 +1,6 @@
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
 import { bindDelegateKeyHistoryLocalApiSmoke } from './delegate-key-history-binding.js';
-import { bindLiveDelegateKeyHistoryStreams } from './live-delegate-key-history.js';
+import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from './delegate-key-history-stream-binding.js';
 import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
@@ -122,18 +122,28 @@ if (mount) {
   }
 
   try {
-    bindLiveDelegateKeyHistoryStreams({
+    bindLiveDelegateKeyHistoryStreamsWithRestHistory({
       mount,
       baseUrl,
       baseFixture: mockVerticalSliceFixture,
       render: renderTradeProofPanel,
-      onError: (error) => {
+      onRestError: (error) => {
+        mount.dataset.qdxDelegateKeyHistoryRestSnapshot = 'error';
+        console.warn('QDEX delegate/API key history REST snapshot unavailable; keeping static read-only fixture.', error);
+      },
+      onRestHistory: () => {
+        mount.dataset.qdxDelegateKeyHistoryRestSnapshot = 'delegatekeyregistry-event-projection';
+      },
+      onStreamError: (error) => {
         mount.dataset.qdxDelegateKeyHistoryStreams = 'error';
         console.warn('QDEX live delegate/API key history streams unavailable; keeping static read-only fixture and no live DelegateKeyRegistry mutation.', error);
       },
-      onUpdate: () => {
+      onStreamUpdate: () => {
         mount.dataset.qdxDelegateKeyHistoryStreams = 'delegate-key-registrations,delegate-key-revocations';
       },
+    }).catch((error) => {
+      mount.dataset.qdxDelegateKeyHistoryStreams = 'disabled';
+      console.warn('QDEX local delegate/API key history API/stream smoke disabled; keeping static read-only fixture.', error);
     });
   } catch (error) {
     mount.dataset.qdxDelegateKeyHistoryStreams = 'disabled';

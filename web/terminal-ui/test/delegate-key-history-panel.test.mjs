@@ -152,12 +152,12 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should retain the delegate-key history stream alignment as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI private DelegateKeyRegistry history stream binding'),
-    'campaign status should record the terminal UI delegate-key stream binding as this run',
+    status.includes('Completed previous run: terminal UI private DelegateKeyRegistry history stream binding'),
+    'campaign status should retain the terminal UI delegate-key stream binding as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
-    'campaign status should point to the local API + terminal UI delegate-key stream smoke after stream binding',
+    status.includes('Completed this run: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
+    'campaign status should record the local API + terminal UI delegate-key stream smoke as this run',
   );
   assert.doesNotMatch(
     `${readme}\n${status}`,

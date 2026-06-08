@@ -141,4 +141,8 @@ delegateKeyRegistryMutation: false
 
 Empty registration/revocation arrays are valid private stream snapshots in local/mock state. These WebSocket snapshots are projection/cache surfaces only: no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement.
 
-Next local/source-only step: terminal UI binding for private DelegateKeyRegistry history streams, still with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed terminal UI binding: `web/terminal-ui/src/live-delegate-key-history.js` consumes the private registration/revocation snapshots and renders only read-only `delegatekeyregistry-event-projection` metadata with `NO_WITHDRAW`/`NO_ADMIN`.
+
+Completed local/source-only stream smoke: `web/terminal-ui/src/delegate-key-history-stream-binding.js` starts from local REST history (`GET /v1/delegate-keys/registrations` plus `GET /v1/delegate-keys/revocations`), subscribes to `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations`, and renders the terminal delegate/API key history panel only after REST + WebSocket agreement on `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, mock-null event evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, and `delegateKeyRegistryMutation: false`.
+
+Next local/source-only step: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers, still with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.

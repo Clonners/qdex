@@ -3,12 +3,13 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 import { createApiServer } from '../../../services/api/src/server.js';
-import { bindDelegateKeyHistoryLocalApiSmoke } from '../src/delegate-key-history-binding.js';
+import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from '../src/delegate-key-history-stream-binding.js';
 import { mockVerticalSliceFixture } from '../src/mock-vertical-fixture.js';
 import { renderTradeProofPanel } from '../src/render.js';
 
 const HISTORY_SOURCE = 'delegatekeyregistry-event-projection';
 const HISTORY_CUSTODY = 'non-custodial-no-withdrawal-authority';
+const STREAM_CUSTODY = 'non-custodial-no-withdrawal-authority';
 const HISTORY_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
 
 const repoRoot = new URL('../../../', import.meta.url);
@@ -28,6 +29,17 @@ const withApiServer = async (callback) => {
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
+};
+
+const waitFor = async (predicate, label) => {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (predicate()) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+
+  throw new Error(`timed out waiting for ${label}`);
 };
 
 const assertHistoryEnvelope = ({ envelope, collection, projectionType, eventName }) => {
@@ -56,35 +68,49 @@ const assertHistoryEnvelope = ({ envelope, collection, projectionType, eventName
   assert.match(envelope.safetyNotice, /no delegate withdrawal\/admin authority/i);
 };
 
-test('local API + terminal UI delegate-key history smoke renders REST read-only DelegateKeyRegistry event projections', async () => {
+test('local API + terminal UI delegate-key history stream smoke renders only REST-confirmed private history snapshots', async () => {
   await withApiServer(async (baseUrl) => {
     const mount = { dataset: {}, innerHTML: '' };
     const fetchCalls = [];
-    const historySnapshots = [];
-    const renderedFixtures = [];
-    const historyErrors = [];
+    const restSnapshots = [];
+    const streamFixtures = [];
+    const restErrors = [];
+    const streamErrors = [];
+    const eventOrder = [];
 
     const countedFetch = async (url, options = {}) => {
       fetchCalls.push({ url: String(url), method: options.method ?? 'GET' });
       return fetch(url, options);
     };
 
-    const binding = await bindDelegateKeyHistoryLocalApiSmoke({
+    const binding = await bindLiveDelegateKeyHistoryStreamsWithRestHistory({
       mount,
       baseUrl,
       fetchImpl: countedFetch,
+      WebSocketImpl: WebSocket,
       baseFixture: mockVerticalSliceFixture,
-      render: (fixture) => {
-        renderedFixtures.push(fixture);
-        return renderTradeProofPanel(fixture);
+      render: renderTradeProofPanel,
+      onRestHistory: (delegateKeyHistory) => {
+        eventOrder.push('rest');
+        restSnapshots.push(delegateKeyHistory);
       },
-      onHistory: (delegateKeyHistory) => historySnapshots.push(delegateKeyHistory),
-      onError: (error) => historyErrors.push(error),
+      onStreamUpdate: (fixture) => {
+        eventOrder.push(`stream:${fixture.delegateKeyHistoryStream.channels.join(',')}`);
+        streamFixtures.push(fixture);
+      },
+      onRestError: (error) => restErrors.push(error),
+      onStreamError: (error) => streamErrors.push(error),
     });
 
     try {
-      assert.deepEqual(historyErrors, []);
-      assert.equal(fetchCalls.length, 2);
+      await waitFor(
+        () => streamFixtures.some((fixture) => fixture.delegateKeyHistoryStream?.channels?.join(',') === 'delegate-key-registrations,delegate-key-revocations'),
+        'REST-confirmed private delegate-key registration and revocation stream render',
+      );
+
+      assert.equal(eventOrder[0], 'rest');
+      assert.deepEqual(restErrors, []);
+      assert.deepEqual(streamErrors, []);
       assert.deepEqual(
         fetchCalls.map((call) => [call.method, new URL(call.url).pathname]),
         [
@@ -93,42 +119,48 @@ test('local API + terminal UI delegate-key history smoke renders REST read-only 
         ],
       );
 
-      assert.equal(historySnapshots.length, 1);
-      assert.equal(renderedFixtures.length, 1);
-      assert.equal(mount.dataset.qdxDelegateKeyHistorySmoke, HISTORY_SOURCE);
-      assert.equal(mount.dataset.qdxDelegateKeyHistoryRegistrationProjection, 'DelegateKeyRegisteredProjection');
-      assert.equal(mount.dataset.qdxDelegateKeyHistoryRevocationProjection, 'DelegateKeyRevokedProjection');
-      assert.equal(mount.dataset.qdxDelegateKeyHistoryRows, '0');
+      assert.equal(restSnapshots.length, 1);
+      assert.equal(mount.dataset.qdxDelegateKeyHistoryRestSnapshot, HISTORY_SOURCE);
+      assert.equal(mount.dataset.qdxDelegateKeyHistoryStreamRestAgreement, HISTORY_SOURCE);
+      assert.equal(mount.dataset.qdxDelegateKeyHistoryStreams, 'delegate-key-registrations,delegate-key-revocations');
+      assert.equal(mount.dataset.qdxDelegateKeyHistoryStreamRows, '0');
 
-      const delegateKeyHistory = historySnapshots[0];
+      const restHistory = restSnapshots[0];
       assertHistoryEnvelope({
-        envelope: delegateKeyHistory.registrations,
+        envelope: restHistory.registrations,
         collection: 'registrations',
         projectionType: 'DelegateKeyRegisteredProjection',
         eventName: 'DelegateKeyRegistered',
       });
       assertHistoryEnvelope({
-        envelope: delegateKeyHistory.revocations,
+        envelope: restHistory.revocations,
         collection: 'revocations',
         projectionType: 'DelegateKeyRevokedProjection',
         eventName: 'DelegateKeyRevoked',
       });
 
-      const fixture = renderedFixtures[0];
-      assert.deepEqual(fixture.delegateKeyHistory, delegateKeyHistory);
-      assert.equal(fixture.delegateKeyHistory.registrations.source, HISTORY_SOURCE);
-      assert.equal(fixture.delegateKeyHistory.revocations.source, HISTORY_SOURCE);
+      const fixture = streamFixtures.at(-1);
+      assert.deepEqual(fixture.delegateKeyHistory.registrations, restHistory.registrations);
+      assert.deepEqual(fixture.delegateKeyHistory.revocations, restHistory.revocations);
+      assert.equal(fixture.sources.delegateKeyHistory, HISTORY_SOURCE);
+      assert.equal(fixture.delegateKeyHistoryStream.source, HISTORY_SOURCE);
+      assert.equal(fixture.delegateKeyHistoryStream.custody, STREAM_CUSTODY);
+      assert.deepEqual(fixture.delegateKeyHistoryStream.permissions, HISTORY_PERMISSIONS);
+      assert.equal(fixture.delegateKeyHistoryStream.settlementMode, 'mock');
+      assert.equal(fixture.delegateKeyHistoryStream.delegateCanWithdraw, false);
+      assert.equal(fixture.delegateKeyHistoryStream.delegateCanAdmin, false);
+      assert.equal(fixture.delegateKeyHistoryStream.realQuaiTransactions, false);
+      assert.equal(fixture.delegateKeyHistoryStream.walletRequired, false);
+      assert.equal(fixture.delegateKeyHistoryStream.fundsMoved, false);
+      assert.equal(fixture.delegateKeyHistoryStream.tradingVaultMutation, false);
+      assert.equal(fixture.delegateKeyHistoryStream.delegateKeyRegistryMutation, false);
 
-      assert.match(mount.innerHTML, /read-only delegate\/API key history/i);
+      assert.match(mount.innerHTML, /live delegate\/API key history streams/i);
       assert.match(mount.innerHTML, /delegatekeyregistry-event-projection/);
       assert.match(mount.innerHTML, /DelegateKeyRegisteredProjection/);
       assert.match(mount.innerHTML, /DelegateKeyRevokedProjection/);
       assert.match(mount.innerHTML, /READ_ONLY, NO_WITHDRAW, NO_ADMIN/);
       assert.match(mount.innerHTML, /settlementMode[\s\S]*mock/i);
-      assert.match(mount.innerHTML, /settlement tx[\s\S]*null \(mock\)/i);
-      assert.match(mount.innerHTML, /block[\s\S]*null \(mock\)/i);
-      assert.match(mount.innerHTML, /event index[\s\S]*null \(mock\)/i);
-      assert.match(mount.innerHTML, /explorer[\s\S]*null \(mock\)/i);
       assert.match(mount.innerHTML, /delegate can withdraw[\s\S]*false/i);
       assert.match(mount.innerHTML, /delegate can admin[\s\S]*false/i);
       assert.match(mount.innerHTML, /real Quai tx[\s\S]*false/i);
@@ -136,23 +168,19 @@ test('local API + terminal UI delegate-key history smoke renders REST read-only 
       assert.match(mount.innerHTML, /funds moved[\s\S]*false/i);
       assert.match(mount.innerHTML, /TradingVault mutation[\s\S]*false/i);
       assert.match(mount.innerHTML, /DelegateKeyRegistry mutation[\s\S]*false/i);
-      assert.match(mount.innerHTML, /no delegate-key registration history rows yet/i);
-      assert.match(mount.innerHTML, /no delegate-key revocation history rows yet/i);
       assert.match(mount.innerHTML, /no wallet loaded/i);
       assert.match(mount.innerHTML, /no live DelegateKeyRegistry mutation, no funds moved/i);
       assert.match(mount.innerHTML, /no delegate withdrawal\/admin authority/i);
+      assert.doesNotMatch(mount.innerHTML, /wallet connected for delegate-key history|broadcast transaction|signing request|funds moved by UI/i);
 
-      assert.doesNotMatch(mount.innerHTML, /delegate-key-owner-signed-prepare-boundary/);
-      assert.doesNotMatch(mount.innerHTML, /wallet connected for delegate-key history/i);
-      assert.doesNotMatch(mount.innerHTML, /broadcast transaction|signing request|funds moved by UI/i);
-      assert.equal(binding.delegateKeyHistory.registrations.source, HISTORY_SOURCE);
+      assert.deepEqual(binding.delegateKeyHistory, restHistory);
     } finally {
       binding.close();
     }
   });
 });
 
-test('terminal UI docs, package check, and campaign status mark delegate-key history REST smoke complete', async () => {
+test('terminal UI docs, package check, and campaign status mark delegate-key history stream smoke complete', async () => {
   const readme = await readText('web/terminal-ui/README.md');
   const packageJson = await readText('web/terminal-ui/package.json');
   const status = await readText('CAMPAIGN_STATUS.md');
@@ -160,13 +188,16 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
   const plan = await readText('docs/plans/2026-06-08-post-delegate-key-owner-signed-readiness.md');
 
   for (const requiredText of [
-    'src/delegate-key-history-binding.js',
-    'local API + terminal UI delegate-key history smoke',
+    'src/delegate-key-history-stream-binding.js',
+    'local API + terminal UI DelegateKeyRegistry history stream integration smoke',
     'GET /v1/delegate-keys/registrations',
     'GET /v1/delegate-keys/revocations',
+    '/v1/ws?channel=delegate-key-registrations',
+    '/v1/ws?channel=delegate-key-revocations',
     'source: delegatekeyregistry-event-projection',
     'DelegateKeyRegisteredProjection',
     'DelegateKeyRevokedProjection',
+    'REST + WebSocket agreement',
     'READ_ONLY',
     'NO_WITHDRAW',
     'NO_ADMIN',
@@ -180,40 +211,32 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
   }
 
   assert.ok(
-    packageJson.includes('node --check src/delegate-key-history-binding.js'),
-    'terminal UI package check should syntax-check the delegate-key history REST smoke binding',
-  );
-  assert.ok(
-    status.includes('Completed previous run: terminal UI read-only delegate-key history panel'),
-    'campaign status should move the static panel checkpoint to previous work',
-  );
-  assert.ok(
-    status.includes('Completed previous run: local API + terminal UI delegate-key history integration smoke'),
-    'campaign status should retain the delegate-key history REST smoke as previous work',
-  );
-  assert.ok(
-    status.includes('Completed previous run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
-    'campaign status should retain the delegate-key history stream alignment as previous work',
+    packageJson.includes('node --check src/delegate-key-history-stream-binding.js'),
+    'terminal UI package check should syntax-check the delegate-key history stream smoke binding',
   );
   assert.ok(
     status.includes('Completed previous run: terminal UI private DelegateKeyRegistry history stream binding'),
-    'campaign status should retain the terminal UI delegate-key stream binding as previous work',
+    'campaign status should move the terminal UI delegate-key stream binding checkpoint to previous work',
   );
   assert.ok(
     status.includes('Completed this run: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
-    'campaign status should record the local/source-only delegate-key stream integration smoke as this run',
+    'campaign status should record the local API + terminal UI delegate-key stream smoke as this run',
   );
   assert.ok(
-    delegateDoc.includes('Completed local/source-only smoke: `web/terminal-ui/src/delegate-key-history-binding.js`'),
-    'delegate-key docs should mark the REST smoke binding complete',
+    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers'),
+    'campaign status should point to bot/operator delegate-key history stream consumers next',
   );
   assert.ok(
-    plan.includes('Completed: local API + terminal UI delegate-key history integration smoke'),
-    'post-delegate readiness plan should mark the REST smoke binding complete',
+    delegateDoc.includes('Completed local/source-only stream smoke: `web/terminal-ui/src/delegate-key-history-stream-binding.js`'),
+    'delegate-key docs should mark the stream smoke binding complete',
+  );
+  assert.ok(
+    plan.includes('Completed: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
+    'post-delegate readiness plan should mark the stream smoke complete',
   );
   assert.doesNotMatch(
     `${readme}\n${status}\n${delegateDoc}\n${plan}`,
     /walletPrivateKey|rpcUrl\s*:|signing key|broadcast transaction|funds moved by UI/i,
-    'delegate-key history smoke docs/status must not claim wallet/RPC/signing/broadcast/funds behavior',
+    'delegate-key history stream smoke docs/status must not claim wallet/RPC/signing/broadcast/funds behavior',
   );
 });

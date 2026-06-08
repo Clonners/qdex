@@ -175,7 +175,11 @@ Completed: terminal UI binding for private DelegateKeyRegistry history streams.
 
 The terminal UI now exposes `web/terminal-ui/src/live-delegate-key-history.js`, opens `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations`, validates the private `delegatekeyregistry-event-projection` snapshots, and renders only read-only `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection` metadata with `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, mock-null event evidence, no live `DelegateKeyRegistry` mutation, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next bounded local/source-only slice: local API + terminal UI DelegateKeyRegistry history stream integration smoke, with REST + WebSocket agreement checks before rendering and still no live `DelegateKeyRegistry` mutation or wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed: local API + terminal UI DelegateKeyRegistry history stream integration smoke.
+
+The stream smoke now uses `web/terminal-ui/src/delegate-key-history-stream-binding.js` to read `GET /v1/delegate-keys/registrations` plus `GET /v1/delegate-keys/revocations`, then bind `/v1/ws?channel=delegate-key-registrations` plus `/v1/ws?channel=delegate-key-revocations` only as REST-confirmed read-only projection/cache metadata. It preserves `delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, mock-null event evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `delegateKeyRegistryMutation: false`, no live `DelegateKeyRegistry` mutation, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next bounded local/source-only slice: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers, still with no live `DelegateKeyRegistry` mutation or wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

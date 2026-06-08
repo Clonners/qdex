@@ -127,12 +127,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should retain the DelegateKeyRegistry history stream alignment boundary as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: terminal UI private DelegateKeyRegistry history stream binding'),
-    'campaign status should checkpoint the terminal UI DelegateKeyRegistry stream binding boundary',
+    status.includes('Completed previous run: terminal UI private DelegateKeyRegistry history stream binding'),
+    'campaign status should retain the terminal UI DelegateKeyRegistry stream binding boundary as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
-    'campaign status should point beyond the stream binding boundary to REST-confirmed terminal UI stream smoke',
+    status.includes('Completed this run: local API + terminal UI DelegateKeyRegistry history stream integration smoke'),
+    'campaign status should checkpoint the REST-confirmed terminal UI stream smoke',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers'),
+    'campaign status should point beyond the terminal UI stream smoke to bot/operator stream consumers',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;
