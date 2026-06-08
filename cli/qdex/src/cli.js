@@ -338,6 +338,7 @@ const parseListingRequestDecisionOptions = (args) => {
 const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 markets
   qdex --base-url http://127.0.0.1:8787 book QI-QUAI
+  qdex --base-url http://127.0.0.1:8787 balance
   qdex --base-url http://127.0.0.1:8787 contracts
   qdex --base-url http://127.0.0.1:8787 listings policy
   qdex --base-url http://127.0.0.1:8787 listings review-flow
@@ -378,6 +379,15 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       writeJson(stdout, {
         command: 'book',
         ...(await client.orderbook.get(marketId)),
+      });
+      return 0;
+    }
+
+    if (command === 'balance') {
+      writeJson(stdout, {
+        command: 'balance',
+        baseUrl,
+        ...(await client.account.balances()),
       });
       return 0;
     }

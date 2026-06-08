@@ -1,4 +1,10 @@
-import { CUSTODY_NOTE, INDEXER_SOURCE, MARKET_ID } from './mock-dex.js';
+import {
+  CUSTODY_NOTE,
+  INDEXER_SOURCE,
+  MARKET_ID,
+  MOCK_VAULT_PROJECTION_SOURCE,
+  createMockVaultBalanceProjection,
+} from './mock-dex.js';
 
 const PUBLIC_CUSTODY_NOTE = 'public-read-only-no-custody';
 const PRIVATE_STREAM_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
@@ -63,7 +69,7 @@ const privateContracts = () => [
     source: INDEXER_SOURCE,
     finality: 'confirmed-settlement-only',
   }),
-  privateContract({ channel: 'balances', payload: 'vault_balance_projection', source: 'mock-vault-projection' }),
+  privateContract({ channel: 'balances', payload: 'vault_balance_projection', source: MOCK_VAULT_PROJECTION_SOURCE }),
   privateContract({
     channel: 'settlements',
     payload: 'settlement_status_projection',
@@ -239,13 +245,8 @@ export const createStreamSnapshot = ({ channel, state } = {}) => {
     return privateSnapshot({
       channel,
       payload: 'vault_balance_projection',
-      source: 'mock-vault-projection',
-      data: {
-        balances: [],
-        source: 'mock-vault-projection',
-        custody: 'non-custodial-contract-vault',
-        withdrawalAuthority: 'owner-wallet-only',
-      },
+      source: MOCK_VAULT_PROJECTION_SOURCE,
+      data: createMockVaultBalanceProjection(),
     });
   }
 

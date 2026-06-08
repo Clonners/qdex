@@ -139,4 +139,20 @@ test('stream snapshots expose public depth/trades and private fills from indexed
   assert.equal(privateFills.data.fills[0].settlementMode, 'mock');
   assert.equal(privateFills.data.fills[0].settlementStatus, 'confirmed');
   assert.equal(Object.hasOwn(privateFills.data.fills[0], 'createdAt'), false);
+
+  const privateBalances = createStreamSnapshot({ channel: 'balances', state });
+  assert.equal(privateBalances.visibility, 'private');
+  assert.equal(privateBalances.source, 'mock-vault-projection');
+  assert.deepEqual(privateBalances.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+  assert.deepEqual(privateBalances.data, {
+    balances: [],
+    source: 'mock-vault-projection',
+    custody: 'non-custodial-contract-vault',
+    permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+    withdrawalAuthority: 'owner-wallet-only',
+    settlementMode: 'mock',
+    realQuaiTransactions: false,
+    walletRequired: false,
+    safetyNotice: 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+  });
 });

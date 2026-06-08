@@ -106,17 +106,18 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   );
 });
 
-test('campaign status records completion-mode continuation and local listing review queue/decision boundary cleanup', async () => {
+test('campaign status records completion-mode continuation plus local listing and balance projection checkpoints', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
     '- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated',
-    '- Current phase: local in-memory listing review decision API plus TypeScript/Python/qdex clients and post-decision status/approval-boundary cleanup are complete; next autonomous slice should be another bounded local/source-only MVP slice with no real network mutation; no wallets/RPC/deploys/txs are approved',
+    '- Current phase: read-only mock vault balance projection is complete across API, private balances stream, TypeScript/Python SDKs, qdex CLI, OpenAPI, and docs; next autonomous slice should be terminal UI balance projection binding or another bounded local/source-only MVP slice with no real network mutation; no wallets/RPC/deploys/txs are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
     'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, TypeScript/Python/qdex decision clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
     'Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.',
-    'Completed this run: post-decision status/approval-boundary cleanup aligned listing review-flow metadata and docs with the existing local queue/decision API plus TypeScript/Python/qdex clients.',
-    'Next autonomous slice: another bounded local/source-only MVP slice without listing submission, real token addresses, or `MarketRegistry` mutation.',
+    'Completed previous run: post-decision status/approval-boundary cleanup aligned listing review-flow metadata and docs with the existing local queue/decision API plus TypeScript/Python/qdex clients.',
+    'Completed this run: reconciled interrupted read-only mock vault balance projection across `GET /v1/account/balances`, private `balances` stream, TypeScript/Python SDKs, `qdex balance`, OpenAPI, docs, and ratchets.',
+    'Next autonomous slice: terminal UI balance projection binding or another bounded local/source-only MVP slice without listing submission, real token addresses, wallets/RPC/signing/broadcast/deploy/tx behavior, funds movement, or real network `MarketRegistry` mutation.',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
     'Clonners approved the next local-only runtime listing review queue slice.',
@@ -126,6 +127,7 @@ test('campaign status records completion-mode continuation and local listing rev
     'Added local-only listing review decision workflow: `POST /v1/listings/requests/{requestId}/decision` records immutable in-memory approve/reject metadata for queued requests',
     'Added TypeScript/Python SDK and `qdex` CLI clients for local in-memory listing review decisions',
     'Completed post-decision status/approval-boundary cleanup: `GET /v1/listings/review-flow`, OpenAPI, docs, TypeScript/Python SDK tests, and `qdex` tests now name the existing local queue/decision API plus TypeScript/Python/qdex clients instead of stale queue-only wording.',
+    'Reconciled interrupted read-only mock vault balance projection slice: `GET /v1/account/balances`, private `balances` WebSocket snapshots, TypeScript/Python SDK `account.balances()`, `qdex balance`, OpenAPI `AccountBalances`, specs, README docs, and ratchets now share explicit `mock-vault-projection`',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

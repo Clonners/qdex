@@ -94,6 +94,24 @@ test('qdex stream orders command exposes bounded read-only order snapshots for c
   });
 });
 
+test('qdex balance command prints read-only mock vault balances without wallet or withdrawal authority', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'balance']);
+
+    assert.equal(result.command, 'balance');
+    assert.equal(result.baseUrl, baseUrl);
+    assert.deepEqual(result.balances, []);
+    assert.equal(result.source, 'mock-vault-projection');
+    assert.equal(result.custody, 'non-custodial-contract-vault');
+    assert.deepEqual(result.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(result.withdrawalAuthority, 'owner-wallet-only');
+    assert.equal(result.settlementMode, 'mock');
+    assert.equal(result.realQuaiTransactions, false);
+    assert.equal(result.walletRequired, false);
+    assert.match(result.safetyNotice, /no wallet loaded, no funds moved/);
+  });
+});
+
 test('qdex contracts command prints local-only registry metadata without wallet or tx claims', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'contracts']);

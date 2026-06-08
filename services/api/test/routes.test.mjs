@@ -252,7 +252,12 @@ test('private routes expose order and fill placeholders without withdrawal autho
       balances: [],
       source: 'mock-vault-projection',
       custody: 'non-custodial-contract-vault',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
       withdrawalAuthority: 'owner-wallet-only',
+      settlementMode: 'mock',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      safetyNotice: 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
     });
 
     const postOrder = await requestJson(baseUrl, '/v1/orders', {

@@ -7,6 +7,20 @@ import { createInMemoryProofService } from '../../proof-service/src/in-memory-pr
 export const MARKET_ID = 'QI-QUAI';
 export const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
 export const INDEXER_SOURCE = 'in-memory-indexer-projection';
+export const MOCK_VAULT_PROJECTION_SOURCE = 'mock-vault-projection';
+export const MOCK_VAULT_BALANCE_SAFETY_NOTICE = 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.';
+
+const MOCK_VAULT_BALANCE_PROJECTION = {
+  balances: [],
+  source: MOCK_VAULT_PROJECTION_SOURCE,
+  custody: 'non-custodial-contract-vault',
+  permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+  withdrawalAuthority: 'owner-wallet-only',
+  settlementMode: 'mock',
+  realQuaiTransactions: false,
+  walletRequired: false,
+  safetyNotice: MOCK_VAULT_BALANCE_SAFETY_NOTICE,
+};
 
 const CANCELLATION_NONCE_NOTE = 'matcher-local-cancel-only-on-chain-nonce-unchanged';
 const CANCELLATION_MESSAGE = 'Mock cancellation removes only matcher-open quantity and does not cancel the on-chain nonce; user nonce cancellation must be signed through NonceManager later.';
@@ -54,6 +68,8 @@ const canonicalOrder = (order) => ({
 });
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
+export const createMockVaultBalanceProjection = () => clone(MOCK_VAULT_BALANCE_PROJECTION);
+
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isDecimalString = (value) => typeof value === 'string' && /^[0-9]+$/.test(value);
 const isPositiveDecimalString = (value) => isDecimalString(value) && BigInt(value) > 0n;

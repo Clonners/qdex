@@ -135,6 +135,24 @@ test('TypeScript SDK exposes local-only contract registry metadata without walle
   });
 });
 
+test('TypeScript SDK exposes read-only mock vault balances without wallet or withdrawal authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const balances = await client.account.balances();
+
+    assert.deepEqual(balances.balances, []);
+    assert.equal(balances.source, 'mock-vault-projection');
+    assert.equal(balances.custody, 'non-custodial-contract-vault');
+    assert.deepEqual(balances.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(balances.withdrawalAuthority, 'owner-wallet-only');
+    assert.equal(balances.settlementMode, 'mock');
+    assert.equal(balances.realQuaiTransactions, false);
+    assert.equal(balances.walletRequired, false);
+    assert.match(balances.safetyNotice, /no wallet loaded, no funds moved/);
+  });
+});
+
 test('TypeScript SDK exposes read-only relayer settlement-mode gate metadata without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

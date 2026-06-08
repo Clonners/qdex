@@ -9,6 +9,7 @@ import { QDexClient, createMockSignedOrder, runMockCrossSmoke } from '@qdex/sdk-
 
 const dex = new QDexClient({ baseUrl: 'http://127.0.0.1:8787' });
 const contractRegistry = await dex.contracts.get();
+const accountBalances = await dex.account.balances();
 const listingPolicy = await dex.listings.policy.get();
 const listingReviewFlow = await dex.listings.reviewFlow.get();
 const listingRequestPrepare = await dex.listings.requests.prepareSubmit({
@@ -60,6 +61,9 @@ const result = await runMockCrossSmoke(dex, {
 });
 
 console.log(contractRegistry.deploymentStatus); // local-only-not-deployed
+console.log(accountBalances.source); // mock-vault-projection
+console.log(accountBalances.permissions); // READ_ONLY, NO_WITHDRAW, NO_ADMIN
+console.log(accountBalances.settlementMode); // mock
 console.log(contractRegistry.listedAssetStatus.status); // wrapped-token-listing
 console.log(contractRegistry.listedAssetStatus.primaryQuoteAssets); // WQUAI, WQI
 console.log(contractRegistry.listedAssetStatus.supportedAssetModel); // erc20-style-vault-token
@@ -112,6 +116,8 @@ console.log(result.proof.settlementMode); // mock
 ```
 
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `realQuaiTransactions: false`, `walletRequired: false`, and no deploy/transaction side effects. `contractRegistry.listedAssetStatus.status` is `wrapped-token-listing`; primary quote assets are `WQUAI` and `WQI`. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. Approved community-created tokens are listable only through those approval-gated metadata surfaces, and raw native Qi direct settlement is out of scope. The safety notice preserves: no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
+
+`dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 
 `dex.listings.policy.get()` calls `GET /v1/listings/policy` and returns read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
 

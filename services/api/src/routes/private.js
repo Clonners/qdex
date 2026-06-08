@@ -1,3 +1,4 @@
+import { createMockVaultBalanceProjection } from '../mock-dex.js';
 import { jsonResult, notImplemented } from '../http.js';
 
 const pathValue = (pathname, prefix) => {
@@ -46,12 +47,7 @@ export const handlePrivateRoute = (context) => {
   }
 
   if (method === 'GET' && pathname === '/v1/account/balances') {
-    return jsonResult(200, {
-      balances: [],
-      source: 'mock-vault-projection',
-      custody: 'non-custodial-contract-vault',
-      withdrawalAuthority: 'owner-wallet-only',
-    });
+    return jsonResult(200, createMockVaultBalanceProjection());
   }
 
   if (method === 'GET' && pathname === '/v1/orders') {

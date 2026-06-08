@@ -104,6 +104,17 @@ class _ContractsApi:
         return self._client._request_ok("/v1/contracts")
 
 
+class _AccountApi:
+    def __init__(self, client):
+        self._client = client
+
+    def get(self):
+        return self._client._request_ok("/v1/account")
+
+    def balances(self):
+        return self._client._request_ok("/v1/account/balances")
+
+
 class _ListingPolicyApi:
     def __init__(self, client):
         self._client = client
@@ -245,6 +256,7 @@ class QDexClient:
         self.tickers = _TickersApi(self)
         self.orderbook = _OrderbookApi(self)
         self.contracts = _ContractsApi(self)
+        self.account = _AccountApi(self)
         self.listings = _ListingsApi(self)
         self.relayer = _RelayerApi(self)
         self.nonces = _NoncesApi(self)

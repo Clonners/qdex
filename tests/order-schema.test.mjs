@@ -34,6 +34,34 @@ test('signed order schema doc defines replay-safe partial-fill order model', asy
   }
 });
 
+test('OpenAPI exposes read-only mock vault account balance projections', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const balancesRoute = sectionBetween(spec, '  /v1/account/balances:', '  /v1/orders:');
+  const accountBalances = sectionBetween(spec, '    AccountBalances:', '    ContractRegistry:');
+
+  for (const requiredText of [
+    'summary: Indexed vault balances',
+    '$ref: "#/components/schemas/AccountBalances"',
+    'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+  ]) {
+    assert.ok(balancesRoute.includes(requiredText), `/v1/account/balances route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'description: Read-only mock vault balance projection',
+    'required: [balances, source, custody, permissions, withdrawalAuthority, settlementMode, realQuaiTransactions, walletRequired, safetyNotice]',
+    'enum: [mock-vault-projection]',
+    'enum: [non-custodial-contract-vault]',
+    'enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]',
+    'enum: [owner-wallet-only]',
+    'enum: [mock]',
+    'enum: [false]',
+    'no delegate withdrawal/admin authority',
+  ]) {
+    assert.ok(accountBalances.includes(requiredText), `AccountBalances schema should include ${requiredText}`);
+  }
+});
+
 test('OpenAPI exposes SignedOrder requests and public IndexedFillProjection components', async () => {
   const spec = await readText('docs/api-openapi.yaml');
 

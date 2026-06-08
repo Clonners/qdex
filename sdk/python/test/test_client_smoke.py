@@ -133,6 +133,22 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 "explicit-approval-required-before-deploy-or-transaction",
             )
 
+    def test_python_sdk_exposes_read_only_mock_vault_balances_without_wallet_or_withdrawal_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            balances = client.account.balances()
+
+            self.assertEqual(balances["balances"], [])
+            self.assertEqual(balances["source"], "mock-vault-projection")
+            self.assertEqual(balances["custody"], "non-custodial-contract-vault")
+            self.assertEqual(balances["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(balances["withdrawalAuthority"], "owner-wallet-only")
+            self.assertEqual(balances["settlementMode"], "mock")
+            self.assertFalse(balances["realQuaiTransactions"])
+            self.assertFalse(balances["walletRequired"])
+            self.assertIn("no wallet loaded, no funds moved", balances["safetyNotice"])
+
     def test_python_sdk_exposes_read_only_relayer_settlement_mode_gate_metadata_without_wallet_or_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

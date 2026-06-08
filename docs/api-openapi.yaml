@@ -246,9 +246,14 @@ paths:
     get:
       tags: [private]
       summary: Indexed vault balances
+      description: "Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority."
       responses:
         "200":
-          description: Balances
+          description: Read-only mock vault balance projection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountBalances"
   /v1/orders:
     get:
       tags: [private]
@@ -406,6 +411,41 @@ paths:
                 $ref: "#/components/schemas/TradeProofNotFound"
 components:
   schemas:
+    AccountBalances:
+      type: object
+      description: Read-only mock vault balance projection; API state is projection/cache, not custody authority.
+      required: [balances, source, custody, permissions, withdrawalAuthority, settlementMode, realQuaiTransactions, walletRequired, safetyNotice]
+      properties:
+        balances:
+          type: array
+          items:
+            type: object
+        source:
+          type: string
+          enum: [mock-vault-projection]
+        custody:
+          type: string
+          enum: [non-custodial-contract-vault]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        withdrawalAuthority:
+          type: string
+          enum: [owner-wallet-only]
+        settlementMode:
+          type: string
+          enum: [mock]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          description: Mock vault projection only; no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
     ContractRegistry:
       type: object
       description: Contract address and dependency metadata. No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts.
