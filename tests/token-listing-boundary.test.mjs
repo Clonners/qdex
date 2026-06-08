@@ -154,11 +154,13 @@ test('OpenAPI and docs expose local listing request review approval flow without
   }
 
   for (const requiredText of [
-    'required: [source, status, phase, requestSurface, reviewAuthority, stages, approvalOutcome, safety]',
+    'required: [source, status, phase, requestSurface, clientSurface, reviewAuthority, stages, approvalOutcome, safety]',
     'enum: [listed-asset-marketregistry-review-flow]',
     'enum: [design-only-local-metadata]',
     'enum: [clonners-managed-local-review-before-dao]',
     'prepare-only POST /v1/listings/requests',
+    'POST /v1/listings/requests/{requestId}/decision with decisionMode=local_review_decision',
+    'TypeScript/Python/qdex listing policy, review-flow, local queue, and local decision clients',
     'Clonners-managed MarketRegistry authority',
     'MarketRegistry.proposeMarketAuthority -> MarketRegistry.acceptMarketAuthority',
     'metadata_intake',
@@ -185,6 +187,8 @@ test('OpenAPI and docs expose local listing request review approval flow without
     '## Local listing request review/approval flow',
     '`GET /v1/listings/review-flow` exposes the Clonners-managed local review and approval state machine as metadata only',
     '`phase: clonners-managed-local-review-before-dao`',
+    '`POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`',
+    'TypeScript/Python/qdex listing policy, review-flow, local queue, and local decision clients',
     '`marketRegistryMutation: false`',
     '`approved-local-metadata-only`',
     '`rejected-local-metadata-only`',

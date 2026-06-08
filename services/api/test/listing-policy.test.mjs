@@ -142,7 +142,9 @@ test('GET /v1/listings/review-flow exposes local Clonners-managed review approva
       source: 'listed-asset-marketregistry-review-flow',
       status: 'design-only-local-metadata',
       phase: 'clonners-managed-local-review-before-dao',
-      requestSurface: 'prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection',
+      requestSurface:
+        'prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection; POST /v1/listings/requests/{requestId}/decision with decisionMode=local_review_decision',
+      clientSurface: 'TypeScript/Python/qdex listing policy, review-flow, local queue, and local decision clients',
       reviewAuthority: {
         currentAuthority: 'Clonners-managed MarketRegistry authority',
         futureAuthority: 'dao-governance',
@@ -208,7 +210,7 @@ test('GET /v1/listings/review-flow exposes local Clonners-managed review approva
         noRealTokenAddresses: true,
         noFundsMovement: true,
         notice:
-          'Local review/approval metadata plus approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses.',
+          'Local review/approval metadata plus approved in-memory queue/decision state only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses.',
       },
     });
   });

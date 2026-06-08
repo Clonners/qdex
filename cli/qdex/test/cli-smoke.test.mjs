@@ -207,7 +207,14 @@ test('qdex listings review-flow command prints read-only local review metadata w
     assert.equal(result.source, 'listed-asset-marketregistry-review-flow');
     assert.equal(result.status, 'design-only-local-metadata');
     assert.equal(result.phase, 'clonners-managed-local-review-before-dao');
-    assert.equal(result.requestSurface, 'prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection');
+    assert.equal(
+      result.requestSurface,
+      'prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection; POST /v1/listings/requests/{requestId}/decision with decisionMode=local_review_decision',
+    );
+    assert.equal(
+      result.clientSurface,
+      'TypeScript/Python/qdex listing policy, review-flow, local queue, and local decision clients',
+    );
     assert.deepEqual(result.stages.map((stage) => stage.id), [
       'metadata_intake',
       'token_safety_review',
@@ -234,7 +241,7 @@ test('qdex listings review-flow command prints read-only local review metadata w
     assert.equal(result.safety.noFundsMovement, true);
     assert.match(
       result.safety.notice,
-      /approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal\/admin authority/i,
+      /approved in-memory queue\/decision state only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal\/admin authority/i,
     );
   });
 });

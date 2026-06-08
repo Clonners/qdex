@@ -106,16 +106,17 @@ test('post-listing-policy plan pins approval-gated listing submission and Market
   );
 });
 
-test('campaign status records completion-mode continuation and local listing review queue boundary', async () => {
+test('campaign status records completion-mode continuation and local listing review queue/decision boundary cleanup', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
     '- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated',
-    '- Current phase: local in-memory listing review decision API plus TypeScript/Python/qdex clients complete; next autonomous slice is a post-decision status/approval-boundary cleanup or another bounded local/source-only MVP slice with no real network mutation; no wallets/RPC/deploys/txs are approved',
+    '- Current phase: local in-memory listing review decision API plus TypeScript/Python/qdex clients and post-decision status/approval-boundary cleanup are complete; next autonomous slice should be another bounded local/source-only MVP slice with no real network mutation; no wallets/RPC/deploys/txs are approved',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
     'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, TypeScript/Python/qdex decision clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
     'Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.',
-    'Next autonomous slice: post-decision status/approval-boundary cleanup or another bounded local/source-only MVP slice without listing submission, real token addresses, or `MarketRegistry` mutation.',
+    'Completed this run: post-decision status/approval-boundary cleanup aligned listing review-flow metadata and docs with the existing local queue/decision API plus TypeScript/Python/qdex clients.',
+    'Next autonomous slice: another bounded local/source-only MVP slice without listing submission, real token addresses, or `MarketRegistry` mutation.',
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
     'Added read-only TypeScript/Python SDK and `qdex` CLI clients for `/v1/listings/review-flow`;',
     'Clonners approved the next local-only runtime listing review queue slice.',
@@ -124,6 +125,7 @@ test('campaign status records completion-mode continuation and local listing rev
     'Clonners asked the campaign to keep going until the DEX is completed.',
     'Added local-only listing review decision workflow: `POST /v1/listings/requests/{requestId}/decision` records immutable in-memory approve/reject metadata for queued requests',
     'Added TypeScript/Python SDK and `qdex` CLI clients for local in-memory listing review decisions',
+    'Completed post-decision status/approval-boundary cleanup: `GET /v1/listings/review-flow`, OpenAPI, docs, TypeScript/Python SDK tests, and `qdex` tests now name the existing local queue/decision API plus TypeScript/Python/qdex clients instead of stale queue-only wording.',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
@@ -135,6 +137,7 @@ test('listing docs point future work to the post-listing policy approval gate', 
   const architecture = await readText('docs/architecture.md');
   const contractsReadme = await readText('contracts/README.md');
   const wrappedPlan = await readText('docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md');
+  const postMockPlan = await readText('docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md');
 
   for (const text of [listingPolicy, contracts, architecture, contractsReadme, wrappedPlan]) {
     assert.ok(text.includes(planPath), 'docs should link the post-listing-policy admin boundary plan');
@@ -166,6 +169,23 @@ test('listing docs point future work to the post-listing policy approval gate', 
     );
   }
 
+  assert.ok(
+    contracts.includes('local in-memory listing review queue/decision workflow preserves the approval gate without MarketRegistry mutation'),
+    'contracts docs should describe both local queue and decision state as completed approval-boundary surfaces',
+  );
+  assert.ok(
+    architecture.includes('current local authority/local queue/decision surfaces'),
+    'architecture docs should not stop at the pre-decision local queue surface',
+  );
+  assert.doesNotMatch(
+    `${contracts}\n${architecture}\n${postMockPlan}`,
+    /local in-memory listing review queue preserves the approval gate|current local authority\/local queue surfaces|queue clients remain a separate local-only slice/,
+    'post-decision docs must not keep stale queue-only or pre-decision-client wording',
+  );
+  assert.ok(
+    postMockPlan.includes('queue and decision clients are complete local-only slices'),
+    'post-mock readiness plan should mark queue/decision clients complete instead of future separate work',
+  );
   assert.ok(
     contractsReadme.includes('Approval required: runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation'),
     'contracts README should point to the approval gate instead of a completed listing-policy slice',

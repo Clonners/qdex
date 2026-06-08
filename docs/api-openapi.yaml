@@ -703,8 +703,8 @@ components:
           example: "Read-only listing metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds."
     ListingRequestReviewFlow:
       type: object
-      description: Read-only local listing request review/approval metadata. It does not persist a runtime queue, mutate MarketRegistry, load wallets, sign, broadcast, deploy, register real token addresses, or move funds.
-      required: [source, status, phase, requestSurface, reviewAuthority, stages, approvalOutcome, safety]
+      description: Read-only local listing request review/approval metadata. It summarizes existing local queue/decision surfaces without mutating MarketRegistry, loading wallets, signing, broadcasting, deploying, registering real token addresses, or moving funds.
+      required: [source, status, phase, requestSurface, clientSurface, reviewAuthority, stages, approvalOutcome, safety]
       properties:
         source:
           type: string
@@ -717,7 +717,10 @@ components:
           enum: [clonners-managed-local-review-before-dao]
         requestSurface:
           type: string
-          example: "prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection"
+          example: "prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection; POST /v1/listings/requests/{requestId}/decision with decisionMode=local_review_decision"
+        clientSurface:
+          type: string
+          example: "TypeScript/Python/qdex listing policy, review-flow, local queue, and local decision clients"
         reviewAuthority:
           type: object
           required: [currentAuthority, futureAuthority, handoffPattern]
@@ -821,7 +824,7 @@ components:
               enum: [true]
             notice:
               type: string
-              example: "Local review/approval metadata plus approved in-memory queue only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses."
+              example: "Local review/approval metadata plus approved in-memory queue/decision state only; it does not mutate MarketRegistry, move TradingVault balances, grant withdrawal/admin authority, load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, or register real token addresses."
     ListingRequestPrepare:
       type: object
       description: Metadata-only prepare/local-review payload for the listing request boundary. It intentionally excludes live authority details and credentials; queue writes require requestMode=local_review_queue.

@@ -152,7 +152,7 @@ Completed: `GET /v1/listings/policy` exposes the read-only listing policy, `POST
 
 Result:
 
-- TypeScript SDK, Python SDK, and `qdex listings request --prepare` clients return the prepare-only envelope without treating it as an on-chain listing submission; queue clients remain a separate local-only slice.
+- TypeScript SDK, Python SDK, and `qdex listings request --prepare` clients return the prepare-only envelope without treating it as an on-chain listing submission; queue and decision clients are complete local-only slices.
 - `source: listed-asset-marketregistry-policy`, `status: design-only-local-metadata`, `requestStatus: not-implemented-approval-required`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, and `walletRequired: false` stay pinned.
 - No runtime listing submission, listing-admin keys, real token addresses, wallets, RPC URLs, signing, broadcasts, deploys, transaction helpers, MarketRegistry mutation, funds movement, or TradingVault balance authority was added.
 

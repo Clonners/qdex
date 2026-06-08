@@ -78,7 +78,7 @@ This surface performs no wallet loading, signing, broadcast, RPC URL access, tra
 
 ## Local listing request review/approval flow
 
-`GET /v1/listings/review-flow` exposes the Clonners-managed local review and approval state machine as metadata only. After Clonners approval, `POST /v1/listings/requests` can queue metadata into a local in-memory review queue, but it still does not mutate `MarketRegistry` and does not create real token addresses.
+`GET /v1/listings/review-flow` exposes the Clonners-managed local review and approval state machine as metadata only. After Clonners approval, `POST /v1/listings/requests` can queue metadata into a local in-memory review queue, and `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision` can record immutable local decision metadata. These surfaces still do not mutate `MarketRegistry` and do not create real token addresses.
 
 Required review-flow metadata:
 
@@ -86,7 +86,8 @@ Required review-flow metadata:
 source: listed-asset-marketregistry-review-flow
 status: design-only-local-metadata
 phase: clonners-managed-local-review-before-dao
-requestSurface: prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection
+requestSurface: prepare-only POST /v1/listings/requests; POST /v1/listings/requests with requestMode=local_review_queue; GET /v1/listings/requests inspection; POST /v1/listings/requests/{requestId}/decision with decisionMode=local_review_decision
+clientSurface: TypeScript/Python/qdex listing policy, review-flow, local queue, and local decision clients
 marketRegistryMutation: false
 approvedStatus: approved-local-metadata-only
 rejectedStatus: rejected-local-metadata-only
@@ -97,7 +98,7 @@ permissions: NO_WITHDRAW, NO_ADMIN
 
 The local stages are `metadata_intake`, `token_safety_review`, `market_parameter_review`, `clonners_local_approval`, and `marketregistry_admin_gate`. The safety contract pins `phase: clonners-managed-local-review-before-dao` and `marketRegistryMutation: false`. A local approval is `approved-local-metadata-only`; a local rejection is `rejected-local-metadata-only`. The next mutation gate remains explicit Clonners approval required before `MarketRegistry.addMarket`.
 
-This route preserves `NO_WITHDRAW` and `NO_ADMIN`, and listing/admin metadata still cannot move `TradingVault` balances, mutate `MarketRegistry`, or grant withdrawal/admin authority.
+This route preserves `NO_WITHDRAW` and `NO_ADMIN`, summarizes the existing local queue/decision client surfaces, and listing/admin metadata still cannot move `TradingVault` balances, mutate `MarketRegistry`, or grant withdrawal/admin authority.
 
 ## Prepare-only listing request API placeholder
 
