@@ -90,7 +90,7 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain the local API + terminal UI public kline/candle stream smoke as current completed work',
   );
   assert.ok(
-    status.includes('Current phase: terminal UI public market-data stream binding is complete'),
-    'campaign status should describe the terminal UI public market-data stream binding as the current completed phase',
+    status.includes('Current phase: local API + terminal UI public market-data stream integration smoke is complete'),
+    'campaign status should describe the local API + terminal UI public market-data stream integration smoke as the current completed phase',
   );
 });

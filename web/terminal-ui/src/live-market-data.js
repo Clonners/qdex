@@ -84,6 +84,7 @@ const normalizeTickerData = (data) => {
   assertArray(data.tickers, 'ticker stream rows');
 
   return {
+    source: TICKER_SOURCE,
     tickers: data.tickers.map((ticker) => {
       assertObject(ticker, 'ticker stream row');
       assertEqual(ticker.source ?? TICKER_SOURCE, TICKER_SOURCE, 'ticker row source');

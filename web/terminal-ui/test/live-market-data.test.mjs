@@ -294,8 +294,9 @@ test('terminal UI package/app/docs/status mention the public market-data stream 
 
   for (const requiredText of [
     'Completed previous run: local API + terminal UI public kline/candle stream integration smoke',
-    'Completed this run: terminal UI public market-data stream binding',
-    'Next autonomous slice: local API + terminal UI public market-data stream integration smoke',
+    'Completed previous run: terminal UI public market-data stream binding',
+    'Completed this run: local API + terminal UI public market-data stream integration smoke',
+    'Next autonomous slice: terminal UI command-palette skeleton for read-only/local mock actions',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
