@@ -1,4 +1,8 @@
 import {
+  DELEGATE_KEY_EVENT_PROJECTION_SOURCE,
+  createDelegateKeyHistoryProjectionEnvelope,
+} from './delegate-keys.js';
+import {
   CUSTODY_NOTE,
   INDEXER_SOURCE,
   MARKET_ID,
@@ -89,6 +93,16 @@ const privateContracts = () => [
     channel: 'withdrawals',
     payload: 'withdrawal_projection',
     source: TRADINGVAULT_EVENT_PROJECTION_SOURCE,
+  }),
+  privateContract({
+    channel: 'delegate-key-registrations',
+    payload: 'delegate_key_registration_projection',
+    source: DELEGATE_KEY_EVENT_PROJECTION_SOURCE,
+  }),
+  privateContract({
+    channel: 'delegate-key-revocations',
+    payload: 'delegate_key_revocation_projection',
+    source: DELEGATE_KEY_EVENT_PROJECTION_SOURCE,
   }),
 ];
 
@@ -288,6 +302,20 @@ export const createStreamSnapshot = ({ channel, state } = {}) => {
     return privateSnapshot({
       channel,
       payload: channel === 'deposits' ? 'deposit_projection' : 'withdrawal_projection',
+      source: data.source,
+      data,
+    });
+  }
+
+  if (channel === 'delegate-key-registrations' || channel === 'delegate-key-revocations') {
+    const operation = channel === 'delegate-key-registrations' ? 'registration' : 'revocation';
+    const data = createDelegateKeyHistoryProjectionEnvelope(operation);
+
+    return privateSnapshot({
+      channel,
+      payload: channel === 'delegate-key-registrations'
+        ? 'delegate_key_registration_projection'
+        : 'delegate_key_revocation_projection',
       source: data.source,
       data,
     });

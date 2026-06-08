@@ -68,6 +68,9 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'Read-only DelegateKeyRegistry history API',
     'GET /v1/delegate-keys/registrations',
     'GET /v1/delegate-keys/revocations',
+    'Read-only DelegateKeyRegistry history WebSocket snapshots',
+    '/v1/ws?channel=delegate-key-registrations',
+    '/v1/ws?channel=delegate-key-revocations',
     'source: delegatekeyregistry-event-projection',
     'projectionType: DelegateKeyRegisteredProjection | DelegateKeyRevokedProjection',
     'settlementMode: mock',
@@ -92,12 +95,12 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'post-delegate readiness plan should mark the history API envelope slice complete',
   );
   assert.ok(
-    contracts.includes('read-only DelegateKeyRegistry history API envelopes, the terminal UI read-only delegate-key history panel, and the local API + terminal UI delegate-key history smoke now expose `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`'),
-    'contracts docs should point to completed delegate-key history API envelopes, terminal UI panel, and REST smoke',
+    contracts.includes('read-only DelegateKeyRegistry history API envelopes, the terminal UI read-only delegate-key history panel, the local API + terminal UI delegate-key history smoke, and private WebSocket snapshots now expose `GET /v1/delegate-keys/registrations`, `GET /v1/delegate-keys/revocations`, `/v1/ws?channel=delegate-key-registrations`, and `/v1/ws?channel=delegate-key-revocations`'),
+    'contracts docs should point to completed delegate-key history API envelopes, terminal UI panel, REST smoke, and WebSocket snapshots',
   );
   assert.ok(
-    architecture.includes('Read-only DelegateKeyRegistry history API surfaces, the terminal UI read-only delegate-key history panel, and the local API + terminal UI delegate-key history smoke now expose `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations`'),
-    'architecture docs should point to completed delegate-key history API envelopes, terminal UI panel, and REST smoke',
+    architecture.includes('Read-only DelegateKeyRegistry history API surfaces, the terminal UI read-only delegate-key history panel, the local API + terminal UI delegate-key history smoke, and private WebSocket snapshots now expose `GET /v1/delegate-keys/registrations`, `GET /v1/delegate-keys/revocations`, `/v1/ws?channel=delegate-key-registrations`, and `/v1/ws?channel=delegate-key-revocations`'),
+    'architecture docs should point to completed delegate-key history API envelopes, terminal UI panel, REST smoke, and WebSocket snapshots',
   );
   assert.ok(
     status.includes('Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
@@ -116,12 +119,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should retain the terminal UI delegate-key history panel after client exposure',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI delegate-key history integration smoke'),
-    'campaign status should checkpoint the delegate-key history REST smoke after the static panel',
+    status.includes('Completed previous run: local API + terminal UI delegate-key history integration smoke'),
+    'campaign status should retain the delegate-key history REST smoke after the static panel',
   );
   assert.ok(
-    status.includes('Next autonomous slice: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
-    'campaign status should point beyond the REST smoke to the stream alignment boundary',
+    status.includes('Completed this run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
+    'campaign status should checkpoint the DelegateKeyRegistry history stream alignment boundary',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI binding for private DelegateKeyRegistry history streams'),
+    'campaign status should point beyond the stream alignment boundary to terminal UI stream binding',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

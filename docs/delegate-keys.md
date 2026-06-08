@@ -10,6 +10,8 @@ Current safe delegate/API key surfaces are local/source-only:
 GET /v1/delegate-keys
 GET /v1/delegate-keys/registrations
 GET /v1/delegate-keys/revocations
+/v1/ws?channel=delegate-key-registrations
+/v1/ws?channel=delegate-key-revocations
 POST /v1/delegate-keys
 DELETE /v1/delegate-keys/{keyId}
 ```
@@ -114,4 +116,29 @@ Completed terminal UI panel: `web/terminal-ui/src/delegate-key-history-panel.js`
 
 Completed local/source-only smoke: `web/terminal-ui/src/delegate-key-history-binding.js` now starts from local `createApiServer()` in tests, reads `GET /v1/delegate-keys/registrations` plus `GET /v1/delegate-keys/revocations`, normalizes both `delegatekeyregistry-event-projection` envelopes, treats empty mock arrays as valid state, and renders the terminal delegate/API key history panel only with `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, mock-null event evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateKeyRegistryMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next local/source-only step: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment for those same read-only history envelopes, still with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+## Read-only DelegateKeyRegistry history WebSocket snapshots
+
+The private WebSocket snapshots now reuse the same read-only history envelopes as REST:
+
+```text
+/v1/ws?channel=delegate-key-registrations
+/v1/ws?channel=delegate-key-revocations
+source: delegatekeyregistry-event-projection
+projectionType: DelegateKeyRegisteredProjection | DelegateKeyRevokedProjection
+settlementMode: mock
+settlementTx: null
+blockNumber: null
+blockHash: null
+eventIndex: null
+explorerUrl: null
+permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
+delegateCanWithdraw: false
+delegateCanAdmin: false
+fundsMoved: false
+tradingVaultMutation: false
+delegateKeyRegistryMutation: false
+```
+
+Empty registration/revocation arrays are valid private stream snapshots in local/mock state. These WebSocket snapshots are projection/cache surfaces only: no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement.
+
+Next local/source-only step: terminal UI binding for private DelegateKeyRegistry history streams, still with no live `DelegateKeyRegistry` mutation and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.

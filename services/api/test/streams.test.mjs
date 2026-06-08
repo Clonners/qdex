@@ -64,6 +64,8 @@ test('stream channel registry pins public market data and custody-safe private s
     'settlements',
     'deposits',
     'withdrawals',
+    'delegate-key-registrations',
+    'delegate-key-revocations',
   ]);
 
   const fillsContract = contracts.private.find((contract) => contract.channel === 'fills');
@@ -86,6 +88,24 @@ test('stream channel registry pins public market data and custody-safe private s
   assert.deepEqual(withdrawalsContract.requiredPermissions, ['READ_ONLY']);
   assert.deepEqual(withdrawalsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
   assert.deepEqual(withdrawalsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
+
+  const delegateKeyRegistrationsContract = contracts.private.find(
+    (contract) => contract.channel === 'delegate-key-registrations',
+  );
+  assert.equal(delegateKeyRegistrationsContract.payload, 'delegate_key_registration_projection');
+  assert.equal(delegateKeyRegistrationsContract.source, 'delegatekeyregistry-event-projection');
+  assert.deepEqual(delegateKeyRegistrationsContract.requiredPermissions, ['READ_ONLY']);
+  assert.deepEqual(delegateKeyRegistrationsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
+  assert.deepEqual(delegateKeyRegistrationsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
+
+  const delegateKeyRevocationsContract = contracts.private.find(
+    (contract) => contract.channel === 'delegate-key-revocations',
+  );
+  assert.equal(delegateKeyRevocationsContract.payload, 'delegate_key_revocation_projection');
+  assert.equal(delegateKeyRevocationsContract.source, 'delegatekeyregistry-event-projection');
+  assert.deepEqual(delegateKeyRevocationsContract.requiredPermissions, ['READ_ONLY']);
+  assert.deepEqual(delegateKeyRevocationsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
+  assert.deepEqual(delegateKeyRevocationsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
 });
 
 test('stream snapshots expose public depth/trades and private fills from indexed mock projections', () => {
@@ -220,6 +240,64 @@ test('private deposit and withdrawal stream snapshots reuse TradingVault event-p
     assert.equal(snapshot.data.tradingVaultMutation, false);
     assert.match(snapshot.data.safetyNotice, /mock rows have no real Quai transaction/);
     assert.match(snapshot.data.safetyNotice, /no wallet loaded/);
+    assert.match(snapshot.data.safetyNotice, /no funds moved/);
+    assert.match(snapshot.data.safetyNotice, /no delegate withdrawal\/admin authority/);
+  }
+});
+
+test('private DelegateKeyRegistry history stream snapshots reuse read-only event-projection envelopes', () => {
+  const state = createMockDexState();
+
+  const expectations = [
+    {
+      channel: 'delegate-key-registrations',
+      payload: 'delegate_key_registration_projection',
+      collection: 'registrations',
+      projectionType: 'DelegateKeyRegisteredProjection',
+      eventName: 'DelegateKeyRegistered',
+    },
+    {
+      channel: 'delegate-key-revocations',
+      payload: 'delegate_key_revocation_projection',
+      collection: 'revocations',
+      projectionType: 'DelegateKeyRevokedProjection',
+      eventName: 'DelegateKeyRevoked',
+    },
+  ];
+
+  for (const expectation of expectations) {
+    const snapshot = createStreamSnapshot({ channel: expectation.channel, state });
+
+    assert.equal(snapshot.channel, expectation.channel);
+    assert.equal(snapshot.visibility, 'private');
+    assert.equal(snapshot.payload, expectation.payload);
+    assert.equal(snapshot.source, 'delegatekeyregistry-event-projection');
+    assert.equal(snapshot.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+
+    assert.deepEqual(snapshot.data[expectation.collection], []);
+    assert.equal(snapshot.data.source, 'delegatekeyregistry-event-projection');
+    assert.equal(snapshot.data.projectionType, expectation.projectionType);
+    assert.equal(snapshot.data.eventName, expectation.eventName);
+    assert.equal(snapshot.data.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(snapshot.data.settlementMode, 'mock');
+    assert.equal(snapshot.data.settlementTx, null);
+    assert.equal(snapshot.data.blockNumber, null);
+    assert.equal(snapshot.data.blockHash, null);
+    assert.equal(snapshot.data.eventIndex, null);
+    assert.equal(snapshot.data.explorerUrl, null);
+    assert.equal(snapshot.data.delegateCanWithdraw, false);
+    assert.equal(snapshot.data.delegateCanAdmin, false);
+    assert.equal(snapshot.data.realQuaiTransactions, false);
+    assert.equal(snapshot.data.walletRequired, false);
+    assert.equal(snapshot.data.fundsMoved, false);
+    assert.equal(snapshot.data.tradingVaultMutation, false);
+    assert.equal(snapshot.data.delegateKeyRegistryMutation, false);
+    assert.match(snapshot.data.safetyNotice, /mock rows have no real Quai transaction/);
+    assert.match(snapshot.data.safetyNotice, /no wallet loaded/);
+    assert.match(snapshot.data.safetyNotice, /no live DelegateKeyRegistry mutation/);
     assert.match(snapshot.data.safetyNotice, /no funds moved/);
     assert.match(snapshot.data.safetyNotice, /no delegate withdrawal\/admin authority/);
   }

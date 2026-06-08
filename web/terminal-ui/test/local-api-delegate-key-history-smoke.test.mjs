@@ -188,12 +188,16 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should move the static panel checkpoint to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI delegate-key history integration smoke'),
-    'campaign status should record the delegate-key history REST smoke as this run',
+    status.includes('Completed previous run: local API + terminal UI delegate-key history integration smoke'),
+    'campaign status should retain the delegate-key history REST smoke as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
-    'campaign status should point to the next local/source-only delegate-key history stream boundary',
+    status.includes('Completed this run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment'),
+    'campaign status should record the delegate-key history stream alignment as this run',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: terminal UI binding for private DelegateKeyRegistry history streams'),
+    'campaign status should point to the next local/source-only delegate-key history stream UI boundary',
   );
   assert.ok(
     delegateDoc.includes('Completed local/source-only smoke: `web/terminal-ui/src/delegate-key-history-binding.js`'),

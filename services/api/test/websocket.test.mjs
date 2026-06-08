@@ -240,6 +240,59 @@ test('WebSocket transport sends private TradingVault deposit and withdrawal hist
   });
 });
 
+test('WebSocket transport sends private DelegateKeyRegistry registration and revocation history snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    for (const expectation of [
+      {
+        channel: 'delegate-key-registrations',
+        payload: 'delegate_key_registration_projection',
+        collection: 'registrations',
+        projectionType: 'DelegateKeyRegisteredProjection',
+        eventName: 'DelegateKeyRegistered',
+      },
+      {
+        channel: 'delegate-key-revocations',
+        payload: 'delegate_key_revocation_projection',
+        collection: 'revocations',
+        projectionType: 'DelegateKeyRevokedProjection',
+        eventName: 'DelegateKeyRevoked',
+      },
+    ]) {
+      const message = await readWebSocketSnapshot(baseUrl, expectation.channel);
+
+      assert.equal(message.type, 'snapshot');
+      assert.equal(message.transport, 'websocket');
+      assert.equal(message.snapshot.channel, expectation.channel);
+      assert.equal(message.snapshot.visibility, 'private');
+      assert.equal(message.snapshot.payload, expectation.payload);
+      assert.equal(message.snapshot.source, 'delegatekeyregistry-event-projection');
+      assert.equal(message.snapshot.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(message.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(message.snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+
+      assert.deepEqual(message.snapshot.data[expectation.collection], []);
+      assert.equal(message.snapshot.data.source, 'delegatekeyregistry-event-projection');
+      assert.equal(message.snapshot.data.projectionType, expectation.projectionType);
+      assert.equal(message.snapshot.data.eventName, expectation.eventName);
+      assert.equal(message.snapshot.data.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(message.snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(message.snapshot.data.settlementMode, 'mock');
+      assert.equal(message.snapshot.data.settlementTx, null);
+      assert.equal(message.snapshot.data.blockNumber, null);
+      assert.equal(message.snapshot.data.blockHash, null);
+      assert.equal(message.snapshot.data.eventIndex, null);
+      assert.equal(message.snapshot.data.explorerUrl, null);
+      assert.equal(message.snapshot.data.delegateCanWithdraw, false);
+      assert.equal(message.snapshot.data.delegateCanAdmin, false);
+      assert.equal(message.snapshot.data.realQuaiTransactions, false);
+      assert.equal(message.snapshot.data.walletRequired, false);
+      assert.equal(message.snapshot.data.fundsMoved, false);
+      assert.equal(message.snapshot.data.tradingVaultMutation, false);
+      assert.equal(message.snapshot.data.delegateKeyRegistryMutation, false);
+    }
+  });
+});
+
 test('WebSocket transport fanouts live snapshots after mock orderbook and fill mutations', async () => {
   await withServer(async (baseUrl) => {
     const httpBaseUrl = baseUrl.replace('ws://', 'http://');
