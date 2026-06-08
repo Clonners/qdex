@@ -35,6 +35,9 @@ qdex --base-url http://127.0.0.1:8787 stream withdrawals --limit 1
 qdex --base-url http://127.0.0.1:8787 stream delegate-key-registrations --limit 1
 qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations --limit 1
 qdex --base-url http://127.0.0.1:8787 stream fees --limit 1
+qdex --base-url http://127.0.0.1:8787 stream tickers --limit 1
+qdex --base-url http://127.0.0.1:8787 stream depth QI-QUAI --limit 1
+qdex --base-url http://127.0.0.1:8787 stream trades QI-QUAI --limit 1
 qdex --base-url http://127.0.0.1:8787 smoke
 ```
 
@@ -43,6 +46,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 `qdex fees` prints `GET /v1/fees` read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `qdex stream fees` consumes bounded public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Output messages carry `fee_schedule_projection`, `public-read-only-no-custody`, `feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
+
+`qdex stream tickers`, `qdex stream depth QI-QUAI`, and `qdex stream trades QI-QUAI` consume bounded public market-data snapshots from `/v1/ws?channel=global.tickers`, `/v1/ws?channel=market.<MARKET>.depth`, and `/v1/ws?channel=market.<MARKET>.trades`. Output messages carry `ticker_snapshot` / `orderbook_depth` / `trade_projection`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, and `confirmed-settlement-only` trade projection semantics with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex account` prints `GET /v1/account` as read-only `mock-account-overview` metadata: `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 

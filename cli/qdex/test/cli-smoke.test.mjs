@@ -238,6 +238,58 @@ test('qdex stream fees command exposes bounded read-only FeeManager fee schedule
   });
 });
 
+test('qdex stream market-data commands expose bounded public snapshots without wallet authority', async () => {
+  await withServer(async (baseUrl) => {
+    const tickers = await runCliJson(['--base-url', baseUrl, 'stream', 'tickers', '--limit', '1']);
+
+    assert.equal(tickers.command, 'stream tickers');
+    assert.equal(tickers.channel, 'global.tickers');
+    assert.equal(tickers.transport, 'websocket');
+    assert.equal(tickers.limit, 1);
+    assert.equal(tickers.messages.length, 1);
+    assert.equal(tickers.messages[0].type, 'snapshot');
+    assert.equal(tickers.messages[0].snapshot.channel, 'global.tickers');
+    assert.equal(tickers.messages[0].snapshot.visibility, 'public');
+    assert.equal(tickers.messages[0].snapshot.payload, 'ticker_snapshot');
+    assert.equal(tickers.messages[0].snapshot.source, 'mock-market-data');
+    assert.equal(tickers.messages[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(tickers.messages[0].snapshot.data.tickers[0].marketId, 'QI-QUAI');
+    assert.equal(tickers.messages[0].snapshot.data.tickers[0].volume24h, '0');
+
+    const depth = await runCliJson(['--base-url', baseUrl, 'stream', 'depth', 'QI-QUAI', '--limit', '1']);
+
+    assert.equal(depth.command, 'stream depth');
+    assert.equal(depth.channel, 'market.QI-QUAI.depth');
+    assert.equal(depth.marketId, 'QI-QUAI');
+    assert.equal(depth.transport, 'websocket');
+    assert.equal(depth.messages.length, 1);
+    assert.equal(depth.messages[0].snapshot.channel, 'market.QI-QUAI.depth');
+    assert.equal(depth.messages[0].snapshot.visibility, 'public');
+    assert.equal(depth.messages[0].snapshot.payload, 'orderbook_depth');
+    assert.equal(depth.messages[0].snapshot.source, 'mock-orderbook');
+    assert.equal(depth.messages[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(depth.messages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.deepEqual(depth.messages[0].snapshot.data.bids, []);
+    assert.deepEqual(depth.messages[0].snapshot.data.asks, []);
+
+    const trades = await runCliJson(['--base-url', baseUrl, 'stream', 'trades', 'QI-QUAI', '--limit', '1']);
+
+    assert.equal(trades.command, 'stream trades');
+    assert.equal(trades.channel, 'market.QI-QUAI.trades');
+    assert.equal(trades.marketId, 'QI-QUAI');
+    assert.equal(trades.transport, 'websocket');
+    assert.equal(trades.messages.length, 1);
+    assert.equal(trades.messages[0].snapshot.channel, 'market.QI-QUAI.trades');
+    assert.equal(trades.messages[0].snapshot.visibility, 'public');
+    assert.equal(trades.messages[0].snapshot.payload, 'trade_projection');
+    assert.equal(trades.messages[0].snapshot.source, 'in-memory-indexer-projection');
+    assert.equal(trades.messages[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(trades.messages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.equal(trades.messages[0].snapshot.data.source, 'in-memory-indexer-projection');
+    assert.deepEqual(trades.messages[0].snapshot.data.trades, []);
+  });
+});
+
 test('qdex balance command prints read-only mock vault balances without wallet or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'balance']);

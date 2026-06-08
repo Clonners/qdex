@@ -8,7 +8,16 @@ The TypeScript SDK is the first-class bot and market-maker client for QDex. It w
 const dex = new QDexClient({ baseUrl, wallet, delegateKey });
 
 await dex.markets.list();
+const tickerStream = dex.tickers.openStream(); // /v1/ws?channel=global.tickers -> ticker_snapshot, mock-market-data
+await tickerStream.close();
+await dex.tickers.stream({ limit });
 await dex.orderbook.get(marketId);
+const depthStream = dex.orderbook.openStream(marketId); // /v1/ws?channel=market.<MARKET>.depth -> orderbook_depth, mock-orderbook
+await depthStream.close();
+await dex.orderbook.stream(marketId, { limit });
+const tradesStream = dex.trades.openStream(marketId); // /v1/ws?channel=market.<MARKET>.trades -> trade_projection, confirmed-settlement-only
+await tradesStream.close();
+await dex.trades.stream(marketId, { limit });
 await dex.contracts.get(); // GET /v1/contracts
 await dex.fees.get(); // GET /v1/fees -> feemanager-policy-projection, FeeScheduleProjection, READ_ONLY
 const feesStream = dex.fees.openStream({ timeoutMs: 2000 }); // /v1/ws?channel=fees -> fee_schedule_projection, public-read-only-no-custody
@@ -137,6 +146,12 @@ await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
 `fees.get()` is read-only FeeManager fee schedule metadata from `GET /v1/fees`. It returns `source: feemanager-policy-projection`, `projectionType: FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. This client has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `fees.openStream()` and `fees.stream({ limit })` consume public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Stream messages carry `payload: fee_schedule_projection`, `custody: public-read-only-no-custody`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`; the helpers remain bounded/read-only and preserve no wallet/RPC/signing/broadcast/deploy/tx/funds behavior or fee-authority runtime keys.
+
+`tickers.openStream()` and `tickers.stream({ limit })` consume public ticker snapshots from `/v1/ws?channel=global.tickers`. Stream messages carry `payload: ticker_snapshot`, `custody: public-read-only-no-custody`, `source: mock-market-data`, null mock prices, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`orderbook.openStream(marketId)` and `orderbook.stream(marketId, { limit })` consume public market depth snapshots from `/v1/ws?channel=market.<MARKET>.depth`. Stream messages carry `payload: orderbook_depth`, `custody: public-read-only-no-custody`, `source: mock-orderbook`, local mock depth rows, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`trades.openStream(marketId)` and `trades.stream(marketId, { limit })` consume public confirmed trade projection snapshots from `/v1/ws?channel=market.<MARKET>.trades`. Stream messages carry `payload: trade_projection`, `custody: public-read-only-no-custody`, `source: in-memory-indexer-projection`, `confirmed-settlement-only` semantics, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `account.get()` is a read-only local account overview from `GET /v1/account`. It returns `source: mock-account-overview`, `session.mode: mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`; it has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 

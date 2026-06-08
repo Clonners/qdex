@@ -515,6 +515,9 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 stream delegate-key-registrations [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream fees [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream tickers [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream depth QI-QUAI [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream trades QI-QUAI [--limit 1]
   qdex --base-url http://127.0.0.1:8787 smoke
 `;
 
@@ -787,6 +790,52 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         command: 'cancel all',
         baseUrl,
         ...(await client.orders.cancelAll()),
+      });
+      return 0;
+    }
+
+    if (command === 'stream' && rest[0] === 'tickers') {
+      const options = parseStreamOptions(rest.slice(1));
+      const messages = await client.tickers.stream(options);
+      writeJson(stdout, {
+        command: 'stream tickers',
+        baseUrl,
+        channel: 'global.tickers',
+        transport: 'websocket',
+        limit: options.limit,
+        messages,
+      });
+      return 0;
+    }
+
+    if (command === 'stream' && rest[0] === 'depth') {
+      const marketId = rest[1] ?? 'QI-QUAI';
+      const options = parseStreamOptions(rest.slice(rest[1] === undefined ? 1 : 2));
+      const messages = await client.orderbook.stream(marketId, options);
+      writeJson(stdout, {
+        command: 'stream depth',
+        baseUrl,
+        channel: `market.${marketId}.depth`,
+        marketId,
+        transport: 'websocket',
+        limit: options.limit,
+        messages,
+      });
+      return 0;
+    }
+
+    if (command === 'stream' && rest[0] === 'trades') {
+      const marketId = rest[1] ?? 'QI-QUAI';
+      const options = parseStreamOptions(rest.slice(rest[1] === undefined ? 1 : 2));
+      const messages = await client.trades.stream(marketId, options);
+      writeJson(stdout, {
+        command: 'stream trades',
+        baseUrl,
+        channel: `market.${marketId}.trades`,
+        marketId,
+        transport: 'websocket',
+        limit: options.limit,
+        messages,
       });
       return 0;
     }

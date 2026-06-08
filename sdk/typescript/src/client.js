@@ -6,6 +6,8 @@ const MOCK_SIGNED_AT = 1780000000;
 const DEFAULT_EXPIRES_AT = 1780003600;
 
 const trimTrailingSlash = (value) => value.replace(/\/+$/, '');
+const marketDepthChannel = (marketId) => `market.${marketId}.depth`;
+const marketTradesChannel = (marketId) => `market.${marketId}.trades`;
 
 class QDexHttpError extends Error {
   constructor(message, { status, body }) {
@@ -188,10 +190,14 @@ export class QDexClient {
     this.tickers = {
       list: async () => (await this.#requestOk('/v1/tickers')).tickers,
       get: async (marketId) => this.#requestOk(`/v1/tickers/${encodeURIComponent(marketId)}`),
+      openStream: (options = {}) => this.streams.open('global.tickers', options),
+      stream: async (options = {}) => this.streams.read('global.tickers', options),
     };
 
     this.orderbook = {
       get: async (marketId) => this.#requestOk(`/v1/orderbook/${encodeURIComponent(marketId)}`),
+      openStream: (marketId, options = {}) => this.streams.open(marketDepthChannel(marketId), options),
+      stream: async (marketId, options = {}) => this.streams.read(marketDepthChannel(marketId), options),
     };
 
     this.contracts = {
@@ -302,6 +308,8 @@ export class QDexClient {
 
     this.trades = {
       list: async (marketId) => this.#requestOk(`/v1/trades/${encodeURIComponent(marketId)}`),
+      openStream: (marketId, options = {}) => this.streams.open(marketTradesChannel(marketId), options),
+      stream: async (marketId, options = {}) => this.streams.read(marketTradesChannel(marketId), options),
     };
 
     this.proofs = {

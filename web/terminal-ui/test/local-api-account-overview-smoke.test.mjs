@@ -210,8 +210,8 @@ test('account docs, browser app, package check, and campaign status mark the loc
     'campaign status should retain this local API account overview smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only public market-data stream consumers'),
-    'campaign status should point next work at local/source-only public market-data stream consumers',
+    status.includes('Next autonomous slice: Python SDK public market-data stream consumers'),
+    'campaign status should point next work at Python public market-data stream parity',
   );
 
   assert.doesNotMatch(

@@ -1018,6 +1018,57 @@ test('TypeScript SDK consumes private DelegateKeyRegistry history streams withou
   });
 });
 
+test('TypeScript SDK consumes public market-data streams without wallet or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const tickerMessages = await client.tickers.stream({ limit: 1, timeoutMs: 2_000 });
+    assert.equal(tickerMessages.length, 1);
+    assert.equal(tickerMessages[0].type, 'snapshot');
+    assert.equal(tickerMessages[0].transport, 'websocket');
+    assert.equal(tickerMessages[0].snapshot.channel, 'global.tickers');
+    assert.equal(tickerMessages[0].snapshot.visibility, 'public');
+    assert.equal(tickerMessages[0].snapshot.payload, 'ticker_snapshot');
+    assert.equal(tickerMessages[0].snapshot.source, 'mock-market-data');
+    assert.equal(tickerMessages[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(tickerMessages[0].snapshot.data.tickers[0].marketId, 'QI-QUAI');
+    assert.equal(tickerMessages[0].snapshot.data.tickers[0].lastPrice, null);
+    assert.equal(tickerMessages[0].snapshot.data.tickers[0].bestBid, null);
+    assert.equal(tickerMessages[0].snapshot.data.tickers[0].bestAsk, null);
+    assert.equal(tickerMessages[0].snapshot.data.tickers[0].volume24h, '0');
+    assert.equal(tickerMessages[0].snapshot.data.tickers[0].source, 'mock-market-data');
+
+    const depthStream = client.orderbook.openStream('QI-QUAI', { timeoutMs: 2_000 });
+    try {
+      const depthMessage = await depthStream.next();
+      assert.equal(depthMessage.type, 'snapshot');
+      assert.equal(depthMessage.snapshot.channel, 'market.QI-QUAI.depth');
+      assert.equal(depthMessage.snapshot.visibility, 'public');
+      assert.equal(depthMessage.snapshot.payload, 'orderbook_depth');
+      assert.equal(depthMessage.snapshot.source, 'mock-orderbook');
+      assert.equal(depthMessage.snapshot.custody, 'public-read-only-no-custody');
+      assert.equal(depthMessage.snapshot.data.marketId, 'QI-QUAI');
+      assert.deepEqual(depthMessage.snapshot.data.bids, []);
+      assert.deepEqual(depthMessage.snapshot.data.asks, []);
+      assert.equal(depthMessage.snapshot.data.source, 'mock-orderbook');
+    } finally {
+      await depthStream.close();
+    }
+
+    const tradeMessages = await client.trades.stream('QI-QUAI', { limit: 1, timeoutMs: 2_000 });
+    assert.equal(tradeMessages.length, 1);
+    assert.equal(tradeMessages[0].type, 'snapshot');
+    assert.equal(tradeMessages[0].snapshot.channel, 'market.QI-QUAI.trades');
+    assert.equal(tradeMessages[0].snapshot.visibility, 'public');
+    assert.equal(tradeMessages[0].snapshot.payload, 'trade_projection');
+    assert.equal(tradeMessages[0].snapshot.source, 'in-memory-indexer-projection');
+    assert.equal(tradeMessages[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(tradeMessages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.equal(tradeMessages[0].snapshot.data.source, 'in-memory-indexer-projection');
+    assert.deepEqual(tradeMessages[0].snapshot.data.trades, []);
+  });
+});
+
 test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippage bounds', () => {
   const order = createMockSignedOrder({
     side: 'sell',

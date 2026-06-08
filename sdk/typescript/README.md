@@ -12,6 +12,18 @@ const contractRegistry = await dex.contracts.get();
 const fees = await dex.fees.get();
 const accountOverview = await dex.account.get();
 const accountBalances = await dex.account.balances();
+const tickerStream = dex.tickers.openStream({ timeoutMs: 2000 });
+const initialTickerSnapshot = await tickerStream.next();
+await tickerStream.close();
+const boundedTickerSnapshots = await dex.tickers.stream({ limit: 1 });
+const depthStream = dex.orderbook.openStream('QI-QUAI', { timeoutMs: 2000 });
+const initialDepthSnapshot = await depthStream.next();
+await depthStream.close();
+const boundedDepthSnapshots = await dex.orderbook.stream('QI-QUAI', { limit: 1 });
+const tradeStream = dex.trades.openStream('QI-QUAI', { timeoutMs: 2000 });
+const initialTradeSnapshot = await tradeStream.next();
+await tradeStream.close();
+const boundedTradeSnapshots = await dex.trades.stream('QI-QUAI', { limit: 1 });
 const vaultDeposits = await dex.vault.deposits.list();
 const vaultWithdrawals = await dex.vault.withdrawals.list();
 const vaultDepositPrepare = await dex.vault.deposits.prepare({
@@ -159,6 +171,19 @@ console.log(accountOverview.walletRequired); // walletRequired: false
 console.log(accountOverview.fundsMoved); // fundsMoved: false
 console.log(accountOverview.tradingVaultMutation); // tradingVaultMutation: false
 console.log(accountBalances.source); // mock-vault-projection
+console.log(initialTickerSnapshot.snapshot.channel); // /v1/ws?channel=global.tickers
+console.log(initialTickerSnapshot.snapshot.payload); // ticker_snapshot
+console.log(initialTickerSnapshot.snapshot.custody); // public-read-only-no-custody
+console.log(initialTickerSnapshot.snapshot.source); // mock-market-data
+console.log(boundedTickerSnapshots[0].snapshot.data.tickers[0].source); // mock-market-data
+console.log(initialDepthSnapshot.snapshot.channel); // /v1/ws?channel=market.<MARKET>.depth
+console.log(initialDepthSnapshot.snapshot.payload); // orderbook_depth
+console.log(initialDepthSnapshot.snapshot.source); // mock-orderbook
+console.log(boundedDepthSnapshots[0].snapshot.custody); // public-read-only-no-custody
+console.log(initialTradeSnapshot.snapshot.channel); // /v1/ws?channel=market.<MARKET>.trades
+console.log(initialTradeSnapshot.snapshot.payload); // trade_projection
+console.log(initialTradeSnapshot.snapshot.source); // in-memory-indexer-projection
+console.log(boundedTradeSnapshots[0].snapshot.data.source); // in-memory-indexer-projection
 console.log(listingPolicy.status); // design-only-local-metadata
 console.log(listingPolicy.primaryQuoteAssets); // WQUAI, WQI
 console.log(listingPolicy.supportedAssets[2].symbol); // community-created-erc20-style-token
@@ -244,6 +269,8 @@ console.log(result.proof.settlementMode); // mock
 `dex.fees.get()` calls `GET /v1/fees` and returns read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
 `dex.fees.openStream` and `dex.fees.stream` consume public `/v1/ws?channel=fees` snapshots for bounded bot/operator FeeManager policy monitoring. Messages carry `payload: fee_schedule_projection`, `custody: public-read-only-no-custody`, `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`; the stream helpers do not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, move funds, or expose fee-authority runtime keys.
+
+`dex.tickers.openStream` and `dex.tickers.stream` consume public ticker snapshots from `/v1/ws?channel=global.tickers`; messages carry `ticker_snapshot`, `public-read-only-no-custody`, and `mock-market-data`. `dex.orderbook.openStream` and `dex.orderbook.stream` consume `/v1/ws?channel=market.<MARKET>.depth`; messages carry `orderbook_depth`, `public-read-only-no-custody`, and `mock-orderbook`. `dex.trades.openStream` and `dex.trades.stream` consume `/v1/ws?channel=market.<MARKET>.trades`; messages carry `trade_projection`, `public-read-only-no-custody`, and `in-memory-indexer-projection` / `confirmed-settlement-only` trade projection semantics. These public market-data helpers preserve no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `dex.account.get()` calls `GET /v1/account` and returns the read-only `mock-account-overview` envelope with `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
