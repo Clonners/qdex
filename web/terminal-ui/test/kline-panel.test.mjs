@@ -125,11 +125,11 @@ test('terminal UI docs, package check, and campaign status mark public kline/can
     'campaign status should retain this terminal UI public kline/candle binding slice as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    status.includes('Completed previous run: local API + terminal UI public kline/candle stream integration smoke'),
     'campaign status should checkpoint the REST-confirmed public kline/candle stream smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    status.includes('Next autonomous slice: local API + terminal UI public market-data stream integration smoke'),
     'campaign status should move next work to another bounded local/source-only MVP surface',
   );
 

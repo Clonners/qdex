@@ -615,6 +615,53 @@ const renderFeePolicyStreamPanel = (feePolicyStream) => {
   `;
 };
 
+const renderPublicMarketDataStreamEvents = (events = []) => {
+  if (events.length === 0) {
+    return '<li class="muted">waiting for public market-data stream snapshots</li>';
+  }
+
+  return events.map(({ channel, event }) => `
+    <li><span>${escapeHtml(channel)}</span> <code>${escapeHtml(event?.reason ?? 'initial_snapshot')}</code></li>
+  `).join('');
+};
+
+const renderPublicMarketDataStreamPanel = (publicMarketDataStream) => {
+  if (publicMarketDataStream === undefined || publicMarketDataStream === null) {
+    return '';
+  }
+
+  const channels = (publicMarketDataStream.channels ?? []).join(', ');
+  const payloads = (publicMarketDataStream.payloads ?? []).join(', ');
+  const sources = (publicMarketDataStream.sources ?? []).join(', ');
+  const permissions = (publicMarketDataStream.permissions ?? []).join(', ');
+
+  return `
+        <article class="panel stream-panel public-market-data-stream-panel">
+          <h2>live public market-data streams</h2>
+          <p class="warning">${escapeHtml(publicMarketDataStream.safetyNotice)}</p>
+          <dl class="kv">
+            <div><dt>channels</dt><dd>${escapeHtml(channels)}</dd></div>
+            <div><dt>payloads</dt><dd>${escapeHtml(payloads)}</dd></div>
+            <div><dt>sources</dt><dd>${escapeHtml(sources)}</dd></div>
+            <div><dt>stream custody</dt><dd>${escapeHtml(publicMarketDataStream.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>market</dt><dd>${escapeHtml(publicMarketDataStream.marketId)}</dd></div>
+            <div><dt>tickers</dt><dd>${escapeHtml(publicMarketDataStream.tickerCount ?? 0)}</dd></div>
+            <div><dt>bids</dt><dd>${escapeHtml(publicMarketDataStream.bidCount ?? 0)}</dd></div>
+            <div><dt>asks</dt><dd>${escapeHtml(publicMarketDataStream.askCount ?? 0)}</dd></div>
+            <div><dt>trades</dt><dd>${escapeHtml(publicMarketDataStream.tradeCount ?? 0)}</dd></div>
+            <div><dt>finality</dt><dd>${escapeHtml(publicMarketDataStream.finality ?? 'confirmed-settlement-only')}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(publicMarketDataStream.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(publicMarketDataStream.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(publicMarketDataStream.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(publicMarketDataStream.tradingVaultMutation)}</dd></div>
+          </dl>
+          <h3>public stream events</h3>
+          <ul>${renderPublicMarketDataStreamEvents(publicMarketDataStream.streamEvents)}</ul>
+        </article>
+  `;
+};
+
 const renderKlineRows = (candles = []) => {
   if (candles.length === 0) {
     return '<li class="muted">no local/mock candle rows yet</li>';
@@ -798,6 +845,8 @@ ${renderKlinePanel(fixture.klines)}
 ${renderFeePolicyStreamPanel(fixture.feePolicyStream)}
 
 ${renderKlineStreamPanel(fixture.klineStream)}
+
+${renderPublicMarketDataStreamPanel(fixture.publicMarketDataStream)}
 
 ${renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream)}
 

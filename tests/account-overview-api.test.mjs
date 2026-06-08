@@ -98,7 +98,7 @@ test('account docs and campaign status pin the read-only overview API and client
     'campaign status should retain the local API account overview smoke as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    status.includes('Completed previous run: local API + terminal UI public kline/candle stream integration smoke'),
     'campaign status should retain the local API + terminal UI public kline/candle stream smoke as current completed work',
   );
 });

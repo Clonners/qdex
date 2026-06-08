@@ -8,6 +8,7 @@ import { bindLiveFeePolicyStreamWithRestSnapshot } from './fee-policy-stream-bin
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindLiveKlineStreamWithRestSnapshot } from './kline-stream-binding.js';
+import { bindLivePublicMarketDataStreams } from './live-market-data.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
@@ -203,6 +204,25 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxKlineStream = 'disabled';
     console.warn('QDEX live public kline/candle stream disabled; keeping static read-only fixture.', error);
+  }
+
+  try {
+    bindLivePublicMarketDataStreams({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxPublicMarketDataStreams = 'error';
+        console.warn('QDEX live public market-data streams unavailable; keeping static read-only fixture with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.', error);
+      },
+      onUpdate: () => {
+        mount.dataset.qdxPublicMarketDataStreams = 'global.tickers,market.QI-QUAI.depth,market.QI-QUAI.trades';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxPublicMarketDataStreams = 'disabled';
+    console.warn('QDEX live public market-data streams disabled; keeping static read-only fixture.', error);
   }
 
   try {

@@ -201,12 +201,12 @@ test('Python SDK docs expose bounded public market-data and kline/candle consume
   }
 });
 
-test('campaign status marks local API + terminal UI public kline/candle stream smoke complete after the terminal UI binding', async () => {
+test('campaign status marks terminal UI public market-data stream binding complete after the kline smoke', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: local API + terminal UI public kline/candle stream integration smoke is complete'),
-    'campaign status should mark local API + terminal UI public kline/candle stream smoke as current phase',
+    status.includes('Current phase: terminal UI public market-data stream binding is complete'),
+    'campaign status should mark terminal UI public market-data stream binding as current phase',
   );
   assert.ok(
     status.includes('Completed previous run: TypeScript SDK and `qdex` CLI public kline/candle consumers'),
@@ -221,11 +221,11 @@ test('campaign status marks local API + terminal UI public kline/candle stream s
     'campaign status should move terminal UI public kline/candle panel binding to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    status.includes('Completed previous run: local API + terminal UI public kline/candle stream integration smoke'),
     'campaign status should record this run as the REST-confirmed public kline/candle stream smoke',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    status.includes('Next autonomous slice: local API + terminal UI public market-data stream integration smoke'),
     'campaign status should move next work to another safe local/source-only MVP surface',
   );
   assert.doesNotMatch(

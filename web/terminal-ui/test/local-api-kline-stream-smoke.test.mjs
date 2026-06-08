@@ -200,11 +200,11 @@ test('terminal UI docs, package check, and campaign status mark public kline str
     'campaign status should move terminal UI public kline binding to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI public kline/candle stream integration smoke'),
+    status.includes('Completed previous run: local API + terminal UI public kline/candle stream integration smoke'),
     'campaign status should mark the local API + terminal UI kline stream smoke as this run',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
+    status.includes('Next autonomous slice: local API + terminal UI public market-data stream integration smoke'),
     'campaign status should move the next work to another safe local/source-only MVP surface',
   );
   assert.ok(
