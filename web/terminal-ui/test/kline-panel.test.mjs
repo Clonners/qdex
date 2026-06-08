@@ -129,7 +129,7 @@ test('terminal UI docs, package check, and campaign status mark public kline/can
     'campaign status should checkpoint the REST-confirmed public kline/candle stream smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI command-palette skeleton for read-only/local mock actions'),
+    status.includes('Next autonomous slice: local API + terminal UI command-palette smoke for read-only/local mock actions'),
     'campaign status should move next work to another bounded local/source-only MVP surface',
   );
 

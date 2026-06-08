@@ -1,4 +1,5 @@
 import { normalizeAccountOverviewPanelFixture } from './account-overview-panel.js';
+import { normalizeCommandPaletteFixture } from './command-palette.js';
 import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-panel.js';
 import { normalizeFeePolicyPanelFixture } from './fee-policy-panel.js';
 import { normalizeKlinePanelFixture } from './kline-panel.js';
@@ -740,6 +741,57 @@ const renderKlineStreamPanel = (klineStream) => {
   `;
 };
 
+const renderCommandPaletteRows = (commands = []) => commands.map((command) => `
+  <li>
+    <code>${escapeHtml(command.command)}</code>
+    <span>${escapeHtml(command.actionType)}</span>
+    <span>${escapeHtml(command.surface)}</span>
+    <span>${escapeHtml(command.dispatchMode)}</span>
+  </li>
+`).join('');
+
+const renderCommandPalettePanel = (commandPalette) => {
+  if (commandPalette === undefined || commandPalette === null) {
+    return '';
+  }
+
+  const panel = normalizeCommandPaletteFixture(commandPalette);
+  const permissions = (panel.permissions ?? []).join(', ');
+
+  return `
+        <article class="panel command-palette-skeleton-panel">
+          <h2>terminal command-palette skeleton</h2>
+          <p class="warning">${escapeHtml(panel.safety.notice)}</p>
+          <dl class="kv">
+            <div><dt>source</dt><dd>${escapeHtml(panel.source)}</dd></div>
+            <div><dt>mode</dt><dd>${escapeHtml(panel.mode)}</dd></div>
+            <div><dt>dispatch</dt><dd>${escapeHtml(panel.dispatchMode)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(panel.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(panel.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(panel.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(panel.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(panel.tradingVaultMutation)}</dd></div>
+            <div><dt>MarketRegistry mutation</dt><dd>${escapeHtml(panel.marketRegistryMutation)}</dd></div>
+            <div><dt>DelegateKeyRegistry mutation</dt><dd>${escapeHtml(panel.delegateKeyRegistryMutation)}</dd></div>
+            <div><dt>delegate can withdraw</dt><dd>${escapeHtml(panel.delegateCanWithdraw)}</dd></div>
+            <div><dt>delegate can admin</dt><dd>${escapeHtml(panel.delegateCanAdmin)}</dd></div>
+          </dl>
+          <form data-qdx-command-palette-form>
+            <label>
+              command
+              <input data-qdx-command-palette-input value=":proof trade-000001" aria-label="terminal command palette input" />
+            </label>
+            <button type="submit">preview command</button>
+          </form>
+          <p class="muted" data-qdx-command-palette-status>Preview-only skeleton: choose a known command; no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.</p>
+          <h3>previewable commands</h3>
+          <ul>${renderCommandPaletteRows(panel.commands)}</ul>
+          <p class="warning">Matcher-local cancellation does not mutate on-chain NonceManager nonces. Delegate/API key commands keep delegate can withdraw false and delegate can admin false.</p>
+        </article>
+  `;
+};
+
 export const renderTradeProofPanel = (fixture) => {
   const { sources, market, orderbook, fill, trade, proof, custody } = fixture;
   const proofJson = JSON.stringify(proof, null, 2);
@@ -853,6 +905,8 @@ ${renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream)}
 ${renderVaultHistoryStreamPanel(fixture.vaultHistoryStream)}
 
 ${renderVaultHistoryPanel(fixture.vaultHistory)}
+
+${renderCommandPalettePanel(fixture.commandPalette)}
 
         <article class="panel command-panel">
           <h2>keyboard</h2>

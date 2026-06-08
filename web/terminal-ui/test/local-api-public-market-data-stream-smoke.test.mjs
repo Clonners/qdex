@@ -231,7 +231,7 @@ test('terminal UI docs, package check, app wiring, and campaign status mark publ
     'campaign status should move terminal UI public market-data stream binding to previous work',
   );
   assert.ok(
-    status.includes('Completed this run: local API + terminal UI public market-data stream integration smoke'),
+    status.includes('Completed previous run: local API + terminal UI public market-data stream integration smoke'),
     'campaign status should mark the public market-data stream smoke as this run',
   );
   assert.ok(

@@ -1,5 +1,6 @@
 import { bindAccountOverviewLocalApiSmoke } from './account-overview-binding.js';
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
+import { bindCommandPaletteSkeleton } from './command-palette.js';
 import { bindDelegateKeyHistoryLocalApiSmoke } from './delegate-key-history-binding.js';
 import { bindLiveDelegateKeyHistoryStreamsWithRestHistory } from './delegate-key-history-stream-binding.js';
 import { bindDelegateKeyPrepareTriggerWithLocalApiSmoke } from './delegate-key-prepare-binding.js';
@@ -21,6 +22,23 @@ if (mount) {
   const baseUrl = mount.dataset.qdxStreamBaseUrl || globalThis.QDEX_STREAM_BASE_URL || 'http://127.0.0.1:8787';
 
   mount.innerHTML = renderTradeProofPanel(mockVerticalSliceFixture);
+
+  try {
+    bindCommandPaletteSkeleton({
+      mount,
+      palette: mockVerticalSliceFixture.commandPalette,
+      onPreview: () => {
+        mount.dataset.qdxCommandPalette = 'preview-only';
+      },
+      onError: (error) => {
+        mount.dataset.qdxCommandPalette = 'error';
+        console.warn('QDEX command palette preview failed safely; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxCommandPalette = 'disabled';
+    console.warn('QDEX command palette skeleton disabled; keeping static read-only/local mock command hints.', error);
+  }
 
   try {
     bindAccountOverviewLocalApiSmoke({
