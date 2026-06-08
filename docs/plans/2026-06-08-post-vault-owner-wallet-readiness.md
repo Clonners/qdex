@@ -160,7 +160,13 @@ Completed: private `deposits`/`withdrawals` WebSocket snapshots now reuse the Tr
 
 `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals` now emit private read-only snapshots backed by the same `createVaultHistoryProjectionEnvelope()` shape as `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`: `source: tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, empty local/mock arrays as valid state, null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`.
 
-Next bounded local/source-only slice: bind terminal UI to private `deposits`/`withdrawals` vault history streams, still with mock-null evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+## Completed local/source-only terminal UI vault history stream binding
+
+Completed: terminal UI now binds private `deposits`/`withdrawals` vault history streams.
+
+`web/terminal-ui/src/live-vault-history.js` consumes `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals`, validates the same `tradingvault-event-projection` TradingVault event envelopes as the REST history panel, renders a live vault history stream safety panel, and keeps static fixture fallback if local streams are unavailable. The binding preserves `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, empty local/mock arrays as valid state, mock-null event evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, no wallet loaded, and no delegate withdrawal/admin authority.
+
+Next bounded local/source-only slice: local API + terminal UI vault history stream integration smoke, still with mock-null evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 

@@ -69,7 +69,10 @@ test('post-vault owner-wallet readiness plan pins completed prepare surfaces and
     'Completed: private `deposits`/`withdrawals` WebSocket snapshots now reuse the TradingVault event-projection envelope.',
     '`/v1/ws?channel=deposits`',
     '`/v1/ws?channel=withdrawals`',
-    'Next bounded local/source-only slice: bind terminal UI to private `deposits`/`withdrawals` vault history streams',
+    '## Completed local/source-only terminal UI vault history stream binding',
+    'Completed: terminal UI now binds private `deposits`/`withdrawals` vault history streams.',
+    '`web/terminal-ui/src/live-vault-history.js`',
+    'Next bounded local/source-only slice: local API + terminal UI vault history stream integration smoke',
   ]) {
     assert.ok(plan.includes(requiredText), `${planPath} should include ${requiredText}`);
   }

@@ -155,6 +155,49 @@ const renderBalanceStreamPanel = (balanceStream, balanceProjection, balances = [
   `;
 };
 
+const renderVaultHistoryStreamEvents = (events = []) => {
+  if (events.length === 0) {
+    return '<li class="muted">waiting for private vault history stream snapshot</li>';
+  }
+
+  return events.map(({ channel, event }) => `
+    <li><span>${escapeHtml(channel)}</span> <code>${escapeHtml(event?.reason ?? 'initial_snapshot')}</code></li>
+  `).join('');
+};
+
+const renderVaultHistoryStreamPanel = (vaultHistoryStream) => {
+  if (vaultHistoryStream === undefined || vaultHistoryStream === null) {
+    return '';
+  }
+
+  const permissions = (vaultHistoryStream.permissions ?? []).join(', ');
+  const channels = (vaultHistoryStream.channels ?? []).join(', ');
+  const projectionSafetyNotices = vaultHistoryStream.projectionSafetyNotices ?? {};
+
+  return `
+        <article class="panel stream-panel vault-history-stream-panel">
+          <h2>live vault history streams</h2>
+          <p class="warning">${escapeHtml(vaultHistoryStream.safetyNotice)}</p>
+          <p class="warning">${escapeHtml(projectionSafetyNotices.deposits ?? '')}</p>
+          <p class="warning">${escapeHtml(projectionSafetyNotices.withdrawals ?? '')}</p>
+          <dl class="kv">
+            <div><dt>channels</dt><dd>${escapeHtml(channels)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(vaultHistoryStream.source)}</dd></div>
+            <div><dt>stream custody</dt><dd>${escapeHtml(vaultHistoryStream.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(vaultHistoryStream.settlementMode)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(vaultHistoryStream.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(vaultHistoryStream.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(vaultHistoryStream.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(vaultHistoryStream.tradingVaultMutation)}</dd></div>
+            <div><dt>row count</dt><dd>${escapeHtml(vaultHistoryStream.rowCount ?? 0)}</dd></div>
+          </dl>
+          <h3>private stream events</h3>
+          <ul>${renderVaultHistoryStreamEvents(vaultHistoryStream.streamEvents)}</ul>
+        </article>
+  `;
+};
+
 const renderVaultOperationPanel = (vaultOperation) => {
   if (vaultOperation === undefined || vaultOperation === null) {
     return '';
@@ -349,6 +392,8 @@ ${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
 ${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fixture.balances)}
 
 ${renderVaultOperationPanel(fixture.vaultOperation)}
+
+${renderVaultHistoryStreamPanel(fixture.vaultHistoryStream)}
 
 ${renderVaultHistoryPanel(fixture.vaultHistory)}
 

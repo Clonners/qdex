@@ -112,8 +112,8 @@ test('vault docs and campaign status mark read-only history API visibility witho
     'campaign status should retain the local API + terminal UI vault history smoke slice',
   );
   assert.ok(
-    status.includes('Completed this run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
-    'campaign status should checkpoint the private vault history stream alignment slice',
+    status.includes('Completed previous run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
+    'campaign status should retain the private vault history stream alignment slice',
   );
 });
 
@@ -205,11 +205,15 @@ test('vault history SDK and CLI docs expose read-only clients without wallet beh
     'campaign status should retain the local API + terminal UI vault history smoke slice',
   );
   assert.ok(
-    status.includes('Completed this run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
-    'campaign status should checkpoint the bounded local/source-only vault history stream alignment slice',
+    status.includes('Completed previous run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
+    'campaign status should retain the bounded local/source-only vault history stream alignment slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: bind terminal UI to private `deposits`/`withdrawals` vault history streams'),
-    'campaign status should name the next bounded local/source-only vault history stream binding slice',
+    status.includes('Completed this run: terminal UI private vault history stream binding'),
+    'campaign status should checkpoint the bounded local/source-only terminal UI vault history stream binding slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: local API + terminal UI vault history stream integration smoke'),
+    'campaign status should name the next bounded local/source-only vault history stream smoke slice',
   );
 });

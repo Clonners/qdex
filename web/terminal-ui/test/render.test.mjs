@@ -220,3 +220,46 @@ test('renderTradeProofPanel surfaces live balances stream mock-vault safety when
   assert.match(html, /no mock vault balances yet/i);
   assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
 });
+
+test('renderTradeProofPanel surfaces live vault history stream safety when present', () => {
+  const html = renderTradeProofPanel({
+    ...mockVerticalSliceFixture,
+    vaultHistoryStream: {
+      channels: ['deposits', 'withdrawals'],
+      source: 'tradingvault-event-projection',
+      custody: 'non-custodial-no-withdrawal-authority',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+      safetyNotice: 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.',
+      projectionSafetyNotices: {
+        deposits: 'Read-only TradingVault Deposit history projection: mock rows have no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+        withdrawals: 'Read-only TradingVault Withdraw history projection: mock rows have no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+      },
+      settlementMode: 'mock',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      fundsMoved: false,
+      tradingVaultMutation: false,
+      rowCount: 0,
+      streamEvents: [
+        { channel: 'deposits', event: { reason: 'initial_snapshot' } },
+        { channel: 'withdrawals', event: { reason: 'initial_snapshot' } },
+      ],
+    },
+  });
+
+  assert.match(html, /live vault history streams/i);
+  assert.match(html, /channels[\s\S]*deposits, withdrawals/i);
+  assert.match(html, /tradingvault-event-projection/);
+  assert.match(html, /non-custodial-no-withdrawal-authority/);
+  assert.match(html, /READ_ONLY, NO_WITHDRAW, NO_ADMIN/);
+  assert.match(html, /settlementMode[\s\S]*mock/i);
+  assert.match(html, /real Quai tx[\s\S]*false/i);
+  assert.match(html, /wallet required[\s\S]*false/i);
+  assert.match(html, /funds moved[\s\S]*false/i);
+  assert.match(html, /TradingVault mutation[\s\S]*false/i);
+  assert.match(html, /row count[\s\S]*0/i);
+  assert.match(html, /no real Quai transaction/i);
+  assert.match(html, /no wallet loaded, no funds moved/i);
+  assert.match(html, /no delegate withdrawal\/admin authority/i);
+  assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
+});

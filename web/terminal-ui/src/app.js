@@ -1,6 +1,7 @@
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
+import { bindLiveVaultHistoryStreams } from './live-vault-history.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { bindVaultHistoryLocalApiSmoke } from './vault-history-binding.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
@@ -97,6 +98,25 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxVaultHistorySmoke = 'disabled';
     console.warn('QDEX vault history smoke disabled; keeping static read-only fixture.', error);
+  }
+
+  try {
+    bindLiveVaultHistoryStreams({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxVaultHistoryStreams = 'error';
+        console.warn('QDEX live vault history streams unavailable; keeping static read-only fixture and no funds behavior.', error);
+      },
+      onUpdate: () => {
+        mount.dataset.qdxVaultHistoryStreams = 'deposits,withdrawals';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxVaultHistoryStreams = 'disabled';
+    console.warn('QDEX live vault history streams disabled; keeping static read-only fixture.', error);
   }
 
   try {

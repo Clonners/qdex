@@ -111,12 +111,16 @@ test('vault docs, post-vault plan, and campaign status mark projection schema co
     'campaign status should retain the completed local/source-only vault history smoke slice',
   );
   assert.ok(
-    status.includes('Completed this run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
-    'campaign status should checkpoint the bounded local/source-only vault history stream alignment slice',
+    status.includes('Completed previous run: private `deposits`/`withdrawals` WebSocket snapshot alignment'),
+    'campaign status should retain the bounded local/source-only vault history stream alignment slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: bind terminal UI to private `deposits`/`withdrawals` vault history streams'),
-    'campaign status should point to the next bounded local/source-only vault history stream binding slice',
+    status.includes('Completed this run: terminal UI private vault history stream binding'),
+    'campaign status should checkpoint the bounded local/source-only terminal UI vault history stream binding slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: local API + terminal UI vault history stream integration smoke'),
+    'campaign status should point to the next bounded local/source-only vault history stream smoke slice',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet|Recommended next autonomous slice: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet/;
