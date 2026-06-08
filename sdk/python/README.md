@@ -14,6 +14,20 @@ markets = dex.markets.list()
 book = dex.orderbook.get("QI-QUAI")
 contracts = dex.contracts.get()
 balances = dex.account.balances()
+vault_deposit_prepare = dex.vault.deposits.prepare({
+    "owner": "0x1111111111111111111111111111111111111111",
+    "assetSymbol": "WQI",
+    "amount": "10",
+    "chainId": 0,
+    "vaultContractRef": "local-only-not-deployed",
+})
+vault_withdrawal_prepare = dex.vault.withdrawals.prepare({
+    "owner": "0x1111111111111111111111111111111111111111",
+    "assetSymbol": "WQUAI",
+    "amount": "1",
+    "chainId": 0,
+    "vaultContractRef": "local-only-not-deployed",
+})
 listing_policy = dex.listings.policy.get()
 listing_review_flow = dex.listings.review_flow.get()
 listing_request_prepare = dex.listings.requests.prepare_submit({
@@ -50,6 +64,17 @@ assert contracts["listedAssetStatus"]["nativeQiTreatment"] == "out-of-scope-dire
 assert balances["source"] == "mock-vault-projection"
 assert balances["permissions"] == ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"]
 assert balances["settlementMode"] == "mock"
+assert vault_deposit_prepare["status"] == 501
+assert vault_deposit_prepare["body"]["error"] == "owner_wallet_vault_deposit_not_implemented"
+assert vault_deposit_prepare["body"]["source"] == "owner-wallet-vault-operation-placeholder"
+assert vault_deposit_prepare["body"]["custody"] == "non-custodial-contract-vault"
+assert vault_deposit_prepare["body"]["operationStatus"] == "prepare-only-not-implemented"
+assert vault_deposit_prepare["body"]["ownerAuthorization"] == "owner-wallet-required"
+assert vault_deposit_prepare["body"]["delegateAuthority"] == "delegates-cannot-deposit-or-withdraw"
+assert vault_deposit_prepare["body"]["permissions"] == ["NO_WITHDRAW", "NO_ADMIN"]
+assert vault_deposit_prepare["body"]["fundsMoved"] is False  # fundsMoved: False
+assert vault_deposit_prepare["body"]["tradingVaultMutation"] is False  # tradingVaultMutation: False
+assert vault_withdrawal_prepare["body"]["error"] == "owner_wallet_vault_withdrawal_not_implemented"
 assert listing_policy["source"] == "listed-asset-marketregistry-policy"
 assert listing_policy["status"] == "design-only-local-metadata"
 assert listing_policy["supportedAssets"][2]["symbol"] == "community-created-erc20-style-token"
@@ -102,6 +127,8 @@ proof = smoke["proof"]
 `contracts.get()` calls `GET /v1/contracts` and returns local-only contract metadata with null addresses, `local-only-not-deployed`, `realQuaiTransactions: False`, `walletRequired: False`, `TradeSettled` as the proof trigger, and delegate safety requiring `PLACE_ORDER`, `NO_WITHDRAW`, and `NO_ADMIN`. It also returns `listedAssetStatus`: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and native Qi direct settlement out of scope in favor of WQI. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval. It does not load wallets, send transactions, read RPC URLs, deploy contracts, or claim real Quai contract addresses; its safety notice says no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 
 `dex.account.balances()` calls `GET /v1/account/balances` and returns the read-only `mock-vault-projection` envelope with `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: False`, and `walletRequired: False`. It has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+
+`dex.vault.deposits.prepare()` and `dex.vault.withdrawals.prepare()` call `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` and return the intentional 501 owner-wallet placeholders (`owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented`). The envelope preserves `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: False`, and `tradingVaultMutation: False`; the SDK treats the placeholder as a boundary response with no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 
 `dex.listings.policy.get()` calls `GET /v1/listings/policy` and returns read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
 

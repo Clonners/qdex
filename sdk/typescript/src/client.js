@@ -203,6 +203,23 @@ export class QDexClient {
       balances: async () => this.#requestOk('/v1/account/balances'),
     };
 
+    this.vault = {
+      deposits: {
+        prepare: async (request) => this.#requestExpectedStatus('/v1/vault/deposits/prepare', {
+          method: 'POST',
+          body: { ...request, operation: 'deposit' },
+          expectedStatus: 501,
+        }),
+      },
+      withdrawals: {
+        prepare: async (request) => this.#requestExpectedStatus('/v1/vault/withdrawals/prepare', {
+          method: 'POST',
+          body: { ...request, operation: 'withdrawal' },
+          expectedStatus: 501,
+        }),
+      },
+    };
+
     this.listings = {
       policy: {
         get: async () => this.#requestOk('/v1/listings/policy'),

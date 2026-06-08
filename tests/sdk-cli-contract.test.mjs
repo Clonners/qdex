@@ -260,6 +260,142 @@ test('qdex CLI spec defines terminal bot commands and safe API key scopes', asyn
   );
 });
 
+test('SDK and CLI docs expose prepare-only TradingVault deposit and withdrawal clients', async () => {
+  const docs = [
+    {
+      path: 'sdk/typescript/spec.md',
+      terms: [
+        'vault.deposits.prepare()',
+        'vault.withdrawals.prepare()',
+        'POST /v1/vault/deposits/prepare',
+        'POST /v1/vault/withdrawals/prepare',
+        'owner_wallet_vault_deposit_not_implemented',
+        'owner_wallet_vault_withdrawal_not_implemented',
+        'owner-wallet-vault-operation-placeholder',
+        'non-custodial-contract-vault',
+        'prepare-only-not-implemented',
+        'owner-wallet-required',
+        'delegates-cannot-deposit-or-withdraw',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/sign/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/typescript/README.md',
+      terms: [
+        'dex.vault.deposits.prepare',
+        'dex.vault.withdrawals.prepare',
+        'POST /v1/vault/deposits/prepare',
+        'POST /v1/vault/withdrawals/prepare',
+        'owner_wallet_vault_deposit_not_implemented',
+        'owner_wallet_vault_withdrawal_not_implemented',
+        'owner-wallet-vault-operation-placeholder',
+        'non-custodial-contract-vault',
+        'prepare-only-not-implemented',
+        'owner-wallet-required',
+        'delegates-cannot-deposit-or-withdraw',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/sign/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/spec.md',
+      terms: [
+        'vault.deposits.prepare()',
+        'vault.withdrawals.prepare()',
+        'POST /v1/vault/deposits/prepare',
+        'POST /v1/vault/withdrawals/prepare',
+        'owner_wallet_vault_deposit_not_implemented',
+        'owner_wallet_vault_withdrawal_not_implemented',
+        'owner-wallet-vault-operation-placeholder',
+        'non-custodial-contract-vault',
+        'prepare-only-not-implemented',
+        'owner-wallet-required',
+        'delegates-cannot-deposit-or-withdraw',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'fundsMoved: False',
+        'tradingVaultMutation: False',
+        'no wallet/RPC/sign/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'sdk/python/README.md',
+      terms: [
+        'dex.vault.deposits.prepare',
+        'dex.vault.withdrawals.prepare',
+        'POST /v1/vault/deposits/prepare',
+        'POST /v1/vault/withdrawals/prepare',
+        'owner_wallet_vault_deposit_not_implemented',
+        'owner_wallet_vault_withdrawal_not_implemented',
+        'owner-wallet-vault-operation-placeholder',
+        'non-custodial-contract-vault',
+        'prepare-only-not-implemented',
+        'owner-wallet-required',
+        'delegates-cannot-deposit-or-withdraw',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'fundsMoved: False',
+        'tradingVaultMutation: False',
+        'no wallet/RPC/sign/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/spec.md',
+      terms: [
+        'qdex vault deposit --prepare',
+        'qdex vault withdraw --prepare',
+        'POST /v1/vault/deposits/prepare',
+        'POST /v1/vault/withdrawals/prepare',
+        'owner_wallet_vault_deposit_not_implemented',
+        'owner_wallet_vault_withdrawal_not_implemented',
+        'owner-wallet-vault-operation-placeholder',
+        'non-custodial-contract-vault',
+        'prepare-only-not-implemented',
+        'owner-wallet-required',
+        'delegates-cannot-deposit-or-withdraw',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/sign/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+    {
+      path: 'cli/qdex/README.md',
+      terms: [
+        'qdex vault deposit --prepare',
+        'qdex vault withdraw --prepare',
+        'POST /v1/vault/deposits/prepare',
+        'POST /v1/vault/withdrawals/prepare',
+        'owner_wallet_vault_deposit_not_implemented',
+        'owner_wallet_vault_withdrawal_not_implemented',
+        'owner-wallet-vault-operation-placeholder',
+        'non-custodial-contract-vault',
+        'prepare-only-not-implemented',
+        'owner-wallet-required',
+        'delegates-cannot-deposit-or-withdraw',
+        'NO_WITHDRAW',
+        'NO_ADMIN',
+        'fundsMoved: false',
+        'tradingVaultMutation: false',
+        'no wallet/RPC/sign/broadcast/deploy/tx/funds behavior',
+      ],
+    },
+  ];
+
+  for (const doc of docs) {
+    const text = await readText(doc.path);
+    assertIncludesAll(text, doc.terms, doc.path);
+  }
+});
+
 test('SDK, CLI, and terminal consumer docs pin IndexedFillProjection projectionType', async () => {
   const docs = [
     {

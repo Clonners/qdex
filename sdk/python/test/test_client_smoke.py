@@ -149,6 +149,60 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(balances["walletRequired"])
             self.assertIn("no wallet loaded, no funds moved", balances["safetyNotice"])
 
+    def test_python_sdk_exposes_prepare_only_owner_wallet_vault_operation_placeholders_without_tx_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            base_request = {
+                "owner": "0x1111111111111111111111111111111111111111",
+                "assetSymbol": "WQI",
+                "amount": "10",
+                "chainId": 0,
+                "vaultContractRef": "local-only-not-deployed",
+            }
+
+            deposit = client.vault.deposits.prepare(base_request)
+            self.assertEqual(deposit["status"], 501)
+            body = deposit["body"]
+            self.assertEqual(body["error"], "owner_wallet_vault_deposit_not_implemented")
+            self.assertEqual(body["source"], "owner-wallet-vault-operation-placeholder")
+            self.assertEqual(body["custody"], "non-custodial-contract-vault")
+            self.assertEqual(body["vaultOperation"], "deposit")
+            self.assertEqual(body["operationStatus"], "prepare-only-not-implemented")
+            self.assertEqual(body["ownerAuthorization"], "owner-wallet-required")
+            self.assertEqual(body["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(body["delegateAuthority"], "delegates-cannot-deposit-or-withdraw")
+            self.assertFalse(body["realQuaiTransactions"])
+            self.assertFalse(body["walletRequired"])
+            self.assertFalse(body["fundsMoved"])
+            self.assertFalse(body["tradingVaultMutation"])
+            self.assertTrue(body["safety"]["noWalletLoading"])
+            self.assertTrue(body["safety"]["noRpcUrlAccess"])
+            self.assertTrue(body["safety"]["noSigning"])
+            self.assertTrue(body["safety"]["noBroadcast"])
+            self.assertTrue(body["safety"]["noTransactionSubmission"])
+            self.assertTrue(body["safety"]["noFundsMovement"])
+            self.assertTrue(body["safety"]["noDelegateWithdrawalAuthority"])
+            self.assertTrue(body["safety"]["noAdminWithdrawalAuthority"])
+            self.assertIn("owner-wallet-only", body["message"])
+            self.assertIn("does not load wallets, sign, broadcast, submit transactions, mutate TradingVault, or move funds", body["message"])
+
+            withdrawal = client.vault.withdrawals.prepare({**base_request, "assetSymbol": "WQUAI", "amount": "1.5"})
+            self.assertEqual(withdrawal["status"], 501)
+            withdrawal_body = withdrawal["body"]
+            self.assertEqual(withdrawal_body["error"], "owner_wallet_vault_withdrawal_not_implemented")
+            self.assertEqual(withdrawal_body["vaultOperation"], "withdrawal")
+            self.assertEqual(withdrawal_body["ownerAuthorization"], "owner-wallet-required")
+            self.assertEqual(withdrawal_body["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(withdrawal_body["delegateAuthority"], "delegates-cannot-deposit-or-withdraw")
+            self.assertFalse(withdrawal_body["realQuaiTransactions"])
+            self.assertFalse(withdrawal_body["walletRequired"])
+            self.assertFalse(withdrawal_body["fundsMoved"])
+            self.assertFalse(withdrawal_body["tradingVaultMutation"])
+            self.assertIn(
+                "no wallet is loaded, no signature is created, no RPC URL is read, no transaction is submitted, and no funds move",
+                withdrawal_body["safety"]["notice"],
+            )
+
     def test_python_sdk_exposes_read_only_relayer_settlement_mode_gate_metadata_without_wallet_or_tx_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

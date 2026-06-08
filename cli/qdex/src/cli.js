@@ -184,6 +184,65 @@ const parseNonceCancelOptions = (args) => {
   };
 };
 
+const parseVaultOperationOptions = (args, operationLabel) => {
+  const request = {};
+  let prepare = false;
+
+  for (let index = 0; index < args.length;) {
+    const arg = args[index];
+
+    if (arg === '--prepare') {
+      prepare = true;
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--owner') {
+      request.owner = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--asset-symbol') {
+      request.assetSymbol = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--amount') {
+      request.amount = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--chain-id') {
+      request.chainId = parseNonNegativeInteger(args[index + 1], '--chain-id');
+      index += 2;
+      continue;
+    }
+
+    if (arg === '--vault-contract-ref') {
+      request.vaultContractRef = args[index + 1];
+      index += 2;
+      continue;
+    }
+
+    throw new Error(`unknown vault ${operationLabel} option: ${arg}`);
+  }
+
+  if (!prepare) {
+    throw new Error(`vault ${operationLabel} requires --prepare; this CLI does not load wallets, sign, broadcast, mutate TradingVault, or move funds.`);
+  }
+
+  for (const requiredField of ['owner', 'assetSymbol', 'amount', 'chainId', 'vaultContractRef']) {
+    if (request[requiredField] === undefined) {
+      throw new Error(`vault ${operationLabel} --prepare requires ${requiredField}.`);
+    }
+  }
+
+  return request;
+};
+
 const parseListingRequestOptions = (args) => {
   const request = {};
   let prepare = false;
@@ -348,6 +407,8 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
+  qdex --base-url http://127.0.0.1:8787 vault deposit --prepare --owner <0xowner> --asset-symbol WQI --amount 10 --chain-id <id> --vault-contract-ref local-only-not-deployed
+  qdex --base-url http://127.0.0.1:8787 vault withdraw --prepare --owner <0xowner> --asset-symbol WQUAI --amount 1 --chain-id <id> --vault-contract-ref local-only-not-deployed
   qdex --base-url http://127.0.0.1:8787 proof trade <trade-id>
   qdex --base-url http://127.0.0.1:8787 cancel --all
   qdex --base-url http://127.0.0.1:8787 stream fills [--limit 1]
@@ -492,6 +553,22 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         baseUrl,
         status: result.status,
         ...result.body,
+      });
+      return 0;
+    }
+
+    if (command === 'vault' && (rest[0] === 'deposit' || rest[0] === 'withdraw')) {
+      const operation = rest[0];
+      const request = parseVaultOperationOptions(rest.slice(1), operation);
+      const result = operation === 'deposit'
+        ? await client.vault.deposits.prepare(request)
+        : await client.vault.withdrawals.prepare(request);
+      writeJson(stdout, {
+        command: `vault ${operation} prepare`,
+        baseUrl,
+        httpStatus: result.status,
+        ...result.body,
+        status: result.status,
       });
       return 0;
     }

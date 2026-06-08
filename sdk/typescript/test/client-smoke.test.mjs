@@ -153,6 +153,61 @@ test('TypeScript SDK exposes read-only mock vault balances without wallet or wit
   });
 });
 
+test('TypeScript SDK exposes prepare-only owner-wallet vault operation placeholders without tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+    const baseRequest = {
+      owner: '0x1111111111111111111111111111111111111111',
+      assetSymbol: 'WQI',
+      amount: '10',
+      chainId: 0,
+      vaultContractRef: 'local-only-not-deployed',
+    };
+
+    const deposit = await client.vault.deposits.prepare(baseRequest);
+    assert.equal(deposit.status, 501);
+    assert.equal(deposit.body.error, 'owner_wallet_vault_deposit_not_implemented');
+    assert.equal(deposit.body.source, 'owner-wallet-vault-operation-placeholder');
+    assert.equal(deposit.body.custody, 'non-custodial-contract-vault');
+    assert.equal(deposit.body.vaultOperation, 'deposit');
+    assert.equal(deposit.body.operationStatus, 'prepare-only-not-implemented');
+    assert.equal(deposit.body.ownerAuthorization, 'owner-wallet-required');
+    assert.deepEqual(deposit.body.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(deposit.body.delegateAuthority, 'delegates-cannot-deposit-or-withdraw');
+    assert.equal(deposit.body.realQuaiTransactions, false);
+    assert.equal(deposit.body.walletRequired, false);
+    assert.equal(deposit.body.fundsMoved, false);
+    assert.equal(deposit.body.tradingVaultMutation, false);
+    assert.equal(deposit.body.safety.noWalletLoading, true);
+    assert.equal(deposit.body.safety.noRpcUrlAccess, true);
+    assert.equal(deposit.body.safety.noSigning, true);
+    assert.equal(deposit.body.safety.noBroadcast, true);
+    assert.equal(deposit.body.safety.noTransactionSubmission, true);
+    assert.equal(deposit.body.safety.noFundsMovement, true);
+    assert.equal(deposit.body.safety.noDelegateWithdrawalAuthority, true);
+    assert.equal(deposit.body.safety.noAdminWithdrawalAuthority, true);
+    assert.match(deposit.body.message, /owner-wallet-only/);
+    assert.match(deposit.body.message, /does not load wallets, sign, broadcast, submit transactions, mutate TradingVault, or move funds/);
+
+    const withdrawal = await client.vault.withdrawals.prepare({
+      ...baseRequest,
+      assetSymbol: 'WQUAI',
+      amount: '1.5',
+    });
+    assert.equal(withdrawal.status, 501);
+    assert.equal(withdrawal.body.error, 'owner_wallet_vault_withdrawal_not_implemented');
+    assert.equal(withdrawal.body.vaultOperation, 'withdrawal');
+    assert.equal(withdrawal.body.ownerAuthorization, 'owner-wallet-required');
+    assert.deepEqual(withdrawal.body.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(withdrawal.body.delegateAuthority, 'delegates-cannot-deposit-or-withdraw');
+    assert.equal(withdrawal.body.realQuaiTransactions, false);
+    assert.equal(withdrawal.body.walletRequired, false);
+    assert.equal(withdrawal.body.fundsMoved, false);
+    assert.equal(withdrawal.body.tradingVaultMutation, false);
+    assert.match(withdrawal.body.safety.notice, /no wallet is loaded, no signature is created, no RPC URL is read, no transaction is submitted, and no funds move/);
+  });
+});
+
 test('TypeScript SDK exposes read-only relayer settlement-mode gate metadata without wallet or tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

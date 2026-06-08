@@ -115,6 +115,38 @@ class _AccountApi:
         return self._client._request_ok("/v1/account/balances")
 
 
+class _VaultDepositsApi:
+    def __init__(self, client):
+        self._client = client
+
+    def prepare(self, request):
+        return self._client._request_expected_status(
+            "/v1/vault/deposits/prepare",
+            expected_status=501,
+            method="POST",
+            body={**request, "operation": "deposit"},
+        )
+
+
+class _VaultWithdrawalsApi:
+    def __init__(self, client):
+        self._client = client
+
+    def prepare(self, request):
+        return self._client._request_expected_status(
+            "/v1/vault/withdrawals/prepare",
+            expected_status=501,
+            method="POST",
+            body={**request, "operation": "withdrawal"},
+        )
+
+
+class _VaultApi:
+    def __init__(self, client):
+        self.deposits = _VaultDepositsApi(client)
+        self.withdrawals = _VaultWithdrawalsApi(client)
+
+
 class _ListingPolicyApi:
     def __init__(self, client):
         self._client = client
@@ -257,6 +289,7 @@ class QDexClient:
         self.orderbook = _OrderbookApi(self)
         self.contracts = _ContractsApi(self)
         self.account = _AccountApi(self)
+        self.vault = _VaultApi(self)
         self.listings = _ListingsApi(self)
         self.relayer = _RelayerApi(self)
         self.nonces = _NoncesApi(self)

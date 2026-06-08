@@ -11,6 +11,20 @@ markets = dex.markets.list()
 book = dex.orderbook.get(market_id)
 contracts = dex.contracts.get()  # GET /v1/contracts
 balances = dex.account.balances()  # GET /v1/account/balances -> mock-vault-projection, read-only, no wallet loaded, no funds moved
+vault_deposit_prepare = dex.vault.deposits.prepare({
+    'owner': '0xowner',
+    'assetSymbol': 'WQI',
+    'amount': '10',
+    'chainId': 0,
+    'vaultContractRef': 'local-only-not-deployed',
+})  # POST /v1/vault/deposits/prepare -> owner_wallet_vault_deposit_not_implemented while prepare-only
+vault_withdrawal_prepare = dex.vault.withdrawals.prepare({
+    'owner': '0xowner',
+    'assetSymbol': 'WQUAI',
+    'amount': '1',
+    'chainId': 0,
+    'vaultContractRef': 'local-only-not-deployed',
+})  # POST /v1/vault/withdrawals/prepare -> owner_wallet_vault_withdrawal_not_implemented while prepare-only
 listing_policy = dex.listings.policy.get()  # GET /v1/listings/policy
 listing_review_flow = dex.listings.review_flow.get()  # GET /v1/listings/review-flow
 listing_request_prepare = dex.listings.requests.prepare_submit({
@@ -89,6 +103,8 @@ dex.orders.cancel_all(market_id='QI-QUAI')
 `contracts.get()` is a read-only contract-registry call to `GET /v1/contracts`. In local MVP mode it must preserve `local-only-not-deployed`, null contract addresses, `realQuaiTransactions: false`, `walletRequired: false`, and `NO_WITHDRAW`/`NO_ADMIN` delegate safety.
 
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+
+`vault.deposits.prepare()` and `vault.withdrawals.prepare()` expose the owner-wallet TradingVault prepare-only boundary through `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare`. They intentionally return the API placeholder envelopes `owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented` with `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: False`, and `tradingVaultMutation: False`. The clients treat HTTP 501 as a boundary response and preserve no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 
 The registry includes `listedAssetStatus`: `status: wrapped-token-listing`, `primaryQuoteAssets: [WQUAI, WQI]`, `supportedAssetModel: erc20-style-vault-token`, and `userListedTokens: True`. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval; native Qi direct settlement is out of scope and the Qi-facing token surface is WQI. The status is read-only metadata and its safety notice must say the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim.
 

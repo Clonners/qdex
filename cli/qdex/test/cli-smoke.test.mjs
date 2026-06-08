@@ -112,6 +112,86 @@ test('qdex balance command prints read-only mock vault balances without wallet o
   });
 });
 
+test('qdex vault prepare commands print owner-wallet placeholders without wallet or tx authority', async () => {
+  await withServer(async (baseUrl) => {
+    const deposit = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'vault',
+      'deposit',
+      '--prepare',
+      '--owner',
+      '0x1111111111111111111111111111111111111111',
+      '--asset-symbol',
+      'WQI',
+      '--amount',
+      '10',
+      '--chain-id',
+      '0',
+      '--vault-contract-ref',
+      'local-only-not-deployed',
+    ]);
+
+    assert.equal(deposit.command, 'vault deposit prepare');
+    assert.equal(deposit.status, 501);
+    assert.equal(deposit.httpStatus, 501);
+    assert.equal(deposit.error, 'owner_wallet_vault_deposit_not_implemented');
+    assert.equal(deposit.source, 'owner-wallet-vault-operation-placeholder');
+    assert.equal(deposit.custody, 'non-custodial-contract-vault');
+    assert.equal(deposit.vaultOperation, 'deposit');
+    assert.equal(deposit.operationStatus, 'prepare-only-not-implemented');
+    assert.equal(deposit.ownerAuthorization, 'owner-wallet-required');
+    assert.deepEqual(deposit.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(deposit.delegateAuthority, 'delegates-cannot-deposit-or-withdraw');
+    assert.equal(deposit.realQuaiTransactions, false);
+    assert.equal(deposit.walletRequired, false);
+    assert.equal(deposit.fundsMoved, false);
+    assert.equal(deposit.tradingVaultMutation, false);
+    assert.equal(deposit.safety.noWalletLoading, true);
+    assert.equal(deposit.safety.noRpcUrlAccess, true);
+    assert.equal(deposit.safety.noSigning, true);
+    assert.equal(deposit.safety.noBroadcast, true);
+    assert.equal(deposit.safety.noTransactionSubmission, true);
+    assert.equal(deposit.safety.noFundsMovement, true);
+    assert.equal(deposit.safety.noDelegateWithdrawalAuthority, true);
+    assert.equal(deposit.safety.noAdminWithdrawalAuthority, true);
+    assert.match(deposit.message, /owner-wallet-only/);
+    assert.match(deposit.message, /does not load wallets, sign, broadcast, submit transactions, mutate TradingVault, or move funds/);
+
+    const withdrawal = await runCliJson([
+      '--base-url',
+      baseUrl,
+      'vault',
+      'withdraw',
+      '--prepare',
+      '--owner',
+      '0x1111111111111111111111111111111111111111',
+      '--asset-symbol',
+      'WQUAI',
+      '--amount',
+      '1.5',
+      '--chain-id',
+      '0',
+      '--vault-contract-ref',
+      'local-only-not-deployed',
+    ]);
+
+    assert.equal(withdrawal.command, 'vault withdraw prepare');
+    assert.equal(withdrawal.status, 501);
+    assert.equal(withdrawal.httpStatus, 501);
+    assert.equal(withdrawal.error, 'owner_wallet_vault_withdrawal_not_implemented');
+    assert.equal(withdrawal.vaultOperation, 'withdrawal');
+    assert.equal(withdrawal.ownerAuthorization, 'owner-wallet-required');
+    assert.deepEqual(withdrawal.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(withdrawal.delegateAuthority, 'delegates-cannot-deposit-or-withdraw');
+    assert.equal(withdrawal.realQuaiTransactions, false);
+    assert.equal(withdrawal.walletRequired, false);
+    assert.equal(withdrawal.fundsMoved, false);
+    assert.equal(withdrawal.tradingVaultMutation, false);
+    assert.match(withdrawal.safety.notice, /no wallet is loaded, no signature is created, no RPC URL is read, no transaction is submitted, and no funds move/);
+  });
+});
+
 test('qdex contracts command prints local-only registry metadata without wallet or tx claims', async () => {
   await withServer(async (baseUrl) => {
     const result = await runCliJson(['--base-url', baseUrl, 'contracts']);

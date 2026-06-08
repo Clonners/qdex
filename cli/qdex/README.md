@@ -17,6 +17,8 @@ qdex --base-url http://127.0.0.1:8787 listings request --local-review-queue --ba
 qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
 qdex --base-url http://127.0.0.1:8787 relayer gate
 qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner 0xowner --nonce 42 --chain-id 0 --nonce-manager-contract 0xnonce-manager --expires-at 1780003600 --signature 0xowner-signature
+qdex --base-url http://127.0.0.1:8787 vault deposit --prepare --owner 0xowner --asset-symbol WQI --amount 10 --chain-id 0 --vault-contract-ref local-only-not-deployed
+qdex --base-url http://127.0.0.1:8787 vault withdraw --prepare --owner 0xowner --asset-symbol WQUAI --amount 1 --chain-id 0 --vault-contract-ref local-only-not-deployed
 qdex --base-url http://127.0.0.1:8787 stream fills --limit 1
 qdex --base-url http://127.0.0.1:8787 stream orders --limit 1
 qdex --base-url http://127.0.0.1:8787 smoke
@@ -25,6 +27,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 `qdex contracts` prints the `GET /v1/contracts` registry as local-only metadata: `local-only-not-deployed`, null addresses, no real Quai tx, no wallet required, and no deploy authority. It includes read-only `listedAssetStatus` metadata: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and the safety notice that the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval.
 
 `qdex balance` prints `GET /v1/account/balances` as read-only `mock-vault-projection` metadata: `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, no real Quai tx, no wallet required, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+
+`qdex vault deposit --prepare` and `qdex vault withdraw --prepare` call `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` and print the intentional 501 owner-wallet placeholders (`owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented`). The output preserves `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: false`, and `tradingVaultMutation: false`; the commands treat the placeholder as a boundary response with no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
 
 `qdex listings policy` prints `GET /v1/listings/policy` read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
 
