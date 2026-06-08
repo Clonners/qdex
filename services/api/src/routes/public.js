@@ -1,4 +1,5 @@
 import { createContractRegistryResponse } from '../contract-registry.js';
+import { createFeeScheduleResponse } from '../fee-policy.js';
 import { jsonResult } from '../http.js';
 import {
   createListingRequestPlaceholderResponse,
@@ -107,13 +108,7 @@ export const handlePublicRoute = (context) => {
   }
 
   if (method === 'GET' && pathname === '/v1/fees') {
-    return jsonResult(200, {
-      makerFeeBps: 0,
-      takerFeeBps: 0,
-      maxFeeBps: 0,
-      source: 'mock-fee-manager',
-      note: 'Production fees must be contract-capped and timelock-governed.',
-    });
+    return jsonResult(200, createFeeScheduleResponse());
   }
 
   if (method === 'GET' && pathname === '/v1/contracts') {

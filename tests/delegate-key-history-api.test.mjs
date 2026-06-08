@@ -139,12 +139,16 @@ test('delegate docs, readiness plan, contracts, architecture, and campaign statu
     'campaign status should checkpoint the TypeScript SDK/qdex DelegateKeyRegistry stream consumers',
   );
   assert.ok(
-    status.includes('Completed this run: Python SDK DelegateKeyRegistry history stream consumers'),
-    'campaign status should checkpoint Python SDK stream consumers after TypeScript/qdex parity',
+    status.includes('Completed previous run: Python SDK DelegateKeyRegistry history stream consumers'),
+    'campaign status should retain Python SDK stream consumers after TypeScript/qdex parity',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should move past delegate-key stream parity to the next bounded source-only surface',
+    status.includes('Completed this run: read-only FeeManager fee schedule API envelope'),
+    'campaign status should checkpoint the FeeManager fee policy API slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: TypeScript/Python/qdex clients for read-only FeeManager fee schedule metadata'),
+    'campaign status should move past delegate-key stream parity to FeeManager client exposure',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only delegate-key registration\/revocation history API envelopes|Next bounded local\/source-only slice: read-only delegate-key registration\/revocation history API envelopes|Next safe local\/source-only surface: read-only delegate-key registration\/revocation history API envelopes/;

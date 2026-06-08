@@ -87,10 +87,15 @@ paths:
   /v1/fees:
     get:
       tags: [public]
-      summary: Fee schedule
+      summary: Read-only FeeManager fee schedule
+      description: FeeManager policy metadata only; no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, fee-authority runtime keys, TradingVault mutation, or real funds are introduced by this route.
       responses:
         "200":
-          description: Fee table
+          description: FeeManager fee schedule metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeeScheduleResponse"
   /v1/contracts:
     get:
       tags: [public]
@@ -1831,6 +1836,105 @@ components:
         notice:
           type: string
           example: "Prepare-only listing request placeholder: no listing request was submitted, no MarketRegistry mutation occurred, and listing/admin metadata cannot move TradingVault balances or grant withdrawal/admin authority."
+    FeeScheduleResponse:
+      type: object
+      description: Read-only FeeManager policy metadata. Local/mock rows carry null event evidence until real Quai FeeManager events exist.
+      required: [feeSchedules, source, status, custody, permissions, hardMaxFeeBps, feeRecipient, feeManagerMutation, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safety]
+      properties:
+        feeSchedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeeScheduleProjection"
+        source:
+          type: string
+          enum: [feemanager-policy-projection]
+        status:
+          type: string
+          enum: [local-only-not-deployed]
+        custody:
+          type: string
+          enum: [non-custodial-fee-policy]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        hardMaxFeeBps:
+          type: integer
+          example: 1000
+        feeRecipient:
+          type: [string, "null"]
+          description: Null in local/mock mode; real rows require event truth before exposing a live recipient.
+        feeManagerMutation:
+          type: boolean
+          enum: [false]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safety:
+          type: object
+          required: [noWalletLoading, noRpcUrlAccess, noSigning, noBroadcast, noDeploys, noTransactionSubmission, noFundsMovement, noFeeAuthorityRuntimeKeys, notice]
+          properties:
+            noWalletLoading: { type: boolean, enum: [true] }
+            noRpcUrlAccess: { type: boolean, enum: [true] }
+            noSigning: { type: boolean, enum: [true] }
+            noBroadcast: { type: boolean, enum: [true] }
+            noDeploys: { type: boolean, enum: [true] }
+            noTransactionSubmission: { type: boolean, enum: [true] }
+            noFundsMovement: { type: boolean, enum: [true] }
+            noFeeAuthorityRuntimeKeys: { type: boolean, enum: [true] }
+            notice:
+              type: string
+              example: "Read-only FeeManager schedule metadata: local/mock rows have no real Quai transaction, no wallet loaded, no fee-authority key, no TradingVault mutation, and no funds moved."
+    FeeScheduleProjection:
+      type: object
+      required: [marketId, projectionType, eventName, makerFeeBps, takerFeeBps, maxFeeBps, feeRecipient, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl]
+      properties:
+        marketId:
+          type: string
+          example: QI-QUAI
+        projectionType:
+          type: string
+          enum: [FeeScheduleProjection]
+        eventName:
+          type: string
+          enum: [FeesUpdated]
+        makerFeeBps:
+          type: integer
+          minimum: 0
+          example: 0
+        takerFeeBps:
+          type: integer
+          minimum: 0
+          example: 0
+        maxFeeBps:
+          type: integer
+          minimum: 0
+          example: 1000
+        feeRecipient:
+          type: [string, "null"]
+        settlementMode:
+          type: string
+          enum: [mock]
+        settlementTx:
+          type: [string, "null"]
+        blockNumber:
+          type: [integer, "null"]
+        blockHash:
+          type: [string, "null"]
+        eventIndex:
+          type: [integer, "null"]
+        explorerUrl:
+          type: [string, "null"]
     ContractMetadata:
       type: object
       required: [key, contractName, address, deploymentStatus, operatorWithdrawalAuthority]

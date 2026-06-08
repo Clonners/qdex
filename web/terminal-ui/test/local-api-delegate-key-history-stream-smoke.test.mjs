@@ -227,8 +227,12 @@ test('terminal UI docs, package check, and campaign status mark delegate-key his
     'campaign status should retain the TypeScript/qdex DelegateKeyRegistry stream consumers as previous work',
   );
   assert.ok(
-    status.includes('Completed this run: Python SDK DelegateKeyRegistry history stream consumers'),
-    'campaign status should checkpoint Python SDK delegate-key history stream consumers',
+    status.includes('Completed previous run: Python SDK DelegateKeyRegistry history stream consumers'),
+    'campaign status should retain Python SDK delegate-key history stream consumers',
+  );
+  assert.ok(
+    status.includes('Completed this run: read-only FeeManager fee schedule API envelope'),
+    'campaign status should checkpoint the FeeManager fee policy API slice',
   );
   assert.ok(
     delegateDoc.includes('Completed local/source-only stream smoke: `web/terminal-ui/src/delegate-key-history-stream-binding.js`'),

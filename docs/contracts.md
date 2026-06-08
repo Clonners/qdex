@@ -159,6 +159,8 @@ Rules:
 - timelock before production
 - fee recipient is explicit in settlement events/proofs
 
+Current read-only fee visibility: the read-only FeeManager fee schedule API envelope now exposes `GET /v1/fees` with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `feeManagerMutation: false`, `tradingVaultMutation: false`, `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN`. This is local/source-only metadata; it does no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, fee-authority runtime keys, TradingVault mutation, or funds movement. See [`docs/fees.md`](./fees.md).
+
 ## DelegateKeyRegistry
 
 Safe API/bot access.
