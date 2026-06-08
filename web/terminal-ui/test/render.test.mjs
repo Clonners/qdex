@@ -46,6 +46,8 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /:proof trade-000001/);
   assert.match(html, /:deposit WQI 10 prepare owner-wallet-only/);
   assert.match(html, /:withdraw WQUAI 1 prepare owner-wallet-only/);
+  assert.match(html, /:api create-key bot-mm-1 prepare owner-wallet-signature-required NO_WITHDRAW/);
+  assert.match(html, /:api revoke-key bot-mm-1 prepare owner-wallet-signature-required NO_ADMIN/);
   assert.match(html, /data-qdx-trigger-cross/);
   assert.match(html, /submit mock cross/i);
   assert.match(html, /market_ioc slippage=50bps/i);
@@ -56,6 +58,14 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /prepare vault deposit/i);
   assert.match(html, /data-qdx-vault-prepare-withdraw/);
   assert.match(html, /prepare vault withdrawal/i);
+  assert.match(html, /data-qdx-delegate-key-prepare-register/);
+  assert.match(html, /prepare delegate\/API key/i);
+  assert.match(html, /data-qdx-delegate-key-prepare-revoke/);
+  assert.match(html, /prepare delegate\/API revoke/i);
+  assert.match(html, /data-qdx-delegate-key-register-status/);
+  assert.match(html, /data-qdx-delegate-key-revoke-status/);
+  assert.match(html, /owner-wallet-signature-required/i);
+  assert.match(html, /NO_WITHDRAW\/NO_ADMIN/i);
   assert.match(html, /no wallet\/RPC\/signing\/broadcast\/deploy\/tx\/funds/i);
   assert.match(html, /no real Quai tx\/explorer\/funds/i);
   assert.match(html, /data-qdx-trigger-status/);
@@ -106,6 +116,49 @@ test('renderTradeProofPanel surfaces prepare-only vault operation safety when pr
   assert.match(html, /no signature is created/i);
   assert.match(html, /no RPC URL is read/i);
   assert.match(html, /no transaction is submitted/i);
+  assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
+});
+
+test('renderTradeProofPanel surfaces prepare-only delegate/API key safety when present', () => {
+  const html = renderTradeProofPanel({
+    ...mockVerticalSliceFixture,
+    delegateKeyOperation: {
+      httpStatus: 501,
+      error: 'delegate_key_registration_not_implemented',
+      operation: 'register_delegate_key',
+      source: 'delegate-key-owner-signed-prepare-boundary',
+      custody: 'non-custodial-no-withdrawal-authority',
+      operationStatus: 'prepare-only-owner-signed-required',
+      ownerAuthorization: 'owner-wallet-signature-required',
+      delegateAuthority: 'trade-only-no-withdraw-no-admin',
+      requiredFields: ['delegate', 'expiresAt', 'allowedMarkets', 'maxNotional', 'permissions'],
+      permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
+      delegateCanWithdraw: false,
+      delegateCanAdmin: false,
+      realQuaiTransactions: false,
+      walletRequired: false,
+      fundsMoved: false,
+      tradingVaultMutation: false,
+      approvalGate: 'explicit-approval-required-before-owner-wallet-signing-or-live-registry-mutation',
+      message: 'No delegate key is registered in local prepare-only mode; owner-signed registration is not wired to wallet loading, signing, broadcast, deploy, transaction helpers, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement.',
+    },
+  });
+
+  assert.match(html, /prepare-only delegate\/API key/i);
+  assert.match(html, /http status[\s\S]*501/i);
+  assert.match(html, /delegate-key-owner-signed-prepare-boundary/);
+  assert.match(html, /register_delegate_key/);
+  assert.match(html, /prepare-only-owner-signed-required/);
+  assert.match(html, /owner-wallet-signature-required/);
+  assert.match(html, /trade-only-no-withdraw-no-admin/);
+  assert.match(html, /PLACE_ORDER, CANCEL_ORDER, CANCEL_ALL, NO_WITHDRAW, NO_ADMIN/);
+  assert.match(html, /delegate can withdraw[\s\S]*false/i);
+  assert.match(html, /delegate can admin[\s\S]*false/i);
+  assert.match(html, /real Quai tx[\s\S]*false/i);
+  assert.match(html, /wallet required[\s\S]*false/i);
+  assert.match(html, /funds moved[\s\S]*false/i);
+  assert.match(html, /TradingVault mutation[\s\S]*false/i);
+  assert.match(html, /not wired to wallet loading, signing, broadcast, deploy, transaction helpers, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement/i);
   assert.doesNotMatch(html, /WITHDRAW, ADMIN/);
 });
 

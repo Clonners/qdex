@@ -1,4 +1,5 @@
 import { bindLiveBalanceStreamWithAccountSnapshot } from './balance-stream-binding.js';
+import { bindDelegateKeyPrepareTrigger } from './delegate-key-prepare-trigger.js';
 import { bindMockCancelTriggerWithOrderStream } from './cancel-stream-binding.js';
 import { bindLiveFillStream } from './live-fills.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
@@ -75,6 +76,25 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxVaultPrepareTrigger = 'disabled';
     console.warn('QDEX vault prepare trigger disabled; keeping owner-wallet boundary prepare-only.', error);
+  }
+
+  try {
+    bindDelegateKeyPrepareTrigger({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxDelegateKeyPrepareTrigger = 'error';
+        console.warn('QDEX delegate/API key prepare trigger failed; no wallet, RPC, signing, broadcast, transaction, live DelegateKeyRegistry mutation, or funds behavior was attempted.', error);
+      },
+      onPrepare: () => {
+        mount.dataset.qdxDelegateKeyPrepareTrigger = 'prepare-only';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxDelegateKeyPrepareTrigger = 'disabled';
+    console.warn('QDEX delegate/API key prepare trigger disabled; keeping owner-signed boundary prepare-only.', error);
   }
 
   try {

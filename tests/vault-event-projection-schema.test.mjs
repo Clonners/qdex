@@ -135,12 +135,16 @@ test('vault docs, post-vault plan, and campaign status mark projection schema co
     'campaign status should retain the bounded local/source-only delegate-key API boundary slice',
   );
   assert.ok(
-    status.includes('Completed this run: TypeScript/Python/qdex prepare-only delegate/API key registration and revocation clients'),
-    'campaign status should checkpoint the bounded local/source-only delegate-key client exposure slice',
+    status.includes('Completed previous run: TypeScript/Python/qdex prepare-only delegate/API key registration and revocation clients'),
+    'campaign status should retain the bounded local/source-only delegate-key client exposure slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: terminal UI prepare-only delegate/API key panel/binding'),
-    'campaign status should point to terminal UI delegate-key prepare-only exposure after client exposure',
+    status.includes('Completed this run: terminal UI prepare-only delegate/API key panel/binding'),
+    'campaign status should checkpoint the bounded local/source-only terminal UI delegate-key exposure slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: local API + terminal UI delegate/API key prepare smoke'),
+    'campaign status should move to local API + terminal UI delegate-key smoke after panel/binding',
   );
 
   const staleNextSlice = /Next local\/source-only step: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet|Recommended next autonomous slice: read-only TradingVault `Deposit`\/`Withdraw` projection schema ratchet/;

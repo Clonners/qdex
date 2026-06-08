@@ -230,6 +230,43 @@ const renderVaultOperationPanel = (vaultOperation) => {
   `;
 };
 
+const renderDelegateKeyOperationPanel = (delegateKeyOperation) => {
+  if (delegateKeyOperation === undefined || delegateKeyOperation === null) {
+    return '';
+  }
+
+  const permissions = (delegateKeyOperation.permissions ?? []).join(', ');
+  const requiredFields = (delegateKeyOperation.requiredFields ?? []).join(', ');
+  const keyId = delegateKeyOperation.keyId ?? 'local-prepare-only-not-registered';
+
+  return `
+        <article class="panel stream-panel delegate-key-operation-panel">
+          <h2>prepare-only delegate/API key</h2>
+          <p class="warning">Owner-signed DelegateKeyRegistry boundary: no wallet is loaded, no signature is created, no RPC URL is read, no transaction is submitted, and no funds move.</p>
+          <p class="warning">${escapeHtml(delegateKeyOperation.message)}</p>
+          <dl class="kv">
+            <div><dt>http status</dt><dd>${escapeHtml(delegateKeyOperation.httpStatus)}</dd></div>
+            <div><dt>source</dt><dd>${escapeHtml(delegateKeyOperation.source)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(delegateKeyOperation.custody)}</dd></div>
+            <div><dt>operation</dt><dd>${escapeHtml(delegateKeyOperation.operation)}</dd></div>
+            <div><dt>key id</dt><dd>${escapeHtml(keyId)}</dd></div>
+            <div><dt>operation status</dt><dd>${escapeHtml(delegateKeyOperation.operationStatus)}</dd></div>
+            <div><dt>owner auth</dt><dd>${escapeHtml(delegateKeyOperation.ownerAuthorization)}</dd></div>
+            <div><dt>delegate authority</dt><dd>${escapeHtml(delegateKeyOperation.delegateAuthority)}</dd></div>
+            <div><dt>required fields</dt><dd>${escapeHtml(requiredFields)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>delegate can withdraw</dt><dd>${escapeHtml(delegateKeyOperation.delegateCanWithdraw)}</dd></div>
+            <div><dt>delegate can admin</dt><dd>${escapeHtml(delegateKeyOperation.delegateCanAdmin)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(delegateKeyOperation.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(delegateKeyOperation.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(delegateKeyOperation.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(delegateKeyOperation.tradingVaultMutation)}</dd></div>
+            <div><dt>approval gate</dt><dd>${escapeHtml(delegateKeyOperation.approvalGate)}</dd></div>
+          </dl>
+        </article>
+  `;
+};
+
 const mockEvidenceLabel = (value) => value ?? 'null (mock)';
 
 const renderVaultHistoryRows = (rows = [], emptyLabel) => {
@@ -393,6 +430,8 @@ ${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fix
 
 ${renderVaultOperationPanel(fixture.vaultOperation)}
 
+${renderDelegateKeyOperationPanel(fixture.delegateKeyOperation)}
+
 ${renderVaultHistoryStreamPanel(fixture.vaultHistoryStream)}
 
 ${renderVaultHistoryPanel(fixture.vaultHistory)}
@@ -405,7 +444,9 @@ ${renderVaultHistoryPanel(fixture.vaultHistory)}
 :proof trade-000001
 :cancel all
 :deposit WQI 10 prepare owner-wallet-only
-:withdraw WQUAI 1 prepare owner-wallet-only</pre>
+:withdraw WQUAI 1 prepare owner-wallet-only
+:api create-key bot-mm-1 prepare owner-wallet-signature-required NO_WITHDRAW
+:api revoke-key bot-mm-1 prepare owner-wallet-signature-required NO_ADMIN</pre>
           <div class="mock-trigger">
             <button type="button" data-qdx-trigger-cross>submit mock cross</button>
             <p class="muted" data-qdx-trigger-status>Posts a local/dev GTC sell plus IOC buy with signed slippage bounds; no real Quai tx/explorer/funds.</p>
@@ -415,6 +456,10 @@ ${renderVaultHistoryPanel(fixture.vaultHistory)}
             <p class="muted" data-qdx-vault-deposit-status>Calls prepare-only owner-wallet deposit boundary; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
             <button type="button" data-qdx-vault-prepare-withdraw>prepare vault withdrawal</button>
             <p class="muted" data-qdx-vault-withdraw-status>Calls prepare-only owner-wallet withdrawal boundary; delegates cannot deposit or withdraw; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <button type="button" data-qdx-delegate-key-prepare-register>prepare delegate/API key</button>
+            <p class="muted" data-qdx-delegate-key-register-status>Calls prepare-only owner-signed delegate/API key boundary; owner-wallet-signature-required; NO_WITHDRAW/NO_ADMIN; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <button type="button" data-qdx-delegate-key-prepare-revoke>prepare delegate/API revoke</button>
+            <p class="muted" data-qdx-delegate-key-revoke-status>Calls prepare-only owner-signed delegate/API key revocation; no live DelegateKeyRegistry mutation, no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
           </div>
         </article>
 
