@@ -115,11 +115,11 @@ Also do not add:
 - positive withdrawal/admin delegate permissions,
 - optimistic local registry changes that claim confirmed event truth.
 
-## Next bounded local/source-only slice
+## Completed projection schema slice
 
-Next bounded local/source-only slice: read-only DelegateKeyRegistry `DelegateKeyRegistered`/`DelegateKeyRevoked` projection schema ratchet.
+Completed: read-only DelegateKeyRegistry `DelegateKeyRegistered`/`DelegateKeyRevoked` projection schema ratchet.
 
-That future slice should define event-shaped projection rows before any owner-signed transaction behavior exists:
+The schema now defines event-shaped projection rows before any owner-signed transaction behavior exists:
 
 ```text
 DelegateKeyRegisteredProjection
@@ -127,12 +127,14 @@ DelegateKeyRevokedProjection
 source: delegatekeyregistry-event-projection
 eventName: DelegateKeyRegistered | DelegateKeyRevoked
 settlementMode: mock | quai_contract
-mock rows with null settlementTx/block/explorer
+mock rows keep settlementTx/blockNumber/blockHash/eventIndex/explorerUrl null
 real rows require settlementTx, blockNumber, blockHash, eventIndex, explorerUrl
-permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
+permissions: READ_ONLY, PLACE_ORDER, CANCEL_ORDER, CANCEL_ALL, NO_WITHDRAW, NO_ADMIN
 ```
 
-The projection schema should remain docs/spec/source-only until approved event evidence exists.
+The projection schema remains docs/spec/source-only until approved event evidence exists. It must not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `DelegateKeyRegistry`, mutate TradingVault balances, or move funds.
+
+Next bounded local/source-only slice: read-only delegate-key registration/revocation history API envelopes, still backed by empty/mock local projection rows and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 ---
 
@@ -176,7 +178,7 @@ git add tests/post-delegate-key-owner-signed-readiness.test.mjs docs/plans/2026-
 git commit -m "docs: pin post-delegate-key readiness"
 ```
 
-### Task 2: Future read-only DelegateKeyRegistry event projection schema ratchet
+### Completed Task 2: Read-only DelegateKeyRegistry event projection schema ratchet
 
 **Objective:** Define event-shaped delegate registration/revocation projection rows without adding transaction behavior.
 

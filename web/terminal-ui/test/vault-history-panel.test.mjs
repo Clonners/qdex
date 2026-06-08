@@ -159,12 +159,12 @@ test('terminal UI docs and campaign status mark vault history smoke complete and
     'campaign status should retain the local API + terminal UI delegate-key smoke slice',
   );
   assert.ok(
-    status.includes('Completed this run: post-delegate-key owner-signed readiness docs'),
-    'campaign status should checkpoint the post-delegate-key owner-signed readiness docs slice',
+    status.includes('Completed previous run: post-delegate-key owner-signed readiness docs'),
+    'campaign status should retain the post-delegate-key owner-signed readiness docs slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
-    'campaign status should move to the DelegateKeyRegistry projection schema ratchet after readiness docs',
+    status.includes('Completed this run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet'),
+    'campaign status should checkpoint the DelegateKeyRegistry projection schema ratchet',
   );
   assert.doesNotMatch(
     `${readme}\n${status}`,

@@ -17,6 +17,7 @@ MVP scope:
 - later Quai contract events from TradingVault/Settlement/NonceManager/MarketRegistry/FeeManager
 - projections for `GET /v1/fills`, `GET /v1/trades/:market`, and `GET /v1/proofs/trades/:tradeId`
 - future owner-signed nonce-cancel proof rows from `NonceCancelled` / `NonceRangeCancelled` contract events
+- future read-only delegate-key registration/revocation rows from `DelegateKeyRegistered` / `DelegateKeyRevoked` contract events
 - private settlement visibility for pending/failed relayer states
 
 Out of scope:
@@ -204,6 +205,67 @@ Rules:
 - real rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before any history/proof UI treats them as confirmed contract event truth.
 - The projection is read-only event truth, not custody authority; it cannot create wallet requests, sign, submit, relay, mutate `TradingVault`, or move funds.
 - Every row preserves `permissions: READ_ONLY | NO_WITHDRAW | NO_ADMIN`; delegate/API keys still have no withdrawal/admin authority.
+
+### DelegateKeyRegistry registration/revocation event projections
+
+Purpose: define event-shaped rows for future read-only delegate/API key registration and revocation visibility before any owner-signed transaction behavior exists.
+
+Projection types:
+
+```text
+DelegateKeyRegisteredProjection
+DelegateKeyRevokedProjection
+```
+
+Shared source and safety fields:
+
+```text
+source: delegatekeyregistry-event-projection
+projectionType: DelegateKeyRegisteredProjection | DelegateKeyRevokedProjection
+sourceEventId
+eventName: DelegateKeyRegistered | DelegateKeyRevoked
+owner
+delegate
+permissions: READ_ONLY | PLACE_ORDER | CANCEL_ORDER | CANCEL_ALL | NO_WITHDRAW | NO_ADMIN
+settlementMode: mock | quai_contract
+settlementTx
+blockNumber
+blockHash
+eventIndex
+explorerUrl
+custody: non-custodial-no-withdrawal-authority
+delegateCanWithdraw: false
+delegateCanAdmin: false
+realQuaiTransactions
+walletRequired: false
+fundsMovedByProjection: false
+tradingVaultMutationByProjection: false
+delegateKeyRegistryMutationByProjection: false
+safetyNotice
+```
+
+Registration-specific fields:
+
+```text
+expiresAt
+allowedMarketsHash
+maxNotional
+```
+
+Revocation-specific fields:
+
+```text
+revoked: true
+```
+
+Rules:
+
+- `DelegateKeyRegisteredProjection` rows are projected only from normalized `DelegateKeyRegistered` source events.
+- `DelegateKeyRevokedProjection` rows are projected only from normalized `DelegateKeyRevoked` source events.
+- mock rows keep settlementTx = null, blockNumber = null, blockHash = null, eventIndex = null, and explorerUrl = null; mock safety copy must say no real Quai transaction, no live registry mutation, and no funds moved.
+- real rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before any API/UI treats delegate-key registry state as confirmed contract event truth.
+- The projection is read-only event truth, not owner-signed mutation authority; it cannot load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `DelegateKeyRegistry`, mutate `TradingVault`, or move funds.
+- Every row preserves `permissions: READ_ONLY | PLACE_ORDER | CANCEL_ORDER | CANCEL_ALL | NO_WITHDRAW | NO_ADMIN`, plus `delegateCanWithdraw: false` and `delegateCanAdmin: false`; there is still no positive withdrawal/admin delegate permission.
 
 ### orders
 

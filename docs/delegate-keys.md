@@ -54,11 +54,11 @@ A future executable owner-signed delegate-key registration/revocation path requi
 5. proof/UI copy that separates prepare-only state from confirmed registry event truth,
 6. contract tests proving `NO_WITHDRAW` and `NO_ADMIN` remain mandatory.
 
-## Next local/source-only projection boundary
+## Read-only DelegateKeyRegistry event projections
 
-The next safe local/source-only slice is a read-only DelegateKeyRegistry `DelegateKeyRegistered`/`DelegateKeyRevoked` projection schema ratchet.
+The read-only DelegateKeyRegistry `DelegateKeyRegistered`/`DelegateKeyRevoked` projection schema is now pinned in `services/indexer/schema.md` and `docs/api-openapi.yaml`.
 
-That schema should define event-shaped rows such as:
+Those event-truth rows only define how future registry evidence is displayed; they are not owner-signed mutation authority:
 
 ```text
 DelegateKeyRegisteredProjection
@@ -66,9 +66,18 @@ DelegateKeyRevokedProjection
 source: delegatekeyregistry-event-projection
 eventName: DelegateKeyRegistered | DelegateKeyRevoked
 settlementMode: mock | quai_contract
-mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null
-real rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl
-permissions: READ_ONLY, NO_WITHDRAW, NO_ADMIN
+mock rows keep settlementTx/blockNumber/blockHash/eventIndex/explorerUrl null
+real rows require settlementTx, blockNumber, blockHash, eventIndex, explorerUrl
+permissions: READ_ONLY, PLACE_ORDER, CANCEL_ORDER, CANCEL_ALL, NO_WITHDRAW, NO_ADMIN
+delegateCanWithdraw: false
+delegateCanAdmin: false
+fundsMovedByProjection: false
+tradingVaultMutationByProjection: false
+delegateKeyRegistryMutationByProjection: false
 ```
 
-The projection schema is read-only metadata. It must not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live registry, mutate TradingVault balances, or move funds.
+`DelegateKeyRegisteredProjection` carries `owner`, `delegate`, `expiresAt`, `allowedMarketsHash`, `maxNotional`, and the indexed permission snapshot. `DelegateKeyRevokedProjection` carries `owner`, `delegate`, `revoked: true`, and the same safety/evidence envelope.
+
+The projection schema is local/source-only and read-only. It preserves event-truth rows only and must not load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `DelegateKeyRegistry`, mutate TradingVault balances, or move funds. In short: no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, live DelegateKeyRegistry mutation, TradingVault mutation, or funds movement.
+
+Next local/source-only step: read-only delegate-key registration/revocation history API envelopes backed by this projection schema, still with empty/mock rows as valid local state and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
