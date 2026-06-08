@@ -186,6 +186,33 @@ The current placeholder response is intentionally non-executable and has no wall
 
 A future request shape may carry `action`, `owner`, `nonce` or `nonceRange`, `chainId`, `nonceManagerContract`, `expiresAt`, and an owner wallet `signature`, but the local MVP route must stay placeholder-only until the approval gates in the post-mock readiness plan are satisfied.
 
+## Delegate/API key prepare-only boundary
+
+`GET /v1/delegate-keys` is a read-only local registry projection for bot/operator metadata. It returns an empty local list plus required future fields (`delegate`, `expiresAt`, `allowedMarkets`, `maxNotional`, and `permissions`) so bots can validate the shape before live owner-signed registration exists.
+
+`POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` are prepare-only `501` owner-signed boundaries under `source: "delegate-key-owner-signed-prepare-boundary"`. The current registration placeholder returns `delegate_key_registration_not_implemented`; the revocation placeholder returns `delegate_key_revocation_not_implemented`. Both preserve `operationStatus: "prepare-only-owner-signed-required"` and `ownerAuthorization: "owner-wallet-signature-required"` without loading a wallet.
+
+No delegate key is registered or revoked in local prepare-only mode. Delegate/API keys remain trade-only: `PLACE_ORDER`, `CANCEL_ORDER`, and `CANCEL_ALL` may be listed as future trade permissions, but every response must keep `NO_WITHDRAW` and `NO_ADMIN` visible and must say there is no wallet loading, signing, broadcast, deploy, transaction helper, real registry mutation, TradingVault mutation, or funds movement.
+
+```json
+{
+  "error": "delegate_key_registration_not_implemented",
+  "source": "delegate-key-owner-signed-prepare-boundary",
+  "operation": "register_delegate_key",
+  "operationStatus": "prepare-only-owner-signed-required",
+  "ownerAuthorization": "owner-wallet-signature-required",
+  "requiredFields": ["delegate", "expiresAt", "allowedMarkets", "maxNotional", "permissions"],
+  "permissions": ["PLACE_ORDER", "CANCEL_ORDER", "CANCEL_ALL", "NO_WITHDRAW", "NO_ADMIN"],
+  "delegateCanWithdraw": false,
+  "delegateCanAdmin": false,
+  "realQuaiTransactions": false,
+  "walletRequired": false,
+  "fundsMoved": false,
+  "tradingVaultMutation": false,
+  "message": "No delegate key is registered or revoked in local prepare-only mode."
+}
+```
+
 ## API usage
 
 `POST /v1/orders` accepts an `OrderRequest` containing the `SignedOrder`. Successful acceptance returns an `OrderAccepted` payload with `orderHash`, `status`, and projection fields. A confirmed `IndexedFillProjection` must be retrievable through `GET /v1/fills` and `GET /v1/proofs/trades/{tradeId}`.

@@ -302,6 +302,73 @@ test('POST /v1/nonces/cancel is an owner-signed NonceManager placeholder without
   });
 });
 
+test('delegate key registration and revocation remain prepare-only without withdrawal or admin authority', async () => {
+  await withServer(async (baseUrl) => {
+    const list = await requestJson(baseUrl, '/v1/delegate-keys');
+    assert.equal(list.status, 200);
+    assert.equal(list.body.source, 'delegate-key-registry-projection');
+    assert.equal(list.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(list.body.defaultPermissions, [
+      'READ_ONLY',
+      'PLACE_ORDER',
+      'CANCEL_ORDER',
+      'CANCEL_ALL',
+      'NO_WITHDRAW',
+      'NO_ADMIN',
+    ]);
+    assert.deepEqual(list.body.requiredFields, ['delegate', 'expiresAt', 'allowedMarkets', 'maxNotional', 'permissions']);
+    assert.equal(list.body.safety.delegateCanWithdraw, false);
+    assert.equal(list.body.safety.delegateCanAdmin, false);
+    assert.equal(list.body.safety.realQuaiTransactions, false);
+    assert.equal(list.body.safety.walletRequired, false);
+
+    const create = await requestJson(baseUrl, '/v1/delegate-keys', {
+      method: 'POST',
+      body: JSON.stringify({
+        delegate: '0x4444444444444444444444444444444444444444',
+        expiresAt: 1780003600,
+        allowedMarkets: ['QI-QUAI'],
+        maxNotional: '1000',
+        permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'],
+      }),
+    });
+
+    assert.equal(create.status, 501);
+    assert.equal(create.body.error, 'delegate_key_registration_not_implemented');
+    assert.equal(create.body.source, 'delegate-key-owner-signed-prepare-boundary');
+    assert.equal(create.body.operation, 'register_delegate_key');
+    assert.equal(create.body.operationStatus, 'prepare-only-owner-signed-required');
+    assert.equal(create.body.ownerAuthorization, 'owner-wallet-signature-required');
+    assert.deepEqual(create.body.permissions, ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(create.body.delegateCanWithdraw, false);
+    assert.equal(create.body.delegateCanAdmin, false);
+    assert.equal(create.body.realQuaiTransactions, false);
+    assert.equal(create.body.walletRequired, false);
+    assert.equal(create.body.fundsMoved, false);
+    assert.equal(create.body.tradingVaultMutation, false);
+    assert.match(create.body.message, /No delegate key is registered/i);
+
+    const revoke = await requestJson(baseUrl, '/v1/delegate-keys/bot-mm-1', {
+      method: 'DELETE',
+    });
+
+    assert.equal(revoke.status, 501);
+    assert.equal(revoke.body.error, 'delegate_key_revocation_not_implemented');
+    assert.equal(revoke.body.source, 'delegate-key-owner-signed-prepare-boundary');
+    assert.equal(revoke.body.operation, 'revoke_delegate_key');
+    assert.equal(revoke.body.keyId, 'bot-mm-1');
+    assert.equal(revoke.body.operationStatus, 'prepare-only-owner-signed-required');
+    assert.deepEqual(revoke.body.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(revoke.body.delegateCanWithdraw, false);
+    assert.equal(revoke.body.delegateCanAdmin, false);
+    assert.equal(revoke.body.realQuaiTransactions, false);
+    assert.equal(revoke.body.walletRequired, false);
+    assert.equal(revoke.body.fundsMoved, false);
+    assert.equal(revoke.body.tradingVaultMutation, false);
+    assert.match(revoke.body.message, /No delegate key is revoked/i);
+  });
+});
+
 test('mock order cancellation removes only matcher-open quantity without nonce or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const firstRestingSell = mockOrder({

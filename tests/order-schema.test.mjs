@@ -313,6 +313,92 @@ test('OpenAPI and order docs expose owner-signed nonce-cancel placeholder', asyn
   }
 });
 
+test('OpenAPI and order docs expose delegate key prepare-only boundary', async () => {
+  const spec = await readText('docs/api-openapi.yaml');
+  const doc = await readText('docs/order-schema.md');
+  const delegateKeysRoute = sectionBetween(spec, '  /v1/delegate-keys:', '  /v1/delegate-keys/{keyId}:');
+  const delegateKeyDeleteRoute = sectionBetween(spec, '  /v1/delegate-keys/{keyId}:', '  /v1/proofs/trades/{tradeId}:');
+  const delegateKeyList = sectionBetween(spec, '    DelegateKeyListResponse:', '    DelegateKeyPrepareNotImplemented:');
+  const delegateKeyPlaceholder = sectionBetween(spec, '    DelegateKeyPrepareNotImplemented:', '    Market:');
+  const delegateKeyDoc = sectionBetween(doc, '## Delegate/API key prepare-only boundary', '## API usage');
+
+  for (const requiredText of [
+    'summary: List delegate/API key metadata',
+    '$ref: "#/components/schemas/DelegateKeyListResponse"',
+    'summary: Prepare delegate/API key registration',
+    '$ref: "#/components/schemas/DelegateKeyPrepareNotImplemented"',
+    '501',
+    'owner-signed delegate-key registration is not wired to wallet loading, signing, broadcast, or live registry mutation',
+  ]) {
+    assert.ok(delegateKeysRoute.includes(requiredText), `/v1/delegate-keys route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'summary: Prepare delegate/API key revocation',
+    '$ref: "#/components/schemas/DelegateKeyPrepareNotImplemented"',
+    '501',
+    'owner-signed delegate-key revocation is not wired to wallet loading, signing, broadcast, or live registry mutation',
+  ]) {
+    assert.ok(delegateKeyDeleteRoute.includes(requiredText), `/v1/delegate-keys/{keyId} route should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'required: [delegateKeys, source, custody, defaultPermissions, requiredFields, safety]',
+    'enum: [delegate-key-registry-projection]',
+    'READ_ONLY',
+    'PLACE_ORDER',
+    'CANCEL_ORDER',
+    'CANCEL_ALL',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'allowedMarkets',
+    'maxNotional',
+    'delegateCanWithdraw',
+    'delegateCanAdmin',
+    'realQuaiTransactions',
+    'walletRequired',
+  ]) {
+    assert.ok(delegateKeyList.includes(requiredText), `DelegateKeyListResponse should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    'delegate_key_registration_not_implemented',
+    'delegate_key_revocation_not_implemented',
+    'delegate-key-owner-signed-prepare-boundary',
+    'prepare-only-owner-signed-required',
+    'owner-wallet-signature-required',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'delegateCanWithdraw:',
+    'delegateCanAdmin:',
+    'fundsMoved:',
+    'tradingVaultMutation:',
+    'No delegate key is registered or revoked in local prepare-only mode',
+  ]) {
+    assert.ok(delegateKeyPlaceholder.includes(requiredText), `DelegateKeyPrepareNotImplemented should include ${requiredText}`);
+  }
+
+  for (const requiredText of [
+    '## Delegate/API key prepare-only boundary',
+    'GET /v1/delegate-keys',
+    'POST /v1/delegate-keys',
+    'DELETE /v1/delegate-keys/{keyId}',
+    'delegate-key-owner-signed-prepare-boundary',
+    'delegate_key_registration_not_implemented',
+    'delegate_key_revocation_not_implemented',
+    'prepare-only-owner-signed-required',
+    'allowedMarkets',
+    'maxNotional',
+    'expiresAt',
+    'NO_WITHDRAW',
+    'NO_ADMIN',
+    'No delegate key is registered or revoked',
+    'no wallet loading, signing, broadcast, deploy, transaction helper, real registry mutation, TradingVault mutation, or funds movement',
+  ]) {
+    assert.ok(delegateKeyDoc.includes(requiredText), `docs/order-schema.md delegate key section should include ${requiredText}`);
+  }
+});
+
 test('order schema splits internal FillPacket from public IndexedFillProjection rows', async () => {
   const doc = await readText('docs/order-schema.md');
   const projectionSection = sectionBetween(doc, '## IndexedFillProjection', '## API usage');

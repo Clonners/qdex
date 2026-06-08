@@ -1,3 +1,7 @@
+import {
+  createDelegateKeyListResponse,
+  createDelegateKeyPreparePlaceholder,
+} from '../delegate-keys.js';
 import { createMockVaultBalanceProjection } from '../mock-dex.js';
 import {
   createVaultHistoryProjectionEnvelope,
@@ -112,20 +116,16 @@ export const handlePrivateRoute = (context) => {
   }
 
   if (method === 'GET' && pathname === '/v1/delegate-keys') {
-    return jsonResult(200, {
-      delegateKeys: [],
-      defaultPermissions: ['READ_ONLY', 'PLACE_ORDER', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'],
-      source: 'mock-delegate-key-registry',
-    });
+    return jsonResult(200, createDelegateKeyListResponse());
   }
 
   if (method === 'POST' && pathname === '/v1/delegate-keys') {
-    return notImplemented(context, 'wire_delegate_key_registry_with_no_withdraw_default');
+    return jsonResult(501, createDelegateKeyPreparePlaceholder('register_delegate_key'));
   }
 
   const keyId = pathValue(pathname, '/v1/delegate-keys/');
   if (method === 'DELETE' && keyId !== null) {
-    return notImplemented(context, 'wire_delegate_key_revocation');
+    return jsonResult(501, createDelegateKeyPreparePlaceholder('revoke_delegate_key', keyId));
   }
 
   return null;

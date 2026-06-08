@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node src/server.js",
-    "check": "node --check src/contract-registry.js && node --check src/http.js && node --check src/listing-policy.js && node --check src/listing-review-queue.js && node --check src/mock-dex.js && node --check src/relayer-gate-status.js && node --check src/streams.js && node --check src/vault-operations.js && node --check src/websocket.js && node --check src/routes/public.js && node --check src/routes/private.js && node --check src/routes/proofs.js && node --check src/server.js && node --test test/*.test.mjs",
+    "check": "node --check src/contract-registry.js && node --check src/delegate-keys.js && node --check src/http.js && node --check src/listing-policy.js && node --check src/listing-review-queue.js && node --check src/mock-dex.js && node --check src/relayer-gate-status.js && node --check src/streams.js && node --check src/vault-operations.js && node --check src/websocket.js && node --check src/routes/public.js && node --check src/routes/private.js && node --check src/routes/proofs.js && node --check src/server.js && node --test test/*.test.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

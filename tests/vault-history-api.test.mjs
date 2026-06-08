@@ -221,11 +221,15 @@ test('vault history SDK and CLI docs expose read-only clients without wallet beh
     'campaign status should retain the bounded local/source-only TypeScript/qdex vault history stream consumer slice',
   );
   assert.ok(
-    status.includes('Completed this run: Python SDK vault history stream consumers'),
-    'campaign status should checkpoint the bounded local/source-only Python vault history stream consumer slice',
+    status.includes('Completed previous run: Python SDK vault history stream consumers'),
+    'campaign status should retain the bounded local/source-only Python vault history stream consumer slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should name the next bounded local/source-only MVP slice after Python stream parity',
+    status.includes('Completed this run: prepare-only delegate/API key registration and revocation API boundary'),
+    'campaign status should checkpoint the bounded local/source-only delegate-key API boundary slice',
+  );
+  assert.ok(
+    status.includes('Next autonomous slice: TypeScript/Python/qdex prepare-only delegate-key registration/revocation clients'),
+    'campaign status should name the delegate-key prepare-only client exposure slice after the API boundary',
   );
 });

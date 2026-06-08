@@ -424,29 +424,42 @@ paths:
   /v1/delegate-keys:
     get:
       tags: [private]
-      summary: List delegate/API keys
+      summary: List delegate/API key metadata
       responses:
         "200":
-          description: Delegate key list
+          description: Read-only delegate key metadata; local MVP does not expose key material or registry mutation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegateKeyListResponse"
     post:
       tags: [private]
-      summary: Create delegate/API key
-      description: Delegate keys default to NO_WITHDRAW.
+      summary: Prepare delegate/API key registration
+      description: owner-signed delegate-key registration is not wired to wallet loading, signing, broadcast, or live registry mutation. Delegate keys default to NO_WITHDRAW and NO_ADMIN.
       responses:
-        "201":
-          description: Delegate key created
+        "501":
+          description: Prepare-only delegate key registration boundary; no delegate key is created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegateKeyPrepareNotImplemented"
   /v1/delegate-keys/{keyId}:
     delete:
       tags: [private]
-      summary: Revoke delegate/API key
+      summary: Prepare delegate/API key revocation
+      description: owner-signed delegate-key revocation is not wired to wallet loading, signing, broadcast, or live registry mutation.
       parameters:
         - name: keyId
           in: path
           required: true
           schema: { type: string }
       responses:
-        "200":
-          description: Delegate key revoked
+        "501":
+          description: Prepare-only delegate key revocation boundary; no delegate key is revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegateKeyPrepareNotImplemented"
   /v1/proofs/trades/{tradeId}:
     get:
       tags: [proofs]
@@ -2338,6 +2351,119 @@ components:
         approvalGate:
           type: string
           enum: [explicit-approval-required-before-wallet-signing-or-quai-broadcast]
+    DelegateKeyListResponse:
+      type: object
+      description: Read-only delegate/API key registry projection. Local MVP mode exposes metadata only and no key material.
+      required: [delegateKeys, source, custody, defaultPermissions, requiredFields, safety]
+      properties:
+        delegateKeys:
+          type: array
+          items:
+            type: object
+        source:
+          type: string
+          enum: [delegate-key-registry-projection]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        defaultPermissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, PLACE_ORDER, CANCEL_ORDER, CANCEL_ALL, NO_WITHDRAW, NO_ADMIN]
+        requiredFields:
+          type: array
+          items:
+            type: string
+            enum: [delegate, expiresAt, allowedMarkets, maxNotional, permissions]
+        safety:
+          type: object
+          required: [delegateCanWithdraw, delegateCanAdmin, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, message]
+          properties:
+            delegateCanWithdraw:
+              type: boolean
+              enum: [false]
+            delegateCanAdmin:
+              type: boolean
+              enum: [false]
+            realQuaiTransactions:
+              type: boolean
+              enum: [false]
+            walletRequired:
+              type: boolean
+              enum: [false]
+            fundsMoved:
+              type: boolean
+              enum: [false]
+            tradingVaultMutation:
+              type: boolean
+              enum: [false]
+            message:
+              type: string
+              example: Delegate/API keys are trade-only metadata in local mode; they cannot withdraw, administer contracts, move funds, or mutate TradingVault balances.
+    DelegateKeyPrepareNotImplemented:
+      type: object
+      description: Precise 501 placeholder for owner-signed delegate/API key registration or revocation. No delegate key is registered or revoked in local prepare-only mode.
+      required: [error, source, operation, operationStatus, ownerAuthorization, delegateAuthority, custody, permissions, requiredFields, delegateCanWithdraw, delegateCanAdmin, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, approvalGate, message]
+      properties:
+        error:
+          type: string
+          enum: [delegate_key_registration_not_implemented, delegate_key_revocation_not_implemented]
+        source:
+          type: string
+          enum: [delegate-key-owner-signed-prepare-boundary]
+        operation:
+          type: string
+          enum: [register_delegate_key, revoke_delegate_key]
+        keyId:
+          type: string
+          nullable: true
+        operationStatus:
+          type: string
+          enum: [prepare-only-owner-signed-required]
+        ownerAuthorization:
+          type: string
+          enum: [owner-wallet-signature-required]
+        delegateAuthority:
+          type: string
+          enum: [trade-only-no-withdraw-no-admin]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [PLACE_ORDER, CANCEL_ORDER, CANCEL_ALL, NO_WITHDRAW, NO_ADMIN]
+        requiredFields:
+          type: array
+          items:
+            type: string
+            enum: [delegate, expiresAt, allowedMarkets, maxNotional, permissions]
+        delegateCanWithdraw:
+          type: boolean
+          enum: [false]
+        delegateCanAdmin:
+          type: boolean
+          enum: [false]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        approvalGate:
+          type: string
+          enum: [explicit-approval-required-before-owner-wallet-signing-or-live-registry-mutation]
+        message:
+          type: string
+          example: No delegate key is registered or revoked in local prepare-only mode; no wallet loading, signing, broadcast, deploy, transaction helper, real registry mutation, TradingVault mutation, or funds movement occurs.
     Market:
       type: object
       required: [id, base, quote, status]
