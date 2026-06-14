@@ -142,6 +142,7 @@ input { font: inherit; }
   display: flex; flex-direction: column;
   flex-shrink: 0;
 }
+.chart-row.hidden { display: none; }
 .chart-container {
   width: 100%; height: 280px; position: relative;
 }
@@ -457,7 +458,7 @@ input { font: inherit; }
     </div>
 
     <!-- Chart Row (center only) -->
-    <div class="chart-row">
+    <div class="chart-row" id="chartRow">
       <div class="chart-intervals" id="chartIntervals">
         <button class="interval-btn" data-interval="1m">1m</button>
         <button class="interval-btn active" data-interval="5m">5m</button>
@@ -465,6 +466,8 @@ input { font: inherit; }
         <button class="interval-btn" data-interval="1h">1H</button>
         <button class="interval-btn" data-interval="4h">4H</button>
         <button class="interval-btn" data-interval="1d">1D</button>
+        <span style="flex:1"></span>
+        <button class="interval-btn chart-toggle" id="chartToggle" title="Show chart">📊</button>
       </div>
       <div class="chart-container">
         <div class="tv-chart" id="tvChart"></div>
@@ -736,11 +739,68 @@ input { font: inherit; }
 
   async function loadKlines() {
     const data = await api(`/v1/klines/${state.market}?interval=${state.interval}`);
-    if (data?.klines) {
+    if (data?.klines && data.klines.length > 0) {
       state.klines = data.klines;
-      updateChart();
+    } else {
+      // Generate mock klines for demo
+      state.klines = generateMockKlines(100);
+    }
+    updateChart();
+    // Show chart when we have data
+    $('#chartRow').classList.remove('hidden');
+    chartVisible = true;
+    const btn = $('#chartToggle');
+    if (btn) {
+      btn.textContent = '✕';
+      btn.title = 'Hide chart';
     }
   }
+
+  // ── Mock Kline Generator ──────────────────────
+  function generateMockKlines(count=100) {
+    const now = Math.floor(Date.now() / 1000);
+    const intervalMs = {
+      '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400, '1d': 86400,
+    }[state.interval] || 300;
+
+    let price = 0.001234;
+    const klines = [];
+    for (let i = count; i >= 0; i--) {
+      const time = now - i * intervalMs;
+      const open = price;
+      const change = (Math.random() - 0.48) * 0.0001;
+      const close = open + change;
+      const high = Math.max(open, close) + Math.random() * 0.00005;
+      const low = Math.min(open, close) - Math.random() * 0.00005;
+      klines.push({ time, open: open.toFixed(6), high: high.toFixed(6), low: low.toFixed(6), close: close.toFixed(6) });
+      price = close;
+    }
+    return klines;
+  }
+
+  // ── Chart Toggle ──────────────────────────────
+  let chartVisible = false;
+
+  function toggleChart() {
+    chartVisible = !chartVisible;
+    const row = $('#chartRow');
+    row.classList.toggle('hidden', !chartVisible);
+    const btn = $('#chartToggle');
+    if (btn) {
+      btn.textContent = chartVisible ? '✕' : '📊';
+      btn.title = chartVisible ? 'Hide chart' : 'Show chart';
+    }
+  }
+
+  // Initialize toggle button
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = $('#chartToggle');
+    if (toggleBtn) {
+      toggleBtn.onclick = toggleChart;
+    }
+    // Hide chart by default
+    $('#chartRow').classList.add('hidden');
+  });
 
   function updateChart() {
     if (!tvSeries || !state.klines.length) return;
