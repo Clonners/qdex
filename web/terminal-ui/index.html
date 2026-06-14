@@ -682,10 +682,12 @@ input { font: inherit; }
     }
   }
 
-  // ── TradingView Chart ─────────────────────────
-  let tvChart, tvSeries;
+  // ── Chart Toggle ──────────────────────────────
+  let chartVisible = false;
+  let chartInitialized = false;
 
-  function initChart() {
+  function initChartLazy() {
+    if (chartInitialized) return;
     const container = $('#tvChart');
     if (!container || typeof LightweightCharts === 'undefined') {
       console.warn('Lightweight Charts not available');
@@ -719,7 +721,7 @@ input { font: inherit; }
       handleScale: true,
     });
 
-    tvSeries = tvChart.addCandlestickSeries({
+    tvSeries = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
       upColor: '#10b981',
       downColor: '#ef4444',
       borderVisible: false,
@@ -731,11 +733,34 @@ input { font: inherit; }
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        tvChart.applyOptions({ width, height });
+        if (width > 0 && height > 0) {
+          tvChart.applyOptions({ width, height });
+        }
       }
     });
     ro.observe(container);
+
+    chartInitialized = true;
   }
+
+  function toggleChart() {
+    chartVisible = !chartVisible;
+    const row = $('#chartRow');
+    row.classList.toggle('hidden', !chartVisible);
+    const btn = $('#chartToggle');
+    if (btn) {
+      btn.textContent = chartVisible ? '✕' : '📊';
+      btn.title = chartVisible ? 'Hide chart' : 'Show chart';
+    }
+    // Initialize chart when first shown
+    if (chartVisible) {
+      initChartLazy();
+      updateChart();
+    }
+  }
+
+  // Attach toggle handler immediately (script runs after DOM)
+  $('#chartToggle').onclick = toggleChart;
 
   async function loadKlines() {
     const data = await api(`/v1/klines/${state.market}?interval=${state.interval}`);
@@ -773,42 +798,22 @@ input { font: inherit; }
     return klines;
   }
 
-  // ── Chart Toggle ──────────────────────────────
-  let chartVisible = false;
-
-  function toggleChart() {
-    chartVisible = !chartVisible;
-    const row = $('#chartRow');
-    row.classList.toggle('hidden', !chartVisible);
-    const btn = $('#chartToggle');
-    if (btn) {
-      btn.textContent = chartVisible ? '✕' : '📊';
-      btn.title = chartVisible ? 'Hide chart' : 'Show chart';
-    }
-    // Update chart when shown
-    if (chartVisible) {
-      updateChart();
-    }
-  }
-
-  // Initialize toggle button
-  document.addEventListener('DOMContentLoaded', () => {
-    const toggleBtn = $('#chartToggle');
-    if (toggleBtn) {
-      toggleBtn.onclick = toggleChart;
-    }
-  });
-
   function updateChart() {
     if (!tvSeries || !state.klines.length) return;
 
-    const candles = state.klines.map(k => ({
-      time: typeof k.time === 'number' ? Math.floor(k.time / 1000) : k.time,
-      open: parseFloat(k.open),
-      high: parseFloat(k.high),
-      low: parseFloat(k.low),
-      close: parseFloat(k.close),
-    }));
+    const candles = state.klines.map(k => {
+      // Mock klines already have time in seconds (Unix timestamp)
+      const time = typeof k.time === 'number' && k.time > 1e10
+        ? Math.floor(k.time / 1000)  // API returns ms
+        : k.time;                    // Mock returns seconds
+      return {
+        time,
+        open: parseFloat(k.open),
+        high: parseFloat(k.high),
+        low: parseFloat(k.low),
+        close: parseFloat(k.close),
+      };
+    });
 
     tvSeries.setData(candles);
     tvChart.timeScale().fitContent();
@@ -1134,7 +1139,6 @@ input { font: inherit; }
     logActivity('Mock mode — no real transactions', 'warn');
 
     await loadMarkets();
-    initChart();
     await refresh();
 
     // Refresh every 2s
