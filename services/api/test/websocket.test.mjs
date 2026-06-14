@@ -12,11 +12,11 @@ const mockOrder = (overrides = {}) => {
   const nonce = overrides.nonce ?? '1';
 
   return {
-    marketId: 'QI-QUAI',
+    marketId: 'WQUAI-WQI',
     side: 'sell',
     type: 'limit',
-    baseToken: 'mock:QI',
-    quoteToken: 'mock:QUAI',
+    baseToken: 'mock:WQUAI',
+    quoteToken: 'mock:WQI',
     amount: '100',
     price: '5',
     timeInForce: 'GTC',
@@ -129,18 +129,18 @@ const requestJson = async (baseUrl, path, options = {}) => {
 
 test('WebSocket transport sends public stream snapshots from /v1/ws channel query', async () => {
   await withServer(async (baseUrl) => {
-    const message = await readWebSocketSnapshot(baseUrl, 'market.QI-QUAI.depth');
+    const message = await readWebSocketSnapshot(baseUrl, 'market.WQUAI-WQI.depth');
 
     assert.equal(message.type, 'snapshot');
     assert.equal(message.transport, 'websocket');
     assert.deepEqual(message.snapshot, {
-      channel: 'market.QI-QUAI.depth',
+      channel: 'market.WQUAI-WQI.depth',
       visibility: 'public',
       payload: 'orderbook_depth',
       source: 'mock-orderbook',
       custody: 'public-read-only-no-custody',
       data: {
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         sequence: 0,
         bids: [],
         asks: [],
@@ -213,7 +213,7 @@ test('WebSocket transport sends public FeeManager fee schedule snapshots', async
     assert.equal(message.snapshot.data.safety.noFeeAuthorityRuntimeKeys, true);
     assert.deepEqual(message.snapshot.data.feeSchedules, [
       {
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         projectionType: 'FeeScheduleProjection',
         eventName: 'FeesUpdated',
         makerFeeBps: 0,
@@ -337,7 +337,7 @@ test('WebSocket transport sends private DelegateKeyRegistry registration and rev
 test('WebSocket transport fanouts live snapshots after mock orderbook and fill mutations', async () => {
   await withServer(async (baseUrl) => {
     const httpBaseUrl = baseUrl.replace('ws://', 'http://');
-    const depthWs = new WebSocket(`${baseUrl}/v1/ws?channel=${encodeURIComponent('market.QI-QUAI.depth')}`);
+    const depthWs = new WebSocket(`${baseUrl}/v1/ws?channel=${encodeURIComponent('market.WQUAI-WQI.depth')}`);
     const fillsWs = new WebSocket(`${baseUrl}/v1/ws?channel=fills`);
 
     try {
@@ -403,9 +403,9 @@ test('WebSocket transport fanouts live snapshots after mock orderbook and fill m
 
       assert.equal(matchedFills.streamEvent.reason, 'mock_settlement_confirmed');
       assert.deepEqual(matchedFills.streamEvent.channels, [
-        'market.QI-QUAI.depth',
+        'market.WQUAI-WQI.depth',
         'orders',
-        'market.QI-QUAI.trades',
+        'market.WQUAI-WQI.trades',
         'fills',
         'settlements',
         'global.tickers',
@@ -426,7 +426,7 @@ test('WebSocket transport fanouts live snapshots after mock orderbook and fill m
 test('WebSocket transport fanouts matcher-local cancellation snapshots to depth and orders streams', async () => {
   await withServer(async (baseUrl) => {
     const httpBaseUrl = baseUrl.replace('ws://', 'http://');
-    const depthWs = new WebSocket(`${baseUrl}/v1/ws?channel=${encodeURIComponent('market.QI-QUAI.depth')}`);
+    const depthWs = new WebSocket(`${baseUrl}/v1/ws?channel=${encodeURIComponent('market.WQUAI-WQI.depth')}`);
     const ordersWs = new WebSocket(`${baseUrl}/v1/ws?channel=orders`);
 
     try {
@@ -482,7 +482,7 @@ test('WebSocket transport fanouts matcher-local cancellation snapshots to depth 
 
       for (const message of [cancelledDepth, cancelledOrders]) {
         assert.equal(message.streamEvent.reason, 'matcher_local_order_cancelled');
-        assert.deepEqual(message.streamEvent.channels, ['market.QI-QUAI.depth', 'orders']);
+        assert.deepEqual(message.streamEvent.channels, ['market.WQUAI-WQI.depth', 'orders']);
         assert.equal(message.streamEvent.source, 'mock-matching-engine');
         assert.equal(message.streamEvent.custody, 'non-custodial-no-withdrawal-authority');
         assert.equal(message.streamEvent.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');

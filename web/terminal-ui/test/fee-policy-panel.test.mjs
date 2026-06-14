@@ -27,7 +27,7 @@ const requiredSafetyFields = Object.freeze({
 });
 
 const requiredScheduleFields = Object.freeze({
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   projectionType: 'FeeScheduleProjection',
   eventName: 'FeesUpdated',
   makerFeeBps: 0,
@@ -83,7 +83,7 @@ test('renderTradeProofPanel renders read-only FeeManager policy without implying
     /feemanager-policy-projection/,
     /FeeScheduleProjection/,
     /FeesUpdated/,
-    /QI-QUAI/,
+    /WQUAI-WQI/,
     /maker fee bps[\s\S]*0/i,
     /taker fee bps[\s\S]*0/i,
     /hard max fee bps[\s\S]*1000/i,

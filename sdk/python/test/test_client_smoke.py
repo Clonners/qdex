@@ -94,18 +94,18 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(registry["deploymentStatus"], "local-only-not-deployed")
             self.assertFalse(registry["realQuaiTransactions"])
             self.assertFalse(registry["walletRequired"])
-            self.assertIn("WQUAI, WQI", registry["assetListingCaveat"])
+            self.assertIn("WQUAI/WQI, WQUAI/USDT, and WQI/USDT", registry["assetListingCaveat"])
             self.assertEqual(registry["listedAssetStatus"]["status"], "wrapped-token-listing")
-            self.assertEqual(registry["listedAssetStatus"]["primaryQuoteAssets"], ["WQUAI", "WQI"])
+            self.assertEqual(registry["listedAssetStatus"]["primaryQuoteAssets"], ["WQI", "USDT"])
             self.assertEqual(registry["listedAssetStatus"]["supportedAssetModel"], "erc20-style-vault-token")
-            self.assertTrue(registry["listedAssetStatus"]["userListedTokens"])
-            self.assertEqual(registry["listedAssetStatus"]["listingFlowStatus"], "design-required")
+            self.assertFalse(registry["listedAssetStatus"]["userListedTokens"])
+            self.assertEqual(registry["listedAssetStatus"]["listingFlowStatus"], "deferred-after-initial-three-markets")
             self.assertEqual(registry["listedAssetStatus"]["nativeQiTreatment"], "out-of-scope-direct-settlement-use-WQI")
             self.assertFalse(registry["listedAssetStatus"]["nativeQiDirectSettlement"])
             self.assertFalse(registry["listedAssetStatus"]["realQuaiTransactions"])
             self.assertFalse(registry["listedAssetStatus"]["walletRequired"])
             self.assertIn(
-                "WQUAI, WQI, and approved community tokens",
+                "WQUAI/WQI, WQUAI/USDT, and WQI/USDT only",
                 registry["listedAssetStatus"]["safetyNotice"],
             )
             self.assertIsNone(registry["contracts"]["tradingVault"]["address"])
@@ -247,7 +247,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             delegate_request = {
                 "owner": "0x1111111111111111111111111111111111111111",
                 "delegate": "0x3333333333333333333333333333333333333333",
-                "allowedMarkets": ["QI-QUAI"],
+                "allowedMarkets": ["WQUAI-WQI"],
                 "maxNotional": "1000",
                 "permissions": ["PLACE_ORDER", "CANCEL_ORDER", "CANCEL_ALL", "NO_WITHDRAW", "NO_ADMIN"],
                 "expiresAt": 1780003600,
@@ -466,7 +466,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 fees["feeSchedules"],
                 [
                     {
-                        "marketId": "QI-QUAI",
+                        "marketId": "WQUAI-WQI",
                         "projectionType": "FeeScheduleProjection",
                         "eventName": "FeesUpdated",
                         "makerFeeBps": 0,
@@ -551,7 +551,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 self.assertEqual(ticker_snapshot["payload"], "ticker_snapshot")
                 self.assertEqual(ticker_snapshot["source"], "mock-market-data")
                 self.assertEqual(ticker_snapshot["custody"], "public-read-only-no-custody")
-                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["marketId"], "QI-QUAI")
+                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["marketId"], "WQUAI-WQI")
                 self.assertEqual(ticker_snapshot["data"]["tickers"][0]["source"], "mock-market-data")
                 self.assertEqual(ticker_snapshot["data"]["tickers"][0]["volume24h"], "0")
                 self.assertIsNone(ticker_snapshot["data"]["tickers"][0]["lastPrice"])
@@ -565,75 +565,75 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(bounded_ticker_messages[0]["snapshot"]["channel"], "global.tickers")
             self.assertEqual(bounded_ticker_messages[0]["snapshot"]["custody"], "public-read-only-no-custody")
 
-            depth_stream = client.orderbook.open_stream("QI-QUAI", timeout=2)
+            depth_stream = client.orderbook.open_stream("WQUAI-WQI", timeout=2)
             try:
                 depth_message = depth_stream.next()
                 depth_snapshot = depth_message["snapshot"]
-                self.assertEqual(depth_snapshot["channel"], "market.QI-QUAI.depth")
+                self.assertEqual(depth_snapshot["channel"], "market.WQUAI-WQI.depth")
                 self.assertEqual(depth_snapshot["visibility"], "public")
                 self.assertEqual(depth_snapshot["payload"], "orderbook_depth")
                 self.assertEqual(depth_snapshot["source"], "mock-orderbook")
                 self.assertEqual(depth_snapshot["custody"], "public-read-only-no-custody")
-                self.assertEqual(depth_snapshot["data"]["marketId"], "QI-QUAI")
+                self.assertEqual(depth_snapshot["data"]["marketId"], "WQUAI-WQI")
                 self.assertEqual(depth_snapshot["data"]["source"], "mock-orderbook")
                 self.assertEqual(depth_snapshot["data"]["bids"], [])
                 self.assertEqual(depth_snapshot["data"]["asks"], [])
             finally:
                 depth_stream.close()
 
-            bounded_depth_messages = client.orderbook.stream("QI-QUAI", limit=1, timeout=2)
+            bounded_depth_messages = client.orderbook.stream("WQUAI-WQI", limit=1, timeout=2)
             self.assertEqual(len(bounded_depth_messages), 1)
-            self.assertEqual(bounded_depth_messages[0]["snapshot"]["channel"], "market.QI-QUAI.depth")
+            self.assertEqual(bounded_depth_messages[0]["snapshot"]["channel"], "market.WQUAI-WQI.depth")
             self.assertEqual(bounded_depth_messages[0]["snapshot"]["payload"], "orderbook_depth")
 
-            trades_stream = client.trades.open_stream("QI-QUAI", timeout=2)
+            trades_stream = client.trades.open_stream("WQUAI-WQI", timeout=2)
             try:
                 trade_message = trades_stream.next()
                 trade_snapshot = trade_message["snapshot"]
-                self.assertEqual(trade_snapshot["channel"], "market.QI-QUAI.trades")
+                self.assertEqual(trade_snapshot["channel"], "market.WQUAI-WQI.trades")
                 self.assertEqual(trade_snapshot["visibility"], "public")
                 self.assertEqual(trade_snapshot["payload"], "trade_projection")
                 self.assertEqual(trade_snapshot["source"], "in-memory-indexer-projection")
                 self.assertEqual(trade_snapshot["custody"], "public-read-only-no-custody")
-                self.assertEqual(trade_snapshot["data"]["marketId"], "QI-QUAI")
+                self.assertEqual(trade_snapshot["data"]["marketId"], "WQUAI-WQI")
                 self.assertEqual(trade_snapshot["data"]["trades"], [])
                 self.assertEqual(trade_snapshot["data"]["source"], "in-memory-indexer-projection")
             finally:
                 trades_stream.close()
 
-            bounded_trade_messages = client.trades.stream("QI-QUAI", limit=1, timeout=2)
+            bounded_trade_messages = client.trades.stream("WQUAI-WQI", limit=1, timeout=2)
             self.assertEqual(len(bounded_trade_messages), 1)
-            self.assertEqual(bounded_trade_messages[0]["snapshot"]["channel"], "market.QI-QUAI.trades")
+            self.assertEqual(bounded_trade_messages[0]["snapshot"]["channel"], "market.WQUAI-WQI.trades")
             self.assertEqual(bounded_trade_messages[0]["snapshot"]["payload"], "trade_projection")
             self.assertEqual(bounded_trade_messages[0]["snapshot"]["custody"], "public-read-only-no-custody")
 
-            one_minute_klines = client.klines.get("QI-QUAI", interval="1m")
-            self.assertEqual(one_minute_klines["marketId"], "QI-QUAI")
+            one_minute_klines = client.klines.get("WQUAI-WQI", interval="1m")
+            self.assertEqual(one_minute_klines["marketId"], "WQUAI-WQI")
             self.assertEqual(one_minute_klines["interval"], "1m")
             self.assertEqual(one_minute_klines["candles"], [])
             self.assertEqual(one_minute_klines["source"], "mock-candle-projection")
 
-            kline_stream = client.klines.open_stream("QI-QUAI", interval="1m", timeout=2)
+            kline_stream = client.klines.open_stream("WQUAI-WQI", interval="1m", timeout=2)
             try:
                 kline_message = kline_stream.next()
                 self.assertEqual(kline_message["type"], "snapshot")
                 self.assertEqual(kline_message["transport"], "websocket")
                 kline_snapshot = kline_message["snapshot"]
-                self.assertEqual(kline_snapshot["channel"], "market.QI-QUAI.klines.1m")
+                self.assertEqual(kline_snapshot["channel"], "market.WQUAI-WQI.klines.1m")
                 self.assertEqual(kline_snapshot["visibility"], "public")
                 self.assertEqual(kline_snapshot["payload"], "kline_snapshot")
                 self.assertEqual(kline_snapshot["source"], "mock-candle-projection")
                 self.assertEqual(kline_snapshot["custody"], "public-read-only-no-custody")
-                self.assertEqual(kline_snapshot["data"]["marketId"], "QI-QUAI")
+                self.assertEqual(kline_snapshot["data"]["marketId"], "WQUAI-WQI")
                 self.assertEqual(kline_snapshot["data"]["interval"], "1m")
                 self.assertEqual(kline_snapshot["data"]["candles"], [])
                 self.assertEqual(kline_snapshot["data"]["source"], "mock-candle-projection")
             finally:
                 kline_stream.close()
 
-            bounded_kline_messages = client.klines.stream("QI-QUAI", interval="15m", limit=1, timeout=2)
+            bounded_kline_messages = client.klines.stream("WQUAI-WQI", interval="15m", limit=1, timeout=2)
             self.assertEqual(len(bounded_kline_messages), 1)
-            self.assertEqual(bounded_kline_messages[0]["snapshot"]["channel"], "market.QI-QUAI.klines.15m")
+            self.assertEqual(bounded_kline_messages[0]["snapshot"]["channel"], "market.WQUAI-WQI.klines.15m")
             self.assertEqual(bounded_kline_messages[0]["snapshot"]["payload"], "kline_snapshot")
             self.assertEqual(bounded_kline_messages[0]["snapshot"]["source"], "mock-candle-projection")
             self.assertEqual(bounded_kline_messages[0]["snapshot"]["custody"], "public-read-only-no-custody")
@@ -740,15 +740,15 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(policy["source"], "listed-asset-marketregistry-policy")
             self.assertEqual(policy["status"], "design-only-local-metadata")
             self.assertEqual(policy["assetModel"], "erc20-style-vault-token")
-            self.assertEqual(policy["primaryQuoteAssets"], ["WQUAI", "WQI"])
+            self.assertEqual(policy["primaryQuoteAssets"], ["WQI", "USDT"])
             self.assertEqual(
                 [asset["symbol"] for asset in policy["supportedAssets"]],
-                ["WQUAI", "WQI", "community-created-erc20-style-token"],
+                ["WQUAI", "WQI", "USDT"],
             )
             self.assertIsNone(policy["supportedAssets"][0]["address"])
             self.assertIsNone(policy["supportedAssets"][1]["address"])
-            self.assertEqual(policy["supportedAssets"][2]["listingStatus"], "listable-after-review")
-            self.assertEqual(policy["exampleMarkets"][0]["marketId"], "WQI-WQUAI")
+            self.assertEqual(policy["supportedAssets"][2]["listingStatus"], "listed")
+            self.assertEqual(policy["exampleMarkets"][0]["marketId"], "WQUAI-WQI")
             self.assertFalse(policy["exampleMarkets"][0]["custodyAuthority"])
             self.assertEqual(policy["marketRegistry"]["truthSource"], "MarketRegistry-enabled-pair-metadata")
             self.assertFalse(policy["marketRegistry"]["balanceMovement"])
@@ -956,8 +956,8 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(body["status"], "design-only-local-metadata")
             self.assertEqual(body["requestStatus"], "not-implemented-approval-required")
             self.assertEqual(body["approvalGate"], "listing-submission-approval-gate")
-            self.assertEqual(body["primaryQuoteAssets"], ["WQUAI", "WQI"])
-            self.assertEqual(body["supportedAsset"], "community-created-erc20-style-token")
+            self.assertEqual(body["primaryQuoteAssets"], ["WQI", "USDT"])
+            self.assertEqual(body["supportedAsset"], "initial-fixed-assets-only-WQUAI-WQI-USDT")
             self.assertEqual(body["permissions"], ["NO_WITHDRAW", "NO_ADMIN"])
             self.assertFalse(body["realQuaiTransactions"])
             self.assertFalse(body["walletRequired"])
@@ -1011,9 +1011,9 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             client = QDexClient(base_url=server.base_url)
 
             markets = client.markets.list()
-            self.assertEqual(markets[0]["id"], "QI-QUAI")
+            self.assertEqual(markets[0]["id"], "WQUAI-WQI")
 
-            book_before = client.orderbook.get("QI-QUAI")
+            book_before = client.orderbook.get("WQUAI-WQI")
             self.assertEqual(book_before["source"], "mock-orderbook")
             self.assertEqual(book_before["bids"], [])
             self.assertEqual(book_before["asks"], [])
@@ -1035,7 +1035,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
 
             smoke = run_mock_cross_smoke(client, resting_sell=resting_sell, crossing_buy=crossing_buy)
 
-            self.assertEqual(smoke["market_id"], "QI-QUAI")
+            self.assertEqual(smoke["market_id"], "WQUAI-WQI")
             self.assertEqual(smoke["resting_order"]["status"], "filled")
             self.assertEqual(smoke["crossing_order"]["status"], "filled")
             self.assertEqual(smoke["fill"]["fillId"], "fill-000001")
@@ -1080,7 +1080,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             )
             self.assertEqual(accepted_order["status"], "open")
 
-            cancel_result = client.orders.cancel_all(market_id="QI-QUAI")
+            cancel_result = client.orders.cancel_all(market_id="WQUAI-WQI")
 
             self.assertTrue(cancel_result["cancelled"])
             self.assertEqual(cancel_result["cancelledCount"], 1)
@@ -1092,7 +1092,7 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(cancel_result["cancelledOrders"][0]["remainingAmount"], "0")
             self.assertEqual(cancel_result["cancelledOrders"][0]["nonceCancellation"], "not-implied-matcher-local-only")
 
-            book_after_cancel = client.orderbook.get("QI-QUAI")
+            book_after_cancel = client.orderbook.get("WQUAI-WQI")
             self.assertEqual(book_after_cancel["asks"], [])
 
     def test_python_sdk_preserves_market_ioc_as_signed_ioc_limit_order_with_slippage_bounds(self):

@@ -89,7 +89,7 @@ const parseStreamOptions = (args) => {
 
 const parseMarketAndKlineOptions = (args) => {
   const hasExplicitMarket = args[0] !== undefined && !args[0].startsWith('--');
-  const marketId = hasExplicitMarket ? args[0] : 'QI-QUAI';
+  const marketId = hasExplicitMarket ? args[0] : 'WQUAI-WQI';
   const optionArgs = hasExplicitMarket ? args.slice(1) : args;
   let interval = '15m';
   const rest = [];
@@ -516,9 +516,9 @@ const parseListingRequestDecisionOptions = (args) => {
 
 const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 markets
-  qdex --base-url http://127.0.0.1:8787 ticker QI-QUAI
-  qdex --base-url http://127.0.0.1:8787 klines QI-QUAI --interval 1m
-  qdex --base-url http://127.0.0.1:8787 book QI-QUAI
+  qdex --base-url http://127.0.0.1:8787 ticker WQUAI-WQI
+  qdex --base-url http://127.0.0.1:8787 klines WQUAI-WQI --interval 1m
+  qdex --base-url http://127.0.0.1:8787 book WQUAI-WQI
   qdex --base-url http://127.0.0.1:8787 balance
   qdex --base-url http://127.0.0.1:8787 account
   qdex --base-url http://127.0.0.1:8787 contracts
@@ -533,7 +533,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 api registrations
   qdex --base-url http://127.0.0.1:8787 api revocations
-  qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner <0xowner> --delegate <0xdelegate> --allowed-market QI-QUAI --max-notional 1000 --expires-at <unix> --permission PLACE_ORDER --signature <0xsig>
+  qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner <0xowner> --delegate <0xdelegate> --allowed-market WQUAI-WQI --max-notional 1000 --expires-at <unix> --permission PLACE_ORDER --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 api revoke-key bot-mm-1 --prepare --owner <0xowner> --signature <0xsig>
   qdex --base-url http://127.0.0.1:8787 vault deposits
   qdex --base-url http://127.0.0.1:8787 vault withdrawals
@@ -549,9 +549,9 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream fees [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream tickers [--limit 1]
-  qdex --base-url http://127.0.0.1:8787 stream depth QI-QUAI [--limit 1]
-  qdex --base-url http://127.0.0.1:8787 stream trades QI-QUAI [--limit 1]
-  qdex --base-url http://127.0.0.1:8787 stream klines QI-QUAI --interval 1m [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream depth WQUAI-WQI [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream trades WQUAI-WQI [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream klines WQUAI-WQI --interval 1m [--limit 1]
   qdex --base-url http://127.0.0.1:8787 smoke
 `;
 
@@ -575,7 +575,7 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
     }
 
     if (command === 'ticker') {
-      const marketId = rest[0] ?? 'QI-QUAI';
+      const marketId = rest[0] ?? 'WQUAI-WQI';
       writeJson(stdout, {
         command: 'ticker',
         baseUrl,
@@ -595,7 +595,7 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
     }
 
     if (command === 'book') {
-      const marketId = rest[0] ?? 'QI-QUAI';
+      const marketId = rest[0] ?? 'WQUAI-WQI';
       writeJson(stdout, {
         command: 'book',
         ...(await client.orderbook.get(marketId)),
@@ -853,7 +853,7 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
     }
 
     if (command === 'stream' && rest[0] === 'depth') {
-      const marketId = rest[1] ?? 'QI-QUAI';
+      const marketId = rest[1] ?? 'WQUAI-WQI';
       const options = parseStreamOptions(rest.slice(rest[1] === undefined ? 1 : 2));
       const messages = await client.orderbook.stream(marketId, options);
       writeJson(stdout, {
@@ -869,7 +869,7 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
     }
 
     if (command === 'stream' && rest[0] === 'trades') {
-      const marketId = rest[1] ?? 'QI-QUAI';
+      const marketId = rest[1] ?? 'WQUAI-WQI';
       const options = parseStreamOptions(rest.slice(rest[1] === undefined ? 1 : 2));
       const messages = await client.trades.stream(marketId, options);
       writeJson(stdout, {

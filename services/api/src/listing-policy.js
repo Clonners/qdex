@@ -1,9 +1,9 @@
-const PRIMARY_QUOTE_ASSETS = ['WQUAI', 'WQI'];
+const PRIMARY_QUOTE_ASSETS = ['WQI', 'USDT'];
 
 const supportedAssets = [
   {
     symbol: 'WQUAI',
-    role: 'quote-and-base-vault-token',
+    role: 'initial-base-vault-token',
     assetModel: 'erc20-style-vault-token',
     address: null,
     listingStatus: 'listed',
@@ -11,28 +11,42 @@ const supportedAssets = [
   },
   {
     symbol: 'WQI',
-    role: 'qi-facing-vault-token',
+    role: 'initial-base-and-quote-vault-token',
     assetModel: 'erc20-style-vault-token',
     address: null,
     listingStatus: 'listed',
     nativeQiDirectSettlement: false,
   },
   {
-    symbol: 'community-created-erc20-style-token',
-    role: 'user-created-listable-asset',
+    symbol: 'USDT',
+    role: 'initial-stable-quote-vault-token',
     assetModel: 'erc20-style-vault-token',
     address: null,
-    listingStatus: 'listable-after-review',
+    listingStatus: 'listed',
     nativeQiDirectSettlement: false,
   },
 ];
 
 const exampleMarkets = [
   {
-    marketId: 'WQI-WQUAI',
+    marketId: 'WQUAI-WQI',
+    baseAsset: 'WQUAI',
+    quoteAsset: 'WQI',
+    marketRegistryStatus: 'initial-fixed-market',
+    custodyAuthority: false,
+  },
+  {
+    marketId: 'WQUAI-USDT',
+    baseAsset: 'WQUAI',
+    quoteAsset: 'USDT',
+    marketRegistryStatus: 'initial-fixed-market',
+    custodyAuthority: false,
+  },
+  {
+    marketId: 'WQI-USDT',
     baseAsset: 'WQI',
-    quoteAsset: 'WQUAI',
-    marketRegistryStatus: 'listable-after-review',
+    quoteAsset: 'USDT',
+    marketRegistryStatus: 'initial-fixed-market',
     custodyAuthority: false,
   },
 ];
@@ -124,7 +138,7 @@ export const createListingRequestReviewFlowResponse = () => ({
     {
       id: 'market_parameter_review',
       label: 'Market parameter review',
-      requiredEvidence: ['WQUAI-or-WQI-quote', 'pricePrecision', 'amountPrecision', 'minAmount'],
+      requiredEvidence: ['initial-pair-is-WQUAI-WQI-WQUAI-USDT-or-WQI-USDT', 'pricePrecision', 'amountPrecision', 'minAmount'],
       effect: 'local-review-record-only',
       marketRegistryMutation: false,
     },
@@ -179,7 +193,7 @@ export const createListingRequestPlaceholderResponse = () => ({
   custody: 'non-custodial',
   assetModel: 'erc20-style-vault-token',
   primaryQuoteAssets: [...PRIMARY_QUOTE_ASSETS],
-  supportedAsset: 'community-created-erc20-style-token',
+  supportedAsset: 'initial-fixed-assets-only-WQUAI-WQI-USDT',
   marketRegistry: {
     truthSource: 'MarketRegistry-enabled-pair-metadata',
     marketRegistryMutation: false,

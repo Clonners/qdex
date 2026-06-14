@@ -60,7 +60,7 @@ const fillStreamMessage = Object.freeze({
           projectionType: 'IndexedFillProjection',
           fillId: 'fill-live-000001',
           tradeId: 'trade-live-000001',
-          marketId: 'QI-QUAI',
+          marketId: 'WQUAI-WQI',
           makerOrderHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
           takerOrderHash: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
           maker: '0x1111111111111111111111111111111111111111',
@@ -78,8 +78,8 @@ const fillStreamMessage = Object.freeze({
   }),
   streamEvent: Object.freeze({
     reason: 'mock_settlement_confirmed',
-    marketId: 'QI-QUAI',
-    channels: Object.freeze(['market.QI-QUAI.depth', 'orders', 'market.QI-QUAI.trades', 'fills', 'settlements', 'global.tickers']),
+    marketId: 'WQUAI-WQI',
+    channels: Object.freeze(['market.WQUAI-WQI.depth', 'orders', 'market.WQUAI-WQI.trades', 'fills', 'settlements', 'global.tickers']),
   }),
 });
 
@@ -102,7 +102,7 @@ const proofEnvelope = Object.freeze({
     eventIndex: 0,
     maker: '0x1111111111111111111111111111111111111111',
     taker: '0x3333333333333333333333333333333333333333',
-    market: 'QI-QUAI',
+    market: 'WQUAI-WQI',
     price: '7',
     amount: '25',
     fees: Object.freeze({ maker: '0', taker: '0' }),
@@ -139,8 +139,8 @@ test('buildFillStreamUrl targets the local fills WebSocket channel', () => {
   );
 
   assert.equal(
-    buildFillStreamUrl({ baseUrl: 'https://dex.local:9443/app', channel: 'market.QI-QUAI.depth' }),
-    'wss://dex.local:9443/v1/ws?channel=market.QI-QUAI.depth',
+    buildFillStreamUrl({ baseUrl: 'https://dex.local:9443/app', channel: 'market.WQUAI-WQI.depth' }),
+    'wss://dex.local:9443/v1/ws?channel=market.WQUAI-WQI.depth',
   );
 });
 

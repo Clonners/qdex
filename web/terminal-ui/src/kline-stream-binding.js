@@ -4,7 +4,7 @@ import { cloneKlineFixture, normalizeKlinePanelFixture } from './kline-panel.js'
 import { renderTradeProofPanel } from './render.js';
 
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
-const DEFAULT_MARKET_ID = 'QI-QUAI';
+const DEFAULT_MARKET_ID = 'WQUAI-WQI';
 const DEFAULT_INTERVAL = '1m';
 const KLINE_SOURCE = 'mock-candle-projection';
 const STREAM_CUSTODY = 'public-read-only-no-custody';

@@ -12,8 +12,8 @@ const PALETTE_SOURCE = 'terminal-command-palette-skeleton';
 const SAFE_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
 const EXPECTED_PREFLIGHT_CALLS = [
   ['GET', '/v1/markets'],
-  ['GET', '/v1/tickers/QI-QUAI'],
-  ['GET', '/v1/orderbook/QI-QUAI'],
+  ['GET', '/v1/tickers/WQUAI-WQI'],
+  ['GET', '/v1/orderbook/WQUAI-WQI'],
   ['GET', '/v1/proofs/trades/trade-000001'],
   ['GET', '/v1/account/balances'],
   ['GET', '/v1/account'],
@@ -127,8 +127,8 @@ test('local API + terminal UI command-palette smoke prechecks safe surfaces with
       assertSafeSmokeEnvelope(snapshot);
       assert.equal(snapshot.precheckedCommands[':markets'].httpStatus, 200);
       assert.equal(snapshot.precheckedCommands[':markets'].source, 'market-list');
-      assert.equal(snapshot.precheckedCommands[':ticker QI-QUAI'].source, 'mock-market-data');
-      assert.equal(snapshot.precheckedCommands[':book QI-QUAI'].source, 'mock-orderbook');
+      assert.equal(snapshot.precheckedCommands[':ticker WQUAI-WQI'].source, 'mock-market-data');
+      assert.equal(snapshot.precheckedCommands[':book WQUAI-WQI'].source, 'mock-orderbook');
       assert.equal(snapshot.precheckedCommands[':proof trade-000001'].httpStatus, 404);
       assert.equal(snapshot.precheckedCommands[':proof trade-000001'].error, 'proof_not_found');
       assert.equal(snapshot.precheckedCommands[':proof trade-000001'].source, 'proof-service-indexer-projection');
@@ -190,8 +190,8 @@ test('terminal UI docs, package check, app wiring, and campaign status mark comm
     'local-api-precheck-preview-only',
     'preview-only-no-dispatch',
     'GET /v1/markets',
-    'GET /v1/tickers/QI-QUAI',
-    'GET /v1/orderbook/QI-QUAI',
+    'GET /v1/tickers/WQUAI-WQI',
+    'GET /v1/orderbook/WQUAI-WQI',
     'GET /v1/proofs/trades/trade-000001',
     'GET /v1/account/balances',
     'GET /v1/account',

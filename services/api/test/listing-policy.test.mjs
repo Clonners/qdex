@@ -42,12 +42,12 @@ test('GET /v1/listings/policy returns read-only token listing and MarketRegistry
     assert.equal(response.body.source, 'listed-asset-marketregistry-policy');
     assert.equal(response.body.status, 'design-only-local-metadata');
     assert.equal(response.body.assetModel, 'erc20-style-vault-token');
-    assert.deepEqual(response.body.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(response.body.primaryQuoteAssets, ['WQI', 'USDT']);
 
     assert.deepEqual(response.body.supportedAssets, [
       {
         symbol: 'WQUAI',
-        role: 'quote-and-base-vault-token',
+        role: 'initial-base-vault-token',
         assetModel: 'erc20-style-vault-token',
         address: null,
         listingStatus: 'listed',
@@ -55,28 +55,42 @@ test('GET /v1/listings/policy returns read-only token listing and MarketRegistry
       },
       {
         symbol: 'WQI',
-        role: 'qi-facing-vault-token',
+        role: 'initial-base-and-quote-vault-token',
         assetModel: 'erc20-style-vault-token',
         address: null,
         listingStatus: 'listed',
         nativeQiDirectSettlement: false,
       },
       {
-        symbol: 'community-created-erc20-style-token',
-        role: 'user-created-listable-asset',
+        symbol: 'USDT',
+        role: 'initial-stable-quote-vault-token',
         assetModel: 'erc20-style-vault-token',
         address: null,
-        listingStatus: 'listable-after-review',
+        listingStatus: 'listed',
         nativeQiDirectSettlement: false,
       },
     ]);
 
     assert.deepEqual(response.body.exampleMarkets, [
       {
-        marketId: 'WQI-WQUAI',
+        marketId: 'WQUAI-WQI',
+        baseAsset: 'WQUAI',
+        quoteAsset: 'WQI',
+        marketRegistryStatus: 'initial-fixed-market',
+        custodyAuthority: false,
+      },
+      {
+        marketId: 'WQUAI-USDT',
+        baseAsset: 'WQUAI',
+        quoteAsset: 'USDT',
+        marketRegistryStatus: 'initial-fixed-market',
+        custodyAuthority: false,
+      },
+      {
+        marketId: 'WQI-USDT',
         baseAsset: 'WQI',
-        quoteAsset: 'WQUAI',
-        marketRegistryStatus: 'listable-after-review',
+        quoteAsset: 'USDT',
+        marketRegistryStatus: 'initial-fixed-market',
         custodyAuthority: false,
       },
     ]);
@@ -168,7 +182,7 @@ test('GET /v1/listings/review-flow exposes local Clonners-managed review approva
         {
           id: 'market_parameter_review',
           label: 'Market parameter review',
-          requiredEvidence: ['WQUAI-or-WQI-quote', 'pricePrecision', 'amountPrecision', 'minAmount'],
+          requiredEvidence: ['initial-pair-is-WQUAI-WQI-WQUAI-USDT-or-WQI-USDT', 'pricePrecision', 'amountPrecision', 'minAmount'],
           effect: 'local-review-record-only',
           marketRegistryMutation: false,
         },
@@ -241,8 +255,8 @@ test('POST /v1/listings/requests returns prepare-only approval-gated placeholder
       approvalGate: 'listing-submission-approval-gate',
       custody: 'non-custodial',
       assetModel: 'erc20-style-vault-token',
-      primaryQuoteAssets: ['WQUAI', 'WQI'],
-      supportedAsset: 'community-created-erc20-style-token',
+      primaryQuoteAssets: ['WQI', 'USDT'],
+      supportedAsset: 'initial-fixed-assets-only-WQUAI-WQI-USDT',
       marketRegistry: {
         truthSource: 'MarketRegistry-enabled-pair-metadata',
         marketRegistryMutation: false,

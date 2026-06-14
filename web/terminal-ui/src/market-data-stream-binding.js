@@ -3,7 +3,7 @@ import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
 
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
-const DEFAULT_MARKET_ID = 'QI-QUAI';
+const DEFAULT_MARKET_ID = 'WQUAI-WQI';
 const TICKER_SOURCE = 'mock-market-data';
 const DEPTH_SOURCE = 'mock-orderbook';
 const TRADES_SOURCE = 'in-memory-indexer-projection';

@@ -8,17 +8,37 @@ import {
 } from '../listing-policy.js';
 import { createRelayerSettlementModeGateStatus } from '../relayer-gate-status.js';
 
-const MARKET_ID = 'QI-QUAI';
+const MARKET_ID = 'WQUAI-WQI';
 
-const market = Object.freeze({
-  id: MARKET_ID,
-  base: 'QI',
-  quote: 'QUAI',
-  status: 'planned',
-  zone: 'single-zone-mvp',
-  custodyModel: 'contract-vault-non-custodial',
-  settlementSource: 'mock-until-quai-contracts',
-});
+const markets = Object.freeze([
+  Object.freeze({
+    id: MARKET_ID,
+    base: 'WQUAI',
+    quote: 'WQI',
+    status: 'planned',
+    zone: 'single-zone-mvp',
+    custodyModel: 'contract-vault-non-custodial',
+    settlementSource: 'mock-until-quai-contracts',
+  }),
+  Object.freeze({
+    id: 'WQUAI-USDT',
+    base: 'WQUAI',
+    quote: 'USDT',
+    status: 'planned',
+    zone: 'single-zone-mvp',
+    custodyModel: 'contract-vault-non-custodial',
+    settlementSource: 'mock-until-quai-contracts',
+  }),
+  Object.freeze({
+    id: 'WQI-USDT',
+    base: 'WQI',
+    quote: 'USDT',
+    status: 'planned',
+    zone: 'single-zone-mvp',
+    custodyModel: 'contract-vault-non-custodial',
+    settlementSource: 'mock-until-quai-contracts',
+  }),
+]);
 
 const marketPathValue = (pathname, prefix) => {
   if (!pathname.startsWith(prefix)) {
@@ -53,21 +73,19 @@ export const handlePublicRoute = (context) => {
   }
 
   if (method === 'GET' && pathname === '/v1/markets') {
-    return jsonResult(200, { markets: [market] });
+    return jsonResult(200, { markets: markets.map((market) => ({ ...market })) });
   }
 
   if (method === 'GET' && pathname === '/v1/tickers') {
     return jsonResult(200, {
-      tickers: [
-        {
-          marketId: MARKET_ID,
-          lastPrice: null,
-          bestBid: null,
-          bestAsk: null,
-          volume24h: '0',
-          source: 'mock-market-data',
-        },
-      ],
+      tickers: markets.map((market) => ({
+        marketId: market.id,
+        lastPrice: null,
+        bestBid: null,
+        bestAsk: null,
+        volume24h: '0',
+        source: 'mock-market-data',
+      })),
     });
   }
 

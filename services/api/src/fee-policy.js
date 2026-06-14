@@ -1,5 +1,5 @@
 const LOCAL_MAX_FEE_BPS = 1_000;
-const MARKET_ID = 'QI-QUAI';
+const MARKET_ID = 'WQUAI-WQI';
 
 export const FEEMANAGER_POLICY_PROJECTION_SOURCE = 'feemanager-policy-projection';
 

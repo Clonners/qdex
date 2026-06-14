@@ -65,7 +65,7 @@ test('mock terminal UI fixture carries keyboard-shortcut help for read-only/loca
   const commandHints = normalized.commandHints.map((hint) => hint.command);
   for (const requiredCommand of [
     ':markets',
-    ':book QI-QUAI',
+    ':book WQUAI-WQI',
     ':mock cross',
     ':cancel all matcher-local',
     ':deposit WQI 10 prepare owner-wallet-only',

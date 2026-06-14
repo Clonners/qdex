@@ -18,7 +18,7 @@ const makeJsonResponse = (status, body) => ({
 
 const mockOrderResponse = ({ orderHash, status = 'open', fills = [] }) => ({
   orderHash,
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   owner: '0x1111111111111111111111111111111111111111',
   delegate: '0x0000000000000000000000000000000000000000',
   side: 'sell',
@@ -37,7 +37,7 @@ const mockOrderResponse = ({ orderHash, status = 'open', fills = [] }) => ({
 const mockFill = Object.freeze({
   fillId: 'fill-000001',
   tradeId: 'trade-000001',
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   makerOrderHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
   takerOrderHash: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
   maker: '0x1111111111111111111111111111111111111111',
@@ -73,7 +73,7 @@ const mockProofEnvelope = Object.freeze({
 test('createMockCrossOrders builds replay-safe mock orders with market_ioc slippage protection', () => {
   const { restingSell, crossingBuy } = createMockCrossOrders();
 
-  assert.equal(restingSell.marketId, 'QI-QUAI');
+  assert.equal(restingSell.marketId, 'WQUAI-WQI');
   assert.equal(restingSell.side, 'sell');
   assert.equal(restingSell.type, 'limit');
   assert.equal(restingSell.timeInForce, 'GTC');
@@ -82,7 +82,7 @@ test('createMockCrossOrders builds replay-safe mock orders with market_ioc slipp
   assert.equal(restingSell.signature.scheme, 'mock');
   assert.equal(restingSell.signature.signer, restingSell.owner);
 
-  assert.equal(crossingBuy.marketId, 'QI-QUAI');
+  assert.equal(crossingBuy.marketId, 'WQUAI-WQI');
   assert.equal(crossingBuy.side, 'buy');
   assert.equal(crossingBuy.type, 'market_ioc');
   assert.equal(crossingBuy.timeInForce, 'IOC');
@@ -95,8 +95,8 @@ test('createMockCrossOrders builds replay-safe mock orders with market_ioc slipp
   for (const order of [restingSell, crossingBuy]) {
     assert.equal(order.chainId, 0);
     assert.equal(order.settlementContract, '0x2222222222222222222222222222222222222222');
-    assert.equal(order.baseToken, 'mock:QI');
-    assert.equal(order.quoteToken, 'mock:QUAI');
+    assert.equal(order.baseToken, 'mock:WQUAI');
+    assert.equal(order.quoteToken, 'mock:WQI');
     assert.equal(Object.hasOwn(order, 'withdrawalAuthority'), false);
     assert.equal(Object.hasOwn(order, 'admin'), false);
   }

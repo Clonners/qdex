@@ -15,7 +15,7 @@ const FEE_POLICY_SAFETY = Object.freeze({
 });
 
 const FEE_SCHEDULE_ROW = Object.freeze({
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   projectionType: 'FeeScheduleProjection',
   eventName: 'FeesUpdated',
   makerFeeBps: 0,

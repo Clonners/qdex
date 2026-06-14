@@ -50,7 +50,7 @@ const CANCELLATION_MESSAGE = 'Mock cancellation removes only matcher-open quanti
 
 const cancelledOrder = Object.freeze({
   orderHash: ORDER_HASH,
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   owner: '0x1111111111111111111111111111111111111111',
   delegate: '0x0000000000000000000000000000000000000000',
   side: 'sell',
@@ -84,8 +84,8 @@ const orderStreamCancelMessage = Object.freeze({
   }),
   streamEvent: Object.freeze({
     reason: 'matcher_local_order_cancelled',
-    marketId: 'QI-QUAI',
-    channels: Object.freeze(['market.QI-QUAI.depth', 'orders']),
+    marketId: 'WQUAI-WQI',
+    channels: Object.freeze(['market.WQUAI-WQI.depth', 'orders']),
     source: 'mock-matching-engine',
     custody: CUSTODY_NOTE,
     nonceManager: NONCE_MANAGER_NOTE,

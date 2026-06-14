@@ -144,11 +144,11 @@ export const createMockSignedOrder = (overrides = {}) => {
   const maxSlippageBps = overrides.maxSlippageBps ?? (type === 'market_ioc' ? 50 : 0);
 
   const order = {
-    marketId: 'QI-QUAI',
+    marketId: 'WQUAI-WQI',
     side: 'sell',
     type,
-    baseToken: 'mock:QI',
-    quoteToken: 'mock:QUAI',
+    baseToken: 'mock:WQUAI',
+    quoteToken: 'mock:WQI',
     amount: '100',
     price: '5',
     timeInForce,

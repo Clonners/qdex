@@ -120,7 +120,7 @@ test('local API + terminal UI delegate/API key prepare smoke clicks register and
       const [registerCall, revokeCall] = fetchCalls;
       assert.equal(registerCall.body.owner, '0x1111111111111111111111111111111111111111');
       assert.equal(registerCall.body.delegate, '0x3333333333333333333333333333333333333333');
-      assert.deepEqual(registerCall.body.allowedMarkets, ['QI-QUAI']);
+      assert.deepEqual(registerCall.body.allowedMarkets, ['WQUAI-WQI']);
       assert.equal(registerCall.body.maxNotional, '1000');
       assert.deepEqual(registerCall.body.permissions, ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN']);
       assert.equal(registerCall.body.requestMode, 'prepare-only-owner-signed-delegate-key-boundary');

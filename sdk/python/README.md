@@ -11,32 +11,32 @@ from qdex_client import QDexClient, create_mock_signed_order, run_mock_cross_smo
 
 dex = QDexClient(base_url=base_url)
 markets = dex.markets.list()
-book = dex.orderbook.get("QI-QUAI")
-one_minute_klines = dex.klines.get("QI-QUAI", interval="1m")  # /v1/klines/<MARKET>?interval=1m
-kline_stream = dex.klines.open_stream("QI-QUAI", interval="1m", timeout=2)  # /v1/ws?channel=market.<MARKET>.klines.1m
+book = dex.orderbook.get("WQUAI-WQI")
+one_minute_klines = dex.klines.get("WQUAI-WQI", interval="1m")  # /v1/klines/<MARKET>?interval=1m
+kline_stream = dex.klines.open_stream("WQUAI-WQI", interval="1m", timeout=2)  # /v1/ws?channel=market.<MARKET>.klines.1m
 try:
     initial_kline_stream_snapshot = kline_stream.next()
 finally:
     kline_stream.close()
-kline_stream_snapshots = dex.klines.stream("QI-QUAI", interval="1m", limit=1, timeout=2)
+kline_stream_snapshots = dex.klines.stream("WQUAI-WQI", interval="1m", limit=1, timeout=2)
 ticker_stream = dex.tickers.open_stream(timeout=2)  # /v1/ws?channel=global.tickers
 try:
     initial_ticker_stream_snapshot = ticker_stream.next()
 finally:
     ticker_stream.close()
 ticker_stream_snapshots = dex.tickers.stream(limit=1, timeout=2)
-depth_stream = dex.orderbook.open_stream("QI-QUAI", timeout=2)  # /v1/ws?channel=market.<MARKET>.depth
+depth_stream = dex.orderbook.open_stream("WQUAI-WQI", timeout=2)  # /v1/ws?channel=market.<MARKET>.depth
 try:
     initial_depth_stream_snapshot = depth_stream.next()
 finally:
     depth_stream.close()
-depth_stream_snapshots = dex.orderbook.stream("QI-QUAI", limit=1, timeout=2)
-trade_stream = dex.trades.open_stream("QI-QUAI", timeout=2)  # /v1/ws?channel=market.<MARKET>.trades
+depth_stream_snapshots = dex.orderbook.stream("WQUAI-WQI", limit=1, timeout=2)
+trade_stream = dex.trades.open_stream("WQUAI-WQI", timeout=2)  # /v1/ws?channel=market.<MARKET>.trades
 try:
     initial_trade_stream_snapshot = trade_stream.next()
 finally:
     trade_stream.close()
-trade_stream_snapshots = dex.trades.stream("QI-QUAI", limit=1, timeout=2)
+trade_stream_snapshots = dex.trades.stream("WQUAI-WQI", limit=1, timeout=2)
 contracts = dex.contracts.get()
 fees = dex.fees.get()
 fee_stream = dex.fees.open_stream(timeout=2)
@@ -101,7 +101,7 @@ listing_review_decision = dex.listings.requests.decide_local_review(queued_listi
 assert contracts["listedAssetStatus"]["status"] == "wrapped-token-listing"
 assert one_minute_klines["source"] == "mock-candle-projection"  # /v1/klines/<MARKET>?interval=1m
 assert one_minute_klines["interval"] == "1m"
-assert initial_kline_stream_snapshot["snapshot"]["channel"] == "market.QI-QUAI.klines.1m"  # /v1/ws?channel=market.<MARKET>.klines.1m
+assert initial_kline_stream_snapshot["snapshot"]["channel"] == "market.WQUAI-WQI.klines.1m"  # /v1/ws?channel=market.<MARKET>.klines.1m
 assert initial_kline_stream_snapshot["snapshot"]["payload"] == "kline_snapshot"
 assert initial_kline_stream_snapshot["snapshot"]["source"] == "mock-candle-projection"
 assert initial_kline_stream_snapshot["snapshot"]["custody"] == "public-read-only-no-custody"
@@ -224,7 +224,7 @@ nonce_cancel_prepare = dex.nonces.prepare_cancel({
 delegate_key_prepare = dex.delegate_keys.prepare_register({
     "owner": "0x1111111111111111111111111111111111111111",
     "delegate": "0x3333333333333333333333333333333333333333",
-    "allowedMarkets": ["QI-QUAI"],
+    "allowedMarkets": ["WQUAI-WQI"],
     "maxNotional": "1000",
     "permissions": ["PLACE_ORDER", "CANCEL_ORDER", "CANCEL_ALL", "NO_WITHDRAW", "NO_ADMIN"],
     "expiresAt": 1780003600,

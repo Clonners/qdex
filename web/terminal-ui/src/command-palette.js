@@ -40,17 +40,17 @@ const DEFAULT_COMMANDS = Object.freeze([
     description: 'Preview public market metadata without wallet or custody authority.',
   }),
   freezeCommand({
-    command: ':ticker QI-QUAI',
+    command: ':ticker WQUAI-WQI',
     label: 'ticker',
     actionType: 'read_only',
-    surface: 'GET /v1/tickers/QI-QUAI',
-    description: 'Preview public ticker metadata for the mock QI-QUAI market.',
+    surface: 'GET /v1/tickers/WQUAI-WQI',
+    description: 'Preview public ticker metadata for the mock WQUAI-WQI market.',
   }),
   freezeCommand({
-    command: ':book QI-QUAI',
+    command: ':book WQUAI-WQI',
     label: 'book',
     actionType: 'read_only',
-    surface: 'GET /v1/orderbook/QI-QUAI',
+    surface: 'GET /v1/orderbook/WQUAI-WQI',
     description: 'Preview public mock orderbook depth without custody authority.',
   }),
   freezeCommand({

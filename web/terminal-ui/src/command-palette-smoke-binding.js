@@ -1,7 +1,7 @@
 import { bindCommandPaletteSkeleton, createMockCommandPaletteFixture } from './command-palette.js';
 
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
-const DEFAULT_MARKET_ID = 'QI-QUAI';
+const DEFAULT_MARKET_ID = 'WQUAI-WQI';
 const SMOKE_SOURCE = 'terminal-command-palette-local-api-smoke';
 const PALETTE_SOURCE = 'terminal-command-palette-skeleton';
 const SAFE_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
@@ -17,12 +17,12 @@ const HTTP_COMMANDS = Object.freeze([
     validate(body) {
       assertArray(body.markets, 'markets response markets');
       if (!body.markets.some((market) => market?.id === DEFAULT_MARKET_ID)) {
-        throw new Error('GET /v1/markets must include QI-QUAI for command-palette preview.');
+        throw new Error('GET /v1/markets must include WQUAI-WQI for command-palette preview.');
       }
     },
   }),
   Object.freeze({
-    command: ':ticker QI-QUAI',
+    command: ':ticker WQUAI-WQI',
     method: 'GET',
     pathname: `/v1/tickers/${DEFAULT_MARKET_ID}`,
     expectedStatuses: [200],
@@ -34,7 +34,7 @@ const HTTP_COMMANDS = Object.freeze([
     },
   }),
   Object.freeze({
-    command: ':book QI-QUAI',
+    command: ':book WQUAI-WQI',
     method: 'GET',
     pathname: `/v1/orderbook/${DEFAULT_MARKET_ID}`,
     expectedStatuses: [200],

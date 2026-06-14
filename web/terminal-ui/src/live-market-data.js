@@ -2,7 +2,7 @@ import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
 
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
-const DEFAULT_MARKET_ID = 'QI-QUAI';
+const DEFAULT_MARKET_ID = 'WQUAI-WQI';
 const PUBLIC_CUSTODY = 'public-read-only-no-custody';
 const SAFE_PERMISSIONS = Object.freeze(['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
 const FORBIDDEN_PERMISSIONS = Object.freeze(['WITHDRAW', 'ADMIN']);

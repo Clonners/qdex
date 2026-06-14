@@ -266,7 +266,7 @@ if (mount) {
         console.warn('QDEX live public kline/candle stream unavailable; keeping static read-only fixture with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.', error);
       },
       onStreamUpdate: () => {
-        mount.dataset.qdxKlineStream = 'market.QI-QUAI.klines.1m';
+        mount.dataset.qdxKlineStream = 'market.WQUAI-WQI.klines.1m';
       },
     }).catch((error) => {
       mount.dataset.qdxKlineStream = 'disabled';
@@ -295,7 +295,7 @@ if (mount) {
         console.warn('QDEX live public market-data streams unavailable; keeping static read-only fixture with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.', error);
       },
       onStreamUpdate: () => {
-        mount.dataset.qdxPublicMarketDataStreams = 'global.tickers,market.QI-QUAI.depth,market.QI-QUAI.trades';
+        mount.dataset.qdxPublicMarketDataStreams = 'global.tickers,market.WQUAI-WQI.depth,market.WQUAI-WQI.trades';
       },
     }).catch((error) => {
       mount.dataset.qdxPublicMarketDataStreams = 'disabled';

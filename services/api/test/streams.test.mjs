@@ -12,11 +12,11 @@ const mockOrder = (overrides = {}) => {
   const nonce = overrides.nonce ?? '1';
 
   return {
-    marketId: 'QI-QUAI',
+    marketId: 'WQUAI-WQI',
     side: 'sell',
     type: 'limit',
-    baseToken: 'mock:QI',
-    quoteToken: 'mock:QUAI',
+    baseToken: 'mock:WQUAI',
+    quoteToken: 'mock:WQI',
     amount: '100',
     price: '5',
     timeInForce: 'GTC',
@@ -46,15 +46,15 @@ const mockOrder = (overrides = {}) => {
 };
 
 test('stream channel registry pins public market data and custody-safe private scopes', () => {
-  const contracts = listStreamContracts({ marketId: 'QI-QUAI' });
+  const contracts = listStreamContracts({ marketId: 'WQUAI-WQI' });
 
   assert.deepEqual(contracts.public.map((contract) => contract.channel), [
     'global.tickers',
     'fees',
-    'market.QI-QUAI.depth',
-    'market.QI-QUAI.trades',
-    'market.QI-QUAI.klines.1m',
-    'market.QI-QUAI.klines.15m',
+    'market.WQUAI-WQI.depth',
+    'market.WQUAI-WQI.trades',
+    'market.WQUAI-WQI.klines.1m',
+    'market.WQUAI-WQI.klines.15m',
   ]);
 
   const privateChannels = contracts.private.map((contract) => contract.channel);
@@ -117,15 +117,15 @@ test('stream channel registry pins public market data and custody-safe private s
 test('stream snapshots expose public depth/trades and private fills from indexed mock projections', () => {
   const state = createMockDexState();
 
-  const emptyDepth = createStreamSnapshot({ channel: 'market.QI-QUAI.depth', state });
+  const emptyDepth = createStreamSnapshot({ channel: 'market.WQUAI-WQI.depth', state });
   assert.deepEqual(emptyDepth, {
-    channel: 'market.QI-QUAI.depth',
+    channel: 'market.WQUAI-WQI.depth',
     visibility: 'public',
     payload: 'orderbook_depth',
     source: 'mock-orderbook',
     custody: 'public-read-only-no-custody',
     data: {
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       sequence: 0,
       bids: [],
       asks: [],
@@ -152,14 +152,14 @@ test('stream snapshots expose public depth/trades and private fills from indexed
   assert.equal(buy.statusCode, 201);
   assert.equal(buy.body.fills.length, 1);
 
-  const publicTrades = createStreamSnapshot({ channel: 'market.QI-QUAI.trades', state });
+  const publicTrades = createStreamSnapshot({ channel: 'market.WQUAI-WQI.trades', state });
   assert.equal(publicTrades.visibility, 'public');
   assert.equal(publicTrades.source, 'in-memory-indexer-projection');
   assert.deepEqual(publicTrades.data.trades, [
     {
       tradeId: 'trade-000001',
       fillId: 'fill-000001',
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       price: '5',
       amount: '100',
       settlementStatus: 'confirmed',
@@ -229,7 +229,7 @@ test('public FeeManager fee schedule stream snapshot reuses the read-only policy
 
   assert.deepEqual(snapshot.data.feeSchedules, [
     {
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       projectionType: 'FeeScheduleProjection',
       eventName: 'FeesUpdated',
       makerFeeBps: 0,

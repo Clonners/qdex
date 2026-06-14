@@ -106,10 +106,10 @@ const DEFAULT_COMMAND_HINTS = Object.freeze([
     description: 'Read-only public market metadata hint.',
   }),
   freezeHelpEntry({
-    command: ':book QI-QUAI',
+    command: ':book WQUAI-WQI',
     label: 'book',
     actionType: 'read_only_help',
-    surface: 'GET /v1/orderbook/QI-QUAI',
+    surface: 'GET /v1/orderbook/WQUAI-WQI',
     description: 'Read-only mock orderbook hint.',
   }),
   freezeHelpEntry({

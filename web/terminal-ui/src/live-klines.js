@@ -6,7 +6,7 @@ const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
 const KLINE_SOURCE = 'mock-candle-projection';
 const KLINE_PAYLOAD = 'kline_snapshot';
 const STREAM_CUSTODY = 'public-read-only-no-custody';
-const DEFAULT_MARKET_ID = 'QI-QUAI';
+const DEFAULT_MARKET_ID = 'WQUAI-WQI';
 const DEFAULT_INTERVAL = '1m';
 const STREAM_SAFETY_NOTICE =
   'Public kline/candle stream: read-only local/mock candle metadata only; no wallet loaded, no RPC URL, no signing, no broadcast, no transaction submission, and no funds moved.';

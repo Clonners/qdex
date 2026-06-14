@@ -23,7 +23,7 @@ const makeJsonResponse = (status, body) => ({
 
 const acceptedRestingOrder = Object.freeze({
   orderHash: ORDER_HASH,
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   owner: '0x4444444444444444444444444444444444444444',
   delegate: '0x0000000000000000000000000000000000000000',
   side: 'sell',
@@ -46,7 +46,7 @@ const cancellationResponse = Object.freeze({
   cancelledOrders: Object.freeze([
     Object.freeze({
       orderHash: ORDER_HASH,
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       owner: '0x4444444444444444444444444444444444444444',
       delegate: '0x0000000000000000000000000000000000000000',
       side: 'sell',
@@ -72,7 +72,7 @@ const cancellationResponse = Object.freeze({
 test('createMockCancelableOrder builds a resting-only signed mock order with no withdrawal authority', () => {
   const order = createMockCancelableOrder();
 
-  assert.equal(order.marketId, 'QI-QUAI');
+  assert.equal(order.marketId, 'WQUAI-WQI');
   assert.equal(order.side, 'sell');
   assert.equal(order.type, 'limit');
   assert.equal(order.timeInForce, 'GTC');

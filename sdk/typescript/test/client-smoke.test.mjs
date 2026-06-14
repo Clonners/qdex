@@ -37,9 +37,9 @@ test('TypeScript SDK smoke drives mock API order -> fill -> proof loop without c
     const client = new QDexClient({ baseUrl });
 
     const markets = await client.markets.list();
-    assert.equal(markets[0].id, 'QI-QUAI');
+    assert.equal(markets[0].id, 'WQUAI-WQI');
 
-    const bookBefore = await client.orderbook.get('QI-QUAI');
+    const bookBefore = await client.orderbook.get('WQUAI-WQI');
     assert.equal(bookBefore.source, 'mock-orderbook');
     assert.deepEqual(bookBefore.bids, []);
     assert.deepEqual(bookBefore.asks, []);
@@ -61,7 +61,7 @@ test('TypeScript SDK smoke drives mock API order -> fill -> proof loop without c
 
     const smoke = await runMockCrossSmoke(client, { restingSell, crossingBuy });
 
-    assert.equal(smoke.marketId, 'QI-QUAI');
+    assert.equal(smoke.marketId, 'WQUAI-WQI');
     assert.equal(smoke.restingOrder.status, 'filled');
     assert.equal(smoke.crossingOrder.status, 'filled');
     assert.equal(smoke.fill.fillId, 'fill-000001');
@@ -102,17 +102,17 @@ test('TypeScript SDK exposes local-only contract registry metadata without walle
     assert.equal(registry.deploymentStatus, 'local-only-not-deployed');
     assert.equal(registry.realQuaiTransactions, false);
     assert.equal(registry.walletRequired, false);
-    assert.match(registry.assetListingCaveat, /WQUAI, WQI/);
+    assert.match(registry.assetListingCaveat, /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT/);
     assert.equal(registry.listedAssetStatus.status, 'wrapped-token-listing');
-    assert.deepEqual(registry.listedAssetStatus.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(registry.listedAssetStatus.primaryQuoteAssets, ['WQI', 'USDT']);
     assert.equal(registry.listedAssetStatus.supportedAssetModel, 'erc20-style-vault-token');
-    assert.equal(registry.listedAssetStatus.userListedTokens, true);
-    assert.equal(registry.listedAssetStatus.listingFlowStatus, 'design-required');
+    assert.equal(registry.listedAssetStatus.userListedTokens, false);
+    assert.equal(registry.listedAssetStatus.listingFlowStatus, 'deferred-after-initial-three-markets');
     assert.equal(registry.listedAssetStatus.nativeQiTreatment, 'out-of-scope-direct-settlement-use-WQI');
     assert.equal(registry.listedAssetStatus.nativeQiDirectSettlement, false);
     assert.equal(registry.listedAssetStatus.realQuaiTransactions, false);
     assert.equal(registry.listedAssetStatus.walletRequired, false);
-    assert.match(registry.listedAssetStatus.safetyNotice, /WQUAI, WQI, and approved community tokens/i);
+    assert.match(registry.listedAssetStatus.safetyNotice, /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT only/i);
     assert.equal(registry.contracts.tradingVault.address, null);
     assert.equal(registry.contracts.tradingVault.operatorWithdrawalAuthority, false);
     assert.equal(registry.contracts.settlement.proofTrigger, 'TradeSettled');
@@ -254,7 +254,7 @@ test('TypeScript SDK exposes prepare-only delegate key registration and revocati
     const delegateRequest = {
       owner: '0x1111111111111111111111111111111111111111',
       delegate: '0x3333333333333333333333333333333333333333',
-      allowedMarkets: ['QI-QUAI'],
+      allowedMarkets: ['WQUAI-WQI'],
       maxNotional: '1000',
       permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
       expiresAt: 1780003600,
@@ -409,7 +409,7 @@ test('TypeScript SDK exposes read-only FeeManager fee schedule metadata without 
     assert.equal(fees.tradingVaultMutation, false);
     assert.deepEqual(fees.feeSchedules, [
       {
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         projectionType: 'FeeScheduleProjection',
         eventName: 'FeesUpdated',
         makerFeeBps: 0,
@@ -519,16 +519,16 @@ test('TypeScript SDK exposes read-only listing policy metadata without listing-a
     assert.equal(policy.source, 'listed-asset-marketregistry-policy');
     assert.equal(policy.status, 'design-only-local-metadata');
     assert.equal(policy.assetModel, 'erc20-style-vault-token');
-    assert.deepEqual(policy.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(policy.primaryQuoteAssets, ['WQI', 'USDT']);
     assert.deepEqual(policy.supportedAssets.map((asset) => asset.symbol), [
       'WQUAI',
       'WQI',
-      'community-created-erc20-style-token',
+      'USDT',
     ]);
     assert.equal(policy.supportedAssets[0].address, null);
     assert.equal(policy.supportedAssets[1].address, null);
-    assert.equal(policy.supportedAssets[2].listingStatus, 'listable-after-review');
-    assert.equal(policy.exampleMarkets[0].marketId, 'WQI-WQUAI');
+    assert.equal(policy.supportedAssets[2].listingStatus, 'listed');
+    assert.equal(policy.exampleMarkets[0].marketId, 'WQUAI-WQI');
     assert.equal(policy.exampleMarkets[0].custodyAuthority, false);
     assert.equal(policy.marketRegistry.truthSource, 'MarketRegistry-enabled-pair-metadata');
     assert.equal(policy.marketRegistry.balanceMovement, false);
@@ -721,8 +721,8 @@ test('TypeScript SDK exposes prepare-only listing request placeholder without tr
     assert.equal(result.body.status, 'design-only-local-metadata');
     assert.equal(result.body.requestStatus, 'not-implemented-approval-required');
     assert.equal(result.body.approvalGate, 'listing-submission-approval-gate');
-    assert.deepEqual(result.body.primaryQuoteAssets, ['WQUAI', 'WQI']);
-    assert.equal(result.body.supportedAsset, 'community-created-erc20-style-token');
+    assert.deepEqual(result.body.primaryQuoteAssets, ['WQI', 'USDT']);
+    assert.equal(result.body.supportedAsset, 'initial-fixed-assets-only-WQUAI-WQI-USDT');
     assert.deepEqual(result.body.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
     assert.equal(result.body.realQuaiTransactions, false);
     assert.equal(result.body.walletRequired, false);
@@ -780,7 +780,7 @@ test('TypeScript SDK cancelAll cancels mock resting orders without nonce or with
     const acceptedOrder = await client.orders.submitSignedOrder(restingSell);
     assert.equal(acceptedOrder.status, 'open');
 
-    const cancelResult = await client.orders.cancelAll({ marketId: 'QI-QUAI' });
+    const cancelResult = await client.orders.cancelAll({ marketId: 'WQUAI-WQI' });
     assert.equal(cancelResult.cancelled, true);
     assert.equal(cancelResult.cancelledCount, 1);
     assert.deepEqual(cancelResult.permissions, ['CANCEL_ALL', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
@@ -791,7 +791,7 @@ test('TypeScript SDK cancelAll cancels mock resting orders without nonce or with
     assert.equal(cancelResult.cancelledOrders[0].remainingAmount, '0');
     assert.equal(cancelResult.cancelledOrders[0].nonceCancellation, 'not-implied-matcher-local-only');
 
-    const bookAfterCancel = await client.orderbook.get('QI-QUAI');
+    const bookAfterCancel = await client.orderbook.get('WQUAI-WQI');
     assert.deepEqual(bookAfterCancel.asks, []);
   });
 });
@@ -833,9 +833,9 @@ test('TypeScript SDK consumes private fills stream over local WebSocket with liv
       const liveMessage = await fillsStream.next();
       assert.equal(liveMessage.streamEvent.reason, 'mock_settlement_confirmed');
       assert.deepEqual(liveMessage.streamEvent.channels, [
-        'market.QI-QUAI.depth',
+        'market.WQUAI-WQI.depth',
         'orders',
-        'market.QI-QUAI.trades',
+        'market.WQUAI-WQI.trades',
         'fills',
         'settlements',
         'global.tickers',
@@ -890,7 +890,7 @@ test('TypeScript SDK consumes private orders stream for matcher-local cancellati
 
       const cancelMessage = await ordersStream.next();
       assert.equal(cancelMessage.streamEvent.reason, 'matcher_local_order_cancelled');
-      assert.deepEqual(cancelMessage.streamEvent.channels, ['market.QI-QUAI.depth', 'orders']);
+      assert.deepEqual(cancelMessage.streamEvent.channels, ['market.WQUAI-WQI.depth', 'orders']);
       assert.equal(cancelMessage.streamEvent.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
       assert.deepEqual(cancelMessage.streamEvent.permissions, ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
       assert.deepEqual(cancelMessage.streamEvent.cancelledOrderHashes, [acceptedOrder.orderHash]);
@@ -1031,23 +1031,23 @@ test('TypeScript SDK consumes public market-data streams without wallet or tx au
     assert.equal(tickerMessages[0].snapshot.payload, 'ticker_snapshot');
     assert.equal(tickerMessages[0].snapshot.source, 'mock-market-data');
     assert.equal(tickerMessages[0].snapshot.custody, 'public-read-only-no-custody');
-    assert.equal(tickerMessages[0].snapshot.data.tickers[0].marketId, 'QI-QUAI');
+    assert.equal(tickerMessages[0].snapshot.data.tickers[0].marketId, 'WQUAI-WQI');
     assert.equal(tickerMessages[0].snapshot.data.tickers[0].lastPrice, null);
     assert.equal(tickerMessages[0].snapshot.data.tickers[0].bestBid, null);
     assert.equal(tickerMessages[0].snapshot.data.tickers[0].bestAsk, null);
     assert.equal(tickerMessages[0].snapshot.data.tickers[0].volume24h, '0');
     assert.equal(tickerMessages[0].snapshot.data.tickers[0].source, 'mock-market-data');
 
-    const depthStream = client.orderbook.openStream('QI-QUAI', { timeoutMs: 2_000 });
+    const depthStream = client.orderbook.openStream('WQUAI-WQI', { timeoutMs: 2_000 });
     try {
       const depthMessage = await depthStream.next();
       assert.equal(depthMessage.type, 'snapshot');
-      assert.equal(depthMessage.snapshot.channel, 'market.QI-QUAI.depth');
+      assert.equal(depthMessage.snapshot.channel, 'market.WQUAI-WQI.depth');
       assert.equal(depthMessage.snapshot.visibility, 'public');
       assert.equal(depthMessage.snapshot.payload, 'orderbook_depth');
       assert.equal(depthMessage.snapshot.source, 'mock-orderbook');
       assert.equal(depthMessage.snapshot.custody, 'public-read-only-no-custody');
-      assert.equal(depthMessage.snapshot.data.marketId, 'QI-QUAI');
+      assert.equal(depthMessage.snapshot.data.marketId, 'WQUAI-WQI');
       assert.deepEqual(depthMessage.snapshot.data.bids, []);
       assert.deepEqual(depthMessage.snapshot.data.asks, []);
       assert.equal(depthMessage.snapshot.data.source, 'mock-orderbook');
@@ -1055,34 +1055,34 @@ test('TypeScript SDK consumes public market-data streams without wallet or tx au
       await depthStream.close();
     }
 
-    const tradeMessages = await client.trades.stream('QI-QUAI', { limit: 1, timeoutMs: 2_000 });
+    const tradeMessages = await client.trades.stream('WQUAI-WQI', { limit: 1, timeoutMs: 2_000 });
     assert.equal(tradeMessages.length, 1);
     assert.equal(tradeMessages[0].type, 'snapshot');
-    assert.equal(tradeMessages[0].snapshot.channel, 'market.QI-QUAI.trades');
+    assert.equal(tradeMessages[0].snapshot.channel, 'market.WQUAI-WQI.trades');
     assert.equal(tradeMessages[0].snapshot.visibility, 'public');
     assert.equal(tradeMessages[0].snapshot.payload, 'trade_projection');
     assert.equal(tradeMessages[0].snapshot.source, 'in-memory-indexer-projection');
     assert.equal(tradeMessages[0].snapshot.custody, 'public-read-only-no-custody');
-    assert.equal(tradeMessages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.equal(tradeMessages[0].snapshot.data.marketId, 'WQUAI-WQI');
     assert.equal(tradeMessages[0].snapshot.data.source, 'in-memory-indexer-projection');
     assert.deepEqual(tradeMessages[0].snapshot.data.trades, []);
 
-    const oneMinuteKlines = await client.klines.get('QI-QUAI', { interval: '1m' });
-    assert.equal(oneMinuteKlines.marketId, 'QI-QUAI');
+    const oneMinuteKlines = await client.klines.get('WQUAI-WQI', { interval: '1m' });
+    assert.equal(oneMinuteKlines.marketId, 'WQUAI-WQI');
     assert.equal(oneMinuteKlines.interval, '1m');
     assert.deepEqual(oneMinuteKlines.candles, []);
     assert.equal(oneMinuteKlines.source, 'mock-candle-projection');
 
-    const klineStream = client.klines.openStream('QI-QUAI', { interval: '1m', timeoutMs: 2_000 });
+    const klineStream = client.klines.openStream('WQUAI-WQI', { interval: '1m', timeoutMs: 2_000 });
     try {
       const klineMessage = await klineStream.next();
       assert.equal(klineMessage.type, 'snapshot');
-      assert.equal(klineMessage.snapshot.channel, 'market.QI-QUAI.klines.1m');
+      assert.equal(klineMessage.snapshot.channel, 'market.WQUAI-WQI.klines.1m');
       assert.equal(klineMessage.snapshot.visibility, 'public');
       assert.equal(klineMessage.snapshot.payload, 'kline_snapshot');
       assert.equal(klineMessage.snapshot.source, 'mock-candle-projection');
       assert.equal(klineMessage.snapshot.custody, 'public-read-only-no-custody');
-      assert.equal(klineMessage.snapshot.data.marketId, 'QI-QUAI');
+      assert.equal(klineMessage.snapshot.data.marketId, 'WQUAI-WQI');
       assert.equal(klineMessage.snapshot.data.interval, '1m');
       assert.deepEqual(klineMessage.snapshot.data.candles, []);
       assert.equal(klineMessage.snapshot.data.source, 'mock-candle-projection');
@@ -1090,10 +1090,10 @@ test('TypeScript SDK consumes public market-data streams without wallet or tx au
       await klineStream.close();
     }
 
-    const fifteenMinuteKlines = await client.klines.stream('QI-QUAI', { interval: '15m', limit: 1, timeoutMs: 2_000 });
+    const fifteenMinuteKlines = await client.klines.stream('WQUAI-WQI', { interval: '15m', limit: 1, timeoutMs: 2_000 });
     assert.equal(fifteenMinuteKlines.length, 1);
     assert.equal(fifteenMinuteKlines[0].type, 'snapshot');
-    assert.equal(fifteenMinuteKlines[0].snapshot.channel, 'market.QI-QUAI.klines.15m');
+    assert.equal(fifteenMinuteKlines[0].snapshot.channel, 'market.WQUAI-WQI.klines.15m');
     assert.equal(fifteenMinuteKlines[0].snapshot.payload, 'kline_snapshot');
     assert.equal(fifteenMinuteKlines[0].snapshot.source, 'mock-candle-projection');
     assert.equal(fifteenMinuteKlines[0].snapshot.custody, 'public-read-only-no-custody');

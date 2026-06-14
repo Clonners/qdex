@@ -47,7 +47,7 @@ const KLINE_SOURCE = 'mock-candle-projection';
 const KLINE_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
 
 const klineEnvelope = Object.freeze({
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   interval: '1m',
   candles: Object.freeze([]),
   source: KLINE_SOURCE,
@@ -57,7 +57,7 @@ const klineStreamMessage = Object.freeze({
   type: 'snapshot',
   transport: 'websocket',
   snapshot: Object.freeze({
-    channel: 'market.QI-QUAI.klines.1m',
+    channel: 'market.WQUAI-WQI.klines.1m',
     visibility: 'public',
     payload: 'kline_snapshot',
     source: KLINE_SOURCE,
@@ -66,7 +66,7 @@ const klineStreamMessage = Object.freeze({
   }),
   streamEvent: Object.freeze({
     reason: 'initial_snapshot',
-    channel: 'market.QI-QUAI.klines.1m',
+    channel: 'market.WQUAI-WQI.klines.1m',
     source: KLINE_SOURCE,
   }),
 });
@@ -81,24 +81,24 @@ const waitFor = async (predicate) => {
 
 test('buildKlineStreamUrl targets the public market kline WebSocket channel', () => {
   assert.equal(
-    buildKlineStreamUrl({ baseUrl: 'http://127.0.0.1:8787', marketId: 'QI-QUAI', interval: '1m' }),
-    'ws://127.0.0.1:8787/v1/ws?channel=market.QI-QUAI.klines.1m',
+    buildKlineStreamUrl({ baseUrl: 'http://127.0.0.1:8787', marketId: 'WQUAI-WQI', interval: '1m' }),
+    'ws://127.0.0.1:8787/v1/ws?channel=market.WQUAI-WQI.klines.1m',
   );
 
   assert.equal(
-    buildKlineStreamUrl({ baseUrl: 'https://dex.local:9443/app', marketId: 'QI-QUAI', interval: '15m' }),
-    'wss://dex.local:9443/v1/ws?channel=market.QI-QUAI.klines.15m',
+    buildKlineStreamUrl({ baseUrl: 'https://dex.local:9443/app', marketId: 'WQUAI-WQI', interval: '15m' }),
+    'wss://dex.local:9443/v1/ws?channel=market.WQUAI-WQI.klines.15m',
   );
 });
 
 test('normalizeKlineStreamMessage accepts only public read-only kline snapshots', () => {
   const normalized = normalizeKlineStreamMessage(klineStreamMessage);
 
-  assert.equal(normalized.channel, 'market.QI-QUAI.klines.1m');
+  assert.equal(normalized.channel, 'market.WQUAI-WQI.klines.1m');
   assert.equal(normalized.payload, 'kline_snapshot');
   assert.equal(normalized.source, KLINE_SOURCE);
   assert.equal(normalized.custody, 'public-read-only-no-custody');
-  assert.equal(normalized.klines.marketId, 'QI-QUAI');
+  assert.equal(normalized.klines.marketId, 'WQUAI-WQI');
   assert.equal(normalized.klines.interval, '1m');
   assert.deepEqual(normalized.klines.candles, []);
   assert.equal(normalized.klines.source, KLINE_SOURCE);
@@ -145,7 +145,7 @@ test('bindLiveKlineStream renders public kline snapshots into the terminal candl
   const binding = bindLiveKlineStream({
     mount,
     baseUrl: 'http://127.0.0.1:8787',
-    marketId: 'QI-QUAI',
+    marketId: 'WQUAI-WQI',
     interval: '1m',
     baseFixture: mockVerticalSliceFixture,
     WebSocketImpl: FakeWebSocket,
@@ -158,27 +158,27 @@ test('bindLiveKlineStream renders public kline snapshots into the terminal candl
   });
 
   assert.equal(FakeWebSocket.instances.length, 1);
-  assert.equal(FakeWebSocket.instances[0].url, 'ws://127.0.0.1:8787/v1/ws?channel=market.QI-QUAI.klines.1m');
+  assert.equal(FakeWebSocket.instances[0].url, 'ws://127.0.0.1:8787/v1/ws?channel=market.WQUAI-WQI.klines.1m');
 
   FakeWebSocket.instances[0].emit('message', { data: JSON.stringify(klineStreamMessage) });
 
   await waitFor(() => renderedFixtures.length === 1);
 
   assert.deepEqual(errors, []);
-  assert.deepEqual(updates, ['market.QI-QUAI.klines.1m']);
-  assert.equal(mount.dataset.qdxKlineStream, 'market.QI-QUAI.klines.1m');
+  assert.deepEqual(updates, ['market.WQUAI-WQI.klines.1m']);
+  assert.equal(mount.dataset.qdxKlineStream, 'market.WQUAI-WQI.klines.1m');
   assert.equal(mount.dataset.qdxKlineStreamSource, KLINE_SOURCE);
   assert.equal(mount.dataset.qdxKlineStreamCandles, '0');
-  assert.match(mount.innerHTML, /market\.QI-QUAI\.klines\.1m mock-candle-projection kline_snapshot/);
+  assert.match(mount.innerHTML, /market\.WQUAI-WQI\.klines\.1m mock-candle-projection kline_snapshot/);
   assert.match(mount.innerHTML, /no wallet loaded/i);
   assert.match(mount.innerHTML, /no funds moved/i);
 
   const fixture = renderedFixtures.at(-1);
   assert.equal(fixture.sources.klines, KLINE_SOURCE);
-  assert.equal(fixture.klines.marketId, 'QI-QUAI');
+  assert.equal(fixture.klines.marketId, 'WQUAI-WQI');
   assert.equal(fixture.klines.interval, '1m');
   assert.deepEqual(fixture.klines.permissions, KLINE_PERMISSIONS);
-  assert.equal(fixture.klineStream.channel, 'market.QI-QUAI.klines.1m');
+  assert.equal(fixture.klineStream.channel, 'market.WQUAI-WQI.klines.1m');
   assert.equal(fixture.klineStream.custody, 'public-read-only-no-custody');
   assert.equal(fixture.klineStream.realQuaiTransactions, false);
   assert.equal(fixture.klineStream.walletRequired, false);

@@ -33,7 +33,7 @@ const requestJson = async (baseUrl, path) => {
 };
 
 const expectedFeeSchedule = Object.freeze({
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   projectionType: 'FeeScheduleProjection',
   eventName: 'FeesUpdated',
   makerFeeBps: 0,

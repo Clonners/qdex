@@ -12,8 +12,8 @@ const HELP_SOURCE = 'terminal-keyboard-shortcut-help';
 const SAFE_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
 const EXPECTED_PREFLIGHT_CALLS = [
   ['GET', '/v1/markets'],
-  ['GET', '/v1/tickers/QI-QUAI'],
-  ['GET', '/v1/orderbook/QI-QUAI'],
+  ['GET', '/v1/tickers/WQUAI-WQI'],
+  ['GET', '/v1/orderbook/WQUAI-WQI'],
   ['GET', '/v1/orders'],
   ['GET', '/v1/account'],
   ['POST', '/v1/vault/deposits/prepare'],
@@ -205,8 +205,8 @@ test('terminal UI docs, package check, app wiring, and campaign status mark keyb
     'local-api-precheck-help-only',
     'help-only-no-dispatch',
     'GET /v1/markets',
-    'GET /v1/tickers/QI-QUAI',
-    'GET /v1/orderbook/QI-QUAI',
+    'GET /v1/tickers/WQUAI-WQI',
+    'GET /v1/orderbook/WQUAI-WQI',
     'GET /v1/orders',
     'GET /v1/account',
     'POST /v1/vault/deposits/prepare',

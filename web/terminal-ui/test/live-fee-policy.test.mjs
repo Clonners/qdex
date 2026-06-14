@@ -49,7 +49,7 @@ const FEE_PERMISSIONS = ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'];
 const feePolicyEnvelope = Object.freeze({
   feeSchedules: Object.freeze([
     Object.freeze({
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       projectionType: 'FeeScheduleProjection',
       eventName: 'FeesUpdated',
       makerFeeBps: 0,

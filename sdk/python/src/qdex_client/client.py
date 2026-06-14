@@ -234,11 +234,11 @@ def create_mock_signed_order(**overrides):
     signature_overrides = overrides.pop("signature", {})
 
     order = {
-        "marketId": "QI-QUAI",
+        "marketId": "WQUAI-WQI",
         "side": "sell",
         "type": order_type,
-        "baseToken": "mock:QI",
-        "quoteToken": "mock:QUAI",
+        "baseToken": "mock:WQUAI",
+        "quoteToken": "mock:WQI",
         "amount": "100",
         "price": "5",
         "timeInForce": time_in_force,

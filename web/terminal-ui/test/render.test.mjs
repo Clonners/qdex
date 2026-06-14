@@ -9,7 +9,7 @@ test('renderTradeProofPanel shows the confirmed mock trade and proof without imp
 
   assert.match(html, /trade-000001/);
   assert.match(html, /fill-000001/);
-  assert.match(html, /QI-QUAI/);
+  assert.match(html, /WQUAI-WQI/);
   assert.match(html, /price[^<]*5/i);
   assert.match(html, /amount[^<]*100/i);
   assert.match(html, /\/v1\/proofs\/trades\/trade-000001/);
@@ -41,8 +41,8 @@ test('renderTradeProofPanel exposes keyboard and command-palette hints for termi
   assert.match(html, /<kbd>\/<\/kbd> search market/);
   assert.match(html, /<kbd>b<\/kbd> buy/);
   assert.match(html, /<kbd>s<\/kbd> sell/);
-  assert.match(html, /:sell QI-QUAI 100 @ 5/);
-  assert.match(html, /:buy QI-QUAI 100 market_ioc slippage=50bps/);
+  assert.match(html, /:sell WQUAI-WQI 100 @ 5/);
+  assert.match(html, /:buy WQUAI-WQI 100 market_ioc slippage=50bps/);
   assert.match(html, /:proof trade-000001/);
   assert.match(html, /:deposit WQI 10 prepare owner-wallet-only/);
   assert.match(html, /:withdraw WQUAI 1 prepare owner-wallet-only/);
@@ -173,7 +173,7 @@ test('renderTradeProofPanel surfaces live fills stream safety when present', () 
       safetyNotice: 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.',
       streamEvent: {
         reason: 'mock_settlement_confirmed',
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
       },
     },
   });
@@ -192,7 +192,7 @@ test('renderTradeProofPanel surfaces live orders stream matcher-local cancellati
     orders: [
       {
         orderHash: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         side: 'sell',
         price: '5',
         amount: '100',
@@ -213,7 +213,7 @@ test('renderTradeProofPanel surfaces live orders stream matcher-local cancellati
       message: 'Mock cancellation removes only matcher-open quantity and does not cancel the on-chain nonce; user nonce cancellation must be signed through NonceManager later.',
       streamEvent: {
         reason: 'matcher_local_order_cancelled',
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
       },
     },
   });

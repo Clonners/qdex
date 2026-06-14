@@ -24,6 +24,7 @@ const REQUIRED_PRIVATE_PERMISSIONS = ['READ_ONLY'];
 const SAFE_DELEGATE_DEFAULTS = ['NO_WITHDRAW', 'NO_ADMIN'];
 const FORBIDDEN_PRIVATE_PERMISSIONS = ['WITHDRAW', 'ADMIN'];
 const MOCK_STREAM_SAFETY_NOTICE = 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.';
+const INITIAL_MARKET_IDS = ['WQUAI-WQI', 'WQUAI-USDT', 'WQI-USDT'];
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -144,16 +145,16 @@ const snapshotEnvelope = ({ channel, visibility, payload, source, custody, data,
 const sourceFromState = (state) => state.projectionSource ?? INDEXER_SOURCE;
 
 const publicTickerSnapshot = () => ({
-  tickers: [
+  tickers: INITIAL_MARKET_IDS.map((marketId) => (
     {
-      marketId: MARKET_ID,
+      marketId,
       lastPrice: null,
       bestBid: null,
       bestAsk: null,
       volume24h: '0',
       source: 'mock-market-data',
-    },
-  ],
+    }
+  )),
 });
 
 const privateSnapshot = ({ channel, payload, source, data }) => snapshotEnvelope({

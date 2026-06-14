@@ -58,7 +58,7 @@ const tickerMessage = Object.freeze({
     data: Object.freeze({
       tickers: Object.freeze([
         Object.freeze({
-          marketId: 'QI-QUAI',
+          marketId: 'WQUAI-WQI',
           lastPrice: null,
           bestBid: null,
           bestAsk: null,
@@ -79,13 +79,13 @@ const depthMessage = Object.freeze({
   type: 'snapshot',
   transport: 'websocket',
   snapshot: Object.freeze({
-    channel: 'market.QI-QUAI.depth',
+    channel: 'market.WQUAI-WQI.depth',
     visibility: 'public',
     payload: 'orderbook_depth',
     source: 'mock-orderbook',
     custody: PUBLIC_CUSTODY,
     data: Object.freeze({
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       sequence: 2,
       bids: Object.freeze([]),
       asks: Object.freeze([]),
@@ -94,7 +94,7 @@ const depthMessage = Object.freeze({
   }),
   streamEvent: Object.freeze({
     reason: 'initial_snapshot',
-    channel: 'market.QI-QUAI.depth',
+    channel: 'market.WQUAI-WQI.depth',
     source: 'mock-orderbook',
   }),
 });
@@ -103,20 +103,20 @@ const tradesMessage = Object.freeze({
   type: 'snapshot',
   transport: 'websocket',
   snapshot: Object.freeze({
-    channel: 'market.QI-QUAI.trades',
+    channel: 'market.WQUAI-WQI.trades',
     visibility: 'public',
     payload: 'trade_projection',
     source: 'in-memory-indexer-projection',
     custody: PUBLIC_CUSTODY,
     data: Object.freeze({
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       trades: Object.freeze([]),
       source: 'in-memory-indexer-projection',
     }),
   }),
   streamEvent: Object.freeze({
     reason: 'initial_snapshot',
-    channel: 'market.QI-QUAI.trades',
+    channel: 'market.WQUAI-WQI.trades',
     source: 'in-memory-indexer-projection',
   }),
 });
@@ -131,11 +131,11 @@ const waitFor = async (predicate) => {
 
 test('buildPublicMarketDataStreamUrls targets public ticker/depth/trade WebSocket channels', () => {
   assert.deepEqual(
-    buildPublicMarketDataStreamUrls({ baseUrl: 'http://127.0.0.1:8787', marketId: 'QI-QUAI' }),
+    buildPublicMarketDataStreamUrls({ baseUrl: 'http://127.0.0.1:8787', marketId: 'WQUAI-WQI' }),
     {
       tickers: 'ws://127.0.0.1:8787/v1/ws?channel=global.tickers',
-      depth: 'ws://127.0.0.1:8787/v1/ws?channel=market.QI-QUAI.depth',
-      trades: 'ws://127.0.0.1:8787/v1/ws?channel=market.QI-QUAI.trades',
+      depth: 'ws://127.0.0.1:8787/v1/ws?channel=market.WQUAI-WQI.depth',
+      trades: 'ws://127.0.0.1:8787/v1/ws?channel=market.WQUAI-WQI.trades',
     },
   );
 
@@ -161,7 +161,7 @@ test('normalizePublicMarketDataStreamMessage accepts only public read-only marke
 
   const depth = normalizePublicMarketDataStreamMessage(depthMessage);
   assert.equal(depth.kind, 'depth');
-  assert.equal(depth.marketId, 'QI-QUAI');
+  assert.equal(depth.marketId, 'WQUAI-WQI');
   assert.equal(depth.payload, 'orderbook_depth');
   assert.equal(depth.source, 'mock-orderbook');
   assert.deepEqual(depth.data.bids, []);
@@ -169,7 +169,7 @@ test('normalizePublicMarketDataStreamMessage accepts only public read-only marke
 
   const trades = normalizePublicMarketDataStreamMessage(tradesMessage);
   assert.equal(trades.kind, 'trades');
-  assert.equal(trades.marketId, 'QI-QUAI');
+  assert.equal(trades.marketId, 'WQUAI-WQI');
   assert.equal(trades.payload, 'trade_projection');
   assert.equal(trades.source, 'in-memory-indexer-projection');
   assert.equal(trades.finality, 'confirmed-settlement-only');
@@ -202,7 +202,7 @@ test('bindLivePublicMarketDataStreams renders ticker/depth/trade snapshots into 
   const binding = bindLivePublicMarketDataStreams({
     mount,
     baseUrl: 'http://127.0.0.1:8787',
-    marketId: 'QI-QUAI',
+    marketId: 'WQUAI-WQI',
     baseFixture: mockVerticalSliceFixture,
     WebSocketImpl: FakeWebSocket,
     render: (fixture) => {
@@ -218,8 +218,8 @@ test('bindLivePublicMarketDataStreams renders ticker/depth/trade snapshots into 
     FakeWebSocket.instances.map((ws) => ws.url),
     [
       'ws://127.0.0.1:8787/v1/ws?channel=global.tickers',
-      'ws://127.0.0.1:8787/v1/ws?channel=market.QI-QUAI.depth',
-      'ws://127.0.0.1:8787/v1/ws?channel=market.QI-QUAI.trades',
+      'ws://127.0.0.1:8787/v1/ws?channel=market.WQUAI-WQI.depth',
+      'ws://127.0.0.1:8787/v1/ws?channel=market.WQUAI-WQI.trades',
     ],
   );
 
@@ -231,7 +231,7 @@ test('bindLivePublicMarketDataStreams renders ticker/depth/trade snapshots into 
 
   assert.deepEqual(errors, []);
   assert.equal(updates.length, 3);
-  assert.equal(mount.dataset.qdxPublicMarketDataStreams, 'global.tickers,market.QI-QUAI.depth,market.QI-QUAI.trades');
+  assert.equal(mount.dataset.qdxPublicMarketDataStreams, 'global.tickers,market.WQUAI-WQI.depth,market.WQUAI-WQI.trades');
   assert.equal(mount.dataset.qdxPublicMarketDataStreamSources, 'mock-market-data,mock-orderbook,in-memory-indexer-projection');
   assert.equal(mount.dataset.qdxPublicMarketDataTickerCount, '1');
   assert.equal(mount.dataset.qdxPublicMarketDataTradeCount, '0');
@@ -242,7 +242,7 @@ test('bindLivePublicMarketDataStreams renders ticker/depth/trade snapshots into 
 
   const fixture = renderedFixtures.at(-1);
   assert.deepEqual(fixture.sources.publicMarketData, ['mock-market-data', 'mock-orderbook', 'in-memory-indexer-projection']);
-  assert.equal(fixture.publicMarketData.marketId, 'QI-QUAI');
+  assert.equal(fixture.publicMarketData.marketId, 'WQUAI-WQI');
   assert.equal(fixture.publicMarketData.tickers.tickers.length, 1);
   assert.equal(fixture.publicMarketData.orderbook.source, 'mock-orderbook');
   assert.equal(fixture.publicMarketData.trades.source, 'in-memory-indexer-projection');

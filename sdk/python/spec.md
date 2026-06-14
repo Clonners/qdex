@@ -99,7 +99,7 @@ nonce_cancel_prepare = dex.nonces.prepare_cancel({
 delegate_key_prepare = dex.delegate_keys.prepare_register({
     'owner': '0xowner',
     'delegate': '0xdelegate',
-    'allowedMarkets': ['QI-QUAI'],
+    'allowedMarkets': ['WQUAI-WQI'],
     'maxNotional': '1000',
     'permissions': ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
     'expiresAt': 1780003600,
@@ -121,14 +121,14 @@ delegate_key_registration_stream_snapshots = dex.delegate_keys.registrations.str
 delegate_key_revocation_stream_snapshots = dex.delegate_keys.revocations.stream(limit=limit)
 
 limit_order: SignedOrder = dex.orders.create_limit_order(
-    market_id='QI-QUAI',
+    market_id='WQUAI-WQI',
     side='buy',
     amount='1000',
     price='0.123',
 )
 
 market_order: SignedOrder = dex.orders.create_market_ioc_order(
-    market_id='QI-QUAI',
+    market_id='WQUAI-WQI',
     side='sell',
     quote_amount='100',
     max_slippage_bps=50,
@@ -141,7 +141,7 @@ if fill_projection is not None:
 for fill in dex.fills.stream():
     handle_fill(fill)
 proof: TradeProof = dex.proofs.trade(trade_id)  # GET /v1/proofs/trades/:tradeId
-dex.orders.cancel_all(market_id='QI-QUAI')
+dex.orders.cancel_all(market_id='WQUAI-WQI')
 ```
 
 ## Order semantics

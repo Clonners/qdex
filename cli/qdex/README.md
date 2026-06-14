@@ -6,9 +6,9 @@ Implemented smoke/read-only stubs:
 
 ```bash
 qdex --base-url http://127.0.0.1:8787 markets
-qdex --base-url http://127.0.0.1:8787 ticker QI-QUAI
-qdex --base-url http://127.0.0.1:8787 klines QI-QUAI --interval 1m
-qdex --base-url http://127.0.0.1:8787 book QI-QUAI
+qdex --base-url http://127.0.0.1:8787 ticker WQUAI-WQI
+qdex --base-url http://127.0.0.1:8787 klines WQUAI-WQI --interval 1m
+qdex --base-url http://127.0.0.1:8787 book WQUAI-WQI
 qdex --base-url http://127.0.0.1:8787 account
 qdex --base-url http://127.0.0.1:8787 balance
 qdex --base-url http://127.0.0.1:8787 contracts
@@ -23,7 +23,7 @@ qdex --base-url http://127.0.0.1:8787 relayer gate
 qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner 0xowner --nonce 42 --chain-id 0 --nonce-manager-contract 0xnonce-manager --expires-at 1780003600 --signature 0xowner-signature
 qdex --base-url http://127.0.0.1:8787 api registrations
 qdex --base-url http://127.0.0.1:8787 api revocations
-qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner 0xowner --delegate 0xdelegate --allowed-market QI-QUAI --max-notional 1000 --expires-at 1780003600 --permission PLACE_ORDER --signature 0xowner-signature
+qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner 0xowner --delegate 0xdelegate --allowed-market WQUAI-WQI --max-notional 1000 --expires-at 1780003600 --permission PLACE_ORDER --signature 0xowner-signature
 qdex --base-url http://127.0.0.1:8787 api revoke-key bot-mm-1 --prepare --owner 0xowner --signature 0xowner-signature
 qdex --base-url http://127.0.0.1:8787 vault deposits
 qdex --base-url http://127.0.0.1:8787 vault withdrawals
@@ -37,9 +37,9 @@ qdex --base-url http://127.0.0.1:8787 stream delegate-key-registrations --limit 
 qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations --limit 1
 qdex --base-url http://127.0.0.1:8787 stream fees --limit 1
 qdex --base-url http://127.0.0.1:8787 stream tickers --limit 1
-qdex --base-url http://127.0.0.1:8787 stream depth QI-QUAI --limit 1
-qdex --base-url http://127.0.0.1:8787 stream trades QI-QUAI --limit 1
-qdex --base-url http://127.0.0.1:8787 stream klines QI-QUAI --interval 1m --limit 1
+qdex --base-url http://127.0.0.1:8787 stream depth WQUAI-WQI --limit 1
+qdex --base-url http://127.0.0.1:8787 stream trades WQUAI-WQI --limit 1
+qdex --base-url http://127.0.0.1:8787 stream klines WQUAI-WQI --interval 1m --limit 1
 qdex --base-url http://127.0.0.1:8787 smoke
 ```
 
@@ -49,11 +49,11 @@ qdex --base-url http://127.0.0.1:8787 smoke
 
 `qdex stream fees` consumes bounded public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Output messages carry `fee_schedule_projection`, `public-read-only-no-custody`, `feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
 
-`qdex stream tickers`, `qdex stream depth QI-QUAI`, `qdex stream trades QI-QUAI`, and `qdex stream klines QI-QUAI --interval 1m --limit 1` consume bounded public market-data snapshots from `/v1/ws?channel=global.tickers`, `/v1/ws?channel=market.<MARKET>.depth`, `/v1/ws?channel=market.<MARKET>.trades`, and `/v1/ws?channel=market.<MARKET>.klines.1m`. `qdex klines QI-QUAI --interval 1m` reads `/v1/klines/<MARKET>?interval=1m`. Output messages carry `ticker_snapshot` / `orderbook_depth` / `trade_projection` / `kline_snapshot`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, `mock-candle-projection`, and `confirmed-settlement-only` trade projection semantics with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+`qdex stream tickers`, `qdex stream depth WQUAI-WQI`, `qdex stream trades WQUAI-WQI`, and `qdex stream klines WQUAI-WQI --interval 1m --limit 1` consume bounded public market-data snapshots from `/v1/ws?channel=global.tickers`, `/v1/ws?channel=market.<MARKET>.depth`, `/v1/ws?channel=market.<MARKET>.trades`, and `/v1/ws?channel=market.<MARKET>.klines.1m`. `qdex klines WQUAI-WQI --interval 1m` reads `/v1/klines/<MARKET>?interval=1m`. Output messages carry `ticker_snapshot` / `orderbook_depth` / `trade_projection` / `kline_snapshot`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, `mock-candle-projection`, and `confirmed-settlement-only` trade projection semantics with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex account` prints `GET /v1/account` as read-only `mock-account-overview` metadata: `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
-`qdex ticker QI-QUAI` prints `GET /v1/tickers/QI-QUAI` public read-only mock market-data metadata (`source: mock-market-data`, null `lastPrice`/`bestBid`/`bestAsk`, and `volume24h: "0"`) with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+`qdex ticker WQUAI-WQI` prints `GET /v1/tickers/WQUAI-WQI` public read-only mock market-data metadata (`source: mock-market-data`, null `lastPrice`/`bestBid`/`bestAsk`, and `volume24h: "0"`) with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex balance` prints `GET /v1/account/balances` as read-only `mock-vault-projection` metadata: `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, no real Quai tx, no wallet required, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
 

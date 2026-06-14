@@ -16,19 +16,19 @@ const tickerStream = dex.tickers.openStream({ timeoutMs: 2000 });
 const initialTickerSnapshot = await tickerStream.next();
 await tickerStream.close();
 const boundedTickerSnapshots = await dex.tickers.stream({ limit: 1 });
-const depthStream = dex.orderbook.openStream('QI-QUAI', { timeoutMs: 2000 });
+const depthStream = dex.orderbook.openStream('WQUAI-WQI', { timeoutMs: 2000 });
 const initialDepthSnapshot = await depthStream.next();
 await depthStream.close();
-const boundedDepthSnapshots = await dex.orderbook.stream('QI-QUAI', { limit: 1 });
-const oneMinuteKlines = await dex.klines.get('QI-QUAI', { interval: '1m' }); // /v1/klines/<MARKET>?interval=1m
-const klineStream = dex.klines.openStream('QI-QUAI', { interval: '1m', timeoutMs: 2000 }); // /v1/ws?channel=market.<MARKET>.klines.1m
+const boundedDepthSnapshots = await dex.orderbook.stream('WQUAI-WQI', { limit: 1 });
+const oneMinuteKlines = await dex.klines.get('WQUAI-WQI', { interval: '1m' }); // /v1/klines/<MARKET>?interval=1m
+const klineStream = dex.klines.openStream('WQUAI-WQI', { interval: '1m', timeoutMs: 2000 }); // /v1/ws?channel=market.<MARKET>.klines.1m
 const initialKlineSnapshot = await klineStream.next();
 await klineStream.close();
-const boundedKlineSnapshots = await dex.klines.stream('QI-QUAI', { interval: '1m', limit: 1 });
-const tradeStream = dex.trades.openStream('QI-QUAI', { timeoutMs: 2000 });
+const boundedKlineSnapshots = await dex.klines.stream('WQUAI-WQI', { interval: '1m', limit: 1 });
+const tradeStream = dex.trades.openStream('WQUAI-WQI', { timeoutMs: 2000 });
 const initialTradeSnapshot = await tradeStream.next();
 await tradeStream.close();
-const boundedTradeSnapshots = await dex.trades.stream('QI-QUAI', { limit: 1 });
+const boundedTradeSnapshots = await dex.trades.stream('WQUAI-WQI', { limit: 1 });
 const vaultDeposits = await dex.vault.deposits.list();
 const vaultWithdrawals = await dex.vault.withdrawals.list();
 const vaultDepositPrepare = await dex.vault.deposits.prepare({
@@ -86,7 +86,7 @@ const nonceCancelPrepare = await dex.nonces.prepareCancel({
 const delegateKeyPrepare = await dex.delegateKeys.prepareRegister({
   owner: '0x1111111111111111111111111111111111111111',
   delegate: '0x3333333333333333333333333333333333333333',
-  allowedMarkets: ['QI-QUAI'],
+  allowedMarkets: ['WQUAI-WQI'],
   maxNotional: '1000',
   permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
   expiresAt: 1780003600,

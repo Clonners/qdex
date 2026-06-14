@@ -46,14 +46,15 @@ const waitFor = async (predicate, label) => {
 
 const assertTickerRestEnvelope = (envelope) => {
   assert.equal(envelope.source, TICKER_SOURCE);
-  assert.equal(envelope.tickers.length, 1);
-  assert.equal(envelope.tickers[0].marketId, 'QI-QUAI');
-  assert.equal(envelope.tickers[0].source, TICKER_SOURCE);
-  assert.equal(envelope.tickers[0].volume24h, '0');
+  assert.deepEqual(envelope.tickers.map((ticker) => ticker.marketId), ['WQUAI-WQI', 'WQUAI-USDT', 'WQI-USDT']);
+  for (const ticker of envelope.tickers) {
+    assert.equal(ticker.source, TICKER_SOURCE);
+    assert.equal(ticker.volume24h, '0');
+  }
 };
 
 const assertOrderbookRestEnvelope = (envelope) => {
-  assert.equal(envelope.marketId, 'QI-QUAI');
+  assert.equal(envelope.marketId, 'WQUAI-WQI');
   assert.equal(envelope.source, DEPTH_SOURCE);
   assert.equal(envelope.sequence, 0);
   assert.deepEqual(envelope.bids, []);
@@ -61,7 +62,7 @@ const assertOrderbookRestEnvelope = (envelope) => {
 };
 
 const assertTradesRestEnvelope = (envelope) => {
-  assert.equal(envelope.marketId, 'QI-QUAI');
+  assert.equal(envelope.marketId, 'WQUAI-WQI');
   assert.equal(envelope.source, TRADES_SOURCE);
   assert.deepEqual(envelope.trades, []);
 };
@@ -84,7 +85,7 @@ test('local API + terminal UI public market-data stream smoke renders only REST-
     const binding = await bindLivePublicMarketDataStreamsWithRestSnapshots({
       mount,
       baseUrl,
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       fetchImpl: countedFetch,
       WebSocketImpl: WebSocket,
       baseFixture: mockVerticalSliceFixture,
@@ -105,8 +106,8 @@ test('local API + terminal UI public market-data stream smoke renders only REST-
       await waitFor(
         () => streamFixtures.some((fixture) => (
           fixture.publicMarketDataStream?.channels.includes('global.tickers')
-            && fixture.publicMarketDataStream?.channels.includes('market.QI-QUAI.depth')
-            && fixture.publicMarketDataStream?.channels.includes('market.QI-QUAI.trades')
+            && fixture.publicMarketDataStream?.channels.includes('market.WQUAI-WQI.depth')
+            && fixture.publicMarketDataStream?.channels.includes('market.WQUAI-WQI.trades')
         )),
         'REST-confirmed public market-data stream render',
       );
@@ -118,17 +119,17 @@ test('local API + terminal UI public market-data stream smoke renders only REST-
         fetchCalls.map((call) => [call.method, new URL(call.url).pathname]),
         [
           ['GET', '/v1/tickers'],
-          ['GET', '/v1/orderbook/QI-QUAI'],
-          ['GET', '/v1/trades/QI-QUAI'],
+          ['GET', '/v1/orderbook/WQUAI-WQI'],
+          ['GET', '/v1/trades/WQUAI-WQI'],
         ],
       );
 
       assert.equal(restSnapshots.length, 1);
       assert.equal(mount.dataset.qdxPublicMarketDataRestSnapshots, REST_SOURCE_JOIN);
       assert.equal(mount.dataset.qdxPublicMarketDataStreamRestAgreement, REST_SOURCE_JOIN);
-      assert.equal(mount.dataset.qdxPublicMarketDataStreams, 'global.tickers,market.QI-QUAI.depth,market.QI-QUAI.trades');
+      assert.equal(mount.dataset.qdxPublicMarketDataStreams, 'global.tickers,market.WQUAI-WQI.depth,market.WQUAI-WQI.trades');
       assert.equal(mount.dataset.qdxPublicMarketDataStreamSources, REST_SOURCE_JOIN);
-      assert.equal(mount.dataset.qdxPublicMarketDataTickerCount, '1');
+      assert.equal(mount.dataset.qdxPublicMarketDataTickerCount, '3');
       assert.equal(mount.dataset.qdxPublicMarketDataTradeCount, '0');
 
       const restSnapshot = restSnapshots[0];
@@ -141,7 +142,7 @@ test('local API + terminal UI public market-data stream smoke renders only REST-
       assert.deepEqual(fixture.publicMarketData.orderbook, restSnapshot.orderbook);
       assert.deepEqual(fixture.publicMarketData.trades, restSnapshot.trades);
       assert.deepEqual(fixture.sources.publicMarketData, [TICKER_SOURCE, DEPTH_SOURCE, TRADES_SOURCE]);
-      assert.equal(fixture.publicMarketData.marketId, 'QI-QUAI');
+      assert.equal(fixture.publicMarketData.marketId, 'WQUAI-WQI');
       assert.equal(fixture.publicMarketData.custody, STREAM_CUSTODY);
       assert.deepEqual(fixture.publicMarketData.permissions, SAFE_PERMISSIONS);
       assert.equal(fixture.publicMarketData.realQuaiTransactions, false);
@@ -152,7 +153,7 @@ test('local API + terminal UI public market-data stream smoke renders only REST-
       assert.deepEqual(fixture.publicMarketDataStream.permissions, SAFE_PERMISSIONS);
       assert.equal(fixture.publicMarketDataStream.custody, STREAM_CUSTODY);
       assert.equal(fixture.publicMarketDataStream.finality, 'confirmed-settlement-only');
-      assert.equal(fixture.publicMarketDataStream.tickerCount, 1);
+      assert.equal(fixture.publicMarketDataStream.tickerCount, 3);
       assert.equal(fixture.publicMarketDataStream.bidCount, 0);
       assert.equal(fixture.publicMarketDataStream.askCount, 0);
       assert.equal(fixture.publicMarketDataStream.tradeCount, 0);

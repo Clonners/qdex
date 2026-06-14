@@ -43,11 +43,11 @@ const mockOrder = (overrides = {}) => {
   const nonce = overrides.nonce ?? '1';
 
   return {
-    marketId: 'QI-QUAI',
+    marketId: 'WQUAI-WQI',
     side: 'sell',
     type: 'limit',
-    baseToken: 'mock:QI',
-    quoteToken: 'mock:QUAI',
+    baseToken: 'mock:WQUAI',
+    quoteToken: 'mock:WQI',
     amount: '100',
     price: '5',
     timeInForce: 'GTC',
@@ -106,21 +106,40 @@ test('public routes expose mock market data with non-custodial settlement metada
 
     const markets = await requestJson(baseUrl, '/v1/markets');
     assert.equal(markets.status, 200);
-    assert.equal(markets.body.markets.length, 1);
-    assert.deepEqual(markets.body.markets[0], {
-      id: 'QI-QUAI',
-      base: 'QI',
-      quote: 'QUAI',
-      status: 'planned',
-      zone: 'single-zone-mvp',
-      custodyModel: 'contract-vault-non-custodial',
-      settlementSource: 'mock-until-quai-contracts',
-    });
+    assert.deepEqual(markets.body.markets, [
+      {
+        id: 'WQUAI-WQI',
+        base: 'WQUAI',
+        quote: 'WQI',
+        status: 'planned',
+        zone: 'single-zone-mvp',
+        custodyModel: 'contract-vault-non-custodial',
+        settlementSource: 'mock-until-quai-contracts',
+      },
+      {
+        id: 'WQUAI-USDT',
+        base: 'WQUAI',
+        quote: 'USDT',
+        status: 'planned',
+        zone: 'single-zone-mvp',
+        custodyModel: 'contract-vault-non-custodial',
+        settlementSource: 'mock-until-quai-contracts',
+      },
+      {
+        id: 'WQI-USDT',
+        base: 'WQI',
+        quote: 'USDT',
+        status: 'planned',
+        zone: 'single-zone-mvp',
+        custodyModel: 'contract-vault-non-custodial',
+        settlementSource: 'mock-until-quai-contracts',
+      },
+    ]);
 
-    const orderbook = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    const orderbook = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.equal(orderbook.status, 200);
     assert.deepEqual(orderbook.body, {
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       sequence: 0,
       bids: [],
       asks: [],
@@ -140,20 +159,20 @@ test('GET /v1/contracts exposes local-only dependency registry without deploy or
     assert.equal(response.body.custody, 'non-custodial-no-withdrawal-authority');
     assert.equal(response.body.realQuaiTransactions, false);
     assert.equal(response.body.walletRequired, false);
-    assert.match(response.body.assetListingCaveat, /WQUAI, WQI/);
+    assert.match(response.body.assetListingCaveat, /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT/);
     assert.equal(response.body.listedAssetStatus.status, 'wrapped-token-listing');
-    assert.deepEqual(response.body.listedAssetStatus.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(response.body.listedAssetStatus.primaryQuoteAssets, ['WQI', 'USDT']);
     assert.equal(response.body.listedAssetStatus.supportedAssetModel, 'erc20-style-vault-token');
-    assert.equal(response.body.listedAssetStatus.userListedTokens, true);
-    assert.equal(response.body.listedAssetStatus.listingFlowStatus, 'design-required');
-    assert.equal(response.body.listedAssetStatus.marketRegistryRole, 'list approved token pairs after review');
+    assert.equal(response.body.listedAssetStatus.userListedTokens, false);
+    assert.equal(response.body.listedAssetStatus.listingFlowStatus, 'deferred-after-initial-three-markets');
+    assert.equal(response.body.listedAssetStatus.marketRegistryRole, 'enable initial fixed pairs; future DAO can expand after review');
     assert.equal(response.body.listedAssetStatus.nativeQiTreatment, 'out-of-scope-direct-settlement-use-WQI');
     assert.equal(response.body.listedAssetStatus.nativeQiDirectSettlement, false);
     assert.equal(response.body.listedAssetStatus.realQuaiTransactions, false);
     assert.equal(response.body.listedAssetStatus.walletRequired, false);
     assert.match(
       response.body.listedAssetStatus.safetyNotice,
-      /WQUAI, WQI, and approved community tokens/i,
+      /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT only/i,
     );
 
     assert.deepEqual(Object.keys(response.body.contracts).sort(), [
@@ -262,7 +281,7 @@ test('private routes expose order and fill placeholders without withdrawal autho
 
     const postOrder = await requestJson(baseUrl, '/v1/orders', {
       method: 'POST',
-      body: JSON.stringify({ order: { marketId: 'QI-QUAI' } }),
+      body: JSON.stringify({ order: { marketId: 'WQUAI-WQI' } }),
     });
     assert.equal(postOrder.status, 400);
     assert.equal(postOrder.body.error, 'order_rejected');
@@ -327,7 +346,7 @@ test('delegate key registration and revocation remain prepare-only without withd
       body: JSON.stringify({
         delegate: '0x4444444444444444444444444444444444444444',
         expiresAt: 1780003600,
-        allowedMarkets: ['QI-QUAI'],
+        allowedMarkets: ['WQUAI-WQI'],
         maxNotional: '1000',
         permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'],
       }),
@@ -397,7 +416,7 @@ test('mock order cancellation removes only matcher-open quantity without nonce o
     assert.equal(firstOrder.status, 201);
     assert.equal(secondOrder.status, 201);
 
-    const bookBeforeCancel = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    const bookBeforeCancel = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.deepEqual(bookBeforeCancel.body.asks.map((order) => order.orderHash), [
       firstOrder.body.orderHash,
       secondOrder.body.orderHash,
@@ -418,7 +437,7 @@ test('mock order cancellation removes only matcher-open quantity without nonce o
     assert.deepEqual(cancelOne.body.cancelledOrders, [
       {
         orderHash: firstOrder.body.orderHash,
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         owner: firstRestingSell.owner,
         delegate: ZERO_DELEGATE,
         side: 'sell',
@@ -457,12 +476,12 @@ test('mock order cancellation removes only matcher-open quantity without nonce o
     assert.deepEqual(alreadyCancelled.body.permissions, ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
     assert.match(alreadyCancelled.body.message, /Only remaining matcher-open quantity/);
 
-    const bookAfterSingleCancel = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    const bookAfterSingleCancel = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.deepEqual(bookAfterSingleCancel.body.asks.map((order) => order.orderHash), [secondOrder.body.orderHash]);
 
     const cancelAll = await requestJson(baseUrl, '/v1/orders/cancel-all', {
       method: 'POST',
-      body: JSON.stringify({ marketId: 'QI-QUAI' }),
+      body: JSON.stringify({ marketId: 'WQUAI-WQI' }),
     });
     assert.equal(cancelAll.status, 200);
     assert.equal(cancelAll.body.cancelled, true);
@@ -471,12 +490,12 @@ test('mock order cancellation removes only matcher-open quantity without nonce o
     assert.equal(cancelAll.body.custody, 'non-custodial-no-withdrawal-authority');
     assert.equal(cancelAll.body.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
     assert.deepEqual(cancelAll.body.permissions, ['CANCEL_ALL', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN']);
-    assert.deepEqual(cancelAll.body.filters, { marketId: 'QI-QUAI', owner: null });
+    assert.deepEqual(cancelAll.body.filters, { marketId: 'WQUAI-WQI', owner: null });
     assert.match(cancelAll.body.message, /does not cancel the on-chain nonce/i);
     assert.deepEqual(cancelAll.body.cancelledOrders, [
       {
         orderHash: secondOrder.body.orderHash,
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         owner: secondRestingSell.owner,
         delegate: ZERO_DELEGATE,
         side: 'sell',
@@ -493,7 +512,7 @@ test('mock order cancellation removes only matcher-open quantity without nonce o
       },
     ]);
 
-    const bookAfterCancelAll = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    const bookAfterCancelAll = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.deepEqual(bookAfterCancelAll.body.asks, []);
 
     const orders = await requestJson(baseUrl, '/v1/orders');
@@ -501,7 +520,7 @@ test('mock order cancellation removes only matcher-open quantity without nonce o
 
     const emptyCancelAll = await requestJson(baseUrl, '/v1/orders/cancel-all', {
       method: 'POST',
-      body: JSON.stringify({ marketId: 'QI-QUAI' }),
+      body: JSON.stringify({ marketId: 'WQUAI-WQI' }),
     });
     assert.equal(emptyCancelAll.status, 200);
     assert.equal(emptyCancelAll.body.cancelled, false);
@@ -531,7 +550,7 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     assert.deepEqual(sell.body.fills, []);
     assert.equal(sell.body.custody, 'non-custodial-no-withdrawal-authority');
 
-    const bookAfterSell = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    const bookAfterSell = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.equal(bookAfterSell.status, 200);
     assert.deepEqual(bookAfterSell.body.bids, []);
     assert.deepEqual(bookAfterSell.body.asks, [
@@ -566,7 +585,7 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     assert.equal(fill.projectionType, 'IndexedFillProjection');
     assert.equal(fill.fillId, 'fill-000001');
     assert.equal(fill.tradeId, 'trade-000001');
-    assert.equal(fill.marketId, 'QI-QUAI');
+    assert.equal(fill.marketId, 'WQUAI-WQI');
     assert.equal(fill.makerOrderHash, sell.body.orderHash);
     assert.equal(fill.takerOrderHash, buy.body.orderHash);
     assert.equal(fill.price, '5');
@@ -581,14 +600,14 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     assert.equal(fills.body.source, 'in-memory-indexer-projection');
     assert.deepEqual(fills.body.fills, [fill]);
 
-    const trades = await requestJson(baseUrl, '/v1/trades/QI-QUAI');
+    const trades = await requestJson(baseUrl, '/v1/trades/WQUAI-WQI');
     assert.equal(trades.status, 200);
     assert.equal(trades.body.source, 'in-memory-indexer-projection');
     assert.deepEqual(trades.body.trades, [
       {
         tradeId: 'trade-000001',
         fillId: 'fill-000001',
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         price: '5',
         amount: '100',
         settlementStatus: 'confirmed',
@@ -612,7 +631,7 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
       eventIndex: 0,
       maker: restingSell.owner,
       taker: takerBuy.owner,
-      market: 'QI-QUAI',
+      market: 'WQUAI-WQI',
       price: '5',
       amount: '100',
       fees: {
@@ -636,7 +655,7 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
       createdFromEventId: 'event-000001',
     });
 
-    const bookAfterMatch = await requestJson(baseUrl, '/v1/orderbook/QI-QUAI');
+    const bookAfterMatch = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.equal(bookAfterMatch.status, 200);
     assert.deepEqual(bookAfterMatch.body.bids, []);
     assert.deepEqual(bookAfterMatch.body.asks, []);

@@ -45,7 +45,7 @@ test('qdex smoke command drives current mock API flow and prints mock-proof safe
     const result = await runCliJson(['--base-url', baseUrl, 'smoke']);
 
     assert.equal(result.command, 'smoke');
-    assert.equal(result.marketId, 'QI-QUAI');
+    assert.equal(result.marketId, 'WQUAI-WQI');
     assert.equal(result.fill.fillId, 'fill-000001');
     assert.equal(result.fill.projectionType, 'IndexedFillProjection');
     assert.equal(result.fill.sourceEventId, 'event-000001');
@@ -240,11 +240,11 @@ test('qdex stream fees command exposes bounded read-only FeeManager fee schedule
 
 test('qdex stream market-data commands expose bounded public snapshots without wallet authority', async () => {
   await withServer(async (baseUrl) => {
-    const klineRest = await runCliJson(['--base-url', baseUrl, 'klines', 'QI-QUAI', '--interval', '1m']);
+    const klineRest = await runCliJson(['--base-url', baseUrl, 'klines', 'WQUAI-WQI', '--interval', '1m']);
 
     assert.equal(klineRest.command, 'klines');
     assert.equal(klineRest.baseUrl, baseUrl);
-    assert.equal(klineRest.marketId, 'QI-QUAI');
+    assert.equal(klineRest.marketId, 'WQUAI-WQI');
     assert.equal(klineRest.interval, '1m');
     assert.deepEqual(klineRest.candles, []);
     assert.equal(klineRest.source, 'mock-candle-projection');
@@ -262,56 +262,56 @@ test('qdex stream market-data commands expose bounded public snapshots without w
     assert.equal(tickers.messages[0].snapshot.payload, 'ticker_snapshot');
     assert.equal(tickers.messages[0].snapshot.source, 'mock-market-data');
     assert.equal(tickers.messages[0].snapshot.custody, 'public-read-only-no-custody');
-    assert.equal(tickers.messages[0].snapshot.data.tickers[0].marketId, 'QI-QUAI');
+    assert.equal(tickers.messages[0].snapshot.data.tickers[0].marketId, 'WQUAI-WQI');
     assert.equal(tickers.messages[0].snapshot.data.tickers[0].volume24h, '0');
 
-    const depth = await runCliJson(['--base-url', baseUrl, 'stream', 'depth', 'QI-QUAI', '--limit', '1']);
+    const depth = await runCliJson(['--base-url', baseUrl, 'stream', 'depth', 'WQUAI-WQI', '--limit', '1']);
 
     assert.equal(depth.command, 'stream depth');
-    assert.equal(depth.channel, 'market.QI-QUAI.depth');
-    assert.equal(depth.marketId, 'QI-QUAI');
+    assert.equal(depth.channel, 'market.WQUAI-WQI.depth');
+    assert.equal(depth.marketId, 'WQUAI-WQI');
     assert.equal(depth.transport, 'websocket');
     assert.equal(depth.messages.length, 1);
-    assert.equal(depth.messages[0].snapshot.channel, 'market.QI-QUAI.depth');
+    assert.equal(depth.messages[0].snapshot.channel, 'market.WQUAI-WQI.depth');
     assert.equal(depth.messages[0].snapshot.visibility, 'public');
     assert.equal(depth.messages[0].snapshot.payload, 'orderbook_depth');
     assert.equal(depth.messages[0].snapshot.source, 'mock-orderbook');
     assert.equal(depth.messages[0].snapshot.custody, 'public-read-only-no-custody');
-    assert.equal(depth.messages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.equal(depth.messages[0].snapshot.data.marketId, 'WQUAI-WQI');
     assert.deepEqual(depth.messages[0].snapshot.data.bids, []);
     assert.deepEqual(depth.messages[0].snapshot.data.asks, []);
 
-    const trades = await runCliJson(['--base-url', baseUrl, 'stream', 'trades', 'QI-QUAI', '--limit', '1']);
+    const trades = await runCliJson(['--base-url', baseUrl, 'stream', 'trades', 'WQUAI-WQI', '--limit', '1']);
 
     assert.equal(trades.command, 'stream trades');
-    assert.equal(trades.channel, 'market.QI-QUAI.trades');
-    assert.equal(trades.marketId, 'QI-QUAI');
+    assert.equal(trades.channel, 'market.WQUAI-WQI.trades');
+    assert.equal(trades.marketId, 'WQUAI-WQI');
     assert.equal(trades.transport, 'websocket');
     assert.equal(trades.messages.length, 1);
-    assert.equal(trades.messages[0].snapshot.channel, 'market.QI-QUAI.trades');
+    assert.equal(trades.messages[0].snapshot.channel, 'market.WQUAI-WQI.trades');
     assert.equal(trades.messages[0].snapshot.visibility, 'public');
     assert.equal(trades.messages[0].snapshot.payload, 'trade_projection');
     assert.equal(trades.messages[0].snapshot.source, 'in-memory-indexer-projection');
     assert.equal(trades.messages[0].snapshot.custody, 'public-read-only-no-custody');
-    assert.equal(trades.messages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.equal(trades.messages[0].snapshot.data.marketId, 'WQUAI-WQI');
     assert.equal(trades.messages[0].snapshot.data.source, 'in-memory-indexer-projection');
     assert.deepEqual(trades.messages[0].snapshot.data.trades, []);
 
-    const klines = await runCliJson(['--base-url', baseUrl, 'stream', 'klines', 'QI-QUAI', '--interval', '1m', '--limit', '1']);
+    const klines = await runCliJson(['--base-url', baseUrl, 'stream', 'klines', 'WQUAI-WQI', '--interval', '1m', '--limit', '1']);
 
     assert.equal(klines.command, 'stream klines');
-    assert.equal(klines.channel, 'market.QI-QUAI.klines.1m');
-    assert.equal(klines.marketId, 'QI-QUAI');
+    assert.equal(klines.channel, 'market.WQUAI-WQI.klines.1m');
+    assert.equal(klines.marketId, 'WQUAI-WQI');
     assert.equal(klines.interval, '1m');
     assert.equal(klines.transport, 'websocket');
     assert.equal(klines.limit, 1);
     assert.equal(klines.messages.length, 1);
-    assert.equal(klines.messages[0].snapshot.channel, 'market.QI-QUAI.klines.1m');
+    assert.equal(klines.messages[0].snapshot.channel, 'market.WQUAI-WQI.klines.1m');
     assert.equal(klines.messages[0].snapshot.visibility, 'public');
     assert.equal(klines.messages[0].snapshot.payload, 'kline_snapshot');
     assert.equal(klines.messages[0].snapshot.source, 'mock-candle-projection');
     assert.equal(klines.messages[0].snapshot.custody, 'public-read-only-no-custody');
-    assert.equal(klines.messages[0].snapshot.data.marketId, 'QI-QUAI');
+    assert.equal(klines.messages[0].snapshot.data.marketId, 'WQUAI-WQI');
     assert.equal(klines.messages[0].snapshot.data.interval, '1m');
     assert.deepEqual(klines.messages[0].snapshot.data.candles, []);
   });
@@ -394,7 +394,7 @@ test('qdex fees command prints read-only FeeManager fee schedule metadata withou
     assert.equal(result.tradingVaultMutation, false);
     assert.deepEqual(result.feeSchedules, [
       {
-        marketId: 'QI-QUAI',
+        marketId: 'WQUAI-WQI',
         projectionType: 'FeeScheduleProjection',
         eventName: 'FeesUpdated',
         makerFeeBps: 0,
@@ -553,17 +553,17 @@ test('qdex contracts command prints local-only registry metadata without wallet 
     assert.equal(result.deploymentStatus, 'local-only-not-deployed');
     assert.equal(result.realQuaiTransactions, false);
     assert.equal(result.walletRequired, false);
-    assert.match(result.assetListingCaveat, /WQUAI, WQI/);
+    assert.match(result.assetListingCaveat, /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT/);
     assert.equal(result.listedAssetStatus.status, 'wrapped-token-listing');
-    assert.deepEqual(result.listedAssetStatus.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(result.listedAssetStatus.primaryQuoteAssets, ['WQI', 'USDT']);
     assert.equal(result.listedAssetStatus.supportedAssetModel, 'erc20-style-vault-token');
-    assert.equal(result.listedAssetStatus.userListedTokens, true);
-    assert.equal(result.listedAssetStatus.listingFlowStatus, 'design-required');
+    assert.equal(result.listedAssetStatus.userListedTokens, false);
+    assert.equal(result.listedAssetStatus.listingFlowStatus, 'deferred-after-initial-three-markets');
     assert.equal(result.listedAssetStatus.nativeQiTreatment, 'out-of-scope-direct-settlement-use-WQI');
     assert.equal(result.listedAssetStatus.nativeQiDirectSettlement, false);
     assert.equal(result.listedAssetStatus.realQuaiTransactions, false);
     assert.equal(result.listedAssetStatus.walletRequired, false);
-    assert.match(result.listedAssetStatus.safetyNotice, /WQUAI, WQI, and approved community tokens/i);
+    assert.match(result.listedAssetStatus.safetyNotice, /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT only/i);
     assert.equal(result.contracts.tradingVault.address, null);
     assert.equal(result.contracts.tradingVault.operatorWithdrawalAuthority, false);
     assert.equal(result.contracts.settlement.proofTrigger, 'TradeSettled');
@@ -623,16 +623,16 @@ test('qdex listings policy command prints read-only token listing and MarketRegi
     assert.equal(result.source, 'listed-asset-marketregistry-policy');
     assert.equal(result.status, 'design-only-local-metadata');
     assert.equal(result.assetModel, 'erc20-style-vault-token');
-    assert.deepEqual(result.primaryQuoteAssets, ['WQUAI', 'WQI']);
+    assert.deepEqual(result.primaryQuoteAssets, ['WQI', 'USDT']);
     assert.deepEqual(result.supportedAssets.map((asset) => asset.symbol), [
       'WQUAI',
       'WQI',
-      'community-created-erc20-style-token',
+      'USDT',
     ]);
     assert.equal(result.supportedAssets[0].address, null);
     assert.equal(result.supportedAssets[1].address, null);
-    assert.equal(result.supportedAssets[2].listingStatus, 'listable-after-review');
-    assert.equal(result.exampleMarkets[0].marketId, 'WQI-WQUAI');
+    assert.equal(result.supportedAssets[2].listingStatus, 'listed');
+    assert.equal(result.exampleMarkets[0].marketId, 'WQUAI-WQI');
     assert.equal(result.exampleMarkets[0].custodyAuthority, false);
     assert.equal(result.marketRegistry.truthSource, 'MarketRegistry-enabled-pair-metadata');
     assert.equal(result.marketRegistry.balanceMovement, false);
@@ -883,8 +883,8 @@ test('qdex listings request --prepare prints prepare-only placeholder without tr
     assert.equal(result.source, 'listed-asset-marketregistry-policy');
     assert.equal(result.requestStatus, 'not-implemented-approval-required');
     assert.equal(result.approvalGate, 'listing-submission-approval-gate');
-    assert.deepEqual(result.primaryQuoteAssets, ['WQUAI', 'WQI']);
-    assert.equal(result.supportedAsset, 'community-created-erc20-style-token');
+    assert.deepEqual(result.primaryQuoteAssets, ['WQI', 'USDT']);
+    assert.equal(result.supportedAsset, 'initial-fixed-assets-only-WQUAI-WQI-USDT');
     assert.deepEqual(result.permissions, ['NO_WITHDRAW', 'NO_ADMIN']);
     assert.equal(result.realQuaiTransactions, false);
     assert.equal(result.walletRequired, false);
@@ -950,7 +950,7 @@ test('qdex api create-key/revoke-key --prepare prints owner-signed delegate-key 
       '--delegate',
       '0x3333333333333333333333333333333333333333',
       '--allowed-market',
-      'QI-QUAI',
+      'WQUAI-WQI',
       '--max-notional',
       '1000',
       '--expires-at',
@@ -1087,7 +1087,7 @@ test('qdex cancel --all removes mock resting orders without nonce or withdrawal 
     assert.equal(result.nonceManager, 'matcher-local-cancel-only-on-chain-nonce-unchanged');
     assert.match(result.message, /does not cancel the on-chain nonce/i);
 
-    const bookAfterCancel = await client.orderbook.get('QI-QUAI');
+    const bookAfterCancel = await client.orderbook.get('WQUAI-WQI');
     assert.deepEqual(bookAfterCancel.asks, []);
   });
 });
@@ -1096,21 +1096,21 @@ test('qdex read-only commands return market, ticker, and book JSON from the API'
   await withServer(async (baseUrl) => {
     const markets = await runCliJson(['--base-url', baseUrl, 'markets']);
     assert.equal(markets.command, 'markets');
-    assert.equal(markets.markets[0].id, 'QI-QUAI');
+    assert.equal(markets.markets[0].id, 'WQUAI-WQI');
 
-    const ticker = await runCliJson(['--base-url', baseUrl, 'ticker', 'QI-QUAI']);
+    const ticker = await runCliJson(['--base-url', baseUrl, 'ticker', 'WQUAI-WQI']);
     assert.equal(ticker.command, 'ticker');
     assert.equal(ticker.baseUrl, baseUrl);
-    assert.equal(ticker.marketId, 'QI-QUAI');
+    assert.equal(ticker.marketId, 'WQUAI-WQI');
     assert.equal(ticker.source, 'mock-market-data');
     assert.equal(ticker.lastPrice, null);
     assert.equal(ticker.bestBid, null);
     assert.equal(ticker.bestAsk, null);
     assert.equal(ticker.volume24h, '0');
 
-    const book = await runCliJson(['--base-url', baseUrl, 'book', 'QI-QUAI']);
+    const book = await runCliJson(['--base-url', baseUrl, 'book', 'WQUAI-WQI']);
     assert.equal(book.command, 'book');
-    assert.equal(book.marketId, 'QI-QUAI');
+    assert.equal(book.marketId, 'WQUAI-WQI');
     assert.equal(book.source, 'mock-orderbook');
   });
 });

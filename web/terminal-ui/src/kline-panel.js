@@ -1,7 +1,7 @@
 const KLINE_SOURCE = 'mock-candle-projection';
 const KLINE_PAYLOAD = 'kline_snapshot';
 const PUBLIC_CUSTODY = 'public-read-only-no-custody';
-const DEFAULT_MARKET_ID = 'QI-QUAI';
+const DEFAULT_MARKET_ID = 'WQUAI-WQI';
 const DEFAULT_INTERVAL = '1m';
 const SAFE_PERMISSIONS = Object.freeze(['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
 

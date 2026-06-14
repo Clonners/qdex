@@ -15,9 +15,27 @@ const escapeHtml = (value) => String(value)
 
 const shortHash = (hash) => `${hash.slice(0, 10)}…${hash.slice(-6)}`;
 
-const renderOrderbookSide = (orders, emptyLabel) => {
+const renderOrderbookSide = (orders, emptyLabel, preview = {}) => {
   if (orders.length === 0) {
-    return `<li class="muted">${escapeHtml(emptyLabel)}</li>`;
+    const price = Number(preview.price ?? 5);
+    const base = Number.isFinite(price) ? price : 5;
+    const side = preview.side === 'bid' ? 'bid' : 'ask';
+    const offsets = side === 'ask' ? [0.030, 0.020, 0.010, 0.006] : [-0.006, -0.010, -0.020, -0.030];
+    const amounts = side === 'ask' ? [18, 42, 63, 91] : [22, 38, 57, 88];
+    const rows = offsets.map((offset, index) => {
+      const levelPrice = (base + offset).toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+      const amount = String(amounts[index]);
+      const total = (Number(levelPrice) * amounts[index]).toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
+      return `
+        <li class="depth-preview">
+          <span>${escapeHtml(levelPrice)}</span>
+          <span>${escapeHtml(amount)}</span>
+          <code>${escapeHtml(total)}</code>
+        </li>
+      `;
+    }).join('');
+
+    return rows;
   }
 
   return orders.map((order) => `
@@ -846,8 +864,8 @@ const renderKeyboardShortcutHelpPanel = (keyboardShortcuts) => {
           <h3>command hints</h3>
           <ul>${renderKeyboardCommandHintRows(panel.commandHints)}</ul>
           <p class="warning">Matcher-local cancellation does not mutate on-chain NonceManager nonces. Owner-wallet prepare hints remain no wallet/RPC/signing/broadcast/deploy/tx/funds behavior. Delegate/API key hints keep delegate can withdraw false and delegate can admin false.</p>
-          <pre>:sell QI-QUAI 100 @ 5
-:buy QI-QUAI 100 market_ioc slippage=50bps
+          <pre>:sell WQUAI-WQI 100 @ 5
+:buy WQUAI-WQI 100 market_ioc slippage=50bps
 :proof trade-000001
 :cancel all matcher-local
 :deposit WQI 10 prepare owner-wallet-only
@@ -880,49 +898,256 @@ export const renderTradeProofPanel = (fixture) => {
   const proofSettlementMode = proof.settlementMode ?? proof.rawEvent.settlementMode;
   const fillSource = sources?.fills ?? 'unknown-fill-source';
   const proofSource = sources?.proof ?? 'unknown-proof-source';
+  const spreadLabel = orderbook.bids.length === 0 && orderbook.asks.length === 0
+    ? 'cleared by confirmed mock cross'
+    : 'local mock depth';
+  const overview = normalizeAccountOverviewPanelFixture(fixture.accountOverview);
+  const permissions = (overview.permissions ?? []).join(', ');
+  const balanceRows = overview.balances.balances ?? [];
+  const openOrderRows = overview.orders.open ?? [];
+  const confirmedFillRows = overview.fills.items ?? [];
+  const accountLabel = overview.account === null ? 'not connected (mock-local-no-wallet-session)' : overview.account;
+  const publicStreamStatus = fixture.publicMarketDataStream?.streamEvent?.reason ?? 'REST/WS mock streams ready';
+  const feeBps = fixture.feePolicy?.feeSchedules?.[0]
+    ? `${fixture.feePolicy.feeSchedules[0].makerFeeBps}/${fixture.feePolicy.feeSchedules[0].takerFeeBps}`
+    : '0/0';
+
+  const renderCompactBalanceRows = () => {
+    if (balanceRows.length === 0) {
+      return '<li class="book-row muted"><span>mock vault</span><span>0</span><span>no wallet</span></li>';
+    }
+
+    return balanceRows.map((balance) => `
+      <li class="book-row">
+        <span>${escapeHtml(balance.token ?? balance.symbol ?? 'token')}</span>
+        <span>${escapeHtml(balance.available ?? '0')}</span>
+        <span>${escapeHtml(balance.locked ?? balance.total ?? '0')}</span>
+      </li>
+    `).join('');
+  };
+
+  const renderCompactOpenOrderRows = () => {
+    if (openOrderRows.length === 0) {
+      return '<li class="book-row muted"><span>open orders</span><span>0</span><span>matcher-local</span></li>';
+    }
+
+    return openOrderRows.map((order) => `
+      <li class="book-row">
+        <span>${escapeHtml(order.marketId ?? 'market')}</span>
+        <span>${escapeHtml(order.status ?? 'open')}</span>
+        <code>${escapeHtml(shortHash(order.orderHash ?? '0x0000000000000000'))}</code>
+      </li>
+    `).join('');
+  };
+
+  const renderCompactFillRows = () => {
+    if (confirmedFillRows.length === 0) {
+      return `<li class="book-row"><span>${escapeHtml(trade.tradeId)}</span><span>${escapeHtml(trade.amount)} @ ${escapeHtml(trade.price)}</span><a href="${escapeHtml(trade.proofUrl)}">proof</a></li>`;
+    }
+
+    return confirmedFillRows.map((row) => `
+      <li class="book-row">
+        <span>${escapeHtml(row.fillId ?? 'fill')}</span>
+        <span>${escapeHtml(row.amount ?? '0')} @ ${escapeHtml(row.price ?? '0')}</span>
+        <code>${escapeHtml(row.sourceEventId ?? 'event')}</code>
+      </li>
+    `).join('');
+  };
+
+  const auditPanels = [
+    renderLiveStreamPanel(fixture.liveStream),
+    renderOrderStreamPanel(fixture.orderStream, fixture.orders),
+    renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fixture.balances),
+    renderAccountOverviewPanel(fixture.accountOverview),
+    renderVaultOperationPanel(fixture.vaultOperation),
+    renderDelegateKeyOperationPanel(fixture.delegateKeyOperation),
+    renderDelegateKeyHistoryPanel(fixture.delegateKeyHistory),
+    renderFeePolicyPanel(fixture.feePolicy),
+    renderKlinePanel(fixture.klines),
+    renderFeePolicyStreamPanel(fixture.feePolicyStream),
+    renderKlineStreamPanel(fixture.klineStream),
+    renderPublicMarketDataStreamPanel(fixture.publicMarketDataStream),
+    renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream),
+    renderVaultHistoryStreamPanel(fixture.vaultHistoryStream),
+    renderVaultHistoryPanel(fixture.vaultHistory),
+  ].filter(Boolean).join('\n');
 
   return `
-    <section class="terminal-shell" aria-label="Quai Terminal DEX mock vertical slice">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">QDEX / terminal-native MVP</p>
-          <h1>${escapeHtml(market.id)}</h1>
+    <section class="terminal-shell safe-trade-shell" aria-label="Quai Terminal DEX mock vertical slice">
+      <header class="topbar exchange-topbar">
+        <div class="brand-cluster">
+          <span class="logo-mark">QDEX</span>
+          <nav class="top-tabs" aria-label="Exchange navigation">
+            <span class="top-tab active">exchange</span>
+            <span class="top-tab">markets</span>
+            <span class="top-tab">wallets</span>
+            <span class="top-tab">orders</span>
+            <span class="top-tab">api</span>
+          </nav>
         </div>
         <div class="status-stack">
           <span class="badge green">API-first</span>
           <span class="badge yellow">settlementMode: ${escapeHtml(market.settlementMode)}</span>
           <span class="badge">${escapeHtml(market.custodyModel)}</span>
+          <span class="badge">TUI-safe preview</span>
         </div>
       </header>
 
-      <section class="grid">
-        <article class="panel market-panel">
-          <h2>market</h2>
-          <dl class="kv">
-            <div><dt>pair</dt><dd>${escapeHtml(market.base)} / ${escapeHtml(market.quote)}</dd></div>
-            <div><dt>book sequence</dt><dd>${escapeHtml(orderbook.sequence)}</dd></div>
-            <div><dt>custody</dt><dd>${escapeHtml(custody.note)}</dd></div>
-            <div><dt>withdrawals</dt><dd>${escapeHtml(custody.withdrawalAuthority)}</dd></div>
-          </dl>
-        </article>
+      <section class="market-header panel safetrade-title-strip" aria-label="Selected market summary">
+        <div class="market-selector-strip">
+          <div class="selected-pair-cell">
+            <strong>${escapeHtml(market.base)}/${escapeHtml(market.quote)}</strong>
+            <small>${escapeHtml(market.id)} · QDEX spot</small>
+          </div>
+          <nav class="pair-tabs" aria-label="Initial QDEX pairs">
+            <span class="active">WQUAI/WQI</span>
+            <span>WQUAI/USDT</span>
+            <span>WQI/USDT</span>
+          </nav>
+        </div>
+        <div class="ticker-strip" aria-label="Market ticker summary">
+          <div><span>last price</span><strong>${escapeHtml(trade.price)}</strong></div>
+          <div><span>24h change</span><strong class="green">mock +0.00%</strong></div>
+          <div><span>24h high</span><strong>5.4</strong></div>
+          <div><span>24h low</span><strong>4.8</strong></div>
+          <div><span>volume</span><strong>${escapeHtml(trade.amount)} ${escapeHtml(market.base)}</strong></div>
+          <div><span>maker/taker</span><strong>${escapeHtml(feeBps)} bps</strong></div>
+        </div>
+      </section>
 
-        <article class="panel book-panel">
-          <h2>orderbook after match</h2>
-          <div class="book-columns">
-            <div>
-              <h3>bids</h3>
-              <ul>${renderOrderbookSide(orderbook.bids, 'empty — crossed taker consumed resting ask')}</ul>
+      <section class="exchange-grid">
+        <aside class="panel markets-panel" aria-label="Markets">
+          <div class="panel-title-row">
+            <h2>markets</h2>
+            <kbd>/</kbd>
+          </div>
+          <div class="market-quote-tabs safe-panel-tabs" aria-label="Market quote tabs"><span class="active">all</span><span>WQI</span><span>USDT</span></div>
+          <div class="terminal-input ghost-input">/ search market</div>
+          <button type="button" class="market-row active">
+            <span><strong>${escapeHtml(market.id)}</strong><small>${escapeHtml(market.base)} / ${escapeHtml(market.quote)}</small></span>
+            <span class="green">${escapeHtml(trade.price)}</span>
+          </button>
+          <button type="button" class="market-row" disabled>
+            <span><strong>WQUAI-USDT</strong><small>initial fixed pair</small></span>
+            <span class="muted">listed</span>
+          </button>
+          <button type="button" class="market-row" disabled>
+            <span><strong>WQI-USDT</strong><small>initial fixed pair</small></span>
+            <span class="muted">listed</span>
+          </button>
+          <p class="microcopy">Initial QDEX market set only: WQUAI/WQI, WQUAI/USDT, WQI/USDT.</p>
+        </aside>
+
+        <main class="panel chart-panel" aria-label="Chart and tape">
+          <div class="chart-header">
+            <div class="chart-tabs safe-panel-tabs" aria-label="Chart tabs">
+              <span class="active">price chart</span>
+              <span>depth chart</span>
+              <span>TradingView slot</span>
             </div>
-            <div>
-              <h3>asks</h3>
-              <ul>${renderOrderbookSide(orderbook.asks, 'empty — confirmed mock fill cleared the book')}</ul>
+            <div class="timeframe-tabs" aria-label="Chart intervals"><span class="active">1m</span><span>5m</span><span>15m</span><span>1h</span><span>1d</span></div>
+          </div>
+          <div class="terminal-chart tradingview-placeholder" aria-label="TradingView chart placeholder">
+            <div class="chart-axis"><span>5.4</span><span>5.2</span><span>5.0</span><span>4.8</span></div>
+            <div class="chart-canvas">
+              <span class="price-line"><b>last ${escapeHtml(trade.price)}</b></span>
+              <div class="tv-slot-copy">
+                <strong>TradingView chart slot</strong>
+                <span>${escapeHtml(market.base)}/${escapeHtml(market.quote)} · ${escapeHtml(publicStreamStatus)}</span>
+                <small>placeholder visual only — real widget/data feed later</small>
+              </div>
             </div>
           </div>
-        </article>
+          <div class="trade-tape">
+            <div class="tape-row tape-head"><span>time</span><span>side</span><span>price</span><span>amount</span><span>proof</span></div>
+            <div class="tape-row"><span>now</span><span class="green">cross</span><span>${escapeHtml(trade.price)}</span><span>${escapeHtml(trade.amount)}</span><a href="${escapeHtml(trade.proofUrl)}">${escapeHtml(trade.tradeId)}</a></div>
+          </div>
+        </main>
 
-        <article class="panel trade-panel">
-          <h2>last trade</h2>
-          <dl class="kv large">
+        <aside class="panel book-panel compact-book" aria-label="Orderbook">
+          <div class="panel-title-row"><h2>order book</h2><span class="muted">seq ${escapeHtml(orderbook.sequence)}</span></div>
+          <div class="book-table safetrade-book">
+            <div class="book-row book-head"><span>price</span><span>amount</span><span>total</span></div>
+            <div class="book-side asks">
+              <h3>sell orders</h3>
+              <ul>${renderOrderbookSide(orderbook.asks, 'display ladder preview — confirmed mock fill cleared the real book', { side: 'ask', price: trade.price })}</ul>
+            </div>
+            <div class="spread-row"><strong>${escapeHtml(trade.price)}</strong><small> last · ${escapeHtml(spreadLabel)}</small></div>
+            <div class="book-side bids">
+              <h3>buy orders</h3>
+              <ul>${renderOrderbookSide(orderbook.bids, 'display ladder preview — crossed taker consumed resting ask', { side: 'bid', price: trade.price })}</ul>
+            </div>
+          </div>
+          <div class="recent-trades-mini">
+            <div class="book-row book-head"><span>recent trades</span><span>price</span><span>amount</span></div>
+            <div class="book-row"><span>now</span><span class="green">${escapeHtml(trade.price)}</span><span>${escapeHtml(trade.amount)}</span></div>
+            <div class="book-row muted-grid"><span>stream</span><span>mock</span><span>safe</span></div>
+          </div>
+        </aside>
+
+        <aside class="panel order-entry-panel safetrade-ticket" aria-label="Order entry">
+          <div class="panel-title-row"><h2>buy / sell ${escapeHtml(market.base)}</h2><span class="badge">preview only</span></div>
+          <div class="ticket-tabs"><button type="button" class="active">buy</button><button type="button">sell</button></div>
+          <div class="order-form-grid">
+            <div class="order-form-card buy-form-card">
+              <div class="form-card-title"><strong>Buy ${escapeHtml(market.base)}</strong><small>with ${escapeHtml(market.quote)}</small></div>
+              <label class="ticket-field">price<input value="${escapeHtml(trade.price)}" readonly aria-label="mock order price" /></label>
+              <label class="ticket-field">amount<input value="${escapeHtml(trade.amount)}" readonly aria-label="mock order amount" /></label>
+              <label class="ticket-field">type<input value="market_ioc slippage=50bps" readonly aria-label="mock order type" /></label>
+              <button type="button" class="primary-action" data-qdx-trigger-cross>buy ${escapeHtml(market.base)}<span hidden>submit mock cross</span></button>
+              <p class="ticket-status" data-qdx-trigger-status>Local mock cross only · no real Quai tx/explorer/funds.</p>
+            </div>
+            <div class="order-form-card sell-form-card">
+              <div class="form-card-title"><strong>Sell ${escapeHtml(market.base)}</strong><small>receive ${escapeHtml(market.quote)}</small></div>
+              <label class="ticket-field">price<input value="${escapeHtml(trade.price)}" readonly aria-label="mock sell order price" /></label>
+              <label class="ticket-field">amount<input value="0" readonly aria-label="mock sell order amount" /></label>
+              <label class="ticket-field">available<input value="mock vault: read-only" readonly aria-label="mock sell available" /></label>
+              <button type="button" class="secondary-action-button" disabled>sell ${escapeHtml(market.base)}</button>
+              <p class="ticket-status red-note">Owner wallet controls real withdrawals. Delegate/API keys stay NO_WITHDRAW.</p>
+            </div>
+          </div>
+          <div class="secondary-actions exchange-secondary-actions">
+            <button type="button" data-qdx-trigger-cancel>create + cancel mock order</button>
+            <button type="button" data-qdx-vault-prepare-deposit>prepare vault deposit</button>
+            <button type="button" data-qdx-vault-prepare-withdraw>prepare vault withdrawal</button>
+            <button type="button" data-qdx-delegate-key-prepare-register>prepare delegate/API key</button>
+            <button type="button" data-qdx-delegate-key-prepare-revoke>prepare delegate/API revoke</button>
+          </div>
+          <details class="ticket-notes">
+            <summary>local action safety notes</summary>
+            <p class="muted">Posts a local/dev GTC sell plus IOC buy with signed slippage bounds; no real Quai tx/explorer/funds.</p>
+            <p class="muted" data-qdx-cancel-status>Posts one local/dev resting order, then matcher-local cancellation does not cancel on-chain nonce; no real Quai tx/explorer/funds.</p>
+            <p class="muted" data-qdx-vault-deposit-status>Calls prepare-only owner-wallet deposit boundary; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <p class="muted" data-qdx-vault-withdraw-status>Calls prepare-only owner-wallet withdrawal boundary; delegates cannot deposit or withdraw; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <p class="muted" data-qdx-delegate-key-register-status>Calls prepare-only owner-signed delegate/API key boundary; owner-wallet-signature-required; NO_WITHDRAW/NO_ADMIN; no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+            <p class="muted" data-qdx-delegate-key-revoke-status>Calls prepare-only owner-signed delegate/API key revocation; no live DelegateKeyRegistry mutation, no wallet/RPC/signing/broadcast/deploy/tx/funds.</p>
+          </details>
+        </aside>
+
+        <section class="panel account-panel exchange-bottom-panel" aria-label="Account overview">
+          <div class="bottom-tabs safe-panel-tabs" aria-label="Order and account tabs">
+            <span class="active">open orders</span>
+            <span>order history</span>
+            <span>trade history</span>
+            <span>balances</span>
+            <span>proofs</span>
+            <span>terminal</span>
+          </div>
+          <div class="account-summary">
+            <div><span>session</span><strong>${escapeHtml(accountLabel)}</strong></div>
+            <div><span>permissions</span><strong>${escapeHtml(permissions)}</strong></div>
+            <div><span>withdrawals</span><strong>${escapeHtml(custody.withdrawalAuthority)}</strong></div>
+          </div>
+          <div class="account-columns bottom-table-grid">
+            <div><h3>balances</h3><ul>${renderCompactBalanceRows()}</ul></div>
+            <div><h3>open orders</h3><ul>${renderCompactOpenOrderRows()}</ul></div>
+            <div><h3>fills / proofs</h3><ul>${renderCompactFillRows()}</ul></div>
+          </div>
+        </section>
+
+        <section class="panel proof-card" aria-label="Proof summary">
+          <div class="panel-title-row"><h2>last trade / proof</h2><a href="${escapeHtml(trade.proofUrl)}">${escapeHtml(trade.proofUrl)}</a></div>
+          <dl class="kv compact-kv">
             <div><dt>trade</dt><dd><code>${escapeHtml(trade.tradeId)}</code></dd></div>
             <div><dt>fill</dt><dd><code>${escapeHtml(trade.fillId)}</code></dd></div>
             <div><dt>market</dt><dd>${escapeHtml(trade.marketId)}</dd></div>
@@ -932,63 +1157,68 @@ export const renderTradeProofPanel = (fixture) => {
             <div><dt>fill source</dt><dd>${escapeHtml(fillSource)}</dd></div>
             <div><dt>projection type</dt><dd><code>${escapeHtml(fill.projectionType)}</code></dd></div>
             <div><dt>source event</dt><dd><code>${escapeHtml(fill.sourceEventId)}</code></dd></div>
-            <div><dt>proof</dt><dd><a href="${escapeHtml(trade.proofUrl)}">${escapeHtml(trade.proofUrl)}</a></dd></div>
           </dl>
-        </article>
+        </section>
 
-        <article class="panel proof-panel">
-          <h2>proof projection</h2>
-          <p class="warning">Mock proof only: no real Quai transaction, no explorer URL, no funds moved.</p>
-          <dl class="kv">
-            <div><dt>settlement tx</dt><dd><code>${escapeHtml(proofSettlementTx)}</code></dd></div>
-            <div><dt>mock reference</dt><dd><code>${escapeHtml(proof.mockSettlementReference)}</code></dd></div>
-            <div><dt>block</dt><dd>${escapeHtml(proofBlockNumber)}</dd></div>
-            <div><dt>event index</dt><dd>${escapeHtml(proof.eventIndex)}</dd></div>
-            <div><dt>proof source</dt><dd>${escapeHtml(proofSource)}</dd></div>
-            <div><dt>created from</dt><dd><code>${escapeHtml(proof.createdFromEventId)}</code></dd></div>
-            <div><dt>settlementMode</dt><dd>${escapeHtml(proofSettlementMode)}</dd></div>
-            <div><dt>maker order</dt><dd><code>${escapeHtml(shortHash(fill.makerOrderHash))}</code></dd></div>
-            <div><dt>taker order</dt><dd><code>${escapeHtml(shortHash(fill.takerOrderHash))}</code></dd></div>
+        <section class="panel command-palette-skeleton-panel command-deck" aria-label="Command palette">
+          <div class="panel-title-row"><h2>terminal command-palette skeleton</h2><span class="badge">preview-only-no-dispatch</span></div>
+          <p class="warning">${escapeHtml(fixture.commandPalette.safety.notice)}</p>
+          <dl class="kv compact-kv visually-compact">
+            <div><dt>source</dt><dd>${escapeHtml(fixture.commandPalette.source)}</dd></div>
+            <div><dt>mode</dt><dd>${escapeHtml(fixture.commandPalette.mode)}</dd></div>
+            <div><dt>dispatch</dt><dd>${escapeHtml(fixture.commandPalette.dispatchMode)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml((fixture.commandPalette.permissions ?? []).join(', '))}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(fixture.commandPalette.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(fixture.commandPalette.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(fixture.commandPalette.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(fixture.commandPalette.tradingVaultMutation)}</dd></div>
+            <div><dt>MarketRegistry mutation</dt><dd>${escapeHtml(fixture.commandPalette.marketRegistryMutation)}</dd></div>
+            <div><dt>DelegateKeyRegistry mutation</dt><dd>${escapeHtml(fixture.commandPalette.delegateKeyRegistryMutation)}</dd></div>
+            <div><dt>delegate can withdraw</dt><dd>${escapeHtml(fixture.commandPalette.delegateCanWithdraw)}</dd></div>
+            <div><dt>delegate can admin</dt><dd>${escapeHtml(fixture.commandPalette.delegateCanAdmin)}</dd></div>
           </dl>
-          <details>
-            <summary>raw proof event</summary>
-            <pre>${escapeHtml(proofJson)}</pre>
-          </details>
-        </article>
+          <form class="command-form" data-qdx-command-palette-form>
+            <label>command<input data-qdx-command-palette-input value=":proof trade-000001" aria-label="terminal command palette input" /></label>
+            <button type="submit">preview command</button>
+          </form>
+          <p class="muted" data-qdx-command-palette-status>Preview-only skeleton: choose a known command; no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.</p>
+          <div class="command-chip-grid">
+            ${(fixture.commandPalette.commands ?? []).map((command) => `<code>${escapeHtml(command.command)}</code>`).join('')}
+          </div>
+          <p class="warning">Matcher-local cancellation does not mutate on-chain NonceManager nonces. Delegate/API key commands keep delegate can withdraw false and delegate can admin false.</p>
+        </section>
 
-${renderLiveStreamPanel(fixture.liveStream)}
-
-${renderOrderStreamPanel(fixture.orderStream, fixture.orders)}
-
-${renderBalanceStreamPanel(fixture.balanceStream, fixture.balanceProjection, fixture.balances)}
-
-${renderAccountOverviewPanel(fixture.accountOverview)}
-
-${renderVaultOperationPanel(fixture.vaultOperation)}
-
-${renderDelegateKeyOperationPanel(fixture.delegateKeyOperation)}
-
-${renderDelegateKeyHistoryPanel(fixture.delegateKeyHistory)}
-
-${renderFeePolicyPanel(fixture.feePolicy)}
-
-${renderKlinePanel(fixture.klines)}
-
-${renderFeePolicyStreamPanel(fixture.feePolicyStream)}
-
-${renderKlineStreamPanel(fixture.klineStream)}
-
-${renderPublicMarketDataStreamPanel(fixture.publicMarketDataStream)}
-
-${renderDelegateKeyHistoryStreamPanel(fixture.delegateKeyHistoryStream)}
-
-${renderVaultHistoryStreamPanel(fixture.vaultHistoryStream)}
-
-${renderVaultHistoryPanel(fixture.vaultHistory)}
-
-${renderCommandPalettePanel(fixture.commandPalette)}
-
-${renderKeyboardShortcutHelpPanel(fixture.keyboardShortcuts)}
+        <section class="panel keyboard-shortcut-help-panel shortcuts-deck" data-qdx-keyboard-shortcuts-panel aria-label="Keyboard shortcuts">
+          <div class="panel-title-row"><h2>terminal keyboard-shortcut help</h2><span class="badge">help-only-no-dispatch</span></div>
+          <p class="warning">${escapeHtml(fixture.keyboardShortcuts.safety.notice)}</p>
+          <p class="muted" data-qdx-keyboard-shortcuts-status>Waiting for local API keyboard-shortcut help smoke; help-only-no-dispatch and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.</p>
+          <dl class="kv compact-kv visually-compact">
+            <div><dt>source</dt><dd>${escapeHtml(fixture.keyboardShortcuts.source)}</dd></div>
+            <div><dt>mode</dt><dd>${escapeHtml(fixture.keyboardShortcuts.mode)}</dd></div>
+            <div><dt>dispatch</dt><dd>${escapeHtml(fixture.keyboardShortcuts.dispatchMode)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml((fixture.keyboardShortcuts.permissions ?? []).join(', '))}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(fixture.keyboardShortcuts.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(fixture.keyboardShortcuts.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(fixture.keyboardShortcuts.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(fixture.keyboardShortcuts.tradingVaultMutation)}</dd></div>
+            <div><dt>MarketRegistry mutation</dt><dd>${escapeHtml(fixture.keyboardShortcuts.marketRegistryMutation)}</dd></div>
+            <div><dt>DelegateKeyRegistry mutation</dt><dd>${escapeHtml(fixture.keyboardShortcuts.delegateKeyRegistryMutation)}</dd></div>
+            <div><dt>delegate can withdraw</dt><dd>${escapeHtml(fixture.keyboardShortcuts.delegateCanWithdraw)}</dd></div>
+            <div><dt>delegate can admin</dt><dd>${escapeHtml(fixture.keyboardShortcuts.delegateCanAdmin)}</dd></div>
+          </dl>
+          <div class="shortcut-grid">
+            ${(fixture.keyboardShortcuts.shortcuts ?? []).map((shortcut) => `<span><kbd>${escapeHtml(shortcut.key)}</kbd> ${escapeHtml(shortcut.label)} <small>${escapeHtml(`${shortcut.key} ${shortcut.label}`)} · ${escapeHtml(shortcut.actionType)} · ${escapeHtml(shortcut.surface)} · ${escapeHtml(shortcut.dispatchMode)}</small></span>`).join('')}
+          </div>
+          <pre>:sell WQUAI-WQI 100 @ 5
+:buy WQUAI-WQI 100 market_ioc slippage=50bps
+:proof trade-000001
+:cancel all matcher-local
+:deposit WQI 10 prepare owner-wallet-only
+:withdraw WQUAI 1 prepare owner-wallet-only
+:api create-key bot-mm-1 prepare owner-wallet-signature-required NO_WITHDRAW
+:api revoke-key bot-mm-1 prepare owner-wallet-signature-required NO_ADMIN</pre>
+          <p class="warning">Matcher-local cancellation does not mutate on-chain NonceManager nonces. Owner-wallet prepare hints remain no wallet/RPC/signing/broadcast/deploy/tx/funds behavior. Delegate/API key hints keep delegate can withdraw false and delegate can admin false.</p>
+        </section>
 
         <article class="panel log-panel">
           <h2>execution log</h2>
@@ -1001,6 +1231,32 @@ ${renderKeyboardShortcutHelpPanel(fixture.keyboardShortcuts)}
 &gt; proof projected: ${escapeHtml(trade.proofUrl)}</pre>
         </article>
       </section>
+
+      <details class="audit-drawer">
+        <summary>audit / projection details — mock proof only, no real Quai transaction, no explorer URL, no funds moved</summary>
+        <section class="audit-grid">
+          <article class="panel proof-panel">
+            <h2>proof projection</h2>
+            <p class="warning">Mock proof only: no real Quai transaction, no explorer URL, no funds moved.</p>
+            <dl class="kv">
+              <div><dt>settlement tx</dt><dd><code>${escapeHtml(proofSettlementTx)}</code></dd></div>
+              <div><dt>mock reference</dt><dd><code>${escapeHtml(proof.mockSettlementReference)}</code></dd></div>
+              <div><dt>block</dt><dd>${escapeHtml(proofBlockNumber)}</dd></div>
+              <div><dt>event index</dt><dd>${escapeHtml(proof.eventIndex)}</dd></div>
+              <div><dt>proof source</dt><dd>${escapeHtml(proofSource)}</dd></div>
+              <div><dt>created from</dt><dd><code>${escapeHtml(proof.createdFromEventId)}</code></dd></div>
+              <div><dt>settlementMode</dt><dd>${escapeHtml(proofSettlementMode)}</dd></div>
+              <div><dt>maker order</dt><dd><code>${escapeHtml(shortHash(fill.makerOrderHash))}</code></dd></div>
+              <div><dt>taker order</dt><dd><code>${escapeHtml(shortHash(fill.takerOrderHash))}</code></dd></div>
+            </dl>
+            <details>
+              <summary>raw proof event</summary>
+              <pre>${escapeHtml(proofJson)}</pre>
+            </details>
+          </article>
+          ${auditPanels}
+        </section>
+      </details>
     </section>
   `;
 };

@@ -16,17 +16,17 @@ const dependencyNames = [
 
 const listedAssetStatus = {
   status: 'wrapped-token-listing',
-  primaryQuoteAssets: ['WQUAI', 'WQI'],
+  primaryQuoteAssets: ['WQI', 'USDT'],
   supportedAssetModel: 'erc20-style-vault-token',
-  userListedTokens: true,
-  listingFlowStatus: 'design-required',
-  marketRegistryRole: 'list approved token pairs after review',
+  userListedTokens: false,
+  listingFlowStatus: 'deferred-after-initial-three-markets',
+  marketRegistryRole: 'enable initial fixed pairs; future DAO can expand after review',
   nativeQiTreatment: 'out-of-scope-direct-settlement-use-WQI',
   nativeQiDirectSettlement: false,
   realQuaiTransactions: false,
   walletRequired: false,
   safetyNotice:
-    'QDEX MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens; native Qi is not a direct TradingVault asset in this campaign.',
+    'QDEX MVP initial market set is WQUAI/WQI, WQUAI/USDT, and WQI/USDT only; native Qi is not a direct TradingVault asset in this campaign.',
 };
 
 export const createContractRegistryResponse = () => ({
@@ -39,7 +39,7 @@ export const createContractRegistryResponse = () => ({
   source: 'contracts-local-harness-and-docs',
   docs: ['docs/contracts.md', 'docs/quai-tooling.md', 'contracts/README.md'],
   assetListingCaveat:
-    'QDEX MVP lists and settles ERC-20-style vault tokens such as WQUAI, WQI, and approved community-created tokens; native Qi direct settlement is out of scope unless explicitly reopened.',
+    'QDEX MVP initially lists only WQUAI/WQI, WQUAI/USDT, and WQI/USDT ERC-20-style vault-token pairs; native Qi direct settlement is out of scope unless explicitly reopened.',
   listedAssetStatus: {
     ...listedAssetStatus,
     primaryQuoteAssets: [...listedAssetStatus.primaryQuoteAssets],

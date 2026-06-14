@@ -4,7 +4,7 @@ import {
 } from './keyboard-shortcuts.js';
 
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
-const DEFAULT_MARKET_ID = 'QI-QUAI';
+const DEFAULT_MARKET_ID = 'WQUAI-WQI';
 const SMOKE_SOURCE = 'terminal-keyboard-shortcut-help-local-api-smoke';
 const HELP_SOURCE = 'terminal-keyboard-shortcut-help';
 const SAFE_PERMISSIONS = Object.freeze(['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
@@ -21,7 +21,7 @@ const PREFLIGHT_CHECKS = Object.freeze([
     validate(body) {
       assertArray(body.markets, 'markets response markets');
       if (!body.markets.some((market) => market?.id === DEFAULT_MARKET_ID)) {
-        throw new Error('GET /v1/markets must include QI-QUAI for keyboard shortcut help.');
+        throw new Error('GET /v1/markets must include WQUAI-WQI for keyboard shortcut help.');
       }
     },
   }),

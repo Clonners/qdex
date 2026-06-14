@@ -85,7 +85,7 @@ await dex.nonces.prepareCancel({
 await dex.delegateKeys.prepareRegister({
   owner: '0xowner',
   delegate: '0xdelegate',
-  allowedMarkets: ['QI-QUAI'],
+  allowedMarkets: ['WQUAI-WQI'],
   maxNotional: '1000',
   permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
   expiresAt: 1780003600,
@@ -99,14 +99,14 @@ const delegateKeyRegistrations = await dex.delegateKeys.listRegistrations(); // 
 const delegateKeyRevocations = await dex.delegateKeys.listRevocations(); // GET /v1/delegate-keys/revocations -> delegatekeyregistry-event-projection / DelegateKeyRevokedProjection
 
 const limitOrder: SignedOrder = await dex.orders.createLimitOrder({
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   side: 'buy',
   amount: '1000',
   price: '0.123',
 });
 
 const marketOrder: SignedOrder = await dex.orders.createMarketIocOrder({
-  marketId: 'QI-QUAI',
+  marketId: 'WQUAI-WQI',
   side: 'sell',
   quoteAmount: '100',
   maxSlippageBps: 50,
@@ -138,7 +138,7 @@ await delegateKeyRevocationStream.close();
 await dex.delegateKeys.registrations.stream({ limit });
 await dex.delegateKeys.revocations.stream({ limit });
 const proof: TradeProof = await dex.proofs.trade(tradeId); // GET /v1/proofs/trades/:tradeId
-await dex.orders.cancelAll({ marketId: 'QI-QUAI' });
+await dex.orders.cancelAll({ marketId: 'WQUAI-WQI' });
 ```
 
 `fills.openStream()` and `fills.stream()`/`fills.stream({ limit })` consume WebSocket snapshots only; they never grant withdrawal/admin authority and private snapshots must preserve `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN` permissions.

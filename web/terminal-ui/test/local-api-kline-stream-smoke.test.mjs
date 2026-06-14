@@ -42,7 +42,7 @@ const waitFor = async (predicate, label) => {
 };
 
 const assertKlineEnvelope = (envelope) => {
-  assert.equal(envelope.marketId, 'QI-QUAI');
+  assert.equal(envelope.marketId, 'WQUAI-WQI');
   assert.equal(envelope.interval, '1m');
   assert.deepEqual(envelope.candles, []);
   assert.equal(envelope.source, KLINE_SOURCE);
@@ -84,7 +84,7 @@ test('local API + terminal UI public kline stream smoke renders only REST-confir
     const binding = await bindLiveKlineStreamWithRestSnapshot({
       mount,
       baseUrl,
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       interval: '1m',
       fetchImpl: countedFetch,
       WebSocketImpl: WebSocket,
@@ -104,7 +104,7 @@ test('local API + terminal UI public kline stream smoke renders only REST-confir
 
     try {
       await waitFor(
-        () => streamFixtures.some((fixture) => fixture.klineStream?.channel === 'market.QI-QUAI.klines.1m'),
+        () => streamFixtures.some((fixture) => fixture.klineStream?.channel === 'market.WQUAI-WQI.klines.1m'),
         'REST-confirmed public kline/candle stream render',
       );
 
@@ -113,13 +113,13 @@ test('local API + terminal UI public kline stream smoke renders only REST-confir
       assert.deepEqual(streamErrors, []);
       assert.deepEqual(
         fetchCalls.map((call) => [call.method, new URL(call.url).pathname, new URL(call.url).searchParams.get('interval')]),
-        [['GET', '/v1/klines/QI-QUAI', '1m']],
+        [['GET', '/v1/klines/WQUAI-WQI', '1m']],
       );
 
       assert.equal(restSnapshots.length, 1);
       assert.equal(mount.dataset.qdxKlineRestSnapshot, KLINE_SOURCE);
       assert.equal(mount.dataset.qdxKlineStreamRestAgreement, KLINE_SOURCE);
-      assert.equal(mount.dataset.qdxKlineStream, 'market.QI-QUAI.klines.1m');
+      assert.equal(mount.dataset.qdxKlineStream, 'market.WQUAI-WQI.klines.1m');
       assert.equal(mount.dataset.qdxKlineStreamCandles, '0');
 
       const restSnapshot = restSnapshots[0];
@@ -132,7 +132,7 @@ test('local API + terminal UI public kline stream smoke renders only REST-confir
       assert.equal(fixture.klineStream.payload, 'kline_snapshot');
       assert.equal(fixture.klineStream.custody, STREAM_CUSTODY);
       assert.deepEqual(fixture.klineStream.permissions, KLINE_PERMISSIONS);
-      assert.equal(fixture.klineStream.marketId, 'QI-QUAI');
+      assert.equal(fixture.klineStream.marketId, 'WQUAI-WQI');
       assert.equal(fixture.klineStream.interval, '1m');
       assert.equal(fixture.klineStream.candleCount, 0);
       assert.equal(fixture.klineStream.realQuaiTransactions, false);

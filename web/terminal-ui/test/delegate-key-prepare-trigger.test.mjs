@@ -62,7 +62,7 @@ test('createDefaultDelegateKeyPrepareRequest builds redacted owner-signed placeh
     keyId: 'bot-mm-1',
     owner: '0x1111111111111111111111111111111111111111',
     delegate: '0x3333333333333333333333333333333333333333',
-    allowedMarkets: ['QI-QUAI'],
+    allowedMarkets: ['WQUAI-WQI'],
     maxNotional: '1000',
     permissions: ['PLACE_ORDER', 'CANCEL_ORDER', 'CANCEL_ALL', 'NO_WITHDRAW', 'NO_ADMIN'],
     expiresAt: 1780003600,

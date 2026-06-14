@@ -1,5 +1,5 @@
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8787';
-const MARKET_ID = 'QI-QUAI';
+const MARKET_ID = 'WQUAI-WQI';
 const ZERO_DELEGATE = '0x0000000000000000000000000000000000000000';
 const SETTLEMENT_CONTRACT = '0x2222222222222222222222222222222222222222';
 const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
@@ -39,8 +39,8 @@ export const createUiMockSignedOrder = (overrides = {}) => {
     marketId: MARKET_ID,
     side: 'sell',
     type: 'limit',
-    baseToken: 'mock:QI',
-    quoteToken: 'mock:QUAI',
+    baseToken: 'mock:WQUAI',
+    quoteToken: 'mock:WQI',
     amount: '100',
     price: '5',
     timeInForce: 'GTC',

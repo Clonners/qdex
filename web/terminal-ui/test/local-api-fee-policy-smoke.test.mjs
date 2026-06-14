@@ -46,7 +46,7 @@ const assertFeePolicyEnvelope = (envelope) => {
   assert.deepEqual(
     envelope.feeSchedules[0],
     {
-      marketId: 'QI-QUAI',
+      marketId: 'WQUAI-WQI',
       projectionType: 'FeeScheduleProjection',
       eventName: 'FeesUpdated',
       makerFeeBps: 0,
@@ -123,7 +123,7 @@ test('local API + terminal UI FeeManager fee schedule smoke renders REST read-on
       assert.match(mount.innerHTML, /feemanager-policy-projection/);
       assert.match(mount.innerHTML, /FeeScheduleProjection/);
       assert.match(mount.innerHTML, /FeesUpdated/);
-      assert.match(mount.innerHTML, /QI-QUAI/);
+      assert.match(mount.innerHTML, /WQUAI-WQI/);
       assert.match(mount.innerHTML, /READ_ONLY, NO_WITHDRAW, NO_ADMIN/);
       assert.match(mount.innerHTML, /hard max fee bps[\s\S]*1000/i);
       assert.match(mount.innerHTML, /fee recipient[\s\S]*null \(local\/mock\)/i);

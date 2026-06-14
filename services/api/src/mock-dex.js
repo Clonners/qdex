@@ -4,7 +4,7 @@ import { createInMemoryIndexerProjection } from '../../indexer/src/in-memory-pro
 import { createListingReviewQueue } from './listing-review-queue.js';
 import { createInMemoryProofService } from '../../proof-service/src/in-memory-proof-service.js';
 
-export const MARKET_ID = 'QI-QUAI';
+export const MARKET_ID = 'WQUAI-WQI';
 export const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
 export const INDEXER_SOURCE = 'in-memory-indexer-projection';
 export const MOCK_VAULT_PROJECTION_SOURCE = 'mock-vault-projection';
@@ -173,7 +173,7 @@ const validateOrder = (order) => {
   }
 
   if (order.marketId !== MARKET_ID) {
-    return rejectOrder('market_disabled', 'Only the QI-QUAI mock market is enabled for the MVP slice.');
+    return rejectOrder('market_disabled', 'Only the WQUAI-WQI mock market is enabled for the MVP slice.');
   }
 
   if (!ALLOWED_SIDES.has(order.side)) {
