@@ -446,6 +446,8 @@ input { font: inherit; }
       <label>Best Ask</label>
       <span class="val dim" id="tickerAsk">—</span>
     </div>
+    <span style="flex:1"></span>
+    <button class="interval-btn chart-toggle" id="chartToggle" title="Show chart">📊</button>
   </div>
 
   <!-- Main Grid -->
@@ -458,7 +460,7 @@ input { font: inherit; }
     </div>
 
     <!-- Chart Row (center only) -->
-    <div class="chart-row" id="chartRow">
+    <div class="chart-row hidden" id="chartRow">
       <div class="chart-intervals" id="chartIntervals">
         <button class="interval-btn" data-interval="1m">1m</button>
         <button class="interval-btn active" data-interval="5m">5m</button>
@@ -466,8 +468,6 @@ input { font: inherit; }
         <button class="interval-btn" data-interval="1h">1H</button>
         <button class="interval-btn" data-interval="4h">4H</button>
         <button class="interval-btn" data-interval="1d">1D</button>
-        <span style="flex:1"></span>
-        <button class="interval-btn chart-toggle" id="chartToggle" title="Show chart">📊</button>
       </div>
       <div class="chart-container">
         <div class="tv-chart" id="tvChart"></div>
@@ -745,14 +745,9 @@ input { font: inherit; }
       // Generate mock klines for demo
       state.klines = generateMockKlines(100);
     }
-    updateChart();
-    // Show chart when we have data
-    $('#chartRow').classList.remove('hidden');
-    chartVisible = true;
-    const btn = $('#chartToggle');
-    if (btn) {
-      btn.textContent = '✕';
-      btn.title = 'Hide chart';
+    // Only update chart if visible
+    if (chartVisible) {
+      updateChart();
     }
   }
 
@@ -790,6 +785,10 @@ input { font: inherit; }
       btn.textContent = chartVisible ? '✕' : '📊';
       btn.title = chartVisible ? 'Hide chart' : 'Show chart';
     }
+    // Update chart when shown
+    if (chartVisible) {
+      updateChart();
+    }
   }
 
   // Initialize toggle button
@@ -798,8 +797,6 @@ input { font: inherit; }
     if (toggleBtn) {
       toggleBtn.onclick = toggleChart;
     }
-    // Hide chart by default
-    $('#chartRow').classList.add('hidden');
   });
 
   function updateChart() {
