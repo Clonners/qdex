@@ -171,7 +171,8 @@ const shouldListen = () => process.argv[1] !== undefined && import.meta.url === 
 
 if (shouldListen()) {
   const server = createApiServer();
-  server.listen(PORT, '127.0.0.1', () => {
-    console.log(`@qdex/api listening on http://127.0.0.1:${PORT}`);
+  const host = process.env.HOST ?? '0.0.0.0';
+  server.listen(PORT, host, () => {
+    console.log(`@qdex/api listening on http://${host}:${PORT}`);
   });
 }
