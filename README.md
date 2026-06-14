@@ -20,6 +20,9 @@ Terminal UI / SDK / Bots
 - Single Quai zone/shard first.
 - Spot markets only.
 - No perps, leverage, margin, bridges, or cross-zone settlement in v0.
+- **ERC-20 only — no native QUAI/QI handling.**
+- Quote assets: `USDT`, `WQI` (wrapped QI). Native QUAI/QI for denomination only.
+- Pairs: `<token>/USDT`, `<token>/WQI` (e.g., `WQUAI/USDT`, `WQUAI/WQI`, `WQI/USDT`).
 - Non-custodial vault contracts as source of funds.
 - Off-chain matching for speed.
 - On-chain settlement for finality and verifiability.

@@ -15,18 +15,17 @@ const dependencyNames = [
 ];
 
 const listedAssetStatus = {
-  status: 'wrapped-token-listing',
-  primaryQuoteAssets: ['WQI', 'USDT'],
-  supportedAssetModel: 'erc20-style-vault-token',
-  userListedTokens: false,
-  listingFlowStatus: 'deferred-after-initial-three-markets',
-  marketRegistryRole: 'enable initial fixed pairs; future DAO can expand after review',
-  nativeQiTreatment: 'out-of-scope-direct-settlement-use-WQI',
+  status: 'erc20-only-listing',
+  primaryQuoteAssets: ['USDT', 'WQI'],
+  supportedAssetModel: 'erc20',
+  quoteAssetModel: 'erc20',
+  nativeQiTreatment: 'denomination-only',
   nativeQiDirectSettlement: false,
+  nativeQiVaultSupport: false,
   realQuaiTransactions: false,
   walletRequired: false,
   safetyNotice:
-    'QDEX MVP initial market set is WQUAI/WQI, WQUAI/USDT, and WQI/USDT only; native Qi is not a direct TradingVault asset in this campaign.',
+    'QDEX MVP: ERC-20 only. Pairs use USDT and WQI (wrapped QI) as quote assets. Native QUAI/QI is never transferred, locked, or settled by DEX contracts — denomination only.',
 };
 
 export const createContractRegistryResponse = () => ({
@@ -39,7 +38,7 @@ export const createContractRegistryResponse = () => ({
   source: 'contracts-local-harness-and-docs',
   docs: ['docs/contracts.md', 'docs/quai-tooling.md', 'contracts/README.md'],
   assetListingCaveat:
-    'QDEX MVP initially lists only WQUAI/WQI, WQUAI/USDT, and WQI/USDT ERC-20-style vault-token pairs; native Qi direct settlement is out of scope unless explicitly reopened.',
+    'QDEX: ERC-20 only. All listed assets are ERC-20 tokens. Pairs use USDT and WQI as quote assets. Native QUAI/QI is denomination only — never transferred or settled.',
   listedAssetStatus: {
     ...listedAssetStatus,
     primaryQuoteAssets: [...listedAssetStatus.primaryQuoteAssets],

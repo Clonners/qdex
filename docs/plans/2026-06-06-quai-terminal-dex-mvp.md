@@ -21,6 +21,7 @@ Non-negotiable invariants:
 5. Every fill exposes proof data.
 6. Single Quai zone/shard first.
 7. Spot only. No leverage, perps, bridges or cross-zone settlement in MVP.
+8. **ERC-20 only — no native QUAI/QI handling.** All listed assets are ERC-20 tokens. Quote assets: `USDT` and `WQI` (wrapped QI). Native QUAI/QI is never transferred, locked, or settled by DEX contracts — denomination only. Pairs: `<token>/USDT`, `<token>/WQI`.
 
 ---
 

@@ -2,11 +2,12 @@
 
 ## State
 
-- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated
+- Status: paused; Clonners paused the autonomous campaign for manual steering
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Primary plan: `docs/plans/2026-06-06-quai-terminal-dex-mvp.md`
 - Runner contract: `docs/campaign/RUNNER_CONTRACT.md`
-- Current phase: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions is complete; terminal UI keyboard-shortcut help panel for read-only/local mock actions is complete; local MVP is feature-complete for source-only/demo purposes; `web/terminal-ui/src/keyboard-shortcuts-smoke-binding.js` prechecks `terminal-keyboard-shortcut-help-local-api-smoke` / `local-api-precheck-help-only` surfaces for `GET /v1/markets`, `GET /v1/tickers/QI-QUAI`, `GET /v1/orderbook/QI-QUAI`, read-only `GET /v1/orders`, `GET /v1/account`, intentional owner-wallet `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` HTTP `501`, plus intentional owner-signed `POST /v1/delegate-keys` HTTP `501`; the browser binding keeps key previews `help-only-no-dispatch`, preserves `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, `marketRegistryMutation: false`, `delegateKeyRegistryMutation: false`, no order submission/cancel-all dispatch, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior; next autonomous work should stop adding UI/local polish and move to a source-only testnet cutover readiness plan until Clonners explicitly approves real wallets/RPC/deploy/signing/tx/funds
+- Current phase: local MVP feature-complete for source-only/demo purposes; testnet cutover readiness plan written; awaiting manual steering for real wallet/RPC/deploy/signing/tx/funds
+- **Token model: ERC-20 only. No native QUAI/QI handling.** Quote assets: `USDT`, `WQI`. Pairs: `<token>/USDT`, `<token>/WQI`. Native QUAI/QI for denomination only.
 
 ## Current repo baseline
 

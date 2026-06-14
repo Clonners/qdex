@@ -8,7 +8,7 @@ Contract implementation should start from the single-zone Hardhat + Quais SDK de
 
 Important current risk: Quai docs/examples disagree on the exact maximum Solidity compiler (`0.8.19` reference page vs `0.8.20` deployment guide/example). The current local interface ratchet pins Solidity `0.8.20` as the Hardhat candidate from `docs/quai-tooling.md`; verify locally/testnet before value-bearing deployment.
 
-Token assumption: the MVP asset plane is listed ERC-20-style vault tokens. `WQUAI`, `WQI`, and community-created tokens can be listed as market assets; raw native Qi direct settlement is out of scope unless Clonners explicitly reopens it. Corrected listing plan: [`docs/plans/2026-06-07-native-qi-wrapper-adapter-boundary.md`](./plans/2026-06-07-native-qi-wrapper-adapter-boundary.md) supersedes the native-Qi-adapter blocker; `/v1/contracts` now exposes read-only `listedAssetStatus` for the wrapped/listed-token direction. The active token listing and MarketRegistry metadata flow is pinned in [`docs/listing-policy.md`](./listing-policy.md).
+Token assumption: **ERC-20 only, no native QUAI/QI handling.** All listed assets are ERC-20 tokens. Trading pairs use `USDT` and `WQI` (wrapped QI) as quote assets — e.g., `WQUAI/USDT`, `WQUAI/WQI`, `WQI/USDT`. Native QUAI/QI is never transferred, locked, or settled by the DEX contracts. It exists only for external denomination and naming convention. The active token listing and MarketRegistry metadata flow is pinned in [`docs/listing-policy.md`](./listing-policy.md).
 
 Static ratchet: `tests/contract-interface-invariants.test.mjs` must stay green before adding implementation code. It guards compiler drift, no admin/operator withdrawal selectors, replay-domain fields, fee-cap fields, and `NO_WITHDRAW`/`NO_ADMIN` delegate semantics.
 
@@ -43,15 +43,13 @@ The endpoint should list `TradingVault`, `NonceManager`, `MarketRegistry`, `FeeM
 Structured listed-asset metadata in `/v1/contracts`:
 
 ```text
-listedAssetStatus.status: wrapped-token-listing
-primaryQuoteAssets: WQUAI, WQI
-supportedAssetModel: erc20-style-vault-token
-userListedTokens: true
-listingFlowStatus: design-required
-nativeQiTreatment: out-of-scope-direct-settlement-use-WQI
+listedAssetStatus.status: erc20-only-listing
+primaryQuoteAssets: USDT, WQI
+supportedAssetModel: erc20
+quoteAssetModel: erc20
+nativeQiTreatment: denomination-only
 nativeQiDirectSettlement: false
-realQuaiTransactions: false
-walletRequired: false
+nativeQiVaultSupport: false
 ```
 
 Native Qi direct settlement is not an MVP blocker anymore; the Qi-facing DEX surface is `WQI`. The token listing and MarketRegistry metadata flow can enable/disable listed token pairs without introducing custody, wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds. `GET /v1/listings/policy` and [`docs/listing-policy.md`](./listing-policy.md) expose that flow as read-only local metadata; the local in-memory listing review queue/decision workflow preserves the approval gate without MarketRegistry mutation. Existing safe listing surfaces: `GET /v1/listings/policy`, `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, and prepare-only fallback. The local authority model starts Clonners-managed and can later transfer to DAO/multisig governance through `MarketRegistry.proposeMarketAuthority` and `MarketRegistry.acceptMarketAuthority`, without custody power. Approval required: runtime listing submission beyond local queue/decision state or MarketRegistry admin mutation. The post-listing-policy MarketRegistry admin boundary is documented in [`docs/plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md`](./plans/2026-06-07-post-listing-policy-marketregistry-admin-boundary.md); no wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, real network mutations, or funds movement are approved.
