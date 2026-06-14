@@ -111,7 +111,7 @@ input { font: inherit; }
 .main {
   flex: 1; display: grid;
   grid-template-columns: 200px 1fr 300px;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto 1fr auto;
   gap: 1px; background: var(--border);
 }
 
@@ -133,6 +133,33 @@ input { font: inherit; }
 }
 .panel-body {
   flex: 1; overflow-y: auto;
+}
+
+/* ── Chart ────────────────────────────────────── */
+.chart-row {
+  grid-column: 2; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  flex-shrink: 0;
+}
+.chart-container {
+  width: 100%; height: 280px; position: relative;
+}
+.chart-container .tv-chart { width: 100%; height: 100%; }
+.chart-intervals {
+  display: flex; gap: 2px; padding: 4px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.interval-btn {
+  padding: 3px 8px; font-size: 10px;
+  color: var(--text-muted); background: none;
+  border: 1px solid transparent; border-radius: 3px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.interval-btn:hover { color: var(--text-dim); }
+.interval-btn.active {
+  color: var(--text); background: var(--surface-3);
+  border-color: var(--border);
 }
 
 /* ── Markets List ─────────────────────────────── */
@@ -371,7 +398,7 @@ input { font: inherit; }
 @media (max-width: 900px) {
   .main {
     grid-template-columns: 1fr 280px;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
   }
   .markets-col { display: none; }
 }
@@ -427,6 +454,21 @@ input { font: inherit; }
     <div class="panel markets-col">
       <div class="panel-header">Markets</div>
       <div class="panel-body markets-list" id="marketsList"></div>
+    </div>
+
+    <!-- Chart Row (center only) -->
+    <div class="chart-row">
+      <div class="chart-intervals" id="chartIntervals">
+        <button class="interval-btn" data-interval="1m">1m</button>
+        <button class="interval-btn active" data-interval="5m">5m</button>
+        <button class="interval-btn" data-interval="15m">15m</button>
+        <button class="interval-btn" data-interval="1h">1H</button>
+        <button class="interval-btn" data-interval="4h">4H</button>
+        <button class="interval-btn" data-interval="1d">1D</button>
+      </div>
+      <div class="chart-container">
+        <div class="tv-chart" id="tvChart"></div>
+      </div>
     </div>
 
     <!-- Center: Orderbook + Trades -->
@@ -574,6 +616,9 @@ input { font: inherit; }
 
   </div>
 
+  <!-- TradingView Lightweight Charts -->
+  <script src="/vendor/lightweight-charts.js"></script>
+
   <script>
   /* ═══════════════════════════════════════════════
      QDEX — Terminal Exchange UI
@@ -587,6 +632,7 @@ input { font: inherit; }
     market: 'WQUAI-WQI',
     side: 'buy',
     orderType: 'limit',
+    interval: '5m',
     wallet: null,
     markets: [],
     tickers: {},
@@ -595,6 +641,7 @@ input { font: inherit; }
     orders: [],
     fills: [],
     balances: [],
+    klines: [],
   };
 
   // ── Helpers ────────────────────────────────────
@@ -630,6 +677,84 @@ input { font: inherit; }
       console.warn('API fetch failed:', path, e);
       return null;
     }
+  }
+
+  // ── TradingView Chart ─────────────────────────
+  let tvChart, tvSeries;
+
+  function initChart() {
+    const container = $('#tvChart');
+    if (!container || typeof LightweightCharts === 'undefined') {
+      console.warn('Lightweight Charts not available');
+      return;
+    }
+
+    tvChart = LightweightCharts.createChart(container, {
+      layout: {
+        background: { type: 'solid', color: '#111114' },
+        textColor: '#71717a',
+      },
+      grid: {
+        vertLines: { color: 'rgba(39,39,42,.5)' },
+        horzLines: { color: 'rgba(39,39,42,.5)' },
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+        vertLine: { color: 'rgba(0,255,102,.3)', labelBackgroundColor: '#10b981' },
+        horzLine: { color: 'rgba(0,255,102,.3)', labelBackgroundColor: '#10b981' },
+      },
+      rightPriceScale: {
+        borderColor: '#27272a',
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
+      timeScale: {
+        borderColor: '#27272a',
+        timeVisible: true,
+        rightOffset: 12,
+      },
+      handleScroll: true,
+      handleScale: true,
+    });
+
+    tvSeries = tvChart.addCandlestickSeries({
+      upColor: '#10b981',
+      downColor: '#ef4444',
+      borderVisible: false,
+      wickUpColor: '#10b981',
+      wickDownColor: '#ef4444',
+    });
+
+    // Resize observer
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        tvChart.applyOptions({ width, height });
+      }
+    });
+    ro.observe(container);
+  }
+
+  async function loadKlines() {
+    const data = await api(`/v1/klines/${state.market}?interval=${state.interval}`);
+    if (data?.klines) {
+      state.klines = data.klines;
+      updateChart();
+    }
+  }
+
+  function updateChart() {
+    if (!tvSeries || !state.klines.length) return;
+
+    const candles = state.klines.map(k => ({
+      time: typeof k.time === 'number' ? Math.floor(k.time / 1000) : k.time,
+      open: parseFloat(k.open),
+      high: parseFloat(k.high),
+      low: parseFloat(k.low),
+      close: parseFloat(k.close),
+    }));
+
+    tvSeries.setData(candles);
+    tvChart.timeScale().fitContent();
   }
 
   // ── Render Functions ───────────────────────────
@@ -751,7 +876,7 @@ input { font: inherit; }
     state.market = id;
     renderMarkets();
     renderTicker();
-    await loadOrderbook();
+    await Promise.all([loadOrderbook(), loadKlines()]);
   }
 
   // ── Data Loading ───────────────────────────────
@@ -800,7 +925,7 @@ input { font: inherit; }
 
   // ── Refresh Loop ───────────────────────────────
   async function refresh() {
-    await Promise.all([loadTickers(), loadOrderbook(), loadTrades()]);
+    await Promise.all([loadTickers(), loadOrderbook(), loadTrades(), loadKlines()]);
     if (state.wallet) await loadAccount();
   }
 
@@ -814,13 +939,12 @@ input { font: inherit; }
     };
   });
 
-  // Panel tabs (orderbook / trades)
+  // Panel tabs
   $$('.tab-bar .tab-item').forEach(btn => {
     btn.onclick = () => {
       const bar = btn.parentElement;
       bar.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      // Find sibling tab-content
       const content = bar.parentElement.querySelector('.tab-content');
       const tab = btn.dataset.tab || btn.dataset.btab;
       if (tab) {
@@ -852,6 +976,16 @@ input { font: inherit; }
     };
   });
 
+  // Chart interval buttons
+  $$('.interval-btn').forEach(btn => {
+    btn.onclick = async () => {
+      $$('.interval-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.interval = btn.dataset.interval;
+      await loadKlines();
+    };
+  });
+
   // Price step buttons
   $('#priceDown').onclick = () => {
     const inp = $('#priceInput');
@@ -880,7 +1014,6 @@ input { font: inherit; }
   $$('.pct-btn').forEach(btn => {
     btn.onclick = () => {
       const pct = Number(btn.dataset.pct) / 100;
-      // For now, mock balance
       const mockBal = 1000;
       $('#amtInput').value = (mockBal * pct).toFixed(2);
       calcTotal();
@@ -898,7 +1031,6 @@ input { font: inherit; }
     const m = state.markets.find(x => x.id === state.market);
     $('#orderTotal').textContent = `${fmt(total)} ${m?.quote || ''}`;
 
-    // Enable submit if both values present
     const btn = $('#submitBtn');
     if (price > 0 && amt > 0) {
       btn.disabled = !state.wallet;
@@ -913,7 +1045,6 @@ input { font: inherit; }
   $('#submitBtn').onclick = async () => {
     if (!state.wallet) return;
     logActivity(`Placed ${state.side} order: ${$('#amtInput').value} @ ${$('#priceInput').value}`, 'success');
-    // TODO: submit to API
   };
 
   // Wallet button
@@ -923,7 +1054,6 @@ input { font: inherit; }
       $('#walletBtn').textContent = state.wallet;
       logActivity('Wallet connected (mock)', 'success');
 
-      // Mock balances
       state.balances = [
         { token: 'WQUAI', available: '1,250.00', locked: '0' },
         { token: 'WQI', available: '8,432.50', locked: '0' },
@@ -947,6 +1077,7 @@ input { font: inherit; }
     logActivity('Mock mode — no real transactions', 'warn');
 
     await loadMarkets();
+    initChart();
     await refresh();
 
     // Refresh every 2s

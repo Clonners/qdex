@@ -135,6 +135,10 @@ export const createApiServer = ({ state = createMockDexState() } = {}) => {
       if (pathname === '/' || pathname === '/index.html') {
         if (serveStatic(response, path.join(UI_DIR, 'index.html'))) return;
       } else if (!pathname.startsWith('/v1/')) {
+        // Serve lightweight-charts vendor
+        const tvPath = path.join(process.cwd(), 'node_modules', 'lightweight-charts', 'dist', 'lightweight-charts.standalone.production.js');
+        if (pathname === '/vendor/lightweight-charts.js' && serveStatic(response, tvPath)) return;
+
         // Serve other static files from UI dir
         const safePath = path.normalize(pathname).replace(/\.\./, '');
         const filePath = path.join(UI_DIR, safePath);
