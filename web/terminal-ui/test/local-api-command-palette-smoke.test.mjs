@@ -232,7 +232,7 @@ test('terminal UI docs, package check, app wiring, and campaign status mark comm
     'campaign status should retain the command-palette smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: testnet cutover readiness Task 4'),
+    status.includes('Next autonomous slice: testnet cutover readiness Task 5'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
 
