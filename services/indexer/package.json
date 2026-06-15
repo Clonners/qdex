@@ -1,0 +1,10 @@
+{
+  "name": "@qdex/indexer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/in-memory-projection.js src/contract-proof-event-adapter.js src/persistence.js && node --test test/*.test.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}
