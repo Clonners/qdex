@@ -115,6 +115,8 @@ This loop must remain impossible until Clonners approves the exact testnet input
 
 **Objective:** Define deployment order and validation without deploying.
 
+**Status:** ✅ Completed (2026-06-15) — `services/api/src/deploy-manifest.js` with `DEPLOY_ORDER`, `DEPLOY_STEPS`, `createDeployManifest()`, `validateDeployManifest()`; 10 RED/GREEN tests cover deployment sequence, draft manifest safety, address rejection, dependency ordering, NO_WITHDRAW/NO_ADMIN preservation, and secret scanning.
+
 **Deployment order:**
 1. Mock/test ERC-20 tokens if needed for testnet assets.
 2. `TradingVault`.
