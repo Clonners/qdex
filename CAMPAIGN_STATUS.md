@@ -8,6 +8,7 @@
 - Executor: oh-my-pi (omp) via no-agent cronjob
 
 ## Current git baseline
+- 3ccfafd feat: testnet cutover Task 4 — relayer real-mode gate expansion
 - 234f0f5 status: update phase + checkpoint for persistent indexer slice
 - c33ebef slice: persistent indexer — JSON-file-backed persistence store with 12 RED/GREEN tests
 - d43de42 feat: testnet cutover Task 3 — deploy manifest and dry-run checks
@@ -167,7 +168,10 @@ Completed previous run: testnet cutover readiness Task 3 — deploy manifest and
 
 Completed previous run: persistent indexer — `@qdex/indexer` with JSON-file-backed persistence store, 12 tests.
 
-Next autonomous slice: testnet cutover readiness Task 4 — relayer real-mode gate expansion
+Completed previous run: testnet cutover readiness Task 4 — relayer real-mode gate expansion
+Extended OpenAPI `RelayerSettlementModeGateStatus` with `realModeRequiredChecks` (13 checks: explicit_approval, complete_contracts, chain_id_match, signatures_present, market_enabled, fee_within_caps, nonces_available, delegate_NO_WITHDRAW, delegate_NO_ADMIN, slippage_bounds, order_amount_valid, receipt_wait, failure_classification) and `RealModeReadinessResult` schema with `failedChecks`/`checkFailures`; added 4 ratchet tests for OpenAPI, API source, real-mode-gate safety metadata, and campaign status alignment; preserves `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: testnet cutover readiness Task 5 — event-truth indexer
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
