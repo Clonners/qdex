@@ -2,6 +2,10 @@ import {
   evaluateRelayerSettlementModeGate,
   REQUIRED_QUAI_EVENT_TRUTH_FIELDS,
 } from '../../relayer/src/approval-gate.js';
+import {
+  evaluateRelayerRealModeReadiness,
+  REAL_MODE_REQUIRED_CHECKS,
+} from '../../relayer/src/real-mode-gate.js';
 
 const CURRENT_SETTLEMENT_MODE = 'mock';
 
@@ -26,9 +30,11 @@ export const createRelayerSettlementModeGateStatus = () => ({
   realQuaiTransactions: false,
   walletRequired: false,
   requiredEventTruthFields: REQUIRED_QUAI_EVENT_TRUTH_FIELDS,
+  realModeRequiredChecks: REAL_MODE_REQUIRED_CHECKS,
   modes: {
     mock: evaluateRelayerSettlementModeGate({ settlementMode: 'mock' }),
     quai_contract: evaluateRelayerSettlementModeGate({ settlementMode: 'quai_contract' }),
   },
+  realModeReadiness: evaluateRelayerRealModeReadiness({ settlementMode: 'quai_contract' }),
   safety: SAFETY,
 });
