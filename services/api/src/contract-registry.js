@@ -15,17 +15,20 @@ const dependencyNames = [
 ];
 
 const listedAssetStatus = {
-  status: 'erc20-only-listing',
-  primaryQuoteAssets: ['USDT', 'WQI'],
-  supportedAssetModel: 'erc20',
+  status: 'wrapped-token-listing',
+  primaryQuoteAssets: ['WQI', 'USDT'],
+  supportedAssetModel: 'erc20-style-vault-token',
   quoteAssetModel: 'erc20',
-  nativeQiTreatment: 'denomination-only',
+  nativeQiTreatment: 'out-of-scope-direct-settlement-use-WQI',
   nativeQiDirectSettlement: false,
   nativeQiVaultSupport: false,
+  userListedTokens: false,
+  listingFlowStatus: 'deferred-after-initial-three-markets',
+  marketRegistryRole: 'enable initial fixed pairs; future DAO can expand after review',
   realQuaiTransactions: false,
   walletRequired: false,
   safetyNotice:
-    'QDEX MVP: ERC-20 only. Pairs use USDT and WQI (wrapped QI) as quote assets. Native QUAI/QI is never transferred, locked, or settled by DEX contracts — denomination only.',
+    'QDEX MVP: ERC-20 only. WQUAI/WQI, WQUAI/USDT, and WQI/USDT only. Pairs use USDT and WQI (wrapped QI) as quote assets. Native QUAI/QI is never transferred, locked, or settled by DEX contracts — denomination only.',
 };
 
 export const createContractRegistryResponse = () => ({
@@ -38,7 +41,7 @@ export const createContractRegistryResponse = () => ({
   source: 'contracts-local-harness-and-docs',
   docs: ['docs/contracts.md', 'docs/quai-tooling.md', 'contracts/README.md'],
   assetListingCaveat:
-    'QDEX: ERC-20 only. All listed assets are ERC-20 tokens. Pairs use USDT and WQI as quote assets. Native QUAI/QI is denomination only — never transferred or settled.',
+    'QDEX: ERC-20 only. All listed assets are ERC-20 tokens. Pairs use USDT and WQI as quote assets — WQUAI/WQI, WQUAI/USDT, and WQI/USDT. Native QUAI/QI is denomination only — never transferred or settled.',
   listedAssetStatus: {
     ...listedAssetStatus,
     primaryQuoteAssets: [...listedAssetStatus.primaryQuoteAssets],
