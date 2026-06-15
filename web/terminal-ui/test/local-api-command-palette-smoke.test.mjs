@@ -232,8 +232,8 @@ test('terminal UI docs, package check, app wiring, and campaign status mark comm
     'campaign status should retain the command-palette smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should move next work to another bounded local/source-only UI surface',
+    status.includes('Next autonomous slice: testnet cutover readiness Task 3'),
+    'campaign status should move next work to the testnet cutover readiness plan',
   );
 
   assert.doesNotMatch(

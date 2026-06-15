@@ -129,8 +129,8 @@ test('terminal UI docs, package check, and campaign status mark public kline/can
     'campaign status should checkpoint the REST-confirmed public kline/candle stream smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should move next work to another bounded local/source-only MVP surface',
+    status.includes('Next autonomous slice: testnet cutover readiness Task 3'),
+    'campaign status should move next work to the testnet cutover readiness plan',
   );
 
   assert.doesNotMatch(

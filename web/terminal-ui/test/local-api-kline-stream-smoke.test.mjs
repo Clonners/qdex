@@ -204,8 +204,8 @@ test('terminal UI docs, package check, and campaign status mark public kline str
     'campaign status should mark the local API + terminal UI kline stream smoke as this run',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should move next work to another bounded local/source-only MVP surface',
+    status.includes('Next autonomous slice: testnet cutover readiness Task 3'),
+    'campaign status should move next work to the testnet cutover readiness plan',
   );
   assert.ok(
     status.includes('Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.'),

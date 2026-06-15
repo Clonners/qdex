@@ -249,8 +249,8 @@ test('terminal UI docs, package check, app wiring, and campaign status mark keyb
     'campaign status should checkpoint the keyboard-shortcut help smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: another bounded local/source-only MVP surface'),
-    'campaign status should move next work past the keyboard shortcut smoke',
+    status.includes('Next autonomous slice: testnet cutover readiness Task 3'),
+    'campaign status should move next work to the testnet cutover readiness plan',
   );
 
   assert.doesNotMatch(
