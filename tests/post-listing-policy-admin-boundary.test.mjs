@@ -111,11 +111,11 @@ test('campaign status records completion-mode continuation plus local listing, b
 
   for (const requiredText of [
     '- Status: active; Clonners asked the autonomous campaign to keep advancing toward a completed DEX via bounded local/source-only slices; external side effects remain approval-gated',
-    '- Current phase: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions is complete;',
+    '- Current phase: local MVP feature-complete for source-only/demo; testnet cutover readiness plan is active',
     'Completed previous run: local API + terminal UI command-palette smoke for read-only/local mock actions',
     'Completed previous run: terminal UI keyboard-shortcut help panel for read-only/local mock actions',
     'Completed this run: local API + terminal UI keyboard-shortcut help smoke for read-only/local mock actions',
-    'Next autonomous slice: another bounded local/source-only MVP surface',
+    'Next autonomous slice: testnet cutover readiness Task 3 — deploy manifest and dry-run checks',
     'Approval received: Clonners approved building a useful listing path initially managed by Clonners and later delegable to a DAO.',
     'Existing safe listing surfaces are `GET /v1/listings/policy`, read-only `GET /v1/listings/review-flow`, local in-memory `GET /v1/listings/requests`, `POST /v1/listings/requests` with `requestMode: local_review_queue`, `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision`, TypeScript/Python/qdex review-flow clients, TypeScript/Python/qdex queue clients, TypeScript/Python/qdex decision clients, and prepare-only listing-request fallback; contract-level authority handoff remains local-only.',
     'Approval received: Clonners wants the campaign to continue autonomously until the DEX is complete, limited to bounded local/source-only development, local tests, local in-memory runtime behavior, and local contract-harness logic inside this repo.',
