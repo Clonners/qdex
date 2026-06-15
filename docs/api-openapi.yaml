@@ -2115,8 +2115,8 @@ components:
           example: No autonomous deployment, transaction, wallet, or external RPC activity is implied by /v1/contracts.
     RelayerSettlementModeGateStatus:
       type: object
-      description: Read-only relayer gate metadata only; no wallet loading, signing, broadcast, RPC URL access, or transaction submission is performed.
-      required: [source, currentSettlementMode, supportedSettlementModes, custody, realQuaiTransactions, walletRequired, requiredEventTruthFields, modes, safety]
+      description: "Read-only relayer gate metadata only; no wallet loading, signing, broadcast, RPC URL access, or transaction submission is performed. Includes realModeRequiredChecks and realModeReadiness for expanded Task 4 readiness."
+      required: [source, currentSettlementMode, supportedSettlementModes, custody, realQuaiTransactions, walletRequired, requiredEventTruthFields, realModeRequiredChecks, modes, realModeReadiness, safety]
       properties:
         source:
           type: string
@@ -2143,6 +2143,12 @@ components:
           items:
             type: string
             enum: [settlementTx, blockNumber, blockHash, eventIndex, explorerUrl]
+        realModeRequiredChecks:
+          type: array
+          description: Full list of real-mode pre-submit readiness checks evaluated before any quai_contract settlement activation.
+          items:
+            type: string
+            enum: [explicit_approval, complete_contracts, chain_id_match, signatures_present, market_enabled, fee_within_caps, nonces_available, delegate_NO_WITHDRAW, delegate_NO_ADMIN, slippage_bounds, order_amount_valid, receipt_wait, failure_classification]
         modes:
           type: object
           required: [mock, quai_contract]
@@ -2151,6 +2157,8 @@ components:
               $ref: "#/components/schemas/RelayerModeGateResult"
             quai_contract:
               $ref: "#/components/schemas/RelayerModeGateResult"
+        realModeReadiness:
+          $ref: "#/components/schemas/RealModeReadinessResult"
         safety:
           type: object
           required: [approvalRequired, explicitApproval, noWalletLoading, noSigning, noBroadcast, noRpcUrlAccess, noTransactionSubmission, proofTrigger, notice]
@@ -2170,6 +2178,49 @@ components:
             notice:
               type: string
               example: Read-only relayer gate metadata only; no wallet loading, signing, broadcast, RPC URL access, or transaction submission is performed.
+    RealModeReadinessResult:
+      type: object
+      description: "Read-only relayer real-mode readiness metadata: evaluates all pre-submit checks without wallet loading, signing, broadcast, RPC URL access, or transaction submission. Always returns realQuaiTransactions: false and walletRequired: false."
+      required: [allowed, reason, settlementMode, permissions, custody, realQuaiTransactions, walletRequired, fundsMoved, failedChecks, safetyNotice]
+      properties:
+        allowed: { type: boolean }
+        reason:
+          type: string
+          enum: [mock_mode_local_only, real_mode_checks_passed, real_mode_checks_failed, unsupported_settlement_mode]
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        custody:
+          type: string
+          enum: [non-custodial-relayer-gate]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        failedChecks:
+          type: array
+          description: List of check names that failed (explicit_approval, complete_contracts, chain_id_match, signatures_present, market_enabled, fee_within_caps, nonces_available, delegate_NO_WITHDRAW, delegate_NO_ADMIN, slippage_bounds, order_amount_valid, receipt_wait, failure_classification).
+          items: { type: string }
+        checkFailures:
+          type: object
+          description: Map of check name to human-readable failure reason.
+          additionalProperties: { type: string }
+        nextAction:
+          type: string
+          example: separately-approved-wallet-and-broadcast-implementation-required
+        safetyNotice:
+          type: string
+          example: "Real Quai relayer mode is approval-gated: this gate only validates readiness; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission."
     RelayerModeGateResult:
       type: object
       required: [allowed, reason, settlementMode, realQuaiTransactions, walletRequired, custody, safetyNotice]
