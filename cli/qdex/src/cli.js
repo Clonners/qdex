@@ -549,6 +549,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 stream delegate-key-registrations [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream fees [--limit 1]
+  qdex --base-url http://127.0.0.1:8787 stream nonce-cancellations [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream tickers [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream depth WQUAI-WQI [--limit 1]
   qdex --base-url http://127.0.0.1:8787 stream trades WQUAI-WQI [--limit 1]
@@ -912,7 +913,7 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       return 0;
     }
 
-    if (command === 'stream' && (rest[0] === 'fills' || rest[0] === 'orders' || rest[0] === 'deposits' || rest[0] === 'withdrawals' || rest[0] === 'delegate-key-registrations' || rest[0] === 'delegate-key-revocations' || rest[0] === 'fees')) {
+    if (command === 'stream' && (rest[0] === 'fills' || rest[0] === 'orders' || rest[0] === 'deposits' || rest[0] === 'withdrawals' || rest[0] === 'delegate-key-registrations' || rest[0] === 'delegate-key-revocations' || rest[0] === 'fees' || rest[0] === 'nonce-cancellations')) {
       const channel = rest[0];
       const options = parseStreamOptions(rest.slice(1));
       const streamClient = channel === 'deposits'
@@ -925,7 +926,9 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
               ? client.delegateKeys.revocations
               : channel === 'fees'
                 ? client.fees
-                : client[channel];
+                : channel === 'nonce-cancellations'
+                  ? client.nonces.cancellations
+                  : client[channel];
       const messages = await streamClient.stream(options);
       writeJson(stdout, {
         command: `stream ${channel}`,

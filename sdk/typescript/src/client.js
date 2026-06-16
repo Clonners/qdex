@@ -293,6 +293,8 @@ export class QDexClient {
       }),
       cancellations: {
         list: async () => this.#requestOk('/v1/nonces/cancellations'),
+        openStream: (options = {}) => this.streams.open('nonce-cancellations', options),
+        stream: async (options = {}) => this.streams.read('nonce-cancellations', options),
       },
     };
 

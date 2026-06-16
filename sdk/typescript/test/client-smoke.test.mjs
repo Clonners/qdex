@@ -1143,3 +1143,53 @@ test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippag
   assert.equal(order.signature.scheme, 'mock');
   assert.equal(order.signature.signer, order.owner);
 });
+
+test('TypeScript SDK consumes private NonceManager cancellations stream without wallet or mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const cancellationsStream = client.nonces.cancellations.openStream({ timeoutMs: 2_000 });
+
+    try {
+      const cancellationsMessage = await cancellationsStream.next();
+      assert.equal(cancellationsMessage.type, 'snapshot');
+      assert.equal(cancellationsMessage.transport, 'websocket');
+      assert.equal(cancellationsMessage.snapshot.channel, 'nonce-cancellations');
+      assert.equal(cancellationsMessage.snapshot.visibility, 'private');
+      assert.equal(cancellationsMessage.snapshot.payload, 'nonce_cancellation_projection');
+      assert.equal(cancellationsMessage.snapshot.source, 'nonce-manager-event-projection');
+      assert.equal(cancellationsMessage.snapshot.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(cancellationsMessage.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.deepEqual(cancellationsMessage.snapshot.data.cancellations, []);
+      assert.equal(cancellationsMessage.snapshot.data.projectionType, 'NonceCancelledProjection');
+      assert.equal(cancellationsMessage.snapshot.data.eventName, 'NonceCancelled');
+      assert.equal(cancellationsMessage.snapshot.data.settlementMode, 'mock');
+      assert.equal(cancellationsMessage.snapshot.data.settlementTx, null);
+      assert.equal(cancellationsMessage.snapshot.data.blockNumber, null);
+      assert.equal(cancellationsMessage.snapshot.data.blockHash, null);
+      assert.equal(cancellationsMessage.snapshot.data.eventIndex, null);
+      assert.equal(cancellationsMessage.snapshot.data.explorerUrl, null);
+      assert.equal(cancellationsMessage.snapshot.data.realQuaiTransactions, false);
+      assert.equal(cancellationsMessage.snapshot.data.walletRequired, false);
+      assert.equal(cancellationsMessage.snapshot.data.fundsMoved, false);
+      assert.equal(cancellationsMessage.snapshot.data.nonceManagerMutation, false);
+      assert.equal(cancellationsMessage.snapshot.data.tradingVaultMutation, false);
+    } finally {
+      await cancellationsStream.close();
+    }
+
+    const boundedSnapshots = await client.nonces.cancellations.stream({ limit: 1, timeoutMs: 2_000 });
+    assert.equal(boundedSnapshots.length, 1);
+    assert.equal(boundedSnapshots[0].type, 'snapshot');
+    assert.equal(boundedSnapshots[0].snapshot.channel, 'nonce-cancellations');
+    assert.equal(boundedSnapshots[0].snapshot.visibility, 'private');
+    assert.equal(boundedSnapshots[0].snapshot.payload, 'nonce_cancellation_projection');
+    assert.equal(boundedSnapshots[0].snapshot.source, 'nonce-manager-event-projection');
+    assert.deepEqual(boundedSnapshots[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(boundedSnapshots[0].snapshot.data.cancellations, []);
+    assert.equal(boundedSnapshots[0].snapshot.data.settlementTx, null);
+    assert.equal(boundedSnapshots[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(boundedSnapshots[0].snapshot.data.fundsMoved, false);
+    assert.equal(boundedSnapshots[0].snapshot.data.nonceManagerMutation, false);
+  });
+});

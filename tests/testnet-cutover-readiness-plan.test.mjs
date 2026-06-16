@@ -47,7 +47,7 @@ test('campaign status points next autonomous work at the source-only testnet cut
     'Current phase: local MVP feature-complete for source-only/demo; testnet cutover readiness plan is active',
     'local MVP feature-complete for source-only/demo',
     'testnet cutover readiness plan',
-    'Next autonomous slice: private nonce cancellations WebSocket snapshot alignment',
+    'Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers',
     planPath,
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses',
   ]) {

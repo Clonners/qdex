@@ -95,6 +95,11 @@ await dex.delegateKeys.prepareRevoke('bot-mm-1', {
   owner: '0xowner',
   signature: '0xowner-signature',
 }); // DELETE /v1/delegate-keys/{keyId} -> delegate_key_revocation_not_implemented / owner-wallet-signature-required
+const nonceCancellations = await dex.nonces.cancellations.list(); // GET /v1/nonces/cancellations -> nonce-manager-event-projection / NonceCancelledProjection
+const nonceCancellationsStream = dex.nonces.cancellations.openStream(); // /v1/ws?channel=nonce-cancellations
+const nonceCancellationsSnapshot = await nonceCancellationsStream.next();
+await nonceCancellationsStream.close();
+await dex.nonces.cancellations.stream({ limit });
 const delegateKeyRegistrations = await dex.delegateKeys.listRegistrations(); // GET /v1/delegate-keys/registrations -> delegatekeyregistry-event-projection / DelegateKeyRegisteredProjection
 const delegateKeyRevocations = await dex.delegateKeys.listRevocations(); // GET /v1/delegate-keys/revocations -> delegatekeyregistry-event-projection / DelegateKeyRevokedProjection
 
@@ -184,6 +189,10 @@ The contract registry also exposes `listedAssetStatus`: `status: wrapped-token-l
 `relayer.settlementModeGate.get()` is read-only relayer gate metadata from `GET /v1/relayer/settlement-mode-gate`. It exposes `source: relayer-approval-gate`, `currentSettlementMode: mock`, and the blocked `quai_contract` result `real_quai_approval_gate_blocked` so bots/operators can inspect readiness without wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 `nonces.prepareCancel()` is a prepare-only client for `POST /v1/nonces/cancel`. It intentionally surfaces the API placeholder response `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local `orders.cancelAll`.
+
+`nonces.cancellations.list()` is a read-only NonceManager history client for `GET /v1/nonces/cancellations`. It returns `source: nonce-manager-event-projection`, `projectionType: NonceCancelledProjection`, `eventName: NonceCancelled`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, null mock tx/block/event/explorer evidence, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `nonceManagerMutation: false`, and `tradingVaultMutation: false`; it preserves no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and does not mutate a live NonceManager or TradingVault.
+
+`nonces.cancellations.openStream()` and `nonces.cancellations.stream({ limit })` consume private NonceManager cancellation history snapshots from `/v1/ws?channel=nonce-cancellations`. Stream snapshots preserve `source: nonce-manager-event-projection`, `payload: nonce_cancellation_projection`, `custody: non-custodial-no-withdrawal-authority`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `delegateKeys.prepareRegister()` and `delegateKeys.prepareRevoke()` expose prepare-only owner-signed delegate/API key boundaries through `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`. They intentionally surface `delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented` with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; they have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and no live DelegateKeyRegistry or TradingVault mutation.
 

@@ -936,6 +936,36 @@ test('qdex nonces cancel --prepare prints owner-signed placeholder without walle
   });
 });
 
+test('qdex stream nonce-cancellations command exposes bounded read-only cancellation history snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'stream', 'nonce-cancellations', '--limit', '1']);
+
+    assert.equal(result.command, 'stream nonce-cancellations');
+    assert.equal(result.channel, 'nonce-cancellations');
+    assert.equal(result.transport, 'websocket');
+    assert.equal(result.limit, 1);
+    assert.equal(result.messages.length, 1);
+    assert.equal(result.messages[0].type, 'snapshot');
+    assert.equal(result.messages[0].snapshot.channel, 'nonce-cancellations');
+    assert.equal(result.messages[0].snapshot.visibility, 'private');
+    assert.equal(result.messages[0].snapshot.payload, 'nonce_cancellation_projection');
+    assert.equal(result.messages[0].snapshot.source, 'nonce-manager-event-projection');
+    assert.equal(result.messages[0].snapshot.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(result.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(result.messages[0].snapshot.data.cancellations, []);
+    assert.equal(result.messages[0].snapshot.data.projectionType, 'NonceCancelledProjection');
+    assert.equal(result.messages[0].snapshot.data.eventName, 'NonceCancelled');
+    assert.equal(result.messages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(result.messages[0].snapshot.data.settlementTx, null);
+    assert.equal(result.messages[0].snapshot.data.explorerUrl, null);
+    assert.equal(result.messages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(result.messages[0].snapshot.data.walletRequired, false);
+    assert.equal(result.messages[0].snapshot.data.fundsMoved, false);
+    assert.equal(result.messages[0].snapshot.data.nonceManagerMutation, false);
+    assert.equal(result.messages[0].snapshot.data.tradingVaultMutation, false);
+  });
+});
+
 test('qdex api create-key/revoke-key --prepare prints owner-signed delegate-key placeholders without wallet or admin authority', async () => {
   await withServer(async (baseUrl) => {
     const registration = await runCliJson([

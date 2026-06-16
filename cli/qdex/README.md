@@ -36,6 +36,7 @@ qdex --base-url http://127.0.0.1:8787 stream withdrawals --limit 1
 qdex --base-url http://127.0.0.1:8787 stream delegate-key-registrations --limit 1
 qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations --limit 1
 qdex --base-url http://127.0.0.1:8787 stream fees --limit 1
+qdex --base-url http://127.0.0.1:8787 stream nonce-cancellations --limit 1
 qdex --base-url http://127.0.0.1:8787 stream tickers --limit 1
 qdex --base-url http://127.0.0.1:8787 stream depth WQUAI-WQI --limit 1
 qdex --base-url http://127.0.0.1:8787 stream trades WQUAI-WQI --limit 1
@@ -74,6 +75,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 `qdex relayer gate` prints `GET /v1/relayer/settlement-mode-gate` read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus `real_quai_approval_gate_blocked` for `quai_contract`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
 
 `qdex nonces cancel --prepare` calls `POST /v1/nonces/cancel` and prints the prepare-only 501 placeholder (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
+
+`qdex stream nonce-cancellations` consumes `/v1/ws?channel=nonce-cancellations` for bounded private NonceManager cancellation history snapshots. The stream output preserves `nonce-manager-event-projection`, `payload: nonce_cancellation_projection`, `custody: non-custodial-no-withdrawal-authority`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex api registrations` and `qdex api revocations` print `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` as read-only `source: delegatekeyregistry-event-projection` history envelopes. They expose `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: false`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
