@@ -80,6 +80,8 @@ Matcher-local cancellation is not on-chain nonce cancellation. The former remove
 
 See [`docs/plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md`](./plans/2026-06-06-post-mock-mvp-readiness-owner-signed-nonce-cancel.md) for the approval-gated replacement map.
 
+The post-nonce-cancel owner-signed readiness plan is pinned in `docs/plans/2026-06-08-post-nonce-cancel-owner-signed-readiness.md` and maps the completed prepare-only nonce cancellation surfaces (API placeholder with `owner_signed_nonce_cancel_not_implemented`, SDK/CLI clients, terminal UI panel and trigger, local API smoke) to the explicit approval gate before any owner-signed NonceManager cancellation, wallet signing, broadcast, transaction submission, or funds movement. The current `POST /v1/nonces/cancel` surface stays a prepare-only `501` boundary with `owner-signed-nonce-cancel-placeholder`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `nonceManagerMutation: false`, and `approvalGate: explicit-approval-required-before-wallet-signing-or-quai-broadcast`.
+
 ## Wrapped token listing boundary
 
 QDEX MVP uses WQUAI, WQI, and listed community-created tokens as ERC-20-style vault assets. Native Qi direct settlement is out of scope for the current DEX plan; the Qi-facing market surface is WQI, not raw native Qi.

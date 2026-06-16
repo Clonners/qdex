@@ -175,7 +175,9 @@ Completed this run: terminal UI nonce cancel prepare render panel added `nonce-c
 
 Completed this run: local API + terminal UI nonce cancel prepare render smoke added `src/nonce-cancel-prepare-binding.js` and `local-api-nonce-cancel-prepare-smoke.test.mjs`; it starts local `createApiServer()`, clicks cancel and cancel-range buttons, validates intentional HTTP `501` owner-signed nonce cancel boundary envelopes, and renders only no-wallet/no-RPC/no-signing/no-broadcast/no-deploy/no-tx/no-funds metadata.
 
-Next autonomous slice: post-nonce-cancel owner-signed readiness docs
+Completed this run: post-nonce-cancel owner-signed readiness docs added `docs/plans/2026-06-08-post-nonce-cancel-owner-signed-readiness.md` plus contracts/architecture doc links, mapping read-only `POST /v1/nonces/cancel`, prepare-only SDK/CLI/terminal UI surfaces, and local API smoke to the explicit approval gate before owner-signed NonceManager cancellation, wallet signing, RPC URL access, broadcast, transaction submission, or funds movement.
+
+Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 

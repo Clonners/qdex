@@ -47,7 +47,7 @@ test('campaign status points next autonomous work at the source-only testnet cut
     'Current phase: local MVP feature-complete for source-only/demo; testnet cutover readiness plan is active',
     'local MVP feature-complete for source-only/demo',
     'testnet cutover readiness plan',
-    'Next autonomous slice: post-nonce-cancel owner-signed readiness docs',
+    'Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet',
     planPath,
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses',
   ]) {
