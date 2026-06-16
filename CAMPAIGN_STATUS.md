@@ -8,6 +8,7 @@
 - Executor: oh-my-pi (omp) via no-agent cronjob
 
 ## Current git baseline
+- 8aefd67 slice: local API + terminal UI fill history integration smoke
 - a4b4e1e slice: read-only open orders panel for terminal UI
 - d1519ca status: checkpoint ratchet reconciliation + next slice: Python SDK NonceManager stream consumers
 - c53d39a ratchet: reconcile 11 stale status ratchet tests to current campaign state
@@ -198,9 +199,11 @@ Completed this run: read-only open orders panel for terminal UI added `open-orde
 
 Completed this run: terminal UI read-only trade/fill history panel added `fill-history-panel.js` with `createMockFillHistoryFixture()` / `normalizeFillHistoryPanelFixture()`, mock fixture integration into `mockVerticalSliceFixture.fillHistory`, `renderFillHistoryPanel()` in render.js, panel in audit panels, package.json syntax check registration, README coverage, and `fill-history-panel.test.mjs` with 8 RED/GREEN tests (mock fixture frozen, normalize empty, normalize fills, safety defaults, permission overrides, fixture envelope, render safety, docs/status ratchet); preserves `in-memory-indexer-projection`, `IndexedFillProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, mock-null tx/block/event/explorer evidence, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: local API + terminal UI fill history integration smoke (binding + smoke test following vault-history pattern)
+Completed this run: local API + terminal UI fill history integration smoke added `src/fill-history-binding.js` with `bindFillHistoryLocalApiSmoke()` and `local-api-fill-history-smoke.test.mjs`; it starts local `createApiServer()`, reads `GET /v1/fills`, normalizes the `in-memory-indexer-projection` envelope with `IndexedFillProjection`, renders the terminal fill history panel with mock-null tx/block/event/explorer evidence, treats empty arrays as valid state, and preserves `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 Completed this run: local API + terminal UI nonce cancellation history integration smoke added `src/nonce-cancellation-history-binding.js` and `local-api-nonce-cancellation-history-smoke.test.mjs`; it starts local `createApiServer()`, reads `GET /v1/nonces/cancellations`, feeds the `nonce-manager-event-projection` envelope through the terminal UI normalizer/renderer, treats empty mock arrays as valid state, and preserves `NonceCancelledProjection`, `NonceRangeCancelledProjection`, mock-null tx/block/event/explorer evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, `nonceManagerMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: private `fills` WebSocket snapshot alignment (following nonce-cancellations pattern)
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
