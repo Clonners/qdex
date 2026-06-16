@@ -14,6 +14,7 @@ import { bindLiveKlineStreamWithRestSnapshot } from './kline-stream-binding.js';
 import { bindLivePublicMarketDataStreamsWithRestSnapshots } from './market-data-stream-binding.js';
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
+import { bindNonceCancelPrepareTriggerWithLocalApiSmoke } from './nonce-cancel-prepare-binding.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
@@ -195,6 +196,25 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxDelegateKeyPrepareTrigger = 'disabled';
     console.warn('QDEX delegate/API key prepare trigger disabled; keeping owner-signed boundary prepare-only.', error);
+  }
+
+  try {
+    bindNonceCancelPrepareTriggerWithLocalApiSmoke({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onError: (error) => {
+        mount.dataset.qdxNonceCancelPrepareTrigger = 'error';
+        console.warn('QDEX nonce cancel prepare trigger failed; no wallet, RPC, signing, broadcast, transaction, or funds behavior was attempted.', error);
+      },
+      onPrepare: () => {
+        mount.dataset.qdxNonceCancelPrepareTrigger = 'prepare-only';
+      },
+    });
+  } catch (error) {
+    mount.dataset.qdxNonceCancelPrepareTrigger = 'disabled';
+    console.warn('QDEX nonce cancel prepare trigger disabled; keeping owner-signed boundary prepare-only.', error);
   }
 
   try {
