@@ -8,13 +8,9 @@
 - Executor: oh-my-pi (omp) via no-agent cronjob
 
 ## Current git baseline
-- 8aefd67 slice: local API + terminal UI fill history integration smoke
-- a4b4e1e slice: read-only open orders panel for terminal UI
-- d1519ca status: checkpoint ratchet reconciliation + next slice: Python SDK NonceManager stream consumers
-- c53d39a ratchet: reconcile 11 stale status ratchet tests to current campaign state
-- da4399c status: checkpoint nonce cancellations stream binding + next slice
-- 83f5b05 slice: terminal UI private nonce cancellations stream binding
-- 67d1b7b status: checkpoint nonce cancellation history integration smoke + next slice
+- 346aaab slice: Python SDK trades stream consumers standalone test
+- 57297d5 status: checkpoint klines stream test + next slice: trades stream standalone
+- d7609ee slice: Python SDK klines stream consumers standalone test
 
 ## Campaign history
 
@@ -211,7 +207,9 @@ Completed this run: Python SDK orders stream consumers added `orders.open_stream
 
 Completed this run: Python SDK klines stream consumers standalone test added `test_python_sdk_consumes_public_klines_stream_without_custody_authority` with 17 assertions covering `klines.open_stream(market_id, interval)` snapshot validation (channel, visibility=public, payload=kline_snapshot, source=mock-candle-projection, custody=public-read-only-no-custody, data.candles, data.source) and bounded `klines.stream(market_id, interval, limit)`; 27 Python SDK tests + workspace tests pass GREEN; preserves `kline_snapshot`, `public-read-only-no-custody`, `mock-candle-projection`, no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: Python SDK trades stream consumers standalone test (`open_stream`/`stream` for trades channel, following fills/orders pattern)
+Completed this run: Python SDK trades stream consumers standalone test added `test_python_sdk_consumes_public_trades_stream_without_custody_authority` with 18 assertions covering `trades.open_stream(market_id)` snapshot validation (channel=market.WQUAI-WQI.trades, visibility=public, payload=trade_projection, source=in-memory-indexer-projection, custody=public-read-only-no-custody, data.marketId, data.trades, data.source) and bounded `trades.stream(market_id, limit)`; 28 Python SDK tests + workspace tests pass GREEN; preserves `trade_projection`, `public-read-only-no-custody`, `in-memory-indexer-projection`, `confirmed-settlement-only`, no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: Python SDK tickers stream consumers standalone test (`open_stream`/`stream` for global.tickers channel, following public stream pattern)
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
