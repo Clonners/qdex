@@ -189,7 +189,9 @@ Completed this run: read-only TypeScript SDK and `qdex` CLI nonce cancellations 
 
 Completed this run: Python SDK nonce cancellations stream consumers added `nonces.cancellations.open_stream()` / `nonces.cancellations.stream(limit=...)`; they consume private `/v1/ws?channel=nonce-cancellations` snapshots with `nonce-manager-event-projection`, `nonce_cancellation_projection`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: False`, `tradingVaultMutation: False`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: terminal UI read-only nonce cancellations history panel
+Completed this run: terminal UI read-only nonce cancellations history panel added `src/nonce-cancellation-history-panel.js` with `createMockNonceCancellationHistoryFixture()`, `normalizeNonceCancellationHistoryPanelFixture()`, mock fixture integration into `mockVerticalSliceFixture.nonceCancellationHistory`, render.js integration, package syntax check registration, README coverage, and ratchet updates; preserves `nonce-manager-event-projection`, `NonceCancelledProjection`, `NonceRangeCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, mock-null tx/block/event/explorer evidence, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, `nonceManagerMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: local API + terminal UI nonce cancellations history integration smoke
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
