@@ -1089,6 +1089,42 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(bounded_snapshot["data"]["nonceManagerMutation"])
             self.assertFalse(bounded_snapshot["data"]["tradingVaultMutation"])
 
+    def test_python_sdk_consumes_private_fill_history_stream_without_wallet_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            fills_stream = client.fills.open_stream(timeout=2)
+
+            try:
+                fill_message = fills_stream.next()
+                self.assertEqual(fill_message["type"], "snapshot")
+                self.assertEqual(fill_message["transport"], "websocket")
+                fill_snapshot = fill_message["snapshot"]
+                self.assertEqual(fill_snapshot["channel"], "fills")
+                self.assertEqual(fill_snapshot["visibility"], "private")
+                self.assertEqual(fill_snapshot["payload"], "fill_projection")
+                self.assertEqual(fill_snapshot["source"], "in-memory-indexer-projection")
+                self.assertEqual(fill_snapshot["custody"], "non-custodial-no-withdrawal-authority")
+                self.assertEqual(fill_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+                self.assertEqual(
+                    fill_snapshot["safetyNotice"],
+                    "Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.",
+                )
+                self.assertEqual(fill_snapshot["data"]["fills"], [])
+            finally:
+                fills_stream.close()
+
+            bounded_messages = client.fills.stream(limit=1, timeout=2)
+            self.assertEqual(len(bounded_messages), 1)
+            bounded_message = bounded_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "fills")
+            self.assertEqual(bounded_snapshot["visibility"], "private")
+            self.assertEqual(bounded_snapshot["payload"], "fill_projection")
+            self.assertEqual(bounded_snapshot["source"], "in-memory-indexer-projection")
+            self.assertEqual(bounded_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(bounded_snapshot["data"]["fills"], [])
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

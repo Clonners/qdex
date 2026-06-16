@@ -101,6 +101,11 @@ nonce_cancellation_stream = dex.nonces.cancellations.open_stream()  # /v1/ws?cha
 nonce_cancellation_snapshot = nonce_cancellation_stream.next()
 nonce_cancellation_stream.close()
 nonce_cancellation_stream_snapshots = dex.nonces.cancellations.stream(limit=limit)
+fills_list = dex.fills.list()  # GET /v1/fills -> source: in-memory-indexer-projection, IndexedFillProjection, READ_ONLY
+fill_stream = dex.fills.open_stream()  # /v1/ws?channel=fills
+fill_snapshot = fill_stream.next()
+fill_stream.close()
+fill_stream_snapshots = dex.fills.stream(limit=limit)
 delegate_key_prepare = dex.delegate_keys.prepare_register({
     'owner': '0xowner',
     'delegate': '0xdelegate',
@@ -213,6 +218,8 @@ The Python SDK must not load wallets, send transactions, read RPC URLs, infer re
 `nonces.cancellations.list()` is a read-only NonceManager history client for `GET /v1/nonces/cancellations`. It returns `source: nonce-manager-event-projection`, `projectionType: NonceCancelledProjection`, `eventName: NonceCancelled`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, null mock tx/block/event/explorer evidence, `realQuaiTransactions: False`, `walletRequired: False`, `fundsMoved: False`, `nonceManagerMutation: False`, and `tradingVaultMutation: False`; it preserves no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and does not mutate a live NonceManager or TradingVault.
 
 `nonces.cancellations.open_stream()` and bounded `nonces.cancellations.stream(limit=limit)` consume private NonceManager cancellation history snapshots from `/v1/ws?channel=nonce-cancellations`. Stream snapshots preserve `source: nonce-manager-event-projection`, `payload: nonce_cancellation_projection`, `custody: non-custodial-no-withdrawal-authority`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: False`, `tradingVaultMutation: False`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`fills.open_stream()` and bounded `fills.stream(limit=limit)` consume private fill history snapshots from `/v1/ws?channel=fills`. Stream snapshots preserve `source: in-memory-indexer-projection`, `payload: fill_projection`, `custody: non-custodial-no-withdrawal-authority`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `finality: confirmed-settlement-only`, `IndexedFillProjection`, `settlementMode: mock`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `delegate_keys.prepare_register()` and `delegate_keys.prepare_revoke()` expose prepare-only owner-signed delegate/API key boundaries through `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`. They intentionally surface `delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented` with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; they have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and no live DelegateKeyRegistry or TradingVault mutation.
 

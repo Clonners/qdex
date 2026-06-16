@@ -521,6 +521,12 @@ class _FillsApi:
     def list(self):
         return self._client._request_ok("/v1/fills")
 
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("fills", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("fills", limit=limit, timeout=timeout)
+
 
 class _TradesApi:
     def __init__(self, client):
