@@ -191,7 +191,9 @@ Completed this run: Python SDK nonce cancellations stream consumers added `nonce
 
 Completed this run: terminal UI read-only nonce cancellations history panel added `src/nonce-cancellation-history-panel.js` with `createMockNonceCancellationHistoryFixture()`, `normalizeNonceCancellationHistoryPanelFixture()`, mock fixture integration into `mockVerticalSliceFixture.nonceCancellationHistory`, render.js integration, package syntax check registration, README coverage, and ratchet updates; preserves `nonce-manager-event-projection`, `NonceCancelledProjection`, `NonceRangeCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, mock-null tx/block/event/explorer evidence, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, `nonceManagerMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: local API + terminal UI nonce cancellations history integration smoke
+Next autonomous slice: private nonce cancellations WebSocket snapshot alignment
+
+Completed this run: local API + terminal UI nonce cancellation history integration smoke added `src/nonce-cancellation-history-binding.js` and `local-api-nonce-cancellation-history-smoke.test.mjs`; it starts local `createApiServer()`, reads `GET /v1/nonces/cancellations`, feeds the `nonce-manager-event-projection` envelope through the terminal UI normalizer/renderer, treats empty mock arrays as valid state, and preserves `NonceCancelledProjection`, `NonceRangeCancelledProjection`, mock-null tx/block/event/explorer evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, `nonceManagerMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
