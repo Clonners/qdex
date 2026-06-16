@@ -1161,6 +1161,41 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(bounded_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
             self.assertEqual(bounded_snapshot["data"]["orders"], [])
 
+    def test_python_sdk_consumes_public_tickers_stream_without_custody_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            ticker_stream = client.tickers.open_stream(timeout=2)
+
+            try:
+                ticker_message = ticker_stream.next()
+                self.assertEqual(ticker_message["type"], "snapshot")
+                self.assertEqual(ticker_message["transport"], "websocket")
+                ticker_snapshot = ticker_message["snapshot"]
+                self.assertEqual(ticker_snapshot["channel"], "global.tickers")
+                self.assertEqual(ticker_snapshot["visibility"], "public")
+                self.assertEqual(ticker_snapshot["payload"], "ticker_snapshot")
+                self.assertEqual(ticker_snapshot["source"], "mock-market-data")
+                self.assertEqual(ticker_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["marketId"], "WQUAI-WQI")
+                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["source"], "mock-market-data")
+                self.assertEqual(ticker_snapshot["data"]["tickers"][0]["volume24h"], "0")
+                self.assertIsNone(ticker_snapshot["data"]["tickers"][0]["lastPrice"])
+                self.assertIsNone(ticker_snapshot["data"]["tickers"][0]["bestBid"])
+                self.assertIsNone(ticker_snapshot["data"]["tickers"][0]["bestAsk"])
+            finally:
+                ticker_stream.close()
+
+            bounded_ticker_messages = client.tickers.stream(limit=1, timeout=2)
+            self.assertEqual(len(bounded_ticker_messages), 1)
+            bounded_message = bounded_ticker_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "global.tickers")
+            self.assertEqual(bounded_snapshot["visibility"], "public")
+            self.assertEqual(bounded_snapshot["payload"], "ticker_snapshot")
+            self.assertEqual(bounded_snapshot["source"], "mock-market-data")
+            self.assertEqual(bounded_snapshot["custody"], "public-read-only-no-custody")
+
     def test_python_sdk_consumes_public_klines_stream_without_custody_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)
