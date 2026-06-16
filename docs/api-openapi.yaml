@@ -2798,6 +2798,166 @@ components:
         safetyNotice:
           type: string
           description: DelegateKeyRevoked projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed registry display.
+    NonceCancelledProjection:
+      type: object
+      description: Read-only NonceManager NonceCancelled event projection. Mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. Projection rows are read-only event truth with no wallet loaded, no live NonceManager mutation, no funds moved, and no delegate withdrawal/admin authority.
+      required: [projectionType, sourceEventId, eventName, owner, action, nonce, nonceRange, nonceManagerContract, nonceManager, permissions, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, custody, realQuaiTransactions, walletRequired, fundsMoved, nonceManagerMutation, tradingVaultMutation, safetyNotice]
+      properties:
+        projectionType:
+          type: string
+          enum: [NonceCancelledProjection]
+        sourceEventId:
+          type: string
+          description: Normalized indexer event id for the source NonceCancelled event.
+        eventName:
+          type: string
+          enum: [NonceCancelled]
+        owner:
+          type: string
+          description: Main wallet that owns the nonce namespace; delegate/API keys cannot submit this flow by default.
+        action:
+          type: string
+          enum: [cancelNonce]
+        nonce:
+          type: [string, "null"]
+          pattern: "^[0-9]+$"
+          description: Decimal nonce cancelled.
+        nonceRange:
+          type: [object, "null"]
+          description: null for single nonce cancellation.
+        nonceManagerContract:
+          type: string
+          description: NonceManager contract address in the replay domain.
+        nonceManager:
+          type: string
+          enum: [contract-event-truth]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        nonceManagerMutation:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          description: NonceCancelled projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed nonce cancellation display.
+    NonceRangeCancelledProjection:
+      type: object
+      description: Read-only NonceManager NonceRangeCancelled event projection. Mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. Projection rows are read-only event truth with no wallet loaded, no live NonceManager mutation, no funds moved, and no delegate withdrawal/admin authority.
+      required: [projectionType, sourceEventId, eventName, owner, action, nonce, nonceRange, nonceManagerContract, nonceManager, permissions, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, custody, realQuaiTransactions, walletRequired, fundsMoved, nonceManagerMutation, tradingVaultMutation, safetyNotice]
+      properties:
+        projectionType:
+          type: string
+          enum: [NonceRangeCancelledProjection]
+        sourceEventId:
+          type: string
+          description: Normalized indexer event id for the source NonceRangeCancelled event.
+        eventName:
+          type: string
+          enum: [NonceRangeCancelled]
+        owner:
+          type: string
+          description: Main wallet that owns the nonce namespace; delegate/API keys cannot submit this flow by default.
+        action:
+          type: string
+          enum: [cancelNonceRange]
+        nonce:
+          type: [string, "null"]
+          description: null for range cancellation.
+        nonceRange:
+          type: [object, "null"]
+          description: Bounded range for cancelNonceRange.
+          properties:
+            from:
+              type: string
+              pattern: "^[0-9]+$"
+            to:
+              type: string
+              pattern: "^[0-9]+$"
+        nonceManagerContract:
+          type: string
+          description: NonceManager contract address in the replay domain.
+        nonceManager:
+          type: string
+          enum: [contract-event-truth]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [NO_WITHDRAW, NO_ADMIN]
+        settlementMode:
+          type: string
+          enum: [mock, quai_contract]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        nonceManagerMutation:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          description: NonceRangeCancelled projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed nonce range cancellation display.
     DelegateKeyRegistrationHistoryResponse:
       type: object
       description: "Read-only DelegateKeyRegistry DelegateKeyRegistered history envelope. source: delegatekeyregistry-event-projection; settlementMode: mock; mock evidence fields stay null until real event truth exists."

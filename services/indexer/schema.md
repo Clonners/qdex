@@ -432,6 +432,56 @@ Rules:
 - Matcher-local cancellation events are suppressed because they remove only matcher-open quantity and do not mutate on-chain `NonceManager` nonce truth.
 - Rows preserve `NO_WITHDRAW` and `NO_ADMIN`; neither the indexer nor proof service gains wallet, withdrawal, signing, broadcast, relayer, admin, or custody authority.
 
+### NonceManager `NonceCancelled`/`NonceRangeCancelled` event projections
+
+Purpose: define event-shaped rows for future read-only nonce cancellation history surfaces before any owner-signed transaction behavior exists.
+
+Projection types:
+
+```text
+NonceCancelledProjection
+NonceRangeCancelledProjection
+```
+
+Shared required fields:
+
+```text
+source: nonce-manager-event-projection
+projectionType: NonceCancelledProjection | NonceRangeCancelledProjection
+sourceEventId
+eventName: NonceCancelled | NonceRangeCancelled
+owner
+action: cancelNonce | cancelNonceRange
+nonce
+nonceRange
+nonceManagerContract
+nonceManager: contract-event-truth
+permissions: NO_WITHDRAW | NO_ADMIN
+settlementMode: mock | quai_contract
+settlementTx
+blockNumber
+blockHash
+eventIndex
+explorerUrl
+custody: non-custodial-no-withdrawal-authority
+realQuaiTransactions
+walletRequired: false
+fundsMovedByProjection: false
+nonceManagerMutationByProjection: false
+tradingVaultMutationByProjection: false
+safetyNotice
+```
+
+Rules:
+
+- `NonceCancelledProjection` rows are projected only from normalized `NonceCancelled` source events.
+- `NonceRangeCancelledProjection` rows are projected only from normalized `NonceRangeCancelled` source events.
+- mock rows keep settlementTx = null, blockNumber = null, blockHash = null, eventIndex = null, and explorerUrl = null; mock safety copy must say no real Quai transaction, no live NonceManager mutation, and no funds moved.
+- real rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before any API/UI treats nonce cancellation as confirmed contract event truth.
+- The projection is read-only event truth, not owner-signed mutation authority; it cannot load wallets, read RPC URLs, sign, broadcast, deploy, submit transactions, mutate a live `NonceManager`, mutate `TradingVault`, or move funds.
+- Every row preserves `permissions: NO_WITHDRAW | NO_ADMIN`; there is no positive withdrawal/admin permission and no delegate nonce-cancel permission in the MVP.
+- `matcher_local_order_cancelled` and `matcher_local_orders_cancelled` matcher-local cancellation events are suppressed; their nonce marker remains `matcher-local-cancel-only-on-chain-nonce-unchanged`.
+
 ## Projection flow
 
 ```text
