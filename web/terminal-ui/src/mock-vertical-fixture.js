@@ -4,6 +4,7 @@ import { createMockDelegateKeyHistoryFixture } from './delegate-key-history-pane
 import { createMockFeePolicyFixture } from './fee-policy-panel.js';
 import { createMockKeyboardShortcutHelpFixture } from './keyboard-shortcuts.js';
 import { createMockKlineFixture } from './kline-panel.js';
+import { createMockNonceCancelPrepareFixture } from './nonce-cancel-prepare-panel.js';
 import { createMockVaultHistoryFixture } from './vault-history-panel.js';
 
 export const mockVerticalSliceFixture = Object.freeze({
@@ -96,6 +97,7 @@ export const mockVerticalSliceFixture = Object.freeze({
   delegateKeyHistory: createMockDelegateKeyHistoryFixture(),
   feePolicy: createMockFeePolicyFixture(),
   klines: createMockKlineFixture(),
+  nonceCancelPrepare: createMockNonceCancelPrepareFixture(),
   custody: Object.freeze({
     note: 'non-custodial-no-withdrawal-authority',
     withdrawalAuthority: 'owner-wallet-only',

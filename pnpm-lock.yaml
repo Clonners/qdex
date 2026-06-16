@@ -32,6 +32,12 @@ importers:
 
   services/api: {}
 
+  services/indexer: {}
+
+  services/matching-engine: {}
+
+  services/relayer: {}
+
   web/terminal-ui: {}
 
 packages:

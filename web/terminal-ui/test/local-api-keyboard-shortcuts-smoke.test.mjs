@@ -249,7 +249,7 @@ test('terminal UI docs, package check, app wiring, and campaign status mark keyb
     'campaign status should checkpoint the keyboard-shortcut help smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: testnet cutover readiness Task 5'),
+    status.includes('Next autonomous slice: testnet cutover readiness Task 6'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
 

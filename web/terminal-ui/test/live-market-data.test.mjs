@@ -296,7 +296,7 @@ test('terminal UI package/app/docs/status mention the public market-data stream 
     'Completed previous run: local API + terminal UI public kline/candle stream integration smoke',
     'Completed previous run: terminal UI public market-data stream binding',
     'Completed previous run: local API + terminal UI public market-data stream integration smoke',
-    'Next autonomous slice: testnet cutover readiness Task 5',
+    'Next autonomous slice: testnet cutover readiness Task 6',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }
