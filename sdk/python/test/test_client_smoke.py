@@ -1262,6 +1262,42 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(bounded_snapshot["data"]["marketId"], "WQUAI-WQI")
             self.assertEqual(bounded_snapshot["data"]["trades"], [])
 
+    def test_python_sdk_consumes_public_orderbook_depth_stream_without_custody_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            depth_stream = client.orderbook.open_stream("WQUAI-WQI", timeout=2)
+
+            try:
+                depth_message = depth_stream.next()
+                self.assertEqual(depth_message["type"], "snapshot")
+                self.assertEqual(depth_message["transport"], "websocket")
+                depth_snapshot = depth_message["snapshot"]
+                self.assertEqual(depth_snapshot["channel"], "market.WQUAI-WQI.depth")
+                self.assertEqual(depth_snapshot["visibility"], "public")
+                self.assertEqual(depth_snapshot["payload"], "orderbook_depth")
+                self.assertEqual(depth_snapshot["source"], "mock-orderbook")
+                self.assertEqual(depth_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(depth_snapshot["data"]["marketId"], "WQUAI-WQI")
+                self.assertEqual(depth_snapshot["data"]["bids"], [])
+                self.assertEqual(depth_snapshot["data"]["asks"], [])
+                self.assertEqual(depth_snapshot["data"]["source"], "mock-orderbook")
+            finally:
+                depth_stream.close()
+
+            bounded_depth_messages = client.orderbook.stream("WQUAI-WQI", limit=1, timeout=2)
+            self.assertEqual(len(bounded_depth_messages), 1)
+            bounded_message = bounded_depth_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "market.WQUAI-WQI.depth")
+            self.assertEqual(bounded_snapshot["visibility"], "public")
+            self.assertEqual(bounded_snapshot["payload"], "orderbook_depth")
+            self.assertEqual(bounded_snapshot["source"], "mock-orderbook")
+            self.assertEqual(bounded_snapshot["custody"], "public-read-only-no-custody")
+            self.assertEqual(bounded_snapshot["data"]["marketId"], "WQUAI-WQI")
+            self.assertEqual(bounded_snapshot["data"]["bids"], [])
+            self.assertEqual(bounded_snapshot["data"]["asks"], [])
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)
