@@ -205,7 +205,9 @@ Completed this run: local API + terminal UI nonce cancellation history integrati
 
 Completed this run: private `fills` WebSocket snapshot alignment added `fill-history-stream-binding.js` with `bindLiveFillHistoryStreamsWithRestHistory()` — REST pre-check for `GET /v1/fills`, then bind live `/v1/ws?channel=fills` WebSocket stream, assert REST+WS agreement on source and fills array before rendering; added `local-api-fill-history-stream-smoke.test.mjs` integration smoke test; 122 terminal-ui tests pass GREEN; preserves `in-memory-indexer-projection`, `IndexedFillProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: TypeScript SDK and `qdex` CLI fills stream consumers (following nonce-cancellations pattern)
+Completed this run: Python SDK fills stream consumers added `fills.open_stream()` and `fills.stream(limit=...)` to `_FillsApi` class in `sdk/python/src/qdex_client/client.py`; added `test_python_sdk_consumes_private_fill_history_stream_without_wallet_authority` with 42 assertions covering open_stream snapshot validation and bounded stream; updated `sdk/python/spec.md` surface code block and documentation; updated `sdk/python/README.md` surface code and documentation paragraph; 25 Python SDK tests + 122 terminal-ui tests + workspace tests pass GREEN; preserves `in-memory-indexer-projection`, `fill_projection`, `IndexedFillProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `finality: confirmed-settlement-only`, `settlementMode: mock`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: Python SDK orders stream consumers (`open_stream`/`stream` for `orders` channel, following TypeScript SDK pattern)
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
