@@ -1193,6 +1193,40 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(bounded_snapshot["custody"], "public-read-only-no-custody")
             self.assertEqual(bounded_snapshot["data"]["candles"], [])
 
+    def test_python_sdk_consumes_public_trades_stream_without_custody_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            trades_stream = client.trades.open_stream("WQUAI-WQI", timeout=2)
+
+            try:
+                trade_message = trades_stream.next()
+                self.assertEqual(trade_message["type"], "snapshot")
+                self.assertEqual(trade_message["transport"], "websocket")
+                trade_snapshot = trade_message["snapshot"]
+                self.assertEqual(trade_snapshot["channel"], "market.WQUAI-WQI.trades")
+                self.assertEqual(trade_snapshot["visibility"], "public")
+                self.assertEqual(trade_snapshot["payload"], "trade_projection")
+                self.assertEqual(trade_snapshot["source"], "in-memory-indexer-projection")
+                self.assertEqual(trade_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(trade_snapshot["data"]["marketId"], "WQUAI-WQI")
+                self.assertEqual(trade_snapshot["data"]["trades"], [])
+                self.assertEqual(trade_snapshot["data"]["source"], "in-memory-indexer-projection")
+            finally:
+                trades_stream.close()
+
+            bounded_trade_messages = client.trades.stream("WQUAI-WQI", limit=1, timeout=2)
+            self.assertEqual(len(bounded_trade_messages), 1)
+            bounded_message = bounded_trade_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "market.WQUAI-WQI.trades")
+            self.assertEqual(bounded_snapshot["visibility"], "public")
+            self.assertEqual(bounded_snapshot["payload"], "trade_projection")
+            self.assertEqual(bounded_snapshot["source"], "in-memory-indexer-projection")
+            self.assertEqual(bounded_snapshot["custody"], "public-read-only-no-custody")
+            self.assertEqual(bounded_snapshot["data"]["marketId"], "WQUAI-WQI")
+            self.assertEqual(bounded_snapshot["data"]["trades"], [])
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)
