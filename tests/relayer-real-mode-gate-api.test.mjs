@@ -78,9 +78,10 @@ test('real-mode-gate.js exports and preserves safety metadata in all paths', asy
   assert.equal(unknownResult.realQuaiTransactions, false);
 });
 
-test('CAMPAIGN_STATUS.md records Task 4 relayer real-mode gate expansion', async () => {
+test('CAMPAIGN_STATUS.md records relayer state machine and real-mode gate slice completed', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
-  assert.ok(status.includes('testnet cutover Task 4'), 'status should reference Task 4');
-  assert.ok(status.includes('relayer real-mode gate expansion'), 'status should name the slice');
+  assert.ok(status.includes('relayer state machine workspace package'), 'status should record relayer slice');
+  assert.ok(status.includes('createRelayerStateMachine'), 'status should reference relayer factory');
+  assert.ok(status.includes('relayer-real-mode-gate-api.test.mjs'), 'status should reference this ratchet reconciliation');
 });
