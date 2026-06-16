@@ -1161,6 +1161,38 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(bounded_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
             self.assertEqual(bounded_snapshot["data"]["orders"], [])
 
+    def test_python_sdk_consumes_public_klines_stream_without_custody_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            klines_stream = client.klines.open_stream("WQUAI-WQI", interval="1m", timeout=2)
+
+            try:
+                kline_message = klines_stream.next()
+                self.assertEqual(kline_message["type"], "snapshot")
+                self.assertEqual(kline_message["transport"], "websocket")
+                kline_snapshot = kline_message["snapshot"]
+                self.assertEqual(kline_snapshot["channel"], "market.WQUAI-WQI.klines.1m")
+                self.assertEqual(kline_snapshot["visibility"], "public")
+                self.assertEqual(kline_snapshot["payload"], "kline_snapshot")
+                self.assertEqual(kline_snapshot["source"], "mock-candle-projection")
+                self.assertEqual(kline_snapshot["custody"], "public-read-only-no-custody")
+                self.assertEqual(kline_snapshot["data"]["candles"], [])
+                self.assertEqual(kline_snapshot["data"]["source"], "mock-candle-projection")
+            finally:
+                klines_stream.close()
+
+            bounded_messages = client.klines.stream("WQUAI-WQI", interval="15m", limit=1, timeout=2)
+            self.assertEqual(len(bounded_messages), 1)
+            bounded_message = bounded_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "market.WQUAI-WQI.klines.15m")
+            self.assertEqual(bounded_snapshot["visibility"], "public")
+            self.assertEqual(bounded_snapshot["payload"], "kline_snapshot")
+            self.assertEqual(bounded_snapshot["source"], "mock-candle-projection")
+            self.assertEqual(bounded_snapshot["custody"], "public-read-only-no-custody")
+            self.assertEqual(bounded_snapshot["data"]["candles"], [])
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)
