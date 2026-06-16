@@ -1125,6 +1125,42 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertEqual(bounded_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
             self.assertEqual(bounded_snapshot["data"]["fills"], [])
 
+    def test_python_sdk_consumes_private_orders_stream_without_wallet_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            orders_stream = client.orders.open_stream(timeout=2)
+
+            try:
+                order_message = orders_stream.next()
+                self.assertEqual(order_message["type"], "snapshot")
+                self.assertEqual(order_message["transport"], "websocket")
+                order_snapshot = order_message["snapshot"]
+                self.assertEqual(order_snapshot["channel"], "orders")
+                self.assertEqual(order_snapshot["visibility"], "private")
+                self.assertEqual(order_snapshot["payload"], "order_projection")
+                self.assertEqual(order_snapshot["source"], "mock-order-projection")
+                self.assertEqual(order_snapshot["custody"], "non-custodial-no-withdrawal-authority")
+                self.assertEqual(order_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+                self.assertEqual(
+                    order_snapshot["safetyNotice"],
+                    "Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.",
+                )
+                self.assertEqual(order_snapshot["data"]["orders"], [])
+            finally:
+                orders_stream.close()
+
+            bounded_messages = client.orders.stream(limit=1, timeout=2)
+            self.assertEqual(len(bounded_messages), 1)
+            bounded_message = bounded_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "orders")
+            self.assertEqual(bounded_snapshot["visibility"], "private")
+            self.assertEqual(bounded_snapshot["payload"], "order_projection")
+            self.assertEqual(bounded_snapshot["source"], "mock-order-projection")
+            self.assertEqual(bounded_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(bounded_snapshot["data"]["orders"], [])
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

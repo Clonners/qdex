@@ -513,6 +513,12 @@ class _OrdersApi:
         body = {key: value for key, value in {"marketId": market_id, "owner": owner}.items() if value is not None}
         return self._client._request_ok("/v1/orders/cancel-all", method="POST", body=body or None)
 
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("orders", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("orders", limit=limit, timeout=timeout)
+
 
 class _FillsApi:
     def __init__(self, client):
