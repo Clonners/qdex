@@ -4,6 +4,7 @@ import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-
 import { normalizeFeePolicyPanelFixture } from './fee-policy-panel.js';
 import { normalizeKeyboardShortcutHelpFixture } from './keyboard-shortcuts.js';
 import { normalizeKlinePanelFixture } from './kline-panel.js';
+import { normalizeOpenOrdersPanelFixture } from './open-orders-panel.js';
 import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
 import { normalizeNonceCancellationHistoryPanelFixture } from './nonce-cancellation-history-panel.js';
 
@@ -339,6 +340,52 @@ const renderDelegateKeyOperationPanel = (delegateKeyOperation) => {
 };
 
 const mockEvidenceLabel = (value) => value ?? 'null (mock)';
+
+const renderOpenOrderRows = (orders = []) => {
+  if (orders.length === 0) {
+    return '<li class="muted">no matcher-local open orders yet</li>';
+  }
+
+  return orders.map((order) => `
+    <li>
+      <span>${escapeHtml(order.side)}</span>
+      <span>${escapeHtml(order.price)}</span>
+      <span>${escapeHtml(order.remainingAmount)}</span>
+      <span>${escapeHtml(order.status)}</span>
+      <code>${escapeHtml(shortHash(order.orderHash))}</code>
+    </li>
+  `).join('');
+};
+
+const renderOpenOrdersPanel = (openOrders) => {
+  if (openOrders === undefined || openOrders === null) {
+    return '';
+  }
+
+  const normalized = normalizeOpenOrdersPanelFixture(openOrders);
+  const permissions = (normalized.permissions ?? []).join(', ');
+  const orderRows = normalized.orders ?? [];
+
+  return `
+        <article class="panel open-orders-panel">
+          <h2>read-only open orders</h2>
+          <p class="warning">${escapeHtml(normalized.safetyNotice)}</p>
+          <dl class="kv">
+            <div><dt>source</dt><dd>${escapeHtml(normalized.source)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(normalized.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>matcher-local</dt><dd>${escapeHtml(normalized.matcherLocalOnly)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(normalized.settlementMode)}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(normalized.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(normalized.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(normalized.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(normalized.tradingVaultMutation)}</dd></div>
+            <div><dt>order count</dt><dd>${escapeHtml(orderRows.length)}</dd></div>
+          </dl>
+          <ul>${renderOpenOrderRows(orderRows)}</ul>
+        </article>
+  `;
+};
 
 const renderAccountOverviewRows = (rows = [], emptyLabel, rowLabel = 'row') => {
   if (rows.length === 0) {
@@ -1042,6 +1089,7 @@ export const renderTradeProofPanel = (fixture) => {
     renderVaultHistoryStreamPanel(fixture.vaultHistoryStream),
     renderVaultHistoryPanel(fixture.vaultHistory),
     renderNonceCancellationHistoryPanel(fixture.nonceCancellationHistory),
+    renderOpenOrdersPanel(fixture.openOrders),
   ].filter(Boolean).join('\n');
 
   return `

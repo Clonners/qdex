@@ -6,6 +6,7 @@ import { createMockKeyboardShortcutHelpFixture } from './keyboard-shortcuts.js';
 import { createMockKlineFixture } from './kline-panel.js';
 import { createMockNonceCancelPrepareFixture } from './nonce-cancel-prepare-panel.js';
 import { createMockNonceCancellationHistoryFixture } from './nonce-cancellation-history-panel.js';
+import { createMockOpenOrdersFixture } from './open-orders-panel.js';
 import { createMockVaultHistoryFixture } from './vault-history-panel.js';
 
 export const mockVerticalSliceFixture = Object.freeze({
@@ -100,6 +101,7 @@ export const mockVerticalSliceFixture = Object.freeze({
   klines: createMockKlineFixture(),
   nonceCancelPrepare: createMockNonceCancelPrepareFixture(),
   nonceCancellationHistory: createMockNonceCancellationHistoryFixture(),
+  openOrders: createMockOpenOrdersFixture(),
   custody: Object.freeze({
     note: 'non-custodial-no-withdrawal-authority',
     withdrawalAuthority: 'owner-wallet-only',
