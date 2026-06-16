@@ -531,6 +531,7 @@ const usage = () => `Usage:
   qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
   qdex --base-url http://127.0.0.1:8787 relayer gate
   qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner <0xowner> --nonce <nonce> --chain-id <id> --nonce-manager-contract <0xcontract> --expires-at <unix> --signature <0xsig>
+  qdex --base-url http://127.0.0.1:8787 nonces cancellations
   qdex --base-url http://127.0.0.1:8787 api registrations
   qdex --base-url http://127.0.0.1:8787 api revocations
   qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner <0xowner> --delegate <0xdelegate> --allowed-market WQUAI-WQI --max-notional 1000 --expires-at <unix> --permission PLACE_ORDER --signature <0xsig>
@@ -730,6 +731,16 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
         baseUrl,
         status: result.status,
         ...result.body,
+      });
+      return 0;
+    }
+
+    if (command === 'nonces' && rest[0] === 'cancellations') {
+      const envelope = await client.nonces.cancellations.list();
+      writeJson(stdout, {
+        command: 'nonces cancellations',
+        baseUrl,
+        ...envelope,
       });
       return 0;
     }

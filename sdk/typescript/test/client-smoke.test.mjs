@@ -766,6 +766,32 @@ test('TypeScript SDK exposes owner-signed nonce-cancel prepare placeholder witho
   });
 });
 
+test('TypeScript SDK lists read-only NonceManager cancellation history without wallet or mutation authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const cancellations = await client.nonces.cancellations.list();
+    assert.deepEqual(cancellations.cancellations, []);
+    assert.equal(cancellations.source, 'nonce-manager-event-projection');
+    assert.equal(cancellations.projectionType, 'NonceCancelledProjection');
+    assert.equal(cancellations.eventName, 'NonceCancelled');
+    assert.equal(cancellations.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(cancellations.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(cancellations.settlementMode, 'mock');
+    assert.equal(cancellations.settlementTx, null);
+    assert.equal(cancellations.blockNumber, null);
+    assert.equal(cancellations.blockHash, null);
+    assert.equal(cancellations.eventIndex, null);
+    assert.equal(cancellations.explorerUrl, null);
+    assert.equal(cancellations.realQuaiTransactions, false);
+    assert.equal(cancellations.walletRequired, false);
+    assert.equal(cancellations.fundsMoved, false);
+    assert.equal(cancellations.nonceManagerMutation, false);
+    assert.equal(cancellations.tradingVaultMutation, false);
+    assert.match(cancellations.safetyNotice, /Read-only NonceManager NonceCancelled\/NonceRangeCancelled history envelope/i);
+  });
+});
+
 test('TypeScript SDK cancelAll cancels mock resting orders without nonce or withdrawal authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

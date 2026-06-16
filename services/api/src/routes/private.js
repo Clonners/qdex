@@ -8,6 +8,7 @@ import {
   createVaultHistoryProjectionEnvelope,
   createVaultOperationPreparePlaceholder,
 } from '../vault-operations.js';
+import { createNonceCancellationHistoryProjectionEnvelope } from '../nonce-operations.js';
 import { jsonResult, notImplemented } from '../http.js';
 
 const pathValue = (pathname, prefix) => {
@@ -100,6 +101,10 @@ export const handlePrivateRoute = (context) => {
 
   if (method === 'POST' && pathname === '/v1/nonces/cancel') {
     return ownerSignedNonceCancelPlaceholder();
+  }
+
+  if (method === 'GET' && pathname === '/v1/nonces/cancellations') {
+    return jsonResult(200, createNonceCancellationHistoryProjectionEnvelope());
   }
 
   if (method === 'GET' && pathname === '/v1/fills') {

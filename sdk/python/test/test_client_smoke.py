@@ -1006,6 +1006,30 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
                 "explicit-approval-required-before-wallet-signing-or-quai-broadcast",
             )
 
+    def test_python_sdk_lists_read_only_nonce_manager_cancellation_history_without_wallet_or_mutation_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            cancellations = client.nonces.cancellations.list()
+            self.assertEqual(cancellations["cancellations"], [])
+            self.assertEqual(cancellations["source"], "nonce-manager-event-projection")
+            self.assertEqual(cancellations["projectionType"], "NonceCancelledProjection")
+            self.assertEqual(cancellations["eventName"], "NonceCancelled")
+            self.assertEqual(cancellations["custody"], "non-custodial-no-withdrawal-authority")
+            self.assertEqual(cancellations["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(cancellations["settlementMode"], "mock")
+            self.assertIsNone(cancellations["settlementTx"])
+            self.assertIsNone(cancellations["blockNumber"])
+            self.assertIsNone(cancellations["blockHash"])
+            self.assertIsNone(cancellations["eventIndex"])
+            self.assertIsNone(cancellations["explorerUrl"])
+            self.assertFalse(cancellations["realQuaiTransactions"])
+            self.assertFalse(cancellations["walletRequired"])
+            self.assertFalse(cancellations["fundsMoved"])
+            self.assertFalse(cancellations["nonceManagerMutation"])
+            self.assertFalse(cancellations["tradingVaultMutation"])
+            self.assertIn("Read-only NonceManager NonceCancelled", cancellations["safetyNotice"])
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

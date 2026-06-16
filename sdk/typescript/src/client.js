@@ -291,6 +291,9 @@ export class QDexClient {
         body: request,
         expectedStatus: 501,
       }),
+      cancellations: {
+        list: async () => this.#requestOk('/v1/nonces/cancellations'),
+      },
     };
 
     this.orders = {

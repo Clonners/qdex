@@ -468,9 +468,18 @@ class _RelayerApi:
         self.settlement_mode_gate = _SettlementModeGateApi(client)
 
 
+class _NoncesCancellationsApi:
+    def __init__(self, client):
+        self._client = client
+
+    def list(self):
+        return self._client._request_ok("/v1/nonces/cancellations")
+
+
 class _NoncesApi:
     def __init__(self, client):
         self._client = client
+        self.cancellations = _NoncesCancellationsApi(client)
 
     def prepare_cancel(self, request):
         return self._client._request_expected_status(

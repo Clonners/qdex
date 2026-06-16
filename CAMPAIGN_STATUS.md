@@ -181,7 +181,9 @@ Completed this run: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled
 
 Completed this run: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` history API envelopes added `GET /v1/nonces/cancellations` route, `NonceCancellationHistoryResponse` schema in OpenAPI, `docs/nonce-operations.md`, and `tests/nonce-cancellations-history-api.test.mjs`; preserves `nonce-manager-event-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, null mock tx/block/explorer evidence, real event evidence required before confirmed nonce cancellation display, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: read-only TypeScript/Python/qdex nonce cancellation history clients
+Completed previous run: read-only TypeScript/Python/qdex nonce cancellation history clients added SDK `dex.nonces.cancellations.list()`, Python SDK `nonces.cancellations.list()`, and CLI `qdex nonces cancellations` for `GET /v1/nonces/cancellations`, preserving `source: nonce-manager-event-projection`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: private nonce cancellations WebSocket snapshot alignment
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
