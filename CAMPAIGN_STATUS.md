@@ -8,13 +8,12 @@
 - Executor: oh-my-pi (omp) via no-agent cronjob
 
 ## Current git baseline
-- 3ccfafd feat: testnet cutover Task 4 — relayer real-mode gate expansion
-- 234f0f5 status: update phase + checkpoint for persistent indexer slice
-- c33ebef slice: persistent indexer — JSON-file-backed persistence store with 12 RED/GREEN tests
-- d43de42 feat: testnet cutover Task 3 — deploy manifest and dry-run checks
-- 9a2547f ratchet: fix 8 failing status ratchet tests
-- 4710d91 feat: testnet cutover Task 2 — real-network config schema
-- 364ab98 slice: relayer state machine — full FillPacket lifecycle, 23 tests
+- a4b4e1e slice: read-only open orders panel for terminal UI
+- d1519ca status: checkpoint ratchet reconciliation + next slice: Python SDK NonceManager stream consumers
+- c53d39a ratchet: reconcile 11 stale status ratchet tests to current campaign state
+- da4399c status: checkpoint nonce cancellations stream binding + next slice
+- 83f5b05 slice: terminal UI private nonce cancellations stream binding
+- 67d1b7b status: checkpoint nonce cancellation history integration smoke + next slice
 
 ## Campaign history
 
@@ -195,7 +194,9 @@ Completed this run: terminal UI private nonce cancellations stream binding added
 
 Completed this run: reconciled 11 stale status ratchet tests across workspace and terminal-ui test suites to match current campaign state; updated from outdated "Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers" to "Next autonomous slice: review campaign completion gaps"; 141 workspace tests + 107 terminal-ui tests now pass GREEN.
 
-Next autonomous slice: Python SDK NonceManager cancellations stream consumers (Python SDK has `nonces.cancellations.list()` and `nonces.cancellations.open_stream()`/`stream()` from the nonce cancellations history slice but the pattern is incomplete — verify and complete bounded stream consumers matching TypeScript SDK pattern)
+Completed this run: read-only open orders panel for terminal UI added `open-orders-panel.js` with `createMockOpenOrdersFixture()` / `normalizeOpenOrdersPanelFixture()`, mock fixture integration into `mockVerticalSliceFixture.openOrders`, `renderOpenOrdersPanel()` in render.js, panel in audit panels, package.json syntax check registration, and `open-orders-panel.test.mjs` with 5 RED/GREEN tests (mock fixture frozen, normalize empty, normalize orders, safety defaults, permission overrides); preserves `mock-order-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior; 112 terminal-ui tests + 24 Python SDK tests pass GREEN.
+
+Next autonomous slice: read-only trade/fill history panel for terminal UI (fills appear in account-overview and live-fills stream but no dedicated `fill-history-panel.js` yet; follow same pattern as open-orders-panel)
 
 Completed this run: local API + terminal UI nonce cancellation history integration smoke added `src/nonce-cancellation-history-binding.js` and `local-api-nonce-cancellation-history-smoke.test.mjs`; it starts local `createApiServer()`, reads `GET /v1/nonces/cancellations`, feeds the `nonce-manager-event-projection` envelope through the terminal UI normalizer/renderer, treats empty mock arrays as valid state, and preserves `NonceCancelledProjection`, `NonceRangeCancelledProjection`, mock-null tx/block/event/explorer evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, `nonceManagerMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
