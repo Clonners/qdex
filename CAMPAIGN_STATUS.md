@@ -187,7 +187,9 @@ Completed this run: private nonce cancellations WebSocket snapshot alignment add
 
 Completed this run: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers added `nonces.cancellations.openStream()` / `nonces.cancellations.stream({ limit })` and `qdex stream nonce-cancellations`; they consume private `nonce-manager-event-projection` snapshots from `/v1/ws?channel=nonce-cancellations` with `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: Python SDK nonce cancellations stream consumers
+Completed this run: Python SDK nonce cancellations stream consumers added `nonces.cancellations.open_stream()` / `nonces.cancellations.stream(limit=...)`; they consume private `/v1/ws?channel=nonce-cancellations` snapshots with `nonce-manager-event-projection`, `nonce_cancellation_projection`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: False`, `tradingVaultMutation: False`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: terminal UI read-only nonce cancellations history panel
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
