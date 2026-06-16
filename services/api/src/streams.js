@@ -14,6 +14,10 @@ import {
   createMockVaultBalanceProjection,
 } from './mock-dex.js';
 import {
+  NONCE_MANAGER_EVENT_PROJECTION_SOURCE,
+  createNonceCancellationHistoryProjectionEnvelope,
+} from './nonce-operations.js';
+import {
   TRADINGVAULT_EVENT_PROJECTION_SOURCE,
   createVaultHistoryProjectionEnvelope,
 } from './vault-operations.js';
@@ -114,6 +118,11 @@ const privateContracts = () => [
     channel: 'delegate-key-revocations',
     payload: 'delegate_key_revocation_projection',
     source: DELEGATE_KEY_EVENT_PROJECTION_SOURCE,
+  }),
+  privateContract({
+    channel: 'nonce-cancellations',
+    payload: 'nonce_cancellation_projection',
+    source: NONCE_MANAGER_EVENT_PROJECTION_SOURCE,
   }),
 ];
 
@@ -338,6 +347,17 @@ export const createStreamSnapshot = ({ channel, state } = {}) => {
       payload: channel === 'delegate-key-registrations'
         ? 'delegate_key_registration_projection'
         : 'delegate_key_revocation_projection',
+      source: data.source,
+      data,
+    });
+  }
+
+  if (channel === 'nonce-cancellations') {
+    const data = createNonceCancellationHistoryProjectionEnvelope();
+
+    return privateSnapshot({
+      channel,
+      payload: 'nonce_cancellation_projection',
       source: data.source,
       data,
     });

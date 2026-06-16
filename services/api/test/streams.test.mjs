@@ -67,6 +67,7 @@ test('stream channel registry pins public market data and custody-safe private s
     'withdrawals',
     'delegate-key-registrations',
     'delegate-key-revocations',
+    'nonce-cancellations',
   ]);
 
   const fillsContract = contracts.private.find((contract) => contract.channel === 'fills');
@@ -112,6 +113,15 @@ test('stream channel registry pins public market data and custody-safe private s
   assert.deepEqual(delegateKeyRevocationsContract.requiredPermissions, ['READ_ONLY']);
   assert.deepEqual(delegateKeyRevocationsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
   assert.deepEqual(delegateKeyRevocationsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
+
+  const nonceCancellationsContract = contracts.private.find(
+    (contract) => contract.channel === 'nonce-cancellations',
+  );
+  assert.equal(nonceCancellationsContract.payload, 'nonce_cancellation_projection');
+  assert.equal(nonceCancellationsContract.source, 'nonce-manager-event-projection');
+  assert.deepEqual(nonceCancellationsContract.requiredPermissions, ['READ_ONLY']);
+  assert.deepEqual(nonceCancellationsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
+  assert.deepEqual(nonceCancellationsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
 });
 
 test('stream snapshots expose public depth/trades and private fills from indexed mock projections', () => {
@@ -356,4 +366,38 @@ test('private DelegateKeyRegistry history stream snapshots reuse read-only event
     assert.match(snapshot.data.safetyNotice, /no funds moved/);
     assert.match(snapshot.data.safetyNotice, /no delegate withdrawal\/admin authority/);
   }
+});
+
+test('private NonceManager cancellation stream snapshot reuses read-only event-projection envelope', () => {
+  const state = createMockDexState();
+
+  const snapshot = createStreamSnapshot({ channel: 'nonce-cancellations', state });
+
+  assert.equal(snapshot.channel, 'nonce-cancellations');
+  assert.equal(snapshot.visibility, 'private');
+  assert.equal(snapshot.payload, 'nonce_cancellation_projection');
+  assert.equal(snapshot.source, 'nonce-manager-event-projection');
+  assert.equal(snapshot.custody, 'non-custodial-no-withdrawal-authority');
+  assert.deepEqual(snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+  assert.equal(snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+
+  assert.deepEqual(snapshot.data.cancellations, []);
+  assert.equal(snapshot.data.source, 'nonce-manager-event-projection');
+  assert.equal(snapshot.data.projectionType, 'NonceCancelledProjection');
+  assert.equal(snapshot.data.eventName, 'NonceCancelled');
+  assert.equal(snapshot.data.custody, 'non-custodial-no-withdrawal-authority');
+  assert.deepEqual(snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+  assert.equal(snapshot.data.settlementMode, 'mock');
+  assert.equal(snapshot.data.settlementTx, null);
+  assert.equal(snapshot.data.blockNumber, null);
+  assert.equal(snapshot.data.blockHash, null);
+  assert.equal(snapshot.data.eventIndex, null);
+  assert.equal(snapshot.data.explorerUrl, null);
+  assert.equal(snapshot.data.realQuaiTransactions, false);
+  assert.equal(snapshot.data.walletRequired, false);
+  assert.equal(snapshot.data.fundsMoved, false);
+  assert.equal(snapshot.data.nonceManagerMutation, false);
+  assert.equal(snapshot.data.tradingVaultMutation, false);
+  assert.match(snapshot.data.safetyNotice, /Read-only NonceManager NonceCancelled/);
+  assert.match(snapshot.data.safetyNotice, /mock evidence fields stay null/);
 });
