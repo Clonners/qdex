@@ -47,7 +47,7 @@ test('campaign status points next autonomous work at the source-only testnet cut
     'Current phase: local MVP feature-complete for source-only/demo; testnet cutover readiness plan is active',
     'local MVP feature-complete for source-only/demo',
     'testnet cutover readiness plan',
-    'Next autonomous slice: testnet cutover readiness Task 5',
+    'Next autonomous slice: testnet cutover readiness Task 6',
     planPath,
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses',
   ]) {
