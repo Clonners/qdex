@@ -232,7 +232,7 @@ test('terminal UI docs, package check, app wiring, and campaign status mark comm
     'campaign status should retain the command-palette smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers'),
+    status.includes('Next autonomous slice: review campaign completion gaps'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
 

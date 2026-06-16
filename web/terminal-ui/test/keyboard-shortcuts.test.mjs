@@ -167,7 +167,7 @@ test('terminal UI docs, package check, and campaign status mark keyboard-shortcu
     'campaign status should checkpoint the keyboard-shortcut help slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers'),
+    status.includes('Next autonomous slice: review campaign completion gaps'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
 

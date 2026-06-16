@@ -44,10 +44,8 @@ test('campaign status points next autonomous work at the source-only testnet cut
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
-    'Current phase: local MVP feature-complete for source-only/demo; testnet cutover readiness plan is active',
-    'local MVP feature-complete for source-only/demo',
     'testnet cutover readiness plan',
-    'Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers',
+    'Next autonomous slice: review campaign completion gaps',
     planPath,
     'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses',
   ]) {

@@ -204,7 +204,7 @@ test('terminal UI docs, package check, and campaign status mark public kline str
     'campaign status should mark the local API + terminal UI kline stream smoke as this run',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers'),
+    status.includes('Next autonomous slice: review campaign completion gaps'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
   assert.ok(

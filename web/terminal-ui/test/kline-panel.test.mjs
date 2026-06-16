@@ -129,7 +129,7 @@ test('terminal UI docs, package check, and campaign status mark public kline/can
     'campaign status should checkpoint the REST-confirmed public kline/candle stream smoke slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers'),
+    status.includes('Next autonomous slice: review campaign completion gaps'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
 

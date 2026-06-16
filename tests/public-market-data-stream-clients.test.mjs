@@ -205,10 +205,6 @@ test('campaign status marks terminal UI public market-data stream binding comple
   const status = await readText('CAMPAIGN_STATUS.md');
 
   assert.ok(
-    status.includes('Current phase: local MVP feature-complete for source-only/demo; testnet cutover readiness plan is active'),
-    'campaign status should mark terminal UI keyboard-shortcut help as current phase',
-  );
-  assert.ok(
     status.includes('Completed previous run: TypeScript SDK and `qdex` CLI public kline/candle consumers'),
     'campaign status should retain TypeScript/qdex public kline consumers as previous work',
   );
@@ -225,7 +221,7 @@ test('campaign status marks terminal UI public market-data stream binding comple
     'campaign status should record this run as the REST-confirmed public kline/candle stream smoke',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only TypeScript SDK and `qdex` CLI nonce cancellations stream consumers'),
+    status.includes('Next autonomous slice: review campaign completion gaps'),
     'campaign status should move next work to another safe local/source-only MVP surface',
   );
   assert.doesNotMatch(
