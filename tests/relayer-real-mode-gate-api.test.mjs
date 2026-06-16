@@ -81,6 +81,6 @@ test('real-mode-gate.js exports and preserves safety metadata in all paths', asy
 test('CAMPAIGN_STATUS.md records Task 4 relayer real-mode gate expansion', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
-  assert.ok(status.includes('testnet cutover readiness Task 4'), 'status should reference Task 4');
+  assert.ok(status.includes('testnet cutover Task 4'), 'status should reference Task 4');
   assert.ok(status.includes('relayer real-mode gate expansion'), 'status should name the slice');
 });

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check src/in-memory-projection.js src/contract-proof-event-adapter.js src/persistence.js src/event-truth-adapter.js && node --test test/*.test.mjs",
+    "check": "node --check src/in-memory-projection.js src/contract-proof-event-adapter.js src/persistence.js src/event-truth-adapter.js src/reorg-safe-event-log.js && node --test test/*.test.mjs",
     "test": "node --test test/*.test.mjs"
   }
 }

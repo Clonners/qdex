@@ -168,10 +168,10 @@ Completed previous run: testnet cutover readiness Task 3 — deploy manifest and
 
 Completed previous run: persistent indexer — `@qdex/indexer` with JSON-file-backed persistence store, 12 tests.
 
-Completed previous run: testnet cutover readiness Task 4 — relayer real-mode gate expansion
-Extended OpenAPI `RelayerSettlementModeGateStatus` with `realModeRequiredChecks` (13 checks: explicit_approval, complete_contracts, chain_id_match, signatures_present, market_enabled, fee_within_caps, nonces_available, delegate_NO_WITHDRAW, delegate_NO_ADMIN, slippage_bounds, order_amount_valid, receipt_wait, failure_classification) and `RealModeReadinessResult` schema with `failedChecks`/`checkFailures`; added 4 ratchet tests for OpenAPI, API source, real-mode-gate safety metadata, and campaign status alignment; preserves `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+Completed previous run: testnet cutover readiness Task 5b — reorg-safe event log with replay
+Added `services/indexer/src/reorg-safe-event-log.js` with `createReorgSafeEventLog()` — deterministic event log with chain-state awareness: `appendBlock()` for canonical block heads, `appendEvent()` with block hash validation, `checkReorg()` for read-only reorg detection, `replayFrom()` to invalidate events at/after reorg point, `getCanonicalEvents()` with optional safety depth filtering, `getReorgedEvents()`, `getReorgHistory()`, `getHeadBlockNumber()`, `getCanonicalHash()`, `getStatus()`, `clear()`; 29 RED/GREEN tests cover safety envelope, input validation, reorg detection via block hash mismatch, replay invalidation, canonical filtering, safety depth gating, sorted output, hash verification, head trimming, full reorg cycle (ingest→detect→replay→re-ingest), multiple reorg incidents, non-consecutive blocks, and safety envelope immutability; also reconciled 2 stale status ratchet tests (`post-listing-policy-admin-boundary.test.mjs`, `relayer-real-mode-gate-api.test.mjs`); all 132/132 workspace tests pass.
 
-Next autonomous slice: testnet cutover readiness Task 5 — event-truth indexer
+Next autonomous slice: testnet cutover readiness Task 6 — owner-wallet flows prepare boundary
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
