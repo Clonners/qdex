@@ -420,6 +420,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OwnerSignedNonceCancelNotImplemented"
+  /v1/nonces/cancellations:
+    get:
+      tags: [private]
+      summary: List read-only NonceManager cancellation history
+      description: "Read-only NonceManager cancellation history from source: nonce-manager-event-projection. mock rows keep settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. settlementMode: mock; no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, NonceManager mutation, or funds movement."
+      responses:
+        "200":
+          description: Read-only NonceManager NonceCancelled/NonceRangeCancelled event history envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NonceCancellationHistoryResponse"
   /v1/fills:
     get:
       tags: [private]
@@ -2958,6 +2970,70 @@ components:
         safetyNotice:
           type: string
           description: NonceRangeCancelled projection is read-only; mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null, and real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl before confirmed nonce range cancellation display.
+    NonceCancellationHistoryResponse:
+      type: object
+      description: "Read-only NonceManager NonceCancelled/NonceRangeCancelled history envelope. source: nonce-manager-event-projection; settlementMode: mock; mock evidence fields stay null until real event truth exists."
+      required: [cancellations, source, projectionType, eventName, custody, permissions, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, realQuaiTransactions, walletRequired, fundsMoved, nonceManagerMutation, tradingVaultMutation, safetyNotice]
+      properties:
+        cancellations:
+          type: array
+          items:
+            oneOf:
+              - $ref: "#/components/schemas/NonceCancelledProjection"
+              - $ref: "#/components/schemas/NonceRangeCancelledProjection"
+        source:
+          type: string
+          enum: [nonce-manager-event-projection]
+        projectionType:
+          type: string
+          enum: [NonceCancelledProjection, NonceRangeCancelledProjection]
+        eventName:
+          type: string
+          enum: [NonceCancelled, NonceRangeCancelled]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        settlementMode:
+          type: string
+          enum: [mock]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        nonceManagerMutation:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          enum: ["Read-only NonceManager cancellation history projection: mock rows have no real Quai transaction, no wallet loaded, no funds moved, no NonceManager mutation, and no delegate withdrawal/admin authority."]
     DelegateKeyRegistrationHistoryResponse:
       type: object
       description: "Read-only DelegateKeyRegistry DelegateKeyRegistered history envelope. source: delegatekeyregistry-event-projection; settlementMode: mock; mock evidence fields stay null until real event truth exists."

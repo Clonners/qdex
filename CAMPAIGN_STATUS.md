@@ -179,7 +179,9 @@ Completed this run: post-nonce-cancel owner-signed readiness docs added `docs/pl
 
 Completed this run: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet added `NonceCancelledProjection` and `NonceRangeCancelledProjection` to `services/indexer/schema.md`, `docs/api-openapi.yaml`, `docs/contracts.md`, `docs/architecture.md`, `docs/plans/2026-06-08-post-nonce-cancel-owner-signed-readiness.md`, and `tests/nonce-cancel-event-projection-schema.test.mjs`; preserves `nonce-manager-event-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, null mock tx/block/explorer evidence, real event evidence required before confirmed nonce cancellation display, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMovedByProjection: false`, `nonceManagerMutationByProjection: false`, `tradingVaultMutationByProjection: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` history API envelopes (`GET /v1/nonces/cancellations`)
+Completed this run: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` history API envelopes added `GET /v1/nonces/cancellations` route, `NonceCancellationHistoryResponse` schema in OpenAPI, `docs/nonce-operations.md`, and `tests/nonce-cancellations-history-api.test.mjs`; preserves `nonce-manager-event-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, null mock tx/block/explorer evidence, real event evidence required before confirmed nonce cancellation display, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: read-only TypeScript/Python/qdex nonce cancellation history clients
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 

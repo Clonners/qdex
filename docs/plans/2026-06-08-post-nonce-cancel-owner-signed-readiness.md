@@ -138,6 +138,10 @@ Next bounded local/source-only slice: another bounded MVP surface; live `NonceMa
 
 Completed: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet added `NonceCancelledProjection` and `NonceRangeCancelledProjection` to `services/indexer/schema.md`, `docs/api-openapi.yaml`, `docs/contracts.md`, `docs/architecture.md`, and test ratchet; preserves `nonce-manager-event-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, null mock tx/block/explorer evidence, real event evidence required before confirmed nonce cancellation display, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMovedByProjection: false`, `nonceManagerMutationByProjection: false`, `tradingVaultMutationByProjection: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
+## Completed read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` history API envelopes
+
+Completed: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` history API envelopes added `GET /v1/nonces/cancellations` route, `NonceCancellationHistoryResponse` schema in OpenAPI, `docs/nonce-operations.md`, and `tests/nonce-cancellations-history-api.test.mjs`; preserves `nonce-manager-event-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, null mock tx/block/explorer evidence, real event evidence required before confirmed nonce cancellation display, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
 ---
 
 ### Task 1: Add this post-nonce-cancel readiness ratchet
