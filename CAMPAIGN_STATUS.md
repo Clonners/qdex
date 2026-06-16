@@ -209,7 +209,9 @@ Completed this run: Python SDK fills stream consumers added `fills.open_stream()
 
 Completed this run: Python SDK orders stream consumers added `orders.open_stream()` and `orders.stream(limit=...)` to `_OrdersApi` class in `sdk/python/src/qdex_client/client.py`; added `test_python_sdk_consumes_private_orders_stream_without_wallet_authority` with 18 assertions covering open_stream snapshot validation and bounded stream; updated `sdk/python/spec.md` surface code block and contract documentation; updated `sdk/python/README.md` surface code and documentation paragraph; 26 Python SDK tests + 122 terminal-ui tests + workspace tests pass GREEN; preserves `mock-order-projection`, `order_projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcher-local-cancel-only-on-chain-nonce-unchanged`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: Python SDK klines stream consumers (`open_stream`/`stream` for klines channel, following TypeScript SDK pattern)
+Completed this run: Python SDK klines stream consumers standalone test added `test_python_sdk_consumes_public_klines_stream_without_custody_authority` with 17 assertions covering `klines.open_stream(market_id, interval)` snapshot validation (channel, visibility=public, payload=kline_snapshot, source=mock-candle-projection, custody=public-read-only-no-custody, data.candles, data.source) and bounded `klines.stream(market_id, interval, limit)`; 27 Python SDK tests + workspace tests pass GREEN; preserves `kline_snapshot`, `public-read-only-no-custody`, `mock-candle-projection`, no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: Python SDK trades stream consumers standalone test (`open_stream`/`stream` for trades channel, following fills/orders pattern)
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
