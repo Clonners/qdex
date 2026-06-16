@@ -1030,6 +1030,65 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(cancellations["tradingVaultMutation"])
             self.assertIn("Read-only NonceManager NonceCancelled", cancellations["safetyNotice"])
 
+    def test_python_sdk_consumes_private_nonce_manager_cancellation_history_stream_without_wallet_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            cancellations_stream = client.nonces.cancellations.open_stream(timeout=2)
+
+            try:
+                cancellation_message = cancellations_stream.next()
+                self.assertEqual(cancellation_message["type"], "snapshot")
+                self.assertEqual(cancellation_message["transport"], "websocket")
+                cancellation_snapshot = cancellation_message["snapshot"]
+                self.assertEqual(cancellation_snapshot["channel"], "nonce-cancellations")
+                self.assertEqual(cancellation_snapshot["visibility"], "private")
+                self.assertEqual(cancellation_snapshot["payload"], "nonce_cancellation_projection")
+                self.assertEqual(cancellation_snapshot["source"], "nonce-manager-event-projection")
+                self.assertEqual(cancellation_snapshot["custody"], "non-custodial-no-withdrawal-authority")
+                self.assertEqual(cancellation_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+                self.assertEqual(
+                    cancellation_snapshot["safetyNotice"],
+                    "Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.",
+                )
+                self.assertEqual(cancellation_snapshot["data"]["cancellations"], [])
+                self.assertEqual(cancellation_snapshot["data"]["projectionType"], "NonceCancelledProjection")
+                self.assertEqual(cancellation_snapshot["data"]["eventName"], "NonceCancelled")
+                self.assertEqual(cancellation_snapshot["data"]["settlementMode"], "mock")
+                self.assertIsNone(cancellation_snapshot["data"]["settlementTx"])
+                self.assertIsNone(cancellation_snapshot["data"]["blockNumber"])
+                self.assertIsNone(cancellation_snapshot["data"]["blockHash"])
+                self.assertIsNone(cancellation_snapshot["data"]["eventIndex"])
+                self.assertIsNone(cancellation_snapshot["data"]["explorerUrl"])
+                self.assertFalse(cancellation_snapshot["data"]["realQuaiTransactions"])
+                self.assertFalse(cancellation_snapshot["data"]["walletRequired"])
+                self.assertFalse(cancellation_snapshot["data"]["fundsMoved"])
+                self.assertFalse(cancellation_snapshot["data"]["nonceManagerMutation"])
+                self.assertFalse(cancellation_snapshot["data"]["tradingVaultMutation"])
+            finally:
+                cancellations_stream.close()
+
+            bounded_messages = client.nonces.cancellations.stream(limit=1, timeout=2)
+            self.assertEqual(len(bounded_messages), 1)
+            bounded_message = bounded_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "nonce-cancellations")
+            self.assertEqual(bounded_snapshot["visibility"], "private")
+            self.assertEqual(bounded_snapshot["payload"], "nonce_cancellation_projection")
+            self.assertEqual(bounded_snapshot["source"], "nonce-manager-event-projection")
+            self.assertEqual(bounded_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(bounded_snapshot["data"]["cancellations"], [])
+            self.assertEqual(bounded_snapshot["data"]["projectionType"], "NonceCancelledProjection")
+            self.assertEqual(bounded_snapshot["data"]["eventName"], "NonceCancelled")
+            self.assertEqual(bounded_snapshot["data"]["settlementMode"], "mock")
+            self.assertIsNone(bounded_snapshot["data"]["settlementTx"])
+            self.assertIsNone(bounded_snapshot["data"]["explorerUrl"])
+            self.assertFalse(bounded_snapshot["data"]["realQuaiTransactions"])
+            self.assertFalse(bounded_snapshot["data"]["walletRequired"])
+            self.assertFalse(bounded_snapshot["data"]["fundsMoved"])
+            self.assertFalse(bounded_snapshot["data"]["nonceManagerMutation"])
+            self.assertFalse(bounded_snapshot["data"]["tradingVaultMutation"])
+
     def test_python_sdk_smoke_drives_mock_api_order_fill_proof_loop_without_custody_shortcuts(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

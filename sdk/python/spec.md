@@ -96,6 +96,11 @@ nonce_cancel_prepare = dex.nonces.prepare_cancel({
     'expiresAt': 1780003600,
     'signature': '0xowner-signature',
 })  # POST /v1/nonces/cancel -> owner_signed_nonce_cancel_not_implemented while prepare-only
+nonce_cancellations = dex.nonces.cancellations.list()  # GET /v1/nonces/cancellations -> source: nonce-manager-event-projection, NonceCancelledProjection, READ_ONLY
+nonce_cancellation_stream = dex.nonces.cancellations.open_stream()  # /v1/ws?channel=nonce-cancellations
+nonce_cancellation_snapshot = nonce_cancellation_stream.next()
+nonce_cancellation_stream.close()
+nonce_cancellation_stream_snapshots = dex.nonces.cancellations.stream(limit=limit)
 delegate_key_prepare = dex.delegate_keys.prepare_register({
     'owner': '0xowner',
     'delegate': '0xdelegate',
@@ -204,6 +209,10 @@ The Python SDK must not load wallets, send transactions, read RPC URLs, infer re
 ## Owner-signed nonce cancellation
 
 `nonces.prepare_cancel()` is a prepare-only client for `POST /v1/nonces/cancel`. It intentionally surfaces the API placeholder response `owner_signed_nonce_cancel_not_implemented` with `owner-signed-required`, `NO_WITHDRAW`, and `NO_ADMIN`; it performs no wallet loading, signing, broadcast, or relayer submission and must not be confused with matcher-local `orders.cancel_all`.
+
+`nonces.cancellations.list()` is a read-only NonceManager history client for `GET /v1/nonces/cancellations`. It returns `source: nonce-manager-event-projection`, `projectionType: NonceCancelledProjection`, `eventName: NonceCancelled`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, null mock tx/block/event/explorer evidence, `realQuaiTransactions: False`, `walletRequired: False`, `fundsMoved: False`, `nonceManagerMutation: False`, and `tradingVaultMutation: False`; it preserves no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and does not mutate a live NonceManager or TradingVault.
+
+`nonces.cancellations.open_stream()` and bounded `nonces.cancellations.stream(limit=limit)` consume private NonceManager cancellation history snapshots from `/v1/ws?channel=nonce-cancellations`. Stream snapshots preserve `source: nonce-manager-event-projection`, `payload: nonce_cancellation_projection`, `custody: non-custodial-no-withdrawal-authority`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: False`, `tradingVaultMutation: False`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `delegate_keys.prepare_register()` and `delegate_keys.prepare_revoke()` expose prepare-only owner-signed delegate/API key boundaries through `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`. They intentionally surface `delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented` with `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; they have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and no live DelegateKeyRegistry or TradingVault mutation.
 

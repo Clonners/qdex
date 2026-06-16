@@ -475,6 +475,12 @@ class _NoncesCancellationsApi:
     def list(self):
         return self._client._request_ok("/v1/nonces/cancellations")
 
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("nonce-cancellations", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("nonce-cancellations", limit=limit, timeout=timeout)
+
 
 class _NoncesApi:
     def __init__(self, client):

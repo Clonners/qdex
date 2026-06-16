@@ -234,6 +234,13 @@ delegate_key_revocation_prepare = dex.delegate_keys.prepare_revoke("bot-mm-1", {
     "owner": "0x1111111111111111111111111111111111111111",
     "signature": "0xowner-signed-placeholder",
 })
+nonce_cancellations = dex.nonces.cancellations.list()
+nonce_cancellation_stream = dex.nonces.cancellations.open_stream(timeout=2)
+try:
+    initial_nonce_cancellation_stream_snapshot = nonce_cancellation_stream.next()
+finally:
+    nonce_cancellation_stream.close()
+nonce_cancellation_stream_snapshots = dex.nonces.cancellations.stream(limit=1, timeout=2)
 delegate_key_registrations = dex.delegate_keys.list_registrations()
 delegate_key_revocations = dex.delegate_keys.list_revocations()
 delegate_key_registration_stream = dex.delegate_keys.registrations.open_stream(timeout=2)
@@ -285,6 +292,8 @@ Mock proofs intentionally keep `settlementMode: mock`, `settlementTx: None`, no 
 `dex.nonces.prepare_cancel()` calls `POST /v1/nonces/cancel` and returns the prepare-only 501 placeholder body (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
 
 `dex.nonces.cancellations.list()` calls `GET /v1/nonces/cancellations` and returns read-only `source: nonce-manager-event-projection` history envelopes. It exposes `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: False`, `walletRequired: False`, `fundsMoved: False`, `nonceManagerMutation: False`, and `tradingVaultMutation: False` with mock-null event evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+`dex.nonces.cancellations.open_stream()` consumes private NonceManager cancellation history snapshots from `/v1/ws?channel=nonce-cancellations`. Bounded `dex.nonces.cancellations.stream(limit=limit)` exposes the same `nonce-manager-event-projection` snapshots with `nonce_cancellation_projection`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: False`, `tradingVaultMutation: False`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `dex.delegate_keys.prepare_register()` and `dex.delegate_keys.prepare_revoke()` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and return intentional 501 owner-signed delegate/API key placeholder bodies (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The envelopes preserve `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: False`, and `delegateCanAdmin: False`; these clients have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
 
