@@ -1128,6 +1128,42 @@ test('TypeScript SDK consumes public market-data streams without wallet or tx au
   });
 });
 
+test('TypeScript SDK consumes public orderbook (depth) stream without custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const depthStream = client.orderbook.openStream('WQUAI-WQI', { timeoutMs: 2_000 });
+    try {
+      const depthMessage = await depthStream.next();
+      assert.equal(depthMessage.type, 'snapshot');
+      assert.equal(depthMessage.transport, 'websocket');
+      assert.equal(depthMessage.snapshot.channel, 'market.WQUAI-WQI.depth');
+      assert.equal(depthMessage.snapshot.visibility, 'public');
+      assert.equal(depthMessage.snapshot.payload, 'orderbook_depth');
+      assert.equal(depthMessage.snapshot.source, 'mock-orderbook');
+      assert.equal(depthMessage.snapshot.custody, 'public-read-only-no-custody');
+      assert.equal(depthMessage.snapshot.data.marketId, 'WQUAI-WQI');
+      assert.deepEqual(depthMessage.snapshot.data.bids, []);
+      assert.deepEqual(depthMessage.snapshot.data.asks, []);
+      assert.equal(depthMessage.snapshot.data.source, 'mock-orderbook');
+    } finally {
+      await depthStream.close();
+    }
+
+    const boundedSnapshots = await client.orderbook.stream('WQUAI-WQI', { limit: 1, timeoutMs: 2_000 });
+    assert.equal(boundedSnapshots.length, 1);
+    assert.equal(boundedSnapshots[0].type, 'snapshot');
+    assert.equal(boundedSnapshots[0].snapshot.channel, 'market.WQUAI-WQI.depth');
+    assert.equal(boundedSnapshots[0].snapshot.visibility, 'public');
+    assert.equal(boundedSnapshots[0].snapshot.payload, 'orderbook_depth');
+    assert.equal(boundedSnapshots[0].snapshot.source, 'mock-orderbook');
+    assert.equal(boundedSnapshots[0].snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(boundedSnapshots[0].snapshot.data.marketId, 'WQUAI-WQI');
+    assert.deepEqual(boundedSnapshots[0].snapshot.data.bids, []);
+    assert.deepEqual(boundedSnapshots[0].snapshot.data.asks, []);
+  });
+});
+
 test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippage bounds', () => {
   const order = createMockSignedOrder({
     side: 'sell',
