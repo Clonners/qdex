@@ -225,7 +225,7 @@ test('campaign status marks terminal UI public market-data stream binding comple
     'campaign status should record this run as the REST-confirmed public kline/candle stream smoke',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet'),
+    status.includes('Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` history API envelopes (`GET /v1/nonces/cancellations`)'),
     'campaign status should move next work to another safe local/source-only MVP surface',
   );
   assert.doesNotMatch(

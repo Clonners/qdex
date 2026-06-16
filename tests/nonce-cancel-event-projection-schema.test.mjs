@@ -114,13 +114,13 @@ test('nonce-cancel docs, readiness plan, and campaign status mark projection sch
     'campaign status should retain the post-nonce-cancel readiness docs checkpoint',
   );
   assert.ok(
-    status.includes('Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet'),
-    'campaign status should have listed the nonce-cancel projection schema ratchet as the next slice',
+    status.includes('Completed this run: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet'),
+    'campaign status should checkpoint the nonce-cancel projection schema slice',
   );
 
   const staleNextSlice = /Next autonomous slice: read-only NonceManager `NonceCancelled`\/`NonceRangeCancelled` projection schema ratchet/;
   assert.doesNotMatch(
-    `${plan}\\n${contracts}\\n${architecture}`,
+    `${plan}\n${contracts}\n${architecture}`,
     staleNextSlice,
     'docs should not keep completed nonce-cancel projection schema as the next autonomous slice',
   );
