@@ -167,7 +167,7 @@ test('terminal UI docs, package check, and campaign status mark keyboard-shortcu
     'campaign status should checkpoint the keyboard-shortcut help slice',
   );
   assert.ok(
-    status.includes('Next autonomous slice: testnet cutover readiness Task 6'),
+    status.includes('Next autonomous slice: post-nonce-cancel owner-signed readiness docs'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
 

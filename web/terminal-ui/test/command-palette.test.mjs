@@ -255,7 +255,7 @@ test('terminal UI docs, package check, and campaign status mark command-palette 
     'campaign status should retain the command-palette local API smoke slice as previous work',
   );
   assert.ok(
-    status.includes('Next autonomous slice: testnet cutover readiness Task 6'),
+    status.includes('Next autonomous slice: post-nonce-cancel owner-signed readiness docs'),
     'campaign status should move next work to the testnet cutover readiness plan',
   );
 
