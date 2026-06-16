@@ -203,7 +203,9 @@ Completed this run: local API + terminal UI fill history integration smoke added
 
 Completed this run: local API + terminal UI nonce cancellation history integration smoke added `src/nonce-cancellation-history-binding.js` and `local-api-nonce-cancellation-history-smoke.test.mjs`; it starts local `createApiServer()`, reads `GET /v1/nonces/cancellations`, feeds the `nonce-manager-event-projection` envelope through the terminal UI normalizer/renderer, treats empty mock arrays as valid state, and preserves `NonceCancelledProjection`, `NonceRangeCancelledProjection`, mock-null tx/block/event/explorer evidence, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, `nonceManagerMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
-Next autonomous slice: private `fills` WebSocket snapshot alignment (following nonce-cancellations pattern)
+Completed this run: private `fills` WebSocket snapshot alignment added `fill-history-stream-binding.js` with `bindLiveFillHistoryStreamsWithRestHistory()` — REST pre-check for `GET /v1/fills`, then bind live `/v1/ws?channel=fills` WebSocket stream, assert REST+WS agreement on source and fills array before rendering; added `local-api-fill-history-stream-smoke.test.mjs` integration smoke test; 122 terminal-ui tests pass GREEN; preserves `in-memory-indexer-projection`, `IndexedFillProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: TypeScript SDK and `qdex` CLI fills stream consumers (following nonce-cancellations pattern)
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
