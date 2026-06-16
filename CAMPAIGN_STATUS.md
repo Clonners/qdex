@@ -177,7 +177,9 @@ Completed this run: local API + terminal UI nonce cancel prepare render smoke ad
 
 Completed this run: post-nonce-cancel owner-signed readiness docs added `docs/plans/2026-06-08-post-nonce-cancel-owner-signed-readiness.md` plus contracts/architecture doc links, mapping read-only `POST /v1/nonces/cancel`, prepare-only SDK/CLI/terminal UI surfaces, and local API smoke to the explicit approval gate before owner-signed NonceManager cancellation, wallet signing, RPC URL access, broadcast, transaction submission, or funds movement.
 
-Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet
+Completed this run: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` projection schema ratchet added `NonceCancelledProjection` and `NonceRangeCancelledProjection` to `services/indexer/schema.md`, `docs/api-openapi.yaml`, `docs/contracts.md`, `docs/architecture.md`, `docs/plans/2026-06-08-post-nonce-cancel-owner-signed-readiness.md`, and `tests/nonce-cancel-event-projection-schema.test.mjs`; preserves `nonce-manager-event-projection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, null mock tx/block/explorer evidence, real event evidence required before confirmed nonce cancellation display, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMovedByProjection: false`, `nonceManagerMutationByProjection: false`, `tradingVaultMutationByProjection: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: read-only NonceManager `NonceCancelled`/`NonceRangeCancelled` history API envelopes (`GET /v1/nonces/cancellations`)
 
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
