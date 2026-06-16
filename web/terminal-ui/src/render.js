@@ -4,6 +4,7 @@ import { normalizeDelegateKeyHistoryPanelFixture } from './delegate-key-history-
 import { normalizeFeePolicyPanelFixture } from './fee-policy-panel.js';
 import { normalizeKeyboardShortcutHelpFixture } from './keyboard-shortcuts.js';
 import { normalizeKlinePanelFixture } from './kline-panel.js';
+import { normalizeFillHistoryPanelFixture } from './fill-history-panel.js';
 import { normalizeOpenOrdersPanelFixture } from './open-orders-panel.js';
 import { normalizeVaultHistoryPanelFixture } from './vault-history-panel.js';
 import { normalizeNonceCancellationHistoryPanelFixture } from './nonce-cancellation-history-panel.js';
@@ -383,6 +384,56 @@ const renderOpenOrdersPanel = (openOrders) => {
             <div><dt>order count</dt><dd>${escapeHtml(orderRows.length)}</dd></div>
           </dl>
           <ul>${renderOpenOrderRows(orderRows)}</ul>
+        </article>
+  `;
+};
+
+const renderFillHistoryRows = (rows = []) => {
+  if (rows.length === 0) {
+    return '<li class="muted">no fill history rows yet</li>';
+  }
+
+  return rows.map((row) => `
+    <li>
+      <span>${escapeHtml(row.marketId ?? 'N/A')}</span>
+      <span>${escapeHtml(row.side ?? 'N/A')}</span>
+      <span>${escapeHtml(row.price ?? '0')}</span>
+      <span>${escapeHtml(row.amount ?? '0')}</span>
+      <code>${escapeHtml(row.fillId ?? row.tradeId ?? 'fill')}</code>
+    </li>
+  `).join('');
+};
+
+const renderFillHistoryPanel = (fillHistory) => {
+  if (fillHistory === undefined || fillHistory === null) {
+    return '';
+  }
+
+  const normalized = normalizeFillHistoryPanelFixture(fillHistory);
+  const permissions = (normalized.permissions ?? []).join(', ');
+  const fillRows = normalized.fills ?? [];
+
+  return `
+        <article class="panel fill-history-panel">
+          <h2>read-only fill history</h2>
+          <p class="warning">${escapeHtml(normalized.safetyNotice)}</p>
+          <dl class="kv">
+            <div><dt>source</dt><dd>${escapeHtml(normalized.source)}</dd></div>
+            <div><dt>custody</dt><dd>${escapeHtml(normalized.custody)}</dd></div>
+            <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
+            <div><dt>projectionType</dt><dd>${escapeHtml(normalized.projectionType)}</dd></div>
+            <div><dt>settlementMode</dt><dd>${escapeHtml(normalized.settlementMode)}</dd></div>
+            <div><dt>settlement tx</dt><dd>${escapeHtml(normalized.settlementTx ?? 'null (mock)')}</dd></div>
+            <div><dt>block</dt><dd>${escapeHtml(normalized.blockNumber ?? 'null (mock)')}</dd></div>
+            <div><dt>event index</dt><dd>${escapeHtml(normalized.eventIndex ?? 'null (mock)')}</dd></div>
+            <div><dt>explorer</dt><dd>${escapeHtml(normalized.explorerUrl ?? 'null (mock)')}</dd></div>
+            <div><dt>real Quai tx</dt><dd>${escapeHtml(normalized.realQuaiTransactions)}</dd></div>
+            <div><dt>wallet required</dt><dd>${escapeHtml(normalized.walletRequired)}</dd></div>
+            <div><dt>funds moved</dt><dd>${escapeHtml(normalized.fundsMoved)}</dd></div>
+            <div><dt>TradingVault mutation</dt><dd>${escapeHtml(normalized.tradingVaultMutation)}</dd></div>
+            <div><dt>fill count</dt><dd>${escapeHtml(fillRows.length)}</dd></div>
+          </dl>
+          <ul>${renderFillHistoryRows(fillRows)}</ul>
         </article>
   `;
 };
@@ -1090,6 +1141,7 @@ export const renderTradeProofPanel = (fixture) => {
     renderVaultHistoryPanel(fixture.vaultHistory),
     renderNonceCancellationHistoryPanel(fixture.nonceCancellationHistory),
     renderOpenOrdersPanel(fixture.openOrders),
+    renderFillHistoryPanel(fixture.fillHistory),
   ].filter(Boolean).join('\n');
 
   return `
