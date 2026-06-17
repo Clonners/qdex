@@ -221,6 +221,12 @@ Completed this run: TypeScript SDK klines (candle) stream standalone test added 
 
 Next autonomous slice: TypeScript SDK public trades stream standalone test (`openStream`/`stream` for market.<MARKET>.trades channel, following public stream pattern)
 
+Completed this run: TypeScript SDK public trades stream standalone test added `test('TypeScript SDK consumes public trades stream without custody authority')` with 22 assertions covering `trades.openStream(marketId)` snapshot validation (channel=market.WQUAI-WQI.trades, visibility=public, payload=trade_projection, source=in-memory-indexer-projection, custody=public-read-only-no-custody, data.marketId, data.trades empty, data.source) and bounded `trades.stream(marketId, { limit })`; updated sdk/typescript/spec.md and README.md with standalone test reference; 29 TypeScript SDK tests + workspace/terminal-ui tests pass GREEN; preserves `trade_projection`, `public-read-only-no-custody`, `in-memory-indexer-projection`, `confirmed-settlement-only`, no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Completed this run: TypeScript SDK public tickers stream standalone test added `test('TypeScript SDK consumes public tickers stream without custody authority')` with 24 assertions covering `tickers.openStream({ timeoutMs: 2_000 })` snapshot validation (channel=global.tickers, visibility=public, payload=ticker_snapshot, source=mock-market-data, custody=public-read-only-no-custody, data.tickers[0].marketId, data.tickers[0].source, data.tickers[0].volume24h, data.tickers[0].lastPrice/BestBid/BestAsk null mock) and bounded `tickers.stream({ limit: 1, timeoutMs: 2_000 })`; updated `sdk/typescript/spec.md` and README.md with standalone test reference; 30 TypeScript SDK tests + workspace/terminal-ui tests pass GREEN; preserves `ticker_snapshot`, `public-read-only-no-custody`, `mock-market-data`, no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: read-only open orders REST API envelope (`GET /v1/account/orders` with `mock-order-projection` / `LocalOrderProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly`, mock-null on-chain evidence)
+
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
 ## Testnet cutover readiness plan
