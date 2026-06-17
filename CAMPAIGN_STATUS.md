@@ -227,6 +227,10 @@ Completed this run: TypeScript SDK public tickers stream standalone test added `
 
 Next autonomous slice: read-only open orders REST API envelope (`GET /v1/account/orders` with `mock-order-projection` / `LocalOrderProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly`, mock-null on-chain evidence)
 
+Completed this run: read-only open orders REST API envelope added `GET /v1/account/orders` route with `createMockOpenOrdersEnvelope()` returning `mock-order-projection`, `LocalOrderProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly: true`, `settlementMode: mock`, mock-null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, plus OpenAPI `AccountOpenOrders` schema, docs/account.md section, and `tests/open-orders-api.test.mjs`; preserves no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: TypeScript/Python SDK and `qdex` CLI read-only open orders clients (`GET /v1/account/orders`)
+
 Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.
 
 ## Testnet cutover readiness plan

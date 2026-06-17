@@ -3,7 +3,7 @@ import {
   createDelegateKeyListResponse,
   createDelegateKeyPreparePlaceholder,
 } from '../delegate-keys.js';
-import { createMockAccountOverview, createMockVaultBalanceProjection } from '../mock-dex.js';
+import { createMockAccountOverview, createMockOpenOrdersEnvelope, createMockVaultBalanceProjection } from '../mock-dex.js';
 import {
   createVaultHistoryProjectionEnvelope,
   createVaultOperationPreparePlaceholder,
@@ -58,6 +58,10 @@ export const handlePrivateRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/account/balances') {
     return jsonResult(200, createMockVaultBalanceProjection());
+  }
+
+  if (method === 'GET' && pathname === '/v1/account/orders') {
+    return jsonResult(200, createMockOpenOrdersEnvelope(context.state.listOrders()));
   }
 
   if (method === 'GET' && pathname === '/v1/vault/deposits') {

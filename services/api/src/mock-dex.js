@@ -72,6 +72,31 @@ const canonicalOrder = (order) => ({
 const clone = (value) => JSON.parse(JSON.stringify(value));
 export const createMockVaultBalanceProjection = () => clone(MOCK_VAULT_BALANCE_PROJECTION);
 
+const MOCK_OPEN_ORDERS_PROJECTION = {
+  orders: [],
+  source: 'mock-order-projection',
+  projectionType: 'LocalOrderProjection',
+  custody: 'non-custodial-no-withdrawal-authority',
+  permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+  matcherLocalOnly: true,
+  settlementMode: 'mock',
+  settlementTx: null,
+  blockNumber: null,
+  blockHash: null,
+  eventIndex: null,
+  explorerUrl: null,
+  realQuaiTransactions: false,
+  walletRequired: false,
+  fundsMoved: false,
+  tradingVaultMutation: false,
+  safetyNotice: 'Mock open orders only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+};
+
+export const createMockOpenOrdersEnvelope = (orders = []) => ({
+  ...clone(MOCK_OPEN_ORDERS_PROJECTION),
+  orders: clone(orders),
+});
+
 export const createMockAccountOverview = ({
   orders = [],
   fills = [],

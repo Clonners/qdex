@@ -264,6 +264,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccountBalances"
+  /v1/account/orders:
+    get:
+      tags: [private]
+      summary: Read-only mock open orders projection
+      description: "Read-only open orders projection from source: mock-order-projection. mock rows keep settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. settlementMode: mock; no wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement."
+      responses:
+        "200":
+          description: Read-only open orders projection envelope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountOpenOrders"
   /v1/vault/deposits:
     get:
       tags: [private]
@@ -683,6 +695,65 @@ components:
         safetyNotice:
           type: string
           description: Mock vault projection only; no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+    AccountOpenOrders:
+      type: object
+      description: Read-only mock open orders projection. Mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. No wallet loading, RPC URL access, signing, broadcasts, deploys, transaction submission, TradingVault mutation, or funds movement.
+      required: [orders, source, projectionType, custody, permissions, matcherLocalOnly, settlementMode, settlementTx, blockNumber, blockHash, eventIndex, explorerUrl, realQuaiTransactions, walletRequired, fundsMoved, tradingVaultMutation, safetyNotice]
+      properties:
+        orders:
+          type: array
+          items:
+            type: object
+        source:
+          type: string
+          enum: [mock-order-projection]
+        projectionType:
+          type: string
+          enum: [LocalOrderProjection]
+        custody:
+          type: string
+          enum: [non-custodial-no-withdrawal-authority]
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]
+        matcherLocalOnly:
+          type: boolean
+          enum: [true]
+        settlementMode:
+          type: string
+          enum: [mock]
+        settlementTx:
+          type: string
+          nullable: true
+        blockNumber:
+          type: integer
+          nullable: true
+        blockHash:
+          type: string
+          nullable: true
+        eventIndex:
+          type: integer
+          nullable: true
+        explorerUrl:
+          type: string
+          nullable: true
+        realQuaiTransactions:
+          type: boolean
+          enum: [false]
+        walletRequired:
+          type: boolean
+          enum: [false]
+        fundsMoved:
+          type: boolean
+          enum: [false]
+        tradingVaultMutation:
+          type: boolean
+          enum: [false]
+        safetyNotice:
+          type: string
+          description: Mock open orders only; no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
     TradingVaultDepositProjection:
       type: object
       description: Read-only TradingVault Deposit event projection. Mock rows set settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl to null; real Quai rows require settlementTx, blockNumber, blockHash, eventIndex, and explorerUrl. Projection rows are read-only event truth with no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
