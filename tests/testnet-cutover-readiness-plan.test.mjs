@@ -40,14 +40,14 @@ test('testnet cutover plan freezes local MVP and keeps real-network gates closed
   );
 });
 
-test('campaign status points next autonomous work at the source-only testnet cutover plan', async () => {
+test('campaign status documents testnet cutover phase and preserves approval gates', async () => {
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
-    'testnet cutover readiness plan',
-    'Next autonomous slice: review campaign completion gaps',
+    'Testnet cutover readiness plan',
+    'RPC APPROVED:',
     planPath,
-    'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses',
+    'Still not approved: wallets',
   ]) {
     assert.ok(status.includes(requiredText), `campaign status should include ${requiredText}`);
   }

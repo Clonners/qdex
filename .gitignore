@@ -20,6 +20,12 @@ contracts/cache/
 *.seed
 *.wallet
 
+# wallet data (encrypted keys, keystores, mnemonic material)
+quai-wallet-data/
+wallet-data/
+keystore.json
+*.keystore
+
 # runtime state
 *.log
 *.sqlite
