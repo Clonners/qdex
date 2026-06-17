@@ -373,6 +373,7 @@ const renderOpenOrdersPanel = (openOrders) => {
           <p class="warning">${escapeHtml(normalized.safetyNotice)}</p>
           <dl class="kv">
             <div><dt>source</dt><dd>${escapeHtml(normalized.source)}</dd></div>
+            <div><dt>projection</dt><dd>${escapeHtml(normalized.projectionType)}</dd></div>
             <div><dt>custody</dt><dd>${escapeHtml(normalized.custody)}</dd></div>
             <div><dt>permissions</dt><dd>${escapeHtml(permissions)}</dd></div>
             <div><dt>matcher-local</dt><dd>${escapeHtml(normalized.matcherLocalOnly)}</dd></div>

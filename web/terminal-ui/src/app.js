@@ -15,6 +15,7 @@ import { bindLivePublicMarketDataStreamsWithRestSnapshots } from './market-data-
 import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stream-binding.js';
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { bindNonceCancelPrepareTriggerWithLocalApiSmoke } from './nonce-cancel-prepare-binding.js';
+import { bindOpenOrdersLocalApiSmoke } from './open-orders-binding.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
@@ -215,6 +216,28 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxNonceCancelPrepareTrigger = 'disabled';
     console.warn('QDEX nonce cancel prepare trigger disabled; keeping owner-signed boundary prepare-only.', error);
+  }
+
+  try {
+    bindOpenOrdersLocalApiSmoke({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onOrders: () => {
+        mount.dataset.qdxOpenOrdersSmoke = 'mock-order-projection';
+      },
+      onError: (error) => {
+        mount.dataset.qdxOpenOrdersSmoke = 'error';
+        console.warn('QDEX open orders REST smoke failed; keeping static read-only fixture with no wallet, RPC, signing, broadcast, transaction, or funds behavior.', error);
+      },
+    }).catch((error) => {
+      mount.dataset.qdxOpenOrdersSmoke = 'disabled';
+      console.warn('QDEX open orders REST smoke disabled; keeping static read-only fixture.', error);
+    });
+  } catch (error) {
+    mount.dataset.qdxOpenOrdersSmoke = 'disabled';
+    console.warn('QDEX open orders REST smoke disabled; keeping static read-only fixture.', error);
   }
 
   try {

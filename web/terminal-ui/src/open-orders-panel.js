@@ -25,6 +25,7 @@ export const createMockOpenOrdersFixture = () => Object.freeze({
 export const normalizeOpenOrdersPanelFixture = (openOrders = createMockOpenOrdersFixture()) => Object.freeze({
   orders: normalizeOpenOrders(openOrders.orders ?? []),
   source: openOrders.source ?? OPEN_ORDERS_SAFETY.source,
+  projectionType: openOrders.projectionType ?? 'LocalOrderProjection',
   custody: openOrders.custody ?? OPEN_ORDERS_SAFETY.custody,
   permissions: [...(openOrders.permissions ?? OPEN_ORDERS_SAFETY.permissions)],
   matcherLocalOnly: openOrders.matcherLocalOnly ?? OPEN_ORDERS_SAFETY.matcherLocalOnly,

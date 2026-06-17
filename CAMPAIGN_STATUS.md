@@ -244,3 +244,7 @@ Plan: `docs/plans/2026-06-08-testnet-cutover-real-settlement-readiness.md`
 - No transaction signing or broadcasts
 - No test funds movement
 - No remote Git push
+
+Completed this run: TypeScript/Python SDK and `qdex` CLI read-only open orders clients added TypeScript SDK `account.orders.get()`, Python SDK `account.orders()`, and CLI `qdex account-orders` for `GET /v1/account/orders`, preserving `source: mock-order-projection`, `projectionType: LocalOrderProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly: true`, `settlementMode: mock`, mock-null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`, with dedicated smoke tests for TypeScript SDK, Python SDK, and CLI, plus spec/README documentation updates; pnpm check (all workspace tests pass GREEN); preserves no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
+Next autonomous slice: terminal UI read-only open orders REST binding (bind `GET /v1/account/orders` to the existing open-orders-panel.js normalizer/renderer, following the account-overview-binding.js pattern)
