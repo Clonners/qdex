@@ -337,18 +337,33 @@ class _FeesApi:
         return self._client._read_stream("fees", limit=limit, timeout=timeout)
 
 
+class _AccountOrdersApi:
+    def __init__(self, client):
+        self._client = client
+
+    def get(self):
+        return self._client._request_ok("/v1/account/orders")
+
+    def __call__(self):
+        return self.get()
+
+    def open_stream(self, *, timeout=None):
+        return self._client._open_stream("open-orders", timeout=timeout)
+
+    def stream(self, *, limit=1, timeout=None):
+        return self._client._read_stream("open-orders", limit=limit, timeout=timeout)
+
+
 class _AccountApi:
     def __init__(self, client):
         self._client = client
+        self.orders = _AccountOrdersApi(client)
 
     def get(self):
         return self._client._request_ok("/v1/account")
 
     def balances(self):
         return self._client._request_ok("/v1/account/balances")
-
-    def orders(self):
-        return self._client._request_ok("/v1/account/orders")
 
 
 class _VaultDepositsApi:

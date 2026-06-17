@@ -173,6 +173,66 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(open_orders["tradingVaultMutation"])
             self.assertIn("Mock open orders only", open_orders["safetyNotice"])
 
+    def test_python_sdk_consumes_private_open_orders_stream_without_wallet_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+            open_orders_stream = client.account.orders.open_stream(timeout=2)
+
+            try:
+                order_message = open_orders_stream.next()
+                self.assertEqual(order_message["type"], "snapshot")
+                self.assertEqual(order_message["transport"], "websocket")
+                order_snapshot = order_message["snapshot"]
+                self.assertEqual(order_snapshot["channel"], "open-orders")
+                self.assertEqual(order_snapshot["visibility"], "private")
+                self.assertEqual(order_snapshot["payload"], "open_orders_projection")
+                self.assertEqual(order_snapshot["source"], "mock-order-projection")
+                self.assertEqual(order_snapshot["custody"], "non-custodial-no-withdrawal-authority")
+                self.assertEqual(order_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+                self.assertEqual(
+                    order_snapshot["safetyNotice"],
+                    "Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.",
+                )
+                self.assertEqual(order_snapshot["data"]["orders"], [])
+                self.assertEqual(order_snapshot["data"]["source"], "mock-order-projection")
+                self.assertEqual(order_snapshot["data"]["projectionType"], "LocalOrderProjection")
+                self.assertEqual(order_snapshot["data"]["custody"], "non-custodial-no-withdrawal-authority")
+                self.assertEqual(order_snapshot["data"]["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+                self.assertTrue(order_snapshot["data"]["matcherLocalOnly"])
+                self.assertEqual(order_snapshot["data"]["settlementMode"], "mock")
+                self.assertIsNone(order_snapshot["data"]["settlementTx"])
+                self.assertIsNone(order_snapshot["data"]["blockNumber"])
+                self.assertIsNone(order_snapshot["data"]["blockHash"])
+                self.assertIsNone(order_snapshot["data"]["eventIndex"])
+                self.assertIsNone(order_snapshot["data"]["explorerUrl"])
+                self.assertFalse(order_snapshot["data"]["realQuaiTransactions"])
+                self.assertFalse(order_snapshot["data"]["walletRequired"])
+                self.assertFalse(order_snapshot["data"]["fundsMoved"])
+                self.assertFalse(order_snapshot["data"]["tradingVaultMutation"])
+                self.assertIn("Mock open orders only", order_snapshot["data"]["safetyNotice"])
+            finally:
+                open_orders_stream.close()
+
+            bounded_messages = client.account.orders.stream(limit=1, timeout=2)
+            self.assertEqual(len(bounded_messages), 1)
+            bounded_message = bounded_messages[0]
+            self.assertEqual(bounded_message["type"], "snapshot")
+            bounded_snapshot = bounded_message["snapshot"]
+            self.assertEqual(bounded_snapshot["channel"], "open-orders")
+            self.assertEqual(bounded_snapshot["visibility"], "private")
+            self.assertEqual(bounded_snapshot["payload"], "open_orders_projection")
+            self.assertEqual(bounded_snapshot["source"], "mock-order-projection")
+            self.assertEqual(bounded_snapshot["custody"], "non-custodial-no-withdrawal-authority")
+            self.assertEqual(bounded_snapshot["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertEqual(bounded_snapshot["data"]["orders"], [])
+            self.assertEqual(bounded_snapshot["data"]["projectionType"], "LocalOrderProjection")
+            self.assertTrue(bounded_snapshot["data"]["matcherLocalOnly"])
+            self.assertEqual(bounded_snapshot["data"]["settlementMode"], "mock")
+            self.assertFalse(bounded_snapshot["data"]["realQuaiTransactions"])
+            self.assertFalse(bounded_snapshot["data"]["walletRequired"])
+            self.assertFalse(bounded_snapshot["data"]["fundsMoved"])
+            self.assertFalse(bounded_snapshot["data"]["tradingVaultMutation"])
+
     def test_python_sdk_exposes_read_only_local_account_overview_without_wallet_or_custody_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)
