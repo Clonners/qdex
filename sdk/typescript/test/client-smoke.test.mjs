@@ -1199,6 +1199,41 @@ test('TypeScript SDK consumes public orderbook (depth) stream without custody au
   });
 });
 
+test('TypeScript SDK consumes public trades stream without custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const tradesStream = client.trades.openStream('WQUAI-WQI', { timeoutMs: 2_000 });
+    try {
+      const tradesMessage = await tradesStream.next();
+      assert.equal(tradesMessage.type, 'snapshot');
+      assert.equal(tradesMessage.transport, 'websocket');
+      assert.equal(tradesMessage.snapshot.channel, 'market.WQUAI-WQI.trades');
+      assert.equal(tradesMessage.snapshot.visibility, 'public');
+      assert.equal(tradesMessage.snapshot.payload, 'trade_projection');
+      assert.equal(tradesMessage.snapshot.source, 'in-memory-indexer-projection');
+      assert.equal(tradesMessage.snapshot.custody, 'public-read-only-no-custody');
+      assert.equal(tradesMessage.snapshot.data.marketId, 'WQUAI-WQI');
+      assert.deepEqual(tradesMessage.snapshot.data.trades, []);
+      assert.equal(tradesMessage.snapshot.data.source, 'in-memory-indexer-projection');
+    } finally {
+      await tradesStream.close();
+    }
+
+    const boundedSnapshots = await client.trades.stream('WQUAI-WQI', { limit: 1, timeoutMs: 2_000 });
+    assert.equal(boundedSnapshots.length, 1);
+
+    const boundedSnapshot = boundedSnapshots[0];
+    assert.equal(boundedSnapshot.type, 'snapshot');
+    assert.equal(boundedSnapshot.snapshot.channel, 'market.WQUAI-WQI.trades');
+    assert.equal(boundedSnapshot.snapshot.visibility, 'public');
+    assert.equal(boundedSnapshot.snapshot.payload, 'trade_projection');
+    assert.equal(boundedSnapshot.snapshot.source, 'in-memory-indexer-projection');
+    assert.equal(boundedSnapshot.snapshot.custody, 'public-read-only-no-custody');
+    assert.deepEqual(boundedSnapshot.snapshot.data.trades, []);
+  });
+});
+
 test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippage bounds', () => {
   const order = createMockSignedOrder({
     side: 'sell',
