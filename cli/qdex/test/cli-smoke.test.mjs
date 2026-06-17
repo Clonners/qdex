@@ -992,6 +992,35 @@ test('qdex stream nonce-cancellations command exposes bounded read-only cancella
   });
 });
 
+test('qdex stream open-orders command exposes bounded read-only open orders snapshots', async () => {
+  await withServer(async (baseUrl) => {
+    const result = await runCliJson(['--base-url', baseUrl, 'stream', 'open-orders', '--limit', '1']);
+
+    assert.equal(result.command, 'stream open-orders');
+    assert.equal(result.channel, 'open-orders');
+    assert.equal(result.transport, 'websocket');
+    assert.equal(result.limit, 1);
+    assert.equal(result.messages.length, 1);
+    assert.equal(result.messages[0].type, 'snapshot');
+    assert.equal(result.messages[0].snapshot.channel, 'open-orders');
+    assert.equal(result.messages[0].snapshot.visibility, 'private');
+    assert.equal(result.messages[0].snapshot.payload, 'open_orders_projection');
+    assert.equal(result.messages[0].snapshot.source, 'mock-order-projection');
+    assert.equal(result.messages[0].snapshot.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(result.messages[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(result.messages[0].snapshot.data.orders, []);
+    assert.equal(result.messages[0].snapshot.data.projectionType, 'LocalOrderProjection');
+    assert.equal(result.messages[0].snapshot.data.matcherLocalOnly, true);
+    assert.equal(result.messages[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(result.messages[0].snapshot.data.settlementTx, null);
+    assert.equal(result.messages[0].snapshot.data.explorerUrl, null);
+    assert.equal(result.messages[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(result.messages[0].snapshot.data.walletRequired, false);
+    assert.equal(result.messages[0].snapshot.data.fundsMoved, false);
+    assert.equal(result.messages[0].snapshot.data.tradingVaultMutation, false);
+  });
+});
+
 test('qdex api create-key/revoke-key --prepare prints owner-signed delegate-key placeholders without wallet or admin authority', async () => {
   await withServer(async (baseUrl) => {
     const registration = await runCliJson([

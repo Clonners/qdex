@@ -922,7 +922,7 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       return 0;
     }
 
-    if (command === 'stream' && (rest[0] === 'fills' || rest[0] === 'orders' || rest[0] === 'deposits' || rest[0] === 'withdrawals' || rest[0] === 'delegate-key-registrations' || rest[0] === 'delegate-key-revocations' || rest[0] === 'fees' || rest[0] === 'nonce-cancellations')) {
+    if (command === 'stream' && (rest[0] === 'fills' || rest[0] === 'orders' || rest[0] === 'deposits' || rest[0] === 'withdrawals' || rest[0] === 'delegate-key-registrations' || rest[0] === 'delegate-key-revocations' || rest[0] === 'fees' || rest[0] === 'nonce-cancellations' || rest[0] === 'open-orders')) {
       const channel = rest[0];
       const options = parseStreamOptions(rest.slice(1));
       const streamClient = channel === 'deposits'
@@ -937,7 +937,9 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
                 ? client.fees
                 : channel === 'nonce-cancellations'
                   ? client.nonces.cancellations
-                  : client[channel];
+                  : channel === 'open-orders'
+                    ? client.account.orders
+                    : client[channel];
       const messages = await streamClient.stream(options);
       writeJson(stdout, {
         command: `stream ${channel}`,

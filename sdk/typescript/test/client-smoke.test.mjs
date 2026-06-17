@@ -1362,3 +1362,58 @@ test('TypeScript SDK consumes private NonceManager cancellations stream without 
     assert.equal(boundedSnapshots[0].snapshot.data.nonceManagerMutation, false);
   });
 });
+
+test('TypeScript SDK consumes private open orders stream without wallet or custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const openOrdersStream = client.account.orders.openStream({ timeoutMs: 2_000 });
+    let openOrdersMessage;
+
+    try {
+      openOrdersMessage = await openOrdersStream.next();
+
+      assert.equal(openOrdersMessage.type, 'snapshot');
+      assert.equal(openOrdersMessage.snapshot.channel, 'open-orders');
+      assert.equal(openOrdersMessage.snapshot.visibility, 'private');
+      assert.equal(openOrdersMessage.snapshot.payload, 'open_orders_projection');
+      assert.equal(openOrdersMessage.snapshot.source, 'mock-order-projection');
+      assert.equal(openOrdersMessage.snapshot.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(openOrdersMessage.snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(openOrdersMessage.snapshot.data.source, 'mock-order-projection');
+      assert.equal(openOrdersMessage.snapshot.data.projectionType, 'LocalOrderProjection');
+      assert.equal(openOrdersMessage.snapshot.data.custody, 'non-custodial-no-withdrawal-authority');
+      assert.deepEqual(openOrdersMessage.snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+      assert.equal(openOrdersMessage.snapshot.data.matcherLocalOnly, true);
+      assert.deepEqual(openOrdersMessage.snapshot.data.orders, []);
+      assert.equal(openOrdersMessage.snapshot.data.settlementMode, 'mock');
+      assert.equal(openOrdersMessage.snapshot.data.settlementTx, null);
+      assert.equal(openOrdersMessage.snapshot.data.blockNumber, null);
+      assert.equal(openOrdersMessage.snapshot.data.blockHash, null);
+      assert.equal(openOrdersMessage.snapshot.data.eventIndex, null);
+      assert.equal(openOrdersMessage.snapshot.data.explorerUrl, null);
+      assert.equal(openOrdersMessage.snapshot.data.realQuaiTransactions, false);
+      assert.equal(openOrdersMessage.snapshot.data.walletRequired, false);
+      assert.equal(openOrdersMessage.snapshot.data.fundsMoved, false);
+      assert.equal(openOrdersMessage.snapshot.data.tradingVaultMutation, false);
+    } finally {
+      await openOrdersStream.close();
+    }
+
+    const boundedSnapshots = await client.account.orders.stream({ limit: 1, timeoutMs: 2_000 });
+    assert.equal(boundedSnapshots.length, 1);
+    assert.equal(boundedSnapshots[0].type, 'snapshot');
+    assert.equal(boundedSnapshots[0].snapshot.channel, 'open-orders');
+    assert.equal(boundedSnapshots[0].snapshot.visibility, 'private');
+    assert.equal(boundedSnapshots[0].snapshot.payload, 'open_orders_projection');
+    assert.equal(boundedSnapshots[0].snapshot.source, 'mock-order-projection');
+    assert.deepEqual(boundedSnapshots[0].snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.deepEqual(boundedSnapshots[0].snapshot.data.orders, []);
+    assert.equal(boundedSnapshots[0].snapshot.data.projectionType, 'LocalOrderProjection');
+    assert.equal(boundedSnapshots[0].snapshot.data.matcherLocalOnly, true);
+    assert.equal(boundedSnapshots[0].snapshot.data.settlementMode, 'mock');
+    assert.equal(boundedSnapshots[0].snapshot.data.realQuaiTransactions, false);
+    assert.equal(boundedSnapshots[0].snapshot.data.fundsMoved, false);
+    assert.equal(boundedSnapshots[0].snapshot.data.tradingVaultMutation, false);
+  });
+});

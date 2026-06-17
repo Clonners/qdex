@@ -226,6 +226,8 @@ export class QDexClient {
       balances: async () => this.#requestOk('/v1/account/balances'),
       orders: {
         get: async () => this.#requestOk('/v1/account/orders'),
+        openStream: (options = {}) => this.streams.open('open-orders', options),
+        stream: async (options = {}) => this.streams.read('open-orders', options),
       },
     };
 
