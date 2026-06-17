@@ -16,6 +16,7 @@ import { bindLiveVaultHistoryStreamsWithRestHistory } from './vault-history-stre
 import { bindMockOrderTrigger } from './mock-order-trigger.js';
 import { bindNonceCancelPrepareTriggerWithLocalApiSmoke } from './nonce-cancel-prepare-binding.js';
 import { bindOpenOrdersLocalApiSmoke } from './open-orders-binding.js';
+import { bindLiveOpenOrdersStreamsWithRestOrders } from './open-orders-stream-binding.js';
 import { bindVaultPrepareTriggerWithLocalApiSmoke } from './vault-prepare-binding.js';
 import { mockVerticalSliceFixture } from './mock-vertical-fixture.js';
 import { renderTradeProofPanel } from './render.js';
@@ -238,6 +239,35 @@ if (mount) {
   } catch (error) {
     mount.dataset.qdxOpenOrdersSmoke = 'disabled';
     console.warn('QDEX open orders REST smoke disabled; keeping static read-only fixture.', error);
+  }
+
+  try {
+    bindLiveOpenOrdersStreamsWithRestOrders({
+      mount,
+      baseUrl,
+      baseFixture: mockVerticalSliceFixture,
+      render: renderTradeProofPanel,
+      onRestError: (error) => {
+        mount.dataset.qdxFillOpenOrdersRestSnapshot = 'error';
+        console.warn('QDEX open orders REST snapshot unavailable; keeping static read-only fixture.', error);
+      },
+      onRestOrders: () => {
+        mount.dataset.qdxFillOpenOrdersRestSnapshot = 'mock-order-projection';
+      },
+      onStreamError: (error) => {
+        mount.dataset.qdxFillOpenOrdersStreams = 'error';
+        console.warn('QDEX live open orders streams unavailable; keeping static read-only fixture.', error);
+      },
+      onStreamUpdate: () => {
+        mount.dataset.qdxFillOpenOrdersStreams = 'open-orders';
+      },
+    }).catch((error) => {
+      mount.dataset.qdxFillOpenOrdersStreams = 'disabled';
+      console.warn('QDEX local open orders API/stream smoke disabled; keeping static read-only fixture.', error);
+    });
+  } catch (error) {
+    mount.dataset.qdxFillOpenOrdersStreams = 'disabled';
+    console.warn('QDEX live open orders streams disabled; keeping static read-only fixture.', error);
   }
 
   try {
