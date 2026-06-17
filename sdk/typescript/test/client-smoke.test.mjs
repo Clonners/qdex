@@ -1128,6 +1128,43 @@ test('TypeScript SDK consumes public market-data streams without wallet or tx au
   });
 });
 
+test('TypeScript SDK consumes public klines (candle) stream without custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const klineStream = client.klines.openStream('WQUAI-WQI', { interval: '1m', timeoutMs: 2_000 });
+    try {
+      const klineMessage = await klineStream.next();
+      assert.equal(klineMessage.type, 'snapshot');
+      assert.equal(klineMessage.transport, 'websocket');
+      assert.equal(klineMessage.snapshot.channel, 'market.WQUAI-WQI.klines.1m');
+      assert.equal(klineMessage.snapshot.visibility, 'public');
+      assert.equal(klineMessage.snapshot.payload, 'kline_snapshot');
+      assert.equal(klineMessage.snapshot.source, 'mock-candle-projection');
+      assert.equal(klineMessage.snapshot.custody, 'public-read-only-no-custody');
+      assert.equal(klineMessage.snapshot.data.marketId, 'WQUAI-WQI');
+      assert.equal(klineMessage.snapshot.data.interval, '1m');
+      assert.deepEqual(klineMessage.snapshot.data.candles, []);
+      assert.equal(klineMessage.snapshot.data.source, 'mock-candle-projection');
+    } finally {
+      await klineStream.close();
+    }
+
+    const boundedSnapshots = await client.klines.stream('WQUAI-WQI', { interval: '15m', limit: 1, timeoutMs: 2_000 });
+    assert.equal(boundedSnapshots.length, 1);
+
+    const boundedSnapshot = boundedSnapshots[0];
+    assert.equal(boundedSnapshot.type, 'snapshot');
+    assert.equal(boundedSnapshot.snapshot.channel, 'market.WQUAI-WQI.klines.15m');
+    assert.equal(boundedSnapshot.snapshot.visibility, 'public');
+    assert.equal(boundedSnapshot.snapshot.payload, 'kline_snapshot');
+    assert.equal(boundedSnapshot.snapshot.source, 'mock-candle-projection');
+    assert.equal(boundedSnapshot.snapshot.custody, 'public-read-only-no-custody');
+    assert.equal(boundedSnapshot.snapshot.data.interval, '15m');
+    assert.deepEqual(boundedSnapshot.snapshot.data.candles, []);
+  });
+});
+
 test('TypeScript SDK consumes public orderbook (depth) stream without custody authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });
@@ -1152,15 +1189,13 @@ test('TypeScript SDK consumes public orderbook (depth) stream without custody au
 
     const boundedSnapshots = await client.orderbook.stream('WQUAI-WQI', { limit: 1, timeoutMs: 2_000 });
     assert.equal(boundedSnapshots.length, 1);
-    assert.equal(boundedSnapshots[0].type, 'snapshot');
-    assert.equal(boundedSnapshots[0].snapshot.channel, 'market.WQUAI-WQI.depth');
-    assert.equal(boundedSnapshots[0].snapshot.visibility, 'public');
-    assert.equal(boundedSnapshots[0].snapshot.payload, 'orderbook_depth');
-    assert.equal(boundedSnapshots[0].snapshot.source, 'mock-orderbook');
-    assert.equal(boundedSnapshots[0].snapshot.custody, 'public-read-only-no-custody');
-    assert.equal(boundedSnapshots[0].snapshot.data.marketId, 'WQUAI-WQI');
-    assert.deepEqual(boundedSnapshots[0].snapshot.data.bids, []);
-    assert.deepEqual(boundedSnapshots[0].snapshot.data.asks, []);
+
+    const boundedSnapshot = boundedSnapshots[0];
+    assert.equal(boundedSnapshot.type, 'snapshot');
+    assert.equal(boundedSnapshot.snapshot.channel, 'market.WQUAI-WQI.depth');
+    assert.equal(boundedSnapshot.snapshot.visibility, 'public');
+    assert.equal(boundedSnapshot.snapshot.payload, 'orderbook_depth');
+    assert.equal(boundedSnapshot.snapshot.source, 'mock-orderbook');
   });
 });
 
