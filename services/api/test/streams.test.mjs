@@ -68,6 +68,7 @@ test('stream channel registry pins public market data and custody-safe private s
     'delegate-key-registrations',
     'delegate-key-revocations',
     'nonce-cancellations',
+    'open-orders',
   ]);
 
   const fillsContract = contracts.private.find((contract) => contract.channel === 'fills');
@@ -122,6 +123,15 @@ test('stream channel registry pins public market data and custody-safe private s
   assert.deepEqual(nonceCancellationsContract.requiredPermissions, ['READ_ONLY']);
   assert.deepEqual(nonceCancellationsContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
   assert.deepEqual(nonceCancellationsContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
+
+  const openOrdersContract = contracts.private.find(
+    (contract) => contract.channel === 'open-orders',
+  );
+  assert.equal(openOrdersContract.payload, 'open_orders_projection');
+  assert.equal(openOrdersContract.source, 'mock-order-projection');
+  assert.deepEqual(openOrdersContract.requiredPermissions, ['READ_ONLY']);
+  assert.deepEqual(openOrdersContract.delegateDefaults, ['NO_WITHDRAW', 'NO_ADMIN']);
+  assert.deepEqual(openOrdersContract.forbiddenPermissions, ['WITHDRAW', 'ADMIN']);
 });
 
 test('stream snapshots expose public depth/trades and private fills from indexed mock projections', () => {
@@ -400,4 +410,36 @@ test('private NonceManager cancellation stream snapshot reuses read-only event-p
   assert.equal(snapshot.data.tradingVaultMutation, false);
   assert.match(snapshot.data.safetyNotice, /Read-only NonceManager NonceCancelled/);
   assert.match(snapshot.data.safetyNotice, /mock evidence fields stay null/);
+});
+
+test('private open-orders stream snapshot reuses mock-order-projection envelope', () => {
+  const state = createMockDexState();
+
+  const snapshot = createStreamSnapshot({ channel: 'open-orders', state });
+
+  assert.equal(snapshot.channel, 'open-orders');
+  assert.equal(snapshot.visibility, 'private');
+  assert.equal(snapshot.payload, 'open_orders_projection');
+  assert.equal(snapshot.source, 'mock-order-projection');
+  assert.equal(snapshot.custody, 'non-custodial-no-withdrawal-authority');
+  assert.deepEqual(snapshot.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+  assert.equal(snapshot.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
+
+  assert.deepEqual(snapshot.data.orders, []);
+  assert.equal(snapshot.data.source, 'mock-order-projection');
+  assert.equal(snapshot.data.projectionType, 'LocalOrderProjection');
+  assert.equal(snapshot.data.custody, 'non-custodial-no-withdrawal-authority');
+  assert.deepEqual(snapshot.data.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+  assert.equal(snapshot.data.matcherLocalOnly, true);
+  assert.equal(snapshot.data.settlementMode, 'mock');
+  assert.equal(snapshot.data.settlementTx, null);
+  assert.equal(snapshot.data.blockNumber, null);
+  assert.equal(snapshot.data.blockHash, null);
+  assert.equal(snapshot.data.eventIndex, null);
+  assert.equal(snapshot.data.explorerUrl, null);
+  assert.equal(snapshot.data.realQuaiTransactions, false);
+  assert.equal(snapshot.data.walletRequired, false);
+  assert.equal(snapshot.data.fundsMoved, false);
+  assert.equal(snapshot.data.tradingVaultMutation, false);
+  assert.match(snapshot.data.safetyNotice, /Mock open orders only/);
 });

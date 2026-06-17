@@ -11,6 +11,7 @@ import {
   INDEXER_SOURCE,
   MARKET_ID,
   MOCK_VAULT_PROJECTION_SOURCE,
+  createMockOpenOrdersEnvelope,
   createMockVaultBalanceProjection,
 } from './mock-dex.js';
 import {
@@ -123,6 +124,11 @@ const privateContracts = () => [
     channel: 'nonce-cancellations',
     payload: 'nonce_cancellation_projection',
     source: NONCE_MANAGER_EVENT_PROJECTION_SOURCE,
+  }),
+  privateContract({
+    channel: 'open-orders',
+    payload: 'open_orders_projection',
+    source: 'mock-order-projection',
   }),
 ];
 
@@ -359,6 +365,17 @@ export const createStreamSnapshot = ({ channel, state } = {}) => {
       channel,
       payload: 'nonce_cancellation_projection',
       source: data.source,
+      data,
+    });
+  }
+
+  if (channel === 'open-orders') {
+    const data = createMockOpenOrdersEnvelope(state.listOrders());
+
+    return privateSnapshot({
+      channel,
+      payload: 'open_orders_projection',
+      source: 'mock-order-projection',
       data,
     });
   }
