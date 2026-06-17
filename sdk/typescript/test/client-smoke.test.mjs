@@ -1234,6 +1234,43 @@ test('TypeScript SDK consumes public trades stream without custody authority', a
   });
 });
 
+test('TypeScript SDK consumes public tickers stream without custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const tickerStream = client.tickers.openStream({ timeoutMs: 2_000 });
+    try {
+      const tickerMessage = await tickerStream.next();
+      assert.equal(tickerMessage.type, 'snapshot');
+      assert.equal(tickerMessage.transport, 'websocket');
+      assert.equal(tickerMessage.snapshot.channel, 'global.tickers');
+      assert.equal(tickerMessage.snapshot.visibility, 'public');
+      assert.equal(tickerMessage.snapshot.payload, 'ticker_snapshot');
+      assert.equal(tickerMessage.snapshot.source, 'mock-market-data');
+      assert.equal(tickerMessage.snapshot.custody, 'public-read-only-no-custody');
+      assert.equal(tickerMessage.snapshot.data.tickers[0].marketId, 'WQUAI-WQI');
+      assert.equal(tickerMessage.snapshot.data.tickers[0].source, 'mock-market-data');
+      assert.equal(tickerMessage.snapshot.data.tickers[0].volume24h, '0');
+      assert.equal(tickerMessage.snapshot.data.tickers[0].lastPrice, null);
+      assert.equal(tickerMessage.snapshot.data.tickers[0].bestBid, null);
+      assert.equal(tickerMessage.snapshot.data.tickers[0].bestAsk, null);
+    } finally {
+      await tickerStream.close();
+    }
+
+    const boundedSnapshots = await client.tickers.stream({ limit: 1, timeoutMs: 2_000 });
+    assert.equal(boundedSnapshots.length, 1);
+
+    const boundedSnapshot = boundedSnapshots[0];
+    assert.equal(boundedSnapshot.type, 'snapshot');
+    assert.equal(boundedSnapshot.snapshot.channel, 'global.tickers');
+    assert.equal(boundedSnapshot.snapshot.visibility, 'public');
+    assert.equal(boundedSnapshot.snapshot.payload, 'ticker_snapshot');
+    assert.equal(boundedSnapshot.snapshot.source, 'mock-market-data');
+    assert.equal(boundedSnapshot.snapshot.custody, 'public-read-only-no-custody');
+  });
+});
+
 test('TypeScript SDK preserves market_ioc as signed IOC limit order with slippage bounds', () => {
   const order = createMockSignedOrder({
     side: 'sell',
