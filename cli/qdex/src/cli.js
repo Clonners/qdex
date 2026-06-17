@@ -623,6 +623,15 @@ export const runQdexCli = async (argv = process.argv.slice(2), {
       return 0;
     }
 
+    if (command === 'account-orders') {
+      writeJson(stdout, {
+        command: 'account-orders',
+        baseUrl,
+        ...(await client.account.orders.get()),
+      });
+      return 0;
+    }
+
     if (command === 'contracts') {
       writeJson(stdout, {
         command: 'contracts',

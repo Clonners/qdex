@@ -347,6 +347,9 @@ class _AccountApi:
     def balances(self):
         return self._client._request_ok("/v1/account/balances")
 
+    def orders(self):
+        return self._client._request_ok("/v1/account/orders")
+
 
 class _VaultDepositsApi:
     def __init__(self, client):

@@ -193,6 +193,32 @@ test('TypeScript SDK exposes read-only local account overview without wallet or 
   });
 });
 
+test('TypeScript SDK exposes read-only open orders projection without wallet or custody authority', async () => {
+  await withServer(async (baseUrl) => {
+    const client = new QDexClient({ baseUrl });
+
+    const openOrders = await client.account.orders.get();
+
+    assert.deepEqual(openOrders.orders, []);
+    assert.equal(openOrders.source, 'mock-order-projection');
+    assert.equal(openOrders.projectionType, 'LocalOrderProjection');
+    assert.equal(openOrders.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(openOrders.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.equal(openOrders.matcherLocalOnly, true);
+    assert.equal(openOrders.settlementMode, 'mock');
+    assert.equal(openOrders.settlementTx, null);
+    assert.equal(openOrders.blockNumber, null);
+    assert.equal(openOrders.blockHash, null);
+    assert.equal(openOrders.eventIndex, null);
+    assert.equal(openOrders.explorerUrl, null);
+    assert.equal(openOrders.realQuaiTransactions, false);
+    assert.equal(openOrders.walletRequired, false);
+    assert.equal(openOrders.fundsMoved, false);
+    assert.equal(openOrders.tradingVaultMutation, false);
+    assert.match(openOrders.safetyNotice, /Mock open orders only.*no real Quai transaction.*no wallet loaded.*no funds moved/i);
+  });
+});
+
 test('TypeScript SDK exposes prepare-only owner-wallet vault operation placeholders without tx authority', async () => {
   await withServer(async (baseUrl) => {
     const client = new QDexClient({ baseUrl });

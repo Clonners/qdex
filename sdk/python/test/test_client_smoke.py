@@ -149,6 +149,30 @@ class QDexPythonSdkSmokeTest(unittest.TestCase):
             self.assertFalse(balances["walletRequired"])
             self.assertIn("no wallet loaded, no funds moved", balances["safetyNotice"])
 
+    def test_python_sdk_exposes_read_only_open_orders_projection_without_wallet_or_custody_authority(self):
+        with ApiServer() as server:
+            client = QDexClient(base_url=server.base_url)
+
+            open_orders = client.account.orders()
+
+            self.assertEqual(open_orders["orders"], [])
+            self.assertEqual(open_orders["source"], "mock-order-projection")
+            self.assertEqual(open_orders["projectionType"], "LocalOrderProjection")
+            self.assertEqual(open_orders["custody"], "non-custodial-no-withdrawal-authority")
+            self.assertEqual(open_orders["permissions"], ["READ_ONLY", "NO_WITHDRAW", "NO_ADMIN"])
+            self.assertTrue(open_orders["matcherLocalOnly"])
+            self.assertEqual(open_orders["settlementMode"], "mock")
+            self.assertIsNone(open_orders["settlementTx"])
+            self.assertIsNone(open_orders["blockNumber"])
+            self.assertIsNone(open_orders["blockHash"])
+            self.assertIsNone(open_orders["eventIndex"])
+            self.assertIsNone(open_orders["explorerUrl"])
+            self.assertFalse(open_orders["realQuaiTransactions"])
+            self.assertFalse(open_orders["walletRequired"])
+            self.assertFalse(open_orders["fundsMoved"])
+            self.assertFalse(open_orders["tradingVaultMutation"])
+            self.assertIn("Mock open orders only", open_orders["safetyNotice"])
+
     def test_python_sdk_exposes_read_only_local_account_overview_without_wallet_or_custody_authority(self):
         with ApiServer() as server:
             client = QDexClient(base_url=server.base_url)

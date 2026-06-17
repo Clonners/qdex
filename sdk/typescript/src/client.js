@@ -224,6 +224,9 @@ export class QDexClient {
     this.account = {
       get: async () => this.#requestOk('/v1/account'),
       balances: async () => this.#requestOk('/v1/account/balances'),
+      orders: {
+        get: async () => this.#requestOk('/v1/account/orders'),
+      },
     };
 
     this.vault = {

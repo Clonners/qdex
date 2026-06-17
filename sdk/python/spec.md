@@ -35,6 +35,7 @@ fee_stream.close()
 fee_stream_snapshots = dex.fees.stream(limit=limit)
 overview = dex.account.get()  # GET /v1/account -> mock-account-overview, LocalAccountOverviewProjection, READ_ONLY
 balances = dex.account.balances()  # GET /v1/account/balances -> mock-vault-projection, read-only, no wallet loaded, no funds moved
+open_orders = dex.account.orders()  # GET /v1/account/orders -> mock-order-projection, LocalOrderProjection, READ_ONLY, NO_WITHDRAW, NO_ADMIN, matcherLocalOnly, mock-settlement-only
 vault_deposits = dex.vault.deposits.list()  # GET /v1/vault/deposits -> source: tradingvault-event-projection, TradingVaultDepositProjection, READ_ONLY
 vault_withdrawals = dex.vault.withdrawals.list()  # GET /v1/vault/withdrawals -> source: tradingvault-event-projection, TradingVaultWithdrawalProjection, READ_ONLY
 deposit_history_stream = dex.vault.deposits.open_stream()  # /v1/ws?channel=deposits
@@ -188,6 +189,8 @@ dex.orders.cancel_all(market_id='WQUAI-WQI')
 `account.get()` is a read-only local account overview from `GET /v1/account`. It returns `source: mock-account-overview`, `session.mode: mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`; it has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
 `account.balances()` is a read-only mock vault projection from `GET /v1/account/balances`. It returns `source: mock-vault-projection`, `settlementMode: mock`, `permissions: [READ_ONLY, NO_WITHDRAW, NO_ADMIN]`, `realQuaiTransactions: false`, and `walletRequired: false`; it has no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+
+`account.orders()` is a read-only local open orders projection from `GET /v1/account/orders`. It returns `source: mock-order-projection`, `projectionType: LocalOrderProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly: true`, `settlementMode: mock`, `realQuaiTransactions: False`, `walletRequired: False`, `fundsMoved: False`, and `tradingVaultMutation: False` with mock-null tx/block/event/explorer evidence; it has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
 `vault.deposits.list()` and `vault.withdrawals.list()` expose read-only TradingVault event history from `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals`. The envelopes return `source: tradingvault-event-projection`, `projectionType: TradingVaultDepositProjection` / `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: False`, `walletRequired: False`, `fundsMoved: False`, and `tradingVaultMutation: False` with mock-null tx/block/event/explorer evidence. These clients preserve no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate TradingVault.
 

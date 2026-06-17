@@ -54,6 +54,8 @@ qdex --base-url http://127.0.0.1:8787 smoke
 
 `qdex account` prints `GET /v1/account` as read-only `mock-account-overview` metadata: `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
 
+`qdex account-orders` prints `GET /v1/account/orders` as read-only `mock-order-projection` metadata: `projectionType: LocalOrderProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly: true`, `settlementMode: mock`, mock-null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
+
 `qdex ticker WQUAI-WQI` prints `GET /v1/tickers/WQUAI-WQI` public read-only mock market-data metadata (`source: mock-market-data`, null `lastPrice`/`bestBid`/`bestAsk`, and `volume24h: "0"`) with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 `qdex balance` prints `GET /v1/account/balances` as read-only `mock-vault-projection` metadata: `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, no real Quai tx, no wallet required, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
