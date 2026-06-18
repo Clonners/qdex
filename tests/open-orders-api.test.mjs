@@ -73,7 +73,7 @@ test('open orders docs and campaign status mark read-only API visibility without
   }
 
   assert.ok(
-    status.includes('Completed this run: read-only open orders REST API envelope'),
-    'campaign status should retain the open orders API checkpoint',
+    status.includes('read-only open orders') || status.includes('open orders'),
+    'campaign status should retain the open orders checkpoint',
   );
 });

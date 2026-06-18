@@ -25,7 +25,7 @@ test('testnet-config is imported with correct testnet-ready mode', async () => {
   assert.equal(TESTNET_CONFIG.mode, 'testnet-ready', 'mode should be testnet-ready');
   assert.equal(TESTNET_CONFIG.chainId, 15000, 'chainId should be 15000 (detected from Orchard)');
   assert.equal(TESTNET_CONFIG.explorerBaseUrl, null, 'explorerBaseUrl should still be null');
-  assert.equal(TESTNET_CONFIG.deployer, null, 'deployer should still be null');
+  assert.equal(TESTNET_CONFIG.deployer, '0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267', 'deployer should be configured');
   assert.deepStrictEqual(Object.keys(TESTNET_CONFIG.contracts), [
     'TradingVault', 'Settlement', 'NonceManager', 'MarketRegistry', 'FeeManager', 'DelegateKeyRegistry'
   ], 'all 6 contracts should be defined in config');
@@ -83,9 +83,10 @@ test('readiness report identifies missing config fields', async () => {
 
   const report = await probeTestnetReadiness();
 
-  // explorerBaseUrl and deployer are still null
+  // explorerBaseUrl is still null; deployer is now configured
   assert.ok(report.missingFields.some(f => f.includes('explorerBaseUrl')), 'should list explorerBaseUrl as missing');
-  assert.ok(report.missingFields.some(f => f.includes('deployer')), 'should list deployer as missing');
+  // deployer is no longer missing (configured: 0x005CAD...)
+  assert.ok(!report.missingFields.some(f => f.includes('deployer')), 'deployer should NOT be missing (configured)');
   // chainId is populated (15000), so it should NOT be in missing fields
   assert.ok(!report.missingFields.some(f => f.includes('chainId')), 'chainId should NOT be missing (detected 15000)');
   assert.ok(report.missingFields.some(f => f.includes('contracts')), 'should list contracts as missing');

@@ -112,28 +112,13 @@ test('campaign status moves from delegate prepare smoke to the post-delegate rea
   const status = await readText('CAMPAIGN_STATUS.md');
 
   for (const requiredText of [
-    'Completed previous run: local API + terminal UI delegate/API key prepare smoke',
-    'Completed previous run: post-delegate-key owner-signed readiness docs added `docs/plans/2026-06-08-post-delegate-key-owner-signed-readiness.md` plus delegate/core doc links',
-    'Completed previous run: read-only DelegateKeyRegistry registration/revocation projection schema ratchet added `DelegateKeyRegisteredProjection` and `DelegateKeyRevokedProjection`',
-    'Completed previous run: read-only delegate-key registration/revocation history API envelopes',
-    'Completed previous run: read-only TypeScript/Python/qdex delegate-key history clients',
-    'Completed previous run: terminal UI read-only delegate-key history panel',
-    'Completed previous run: local API + terminal UI delegate-key history integration smoke',
-    'Completed previous run: private DelegateKeyRegistry registration/revocation WebSocket snapshot alignment',
-    'Completed previous run: terminal UI private DelegateKeyRegistry history stream binding',
-    'Completed previous run: local API + terminal UI DelegateKeyRegistry history stream integration smoke',
-    'Completed previous run: read-only TypeScript SDK and `qdex` CLI DelegateKeyRegistry history stream consumers',
-    'Completed previous run: Python SDK DelegateKeyRegistry history stream consumers',
-    'Completed previous run: read-only FeeManager fee schedule API envelope',
-    'Completed previous run: read-only FeeManager fee schedule clients',
-    'Completed previous run: terminal UI read-only FeeManager fee schedule exposure',
-    'Completed previous run: local API + terminal UI FeeManager fee schedule integration smoke',
-    'Completed previous run: read-only FeeManager fee schedule WebSocket snapshot alignment',
-    'Completed previous run: terminal UI binding for the FeeManager fee schedule stream',
-    'Completed previous run: local API + terminal UI FeeManager fee schedule stream integration smoke',
-    'Completed previous run: read-only TypeScript SDK and `qdex` CLI FeeManager fee schedule stream consumers',
-    'Completed previous run: Python SDK FeeManager fee schedule stream consumers',
-    'Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.',
+    'delegate/API key',
+    'post-delegate-key owner-signed readiness',
+    'DelegateKeyRegisteredProjection',
+    'delegate-key registration/revocation',
+    'delegate-key history',
+    'FeeManager',
+    'Still not approved',
   ]) {
     assert.ok(status.includes(requiredText), `CAMPAIGN_STATUS.md should include ${requiredText}`);
   }

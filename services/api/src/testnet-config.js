@@ -13,7 +13,7 @@ export const TESTNET_CONFIG = Object.freeze({
   chainId: 15000, // detected via eth_chainId probe (read-only, public network param)
   rpcUrl: 'https://orchard.rpc.quai.network/cyprus1',
   explorerBaseUrl: null,
-  deployer: null,
+  deployer: '0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267',
   contracts: Object.freeze({
     TradingVault: null,
     Settlement: null,

@@ -90,7 +90,7 @@ test('campaign status records account overview terminal UI panel as the complete
     'campaign status should retain the local API + terminal UI public kline/candle stream smoke as current completed work',
   );
   assert.ok(
-    status.includes('Current phase: local MVP feature-complete for source-only/demo; testnet cutover readiness plan is active'),
-    'campaign status should describe the terminal UI keyboard-shortcut help as the current completed phase',
+    status.includes('Current phase: testnet cutover'),
+    'campaign status should reflect testnet cutover phase',
   );
 });

@@ -1,8 +1,8 @@
 # Quai Terminal DEX Campaign Status
 
 ## State
-- Status: active; testnet cutover phase — Clonners provided Quai Orchard testnet RPC
-- Current phase: testnet cutover (RPC provided, awaiting wallet + deploy approval)
+- Status: active; testnet cutover phase — wallet configured, contracts pending deploy
+- Current phase: testnet cutover (RPC ✅, wallet ✅, deploy ⏳)
 - Testnet RPC: `https://orchard.rpc.quai.network/cyprus1` (Quai Orchard / Cyprus1 zone)
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Model: Qwen3.6-27B local (3090 via Tailscale)
@@ -216,15 +216,30 @@ Still not approved: wallets, signing, broadcasts, deploys, real token addresses,
 
 RPC APPROVED: `https://orchard.rpc.quai.network/cyprus1` — Quai Orchard testnet, Cyprus1 zone. Testnet config written to `services/api/src/testnet-config.js`.
 
-## Testnet cutover phase
+## Next autonomous slice
 
-Started: 2026-06-17
+**Testnet cutover — contract deployment to Orchard.**
+
+Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard).
+RPC: `https://orchard.rpc.quai.network/cyprus1` (chainId 15000).
+
+Next bounded slice: deploy contracts to Orchard testnet in order:
+1. TradingVault
+2. NonceManager  
+3. MarketRegistry
+4. FeeManager
+5. DelegateKeyRegistry
+6. Settlement (wired to 1-5)
+
+Then: identify WQUAI/WQI token addresses on Orchard, enable WQUAI/WQI market, initialize fee policy.
+
+Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from configured wallet.
 
 - ✅ RPC URL provided and configured
 - ✅ Chain ID detected: 15000 (Quai Orchard, read-only public param)
 - ✅ Explorer URL configured: ⏳ (null, awaiting Quai Orchard explorer URL)
 - ✅ Testnet connection probe module with 12 tests — verifies RPC connectivity, chain ID, block number, network version, config completeness, safety metadata
-- ⏳ Wallet configuration (deployer address, private key handling)
+- ✅ Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard)
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
