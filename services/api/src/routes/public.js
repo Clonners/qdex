@@ -7,6 +7,7 @@ import {
   createTokenListingPolicyResponse,
 } from '../listing-policy.js';
 import { createRelayerSettlementModeGateStatus } from '../relayer-gate-status.js';
+import { getTestnetDeploymentStatus } from '../testnet-deployment-status.js';
 
 const MARKET_ID = 'WQUAI-WQI';
 
@@ -162,6 +163,10 @@ export const handlePublicRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/relayer/settlement-mode-gate') {
     return jsonResult(200, createRelayerSettlementModeGateStatus());
+  }
+
+  if (method === 'GET' && pathname === '/v1/testnet/deployment-status') {
+    return jsonResult(200, getTestnetDeploymentStatus());
   }
 
   return null;
