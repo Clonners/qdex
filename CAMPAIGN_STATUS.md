@@ -15,6 +15,8 @@
 
 ## Campaign history
 
+Completed this run: deploy readiness check module `services/api/src/deploy-readiness-check.js` — fail-closed gate before testnet deployment that consolidates config completeness (`rpcUrl`, `chainId`, `networkName`, `zone`, `explorerBaseUrl`, `deployer`), deploy manifest validation (draft-dry-run mode, null addresses, step ordering, dependency ordering), and safety metadata (no wallet loaded, no RPC calls, no signing, no broadcasting, no funds movement, no contract deploy); `checkDeployReadiness()` returns structured readiness report with network info, deployment order reference, and consolidated blockers; `assertDeployReady()` throws with consolidated blocker list when not ready; 19 RED/GREEN tests cover config completeness, manifest health, safety metadata, consolidated report, assert throw behavior, source safety (no wallet/signing imports), export verification, and integration matching; 565 total tests, 541 pass (24 pre-existing: 20 Hardhat contracts + 3 stale terminal UI ratchets); preserves `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+
 Completed previous run: prepare-only delegate/API key registration and revocation API boundary added `delegate-key-registry-projection` list metadata plus intentional `501` owner-signed placeholders for `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`; responses preserve `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
 Completed previous run: TypeScript/Python/qdex prepare-only delegate/API key registration and revocation clients added SDK `delegateKeys.prepareRegister()` / `delegateKeys.prepareRevoke()`, Python `delegate_keys.prepare_register()` / `delegate_keys.prepare_revoke()`, and CLI `qdex api create-key --prepare` / `qdex api revoke-key --prepare`; they return intentional `501` owner-signed envelopes with `delegate-key-owner-signed-prepare-boundary`, `prepare-only-owner-signed-required`, `owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
@@ -218,20 +220,13 @@ RPC APPROVED: `https://orchard.rpc.quai.network/cyprus1` — Quai Orchard testne
 
 ## Next autonomous slice
 
-**Testnet cutover — contract deployment to Orchard.**
+**Testnet cutover — deploy readiness gate.**
 
 Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard).
 RPC: `https://orchard.rpc.quai.network/cyprus1` (chainId 15000).
 
-Next bounded slice: deploy contracts to Orchard testnet in order:
-1. TradingVault
-2. NonceManager  
-3. MarketRegistry
-4. FeeManager
-5. DelegateKeyRegistry
-6. Settlement (wired to 1-5)
-
-Then: identify WQUAI/WQI token addresses on Orchard, enable WQUAI/WQI market, initialize fee policy.
+Next bounded slice: deploy contracts to Orchard testnet (requires explicit approval).
+Before deployment: readiness gate verifies config completeness, manifest validity, safety metadata.
 
 Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from configured wallet.
 
@@ -241,6 +236,7 @@ Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from 
 - ✅ Testnet connection probe module with 12 tests — verifies RPC connectivity, chain ID, block number, network version, config completeness, safety metadata
 - ✅ Explorer helper utilities with 13 tests — `explorerUrlForTx()`, `explorerUrlForAddress()`, `explorerUrlForBlock()`
 - ✅ Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard)
+- ✅ Deploy readiness check with 19 tests — consolidates config completeness, deploy manifest validation, and safety metadata into a single fail-closed gate; `checkDeployReadiness()` returns structured report, `assertDeployReady()` throws on blockers; preserves `NO_WITHDRAW`, `NO_ADMIN`, `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
