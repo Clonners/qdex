@@ -96,10 +96,10 @@ test('checkTestnetReadiness reports contract address status correctly', () => {
 test('checkTestnetReadiness reports token address status correctly', () => {
   const report = checkTestnetReadiness();
 
-  assert.equal(report.tokens.deployed, 0, 'No tokens deployed yet');
+  assert.equal(report.tokens.deployed, 2, 'Both tokens configured (WQUAI + WQI on Orchard)');
   assert.equal(report.tokens.total, 2, 'Should track 2 tokens (WQUAI, WQI)');
-  assert.equal(report.tokens.null.length, 2, 'Both token addresses should be null');
-  assert.ok(report.tokens.pass, 'All-null tokens should pass (expected before deploy)');
+  assert.equal(report.tokens.null.length, 0, 'No token addresses null (all configured)');
+  assert.ok(report.tokens.pass, 'All-configured tokens should pass');
 });
 
 test('checkTestnetReadiness explorer category passes with configured explorer', () => {
@@ -227,9 +227,9 @@ test('checkTestnetReadiness includes expected warnings about null addresses', ()
   assert.ok(contractWarning, 'Should have a warning about null contract addresses');
   assert.ok(contractWarning.includes('6/6 null'), 'Should say 6/6 null');
 
-  const tokenWarning = report.warnings.find((w) => w.includes('Tokens:') && w.includes('null'));
-  assert.ok(tokenWarning, 'Should have a warning about null token addresses');
-  assert.ok(tokenWarning.includes('2/2 null'), 'Should say 2/2 null');
+  const tokenWarning = report.warnings.find((w) => w.includes('Tokens:'));
+  assert.ok(tokenWarning, 'Should have a token status warning');
+  assert.ok(tokenWarning.includes('all 2 addresses configured'), 'Should say all tokens configured');
 });
 
 // ---- Explorer null guard ----

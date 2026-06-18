@@ -284,7 +284,9 @@ export function checkTestnetReadiness(options = {}) {
   const warnings = [
     ...deployReadiness.config.warnings,
     `Contracts: ${contracts.null.length}/${contracts.total} null (expected before deploy)`,
-    `Tokens: ${tokens.null.length}/${tokens.total} null (expected before deploy)`,
+    tokens.null.length > 0
+      ? `Tokens: ${tokens.null.length}/${tokens.total} null (expected before deploy)`
+      : `Tokens: all ${tokens.total} addresses configured`,
   ];
 
   // The readiness report is ready if config + manifest + safety all pass.

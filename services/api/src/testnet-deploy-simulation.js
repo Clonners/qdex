@@ -72,18 +72,73 @@ export function readArtifact(artifactsPath, contractName) {
 
 /**
  * Encode a single Solidity parameter value to hex (32 bytes for value types).
- * @param {string} type - Solidity type (e.g. "address")
+ * @param {string} type - Solidity type (e.g. "address", "uint256", "bool", "bytes32")
  * @param {unknown} value - Parameter value
  * @returns {string|null} - Hex string or null on failure
  */
 function encodeParam(type, value) {
+  // ── address ─────────────────────────────────────────────────────
   if (type === 'address') {
     if (typeof value !== 'string' || !value) return null;
     const addr = value.startsWith('0x') ? value.slice(2) : value;
     if (!/^[a-fA-F0-9]{40}$/.test(addr)) return null;
-    // Left-pad to 32 bytes (64 hex chars)
-    return '0x' + addr.padStart(40, '0').padStart(64, '0');
+    // address is 20 bytes, left-padded to 32 bytes (64 hex chars)
+    return '0x' + addr.padStart(64, '0');
   }
+
+  // ── uintN (8..256) ─────────────────────────────────────────────
+  const uintMatch = type.match(/^uint(\d+)$/);
+  if (uintMatch) {
+    const bits = parseInt(uintMatch[1], 10);
+    if (bits % 8 !== 0 || bits < 8 || bits > 256) return null;
+    const num = BigInt(typeof value === 'string' ? value : value);
+    const maxVal = BigInt(`0x${'ff'.repeat(bits / 8)}`);
+    if (num < 0n || num > maxVal) return null;
+    return '0x' + num.toString(16).padStart(bits / 4, '0');
+  }
+
+  // ── intN (8..256) ──────────────────────────────────────────────
+  const intMatch = type.match(/^int(\d+)$/);
+  if (intMatch) {
+    const bits = parseInt(intMatch[1], 10);
+    if (bits % 8 !== 0 || bits < 8 || bits > 256) return null;
+    const num = BigInt(typeof value === 'string' ? value : value);
+    const maxVal = BigInt(`0x${'ff'.repeat(bits / 8 - 1)}7f`);
+    const minVal = ~maxVal;
+    if (num < minVal || num > maxVal) return null;
+    // Two's complement for negative numbers
+    let hex = num.toString(16);
+    if (hex.startsWith('-')) {
+      const absVal = BigInt(hex.slice(1));
+      const bitsHex = bits / 4;
+      hex = (BigInt(`0x${'ff'.repeat(bitsHex)}`) + 1n - absVal).toString(16);
+    }
+    return '0x' + hex.padStart(bits / 4, '0');
+  }
+
+  // ── bool ────────────────────────────────────────────────────────
+  if (type === 'bool') {
+    if (value === true || value === 'true' || value === 1 || value === '1') return '0x' + '00'.repeat(31) + '01';
+    if (value === false || value === 'false' || value === 0 || value === '0') return '0x' + '00'.repeat(32);
+    return null;
+  }
+
+  // ── bytesN (1..32) ──────────────────────────────────────────────
+  const bytesMatch = type.match(/^bytes(\d+)$/);
+  if (bytesMatch) {
+    const len = parseInt(bytesMatch[1], 10);
+    if (len < 1 || len > 32) return null;
+    const hex = typeof value === 'string' && value.startsWith('0x') ? value.slice(2) : '';
+    if (hex.length !== len * 2) return null;
+    if (!/^[a-fA-F0-9]+$/.test(hex)) return null;
+    return '0x' + hex.padEnd(64, '0');
+  }
+
+  // ── string / bytes (dynamic — placeholder, returns null for simulation) ──
+  if (type === 'string' || type === 'bytes') {
+    return null; // Dynamic types need full ABI encoding (offset + length + data)
+  }
+
   return null; // Unsupported type
 }
 
@@ -152,6 +207,9 @@ export function estimateDeploymentGas(bytecode, constructorGasEstimate = GAS_CON
  * Resolve constructor parameter values for a contract based on deployer address
  * and dependency contract addresses.
  *
+ * Supported types: address, uintN, intN, bool, bytesN.
+ * Dynamic types (string, bytes) return an error.
+ *
  * @param {string} contractName
  * @param {{type: string, name: string}[]} inputs - Constructor input descriptors
  * @param {string} deployerAddress - Deployer wallet address
@@ -175,6 +233,15 @@ export function resolveConstructorParams(contractName, inputs, deployerAddress, 
       } else {
         params.push(deployer); // Default to deployer
       }
+    } else if (input.type === 'bool') {
+      params.push(false); // Default to false for bool
+    } else if (/^uint\d+$/.test(input.type)) {
+      params.push('0'); // Default to 0 for uint types
+    } else if (/^int\d+$/.test(input.type)) {
+      params.push('0'); // Default to 0 for int types
+    } else if (/^bytes\d+$/.test(input.type)) {
+      const len = parseInt(input.type.slice(5), 10);
+      params.push('0x' + '00'.repeat(len)); // Default to zero bytes
     } else {
       return { params: [], error: `unsupported constructor parameter type: ${input.type}` };
     }

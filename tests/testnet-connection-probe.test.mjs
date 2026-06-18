@@ -31,7 +31,8 @@ test('testnet-config is imported with correct testnet-ready mode', async () => {
   ], 'all 6 contracts should be defined in config');
   assert.equal(TESTNET_CONFIG.contracts.TradingVault, null, 'contract addresses are null until deploy');
   assert.deepStrictEqual(Object.keys(TESTNET_CONFIG.tokens), ['WQUAI', 'WQI'], 'tokens should be WQUAI and WQI');
-  assert.equal(TESTNET_CONFIG.tokens.WQUAI, null, 'token addresses are null until identified');
+  assert.ok(TESTNET_CONFIG.tokens.WQUAI?.startsWith('0x'), 'WQUAI should be configured on Orchard');
+  assert.ok(TESTNET_CONFIG.tokens.WQI?.startsWith('0x'), 'WQI should be configured on Orchard');
 });
 
 // ── Readiness report safety envelope ──────────────────────────────────
@@ -92,8 +93,9 @@ test('readiness report identifies missing config fields', async () => {
   // chainId is populated (15000), so it should NOT be in missing fields
   assert.ok(!report.missingFields.some(f => f.includes('chainId')), 'chainId should NOT be missing (detected 15000)');
   assert.ok(report.missingFields.some(f => f.includes('contracts')), 'should list contracts as missing');
-  assert.ok(report.missingFields.some(f => f.includes('tokens')), 'should list tokens as missing');
-  assert.equal(report.configComplete, false, 'config should not be complete yet (contracts and tokens still null)');
+  // tokens are now configured — should NOT be in missing fields
+  assert.ok(!report.missingFields.some(f => f.includes('tokens')), 'tokens should NOT be missing (WQUAI + WQI configured)');
+  assert.equal(report.configComplete, false, 'config should not be complete yet (contracts still null)');
 });
 
 test('readiness report connected flag reflects actual probe success', async () => {
@@ -213,11 +215,12 @@ test('testnet-config.js preserves safety envelope — no secrets or real address
   assert.ok(source.includes('cyprus1'), 'should reference Cyprus1 zone');
   assert.ok(source.includes('testnet-ready'), 'mode should be testnet-ready');
 
-  // Contract addresses and token addresses should be null
+  // Contract addresses should still be null (not deployed yet)
   assert.ok(source.includes('TradingVault: null'), 'TradingVault should be null');
   assert.ok(source.includes('Settlement: null'), 'Settlement should be null');
-  assert.ok(source.includes('WQUAI: null'), 'WQUAI should be null');
-  assert.ok(source.includes('WQI: null'), 'WQI should be null');
+  // Token addresses are now configured on Orchard (Clonners provided)
+  assert.ok(source.includes('WQUAI:') && source.includes('0x'), 'WQUAI should be configured');
+  assert.ok(source.includes('WQI:') && source.includes('0x'), 'WQI should be configured');
 
   // No private keys or secrets
   assert.equal(/0x[a-fA-F0-9]{64}/.test(source), false, 'should not contain private keys (64 hex chars)');

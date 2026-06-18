@@ -45,7 +45,7 @@ test('GATES covers all required acceptance areas', async () => {
     'explorer-helpers',
     'relayer-gate',
     'contracts-null-before-deploy',
-    'tokens-null-before-deploy',
+    'tokens-configured',
   ];
 
   for (const requiredId of requiredIds) {
@@ -206,15 +206,15 @@ test('contracts-null-before-deploy gate passes: all 6 contracts null', async () 
   assert.equal(gate.details.allNull, true, 'all contract addresses should be null');
 });
 
-test('tokens-null-before-deploy gate passes: all 2 tokens null', async () => {
+test('tokens-configured gate passes: WQUAI + WQI addresses set (Orchard testnet)', async () => {
   const { runTestnetAcceptance } = await import('../services/api/src/testnet-acceptance-script.js');
 
   const report = await runTestnetAcceptance();
-  const gate = report.gates['tokens-null-before-deploy'];
+  const gate = report.gates['tokens-configured'];
 
-  assert.equal(gate.pass, true, 'tokens-null-before-deploy gate should pass');
+  assert.equal(gate.pass, true, 'tokens-configured gate should pass');
   assert.equal(gate.details.total, 2, 'should have 2 tokens');
-  assert.equal(gate.details.allNull, true, 'all token addresses should be null');
+  assert.equal(gate.details.allConfigured, true, 'all token addresses should be configured');
 });
 
 // ── Score and pass/fail semantics ────────────────────────────────────
@@ -249,7 +249,7 @@ test('deployment checklist has 14 steps from cutover plan Task 7', async () => {
   assert.equal(checklist[0].step, 1, 'first step should be 1');
   assert.equal(checklist[13].step, 14, 'last step should be 14');
 
-  // Step 1 should be done (config ready, tokens null)
+  // Step 1 should be done (config ready, tokens configured)
   assert.equal(checklist[0].done, true, 'step 1 should be done (network+tokens confirmed)');
 
   // Steps 2-14 should NOT be done (require deployment/funds)

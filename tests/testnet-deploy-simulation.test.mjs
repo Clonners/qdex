@@ -168,11 +168,91 @@ describe('testnet deploy simulation', () => {
     assert.equal(result.params[1].toLowerCase(), DEPLOYER.toLowerCase());
   });
 
-  it('resolveConstructorParams rejects unsupported type', () => {
-    const inputs = [{ type: 'uint256', name: 'amount' }];
+ it('resolveConstructorParams rejects unsupported type', () => {
+    const inputs = [{ type: 'tuple', name: 'data' }];
     const result = resolveConstructorParams('Unknown', inputs, DEPLOYER);
     assert.ok(result.error, 'should reject unsupported type');
-    assert.ok(result.error.includes('uint256'));
+    assert.ok(result.error.includes('tuple'));
+  });
+
+  it('resolveConstructorParams resolves uint256 default to 0', () => {
+    const inputs = [{ type: 'uint256', name: 'initialSupply' }];
+    const result = resolveConstructorParams('Token', inputs, DEPLOYER);
+    assert.equal(result.error, null);
+    assert.equal(result.params.length, 1);
+    assert.equal(result.params[0], '0');
+  });
+
+  it('resolveConstructorParams resolves bool default to false', () => {
+    const inputs = [{ type: 'bool', name: 'paused' }];
+    const result = resolveConstructorParams('Token', inputs, DEPLOYER);
+    assert.equal(result.error, null);
+    assert.equal(result.params.length, 1);
+    assert.equal(result.params[0], false);
+  });
+
+  it('resolveConstructorParams resolves bytes32 default to zero bytes', () => {
+    const inputs = [{ type: 'bytes32', name: 'salt' }];
+    const result = resolveConstructorParams('Contract', inputs, DEPLOYER);
+    assert.equal(result.error, null);
+    assert.equal(result.params.length, 1);
+    assert.equal(result.params[0], '0x' + '00'.repeat(32));
+  });
+
+  it('encodeConstructorData encodes uint256 parameter', () => {
+    const bytecode = '0x00';
+    const inputs = [{ type: 'uint256', name: 'supply' }];
+    const values = ['1000000'];
+    const result = encodeConstructorData(bytecode, inputs, values);
+    assert.equal(result.error, null, `should encode uint256: ${result.error}`);
+    assert.ok(result.calldata, 'should have calldata');
+    // 0x prefix (2) + bytecode content (2) + 32 bytes encoded (64 hex) = 68
+    assert.equal(result.calldata.length, 68);
+  });
+
+  it('encodeConstructorData encodes bool parameter (true)', () => {
+    const bytecode = '0x00';
+    const inputs = [{ type: 'bool', name: 'enabled' }];
+    const values = [true];
+    const result = encodeConstructorData(bytecode, inputs, values);
+    assert.equal(result.error, null, `should encode bool: ${result.error}`);
+    assert.ok(result.calldata, 'should have calldata');
+    assert.ok(result.calldata.endsWith('01'), 'should end with 01 for true');
+  });
+
+  it('encodeConstructorData encodes bool parameter (false)', () => {
+    const bytecode = '0x00';
+    const inputs = [{ type: 'bool', name: 'enabled' }];
+    const values = [false];
+    const result = encodeConstructorData(bytecode, inputs, values);
+    assert.equal(result.error, null);
+    assert.ok(result.calldata, 'should have calldata');
+    // All zeros for false
+    assert.equal(result.calldata, '0x00' + '00'.repeat(32));
+  });
+
+  it('encodeConstructorData encodes bytes32 parameter', () => {
+    const bytecode = '0x00';
+    const inputs = [{ type: 'bytes32', name: 'salt' }];
+    const values = ['0x' + 'ab'.repeat(32)];
+    const result = encodeConstructorData(bytecode, inputs, values);
+    assert.equal(result.error, null, `should encode bytes32: ${result.error}`);
+    assert.ok(result.calldata, 'should have calldata');
+    assert.ok(result.calldata.includes('abab'), 'should include encoded bytes');
+  });
+
+  it('encodeConstructorData mixed types (address + uint256)', () => {
+    const bytecode = '0x00';
+    const inputs = [
+      { type: 'address', name: 'owner_' },
+      { type: 'uint256', name: 'supply' },
+    ];
+    const values = [DEPLOYER, '1000'];
+    const result = encodeConstructorData(bytecode, inputs, values);
+    assert.equal(result.error, null, `should encode mixed types: ${result.error}`);
+    assert.ok(result.calldata, 'should have calldata');
+    // 0x prefix (2) + bytecode content (2) + 2 x 32 bytes encoded (128 hex) = 132
+    assert.equal(result.calldata.length, 132);
   });
 
   it('runDeploymentSimulation returns structured report', () => {

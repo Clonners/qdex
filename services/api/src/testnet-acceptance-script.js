@@ -62,8 +62,8 @@ const GATES = Object.freeze([
     weight: 10,
   },
   {
-    id: 'tokens-null-before-deploy',
-    description: 'All token addresses null (expected before deployment)',
+    id: 'tokens-configured',
+    description: 'Token addresses configured (WQUAI, WQI on Orchard)',
     weight: 5,
   },
 ]);
@@ -231,17 +231,17 @@ function checkContractsNull() {
   };
 }
 
-function checkTokensNull() {
+function checkTokensConfigured() {
   const tokens = TESTNET_CONFIG.tokens;
   const tokenNames = Object.keys(tokens);
-  const allNull = tokenNames.every((name) => tokens[name] === null);
+  const allConfigured = tokenNames.every((name) => tokens[name] !== null);
 
   return {
-    pass: allNull,
-    blockers: allNull ? [] : [`unexpected non-null token addresses before deploy`],
+    pass: allConfigured,
+    blockers: allConfigured ? [] : ['token addresses not configured'],
     details: {
       total: tokenNames.length,
-      allNull: allNull,
+      allConfigured: allConfigured,
       tokens: tokenNames.map((name) => ({ name, address: tokens[name] })),
     },
   };
@@ -255,7 +255,7 @@ const GATE_MAP = {
   'explorer-helpers': checkExplorerHelpers,
   'relayer-gate': checkRelayerGate,
   'contracts-null-before-deploy': checkContractsNull,
-  'tokens-null-before-deploy': checkTokensNull,
+  'tokens-configured': checkTokensConfigured,
 };
 
 // ── Operator deployment checklist (from cutover plan Task 7) ─────────
@@ -272,10 +272,10 @@ function buildDeploymentChecklist() {
     TESTNET_CONFIG.deployer && /^0x[a-fA-F0-9]{40}$/i.test(TESTNET_CONFIG.deployer);
 
   const allContractsNull = Object.values(TESTNET_CONFIG.contracts).every((v) => v === null);
-  const allTokensNull = Object.values(TESTNET_CONFIG.tokens).every((v) => v === null);
+  const allTokensConfigured = Object.values(TESTNET_CONFIG.tokens).every((v) => v !== null);
 
   return [
-    { step: 1, item: 'Confirm network, zone, chain ID, RPC, explorer, and test token addresses', done: networkConfirmed && allTokensNull },
+    { step: 1, item: 'Confirm network, zone, chain ID, RPC, explorer, and test token addresses', done: networkConfirmed && allTokensConfigured },
     { step: 2, item: 'Confirm test wallet funding and signing path', done: false },
     { step: 3, item: 'Deploy contracts and record addresses', done: false },
     { step: 4, item: 'Verify local contract invariants against deployed ABI/source', done: false },
