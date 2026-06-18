@@ -226,7 +226,7 @@ Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on O
 RPC: `https://orchard.rpc.quai.network/cyprus1` (chainId 15000).
 
 Next bounded slice: deploy contracts to Orchard testnet (requires explicit approval).
-Before deployment: readiness validator confirms score 100/100 across all 6 categories.
+Before deployment: acceptance script confirms score 100/100 across all 8 gates + readiness score 100/100.
 
 Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from configured wallet.
 
@@ -238,6 +238,7 @@ Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from 
 - ✅ Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard)
 - ✅ Deploy readiness check with 19 tests — consolidates config completeness, deploy manifest validation, and safety metadata into a single fail-closed gate
 - ✅ Testnet readiness validator with 24 tests — consolidated pre-deployment acceptance checklist with 6 weighted categories (config 25%, manifest 20%, safety 20%, explorer 10%, contracts 15%, tokens 10%), readiness score 100/100, 14-step deployment checklist from cutover plan Task 7
+- ✅ Testnet acceptance script with 21 tests — cutover plan Task 7 operator checklist as fail-closed validation gate with 8 weighted gates (network-config, deployer-address, deploy-manifest, safety-metadata, explorer-helpers, relayer-gate, contracts-null, tokens-null), acceptance score 100/100
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
