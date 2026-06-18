@@ -242,12 +242,14 @@ test('CAMPAIGN_STATUS.md records deployer balance verification', async () => {
     'utf8',
   );
 
+  // Substring check — status uses human-readable description, not module filename.
+  // Pattern: "Testnet deployer balance verification with N tests"
   assert.ok(
-    status.includes('testnet-deployer-balance'),
-    'status should reference deployer balance verification module',
+    status.includes('deployer balance verification'),
+    'status should reference deployer balance verification',
   );
   assert.ok(
-    status.includes('testnet-deployer-balance.test.mjs'),
-    'status should reference this test file',
+    status.includes('eth_getBalance'),
+    'status should reference the read-only RPC method used',
   );
 });
