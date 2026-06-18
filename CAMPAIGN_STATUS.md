@@ -218,18 +218,20 @@ Still not approved: wallets, signing, broadcasts, deploys, real token addresses,
 
 RPC APPROVED: `https://orchard.rpc.quai.network/cyprus1` — Quai Orchard testnet, Cyprus1 zone. Testnet config written to `services/api/src/testnet-config.js`.
 
+Completed this run: testnet contract artifact verification module `contract-artifact-verification.js` — read-only pre-deployment gate that validates compiled Hardhat artifacts are deployment-ready: reads local artifact JSON files for all 6 deployable contracts (TradingVault, NonceManager, MarketRegistry, FeeManager, DelegateKeyRegistry, Settlement), validates ABI structure (non-empty array with functions/events), validates bytecode presence (non-empty hex with 0x prefix), estimates deployment gas costs using EIP-2028 bytecode deposit heuristic (16 gas/byte, 4 gas/zero-byte + fixed overhead ~103K gas/contract), extracts constructor parameter info, counts ABI interface functions/events, produces per-contract reports with gas estimates and constructor metadata, consolidated `ready` boolean, total estimated gas across all contracts (~5.6M gas total), fail-closed when artifacts path missing or any contract invalid; added `tests/contract-artifact-verification.test.mjs` with 39 RED/GREEN tests covering module exports, DEPLOYABLE_CONTRACTS canonical order, gas cost constants, resolveArtifactsPath, readArtifact (success/error/missing), validateArtifactStructure (no ABI/empty ABI/no bytecode/empty bytecode/non-hex/valid/warns-only-constructor/not-array), estimateDeploymentGas (empty/minimal/zero-bytes-cheaper/larger-costs-more/positive), extractConstructorInfo (no ABI/no constructor/empty inputs/with inputs), countAbiInterfaces (no ABI/functions+events/separates/skips-anonymous), full verification report shape, 6 contracts present, all 6 valid when artifacts exist, total gas positive and >1M, per-contract results completeness, safety metadata always present, ready=false when path missing, formatted gas string, assertArtifactsReady (returns on valid/throws on missing/blocker count), and source safety scan (no wallet/signing/fetch/provider patterns); 285 workspace tests, 285 pass GREEN (0 pre-existing failures).
+
 ## Next autonomous slice
 
-**Testnet cutover — RPC latency diagnostics complete, deploy readiness pending approval.**
+**Testnet cutover — contract artifacts verified, deploy readiness pending approval.**
 
 Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard).
 RPC: `https://orchard.rpc.quai.network/cyprus1` (chainId 15000).
 
-Next bounded slice: deploy contracts to Orchard testnet (requires explicit approval).
-Before deployment: acceptance script confirms score 100/100 across all 8 gates + readiness score 100/100.
-RPC latency benchmark available for relayer suitability assessment.
+All 6 deployable contracts have valid compiled artifacts (ABI + bytecode present).
+Estimated total deployment gas: ~5.6M gas across all contracts.
+Acceptance script confirms score 100/100 across all 8 gates + readiness score 100/100.
 
-Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from configured wallet.
+Next bounded slice: deploy contracts to Orchard testnet (requires explicit approval).
 
 - ✅ RPC URL provided and configured
 - ✅ Chain ID detected: 15000 (Quai Orchard, read-only public param)
@@ -241,6 +243,7 @@ Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from 
 - ✅ Testnet readiness validator with 24 tests — consolidated pre-deployment acceptance checklist with 6 weighted categories (config 25%, manifest 20%, safety 20%, explorer 10%, contracts 15%, tokens 10%), readiness score 100/100, 14-step deployment checklist from cutover plan Task 7
 - ✅ Testnet acceptance script with 21 tests — cutover plan Task 7 operator checklist as fail-closed validation gate with 8 weighted gates (network-config, deployer-address, deploy-manifest, safety-metadata, explorer-helpers, relayer-gate, contracts-null, tokens-null), acceptance score 100/100
 - ✅ Testnet RPC latency/benchmark module with 14 tests — read-only diagnostics: per-method latency (eth_chainId/eth_blockNumber/net_version), percentile stats (min/max/avg/median/p90/p95/p99), block cadence measurement, health assessment (healthy/degraded/unreliable), readiness integration
+- ✅ Contract artifact verification with 39 tests — pre-deployment gate: validates all 6 deployable contracts have valid ABI + bytecode artifacts, estimates deployment gas costs (~5.6M total), extracts constructor params, counts interfaces, fail-closed when artifacts missing/invalid
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
