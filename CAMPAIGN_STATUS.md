@@ -235,7 +235,9 @@ Completed this run: testnet RPC verification module `testnet-rpc-verification.js
 
 ## Next autonomous slice
 
-**Testnet cutover — deployment status API endpoint added, all pre-deployment gates consolidated, deployment approval pending.**
+**Testnet cutover — token discovery module added, WQUAI/WQI addresses pending from Clonners, all pre-deployment gates consolidated, deployment approval pending.**
+
+Token discovery module: `testnet-token-discovery.js` with 41 tests — read-only probe for WQUAI/WQI on Orchard: `probeAddress()` checks bytecode + ERC-20 properties (name/symbol/decimals/totalSupply) via eth_getCode + eth_call, `discoverToken()` scores candidates by symbol + name match, `runTokenDiscovery()` probes all known candidates, `checkTokenMatch()` validates discovery against expected characteristics, `formatDiscoveryReport()` human-readable output. Candidate address arrays (`KNOWN_WQUAI_CANDIDATES`, `KNOWN_WQI_CANDIDATES`) currently empty — populated when Clonners provides Orchard addresses. Advisory only, does NOT auto-update `testnet-config.js`. Preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`.
 
 Deployment status API: `GET /v1/testnet/deployment-status` — read-only aggregation of config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist (14 steps). 83 tests.
 
@@ -245,6 +247,7 @@ Deployer balance: sufficient for estimated deployment cost (~2.16 QUAI estimated
 Gas price estimation: live `eth_gasPrice` probe, per-contract cost estimates with 1.5× safety.
 ABI completeness: all 6 contracts validated against required function/event interfaces.
 Token validation: ERC-20 validation module with read-only RPC probes (eth_getCode, eth_call).
+Token discovery: candidate probing module with scoring/matching/reporting (41 tests, advisory only).
 Deployment orchestrator: state machine with approval gate, dependency enforcement, address tracking.
 
 All 6 deployable contracts have valid compiled artifacts (ABI + bytecode present).
@@ -252,7 +255,7 @@ Estimated total deployment gas: ~7.2M gas (10.8M with 1.5× safety).
 Acceptance script confirms score 100/100 across all 8 gates + readiness score 100/100.
 Deployment status API endpoint consolidates all evidence into single operator-facing route.
 
-Next bounded slice: testnet token discovery/verification on Orchard (find WQUAI/WQI addresses via read-only RPC probes) or deployment simulation enhancement with full constructor parameter validation.
+Next bounded slice: update token discovery with actual Orchard WQUAI/WQI addresses when provided, or advance deployment simulation with constructor parameter validation.
 
 - ✅ RPC URL provided and configured
 - ✅ Chain ID detected: 15000 (Quai Orchard, read-only public param)
@@ -273,6 +276,7 @@ Next bounded slice: testnet token discovery/verification on Orchard (find WQUAI/
 - ✅ Testnet RPC verification with 39 tests — pre-deployment readiness gate: aggregates 7 probe modules (rpc-connectivity, gas-price, deployment-cost, deployer-balance, token-addresses, deploy-readiness, contract-artifacts) into single verification call with go/no-go verdict (READY/WARNING/BLOCKED), parallel execution, formatVerificationReport(), assertTestnetReady() gate
 - ✅ Testnet deployment orchestrator with 68 tests — state machine for deployment lifecycle (draft→validated→deploying→deployed), approval metadata gate, dependency enforcement, address tracking, progress reporting, format report, idempotent reset
 - ✅ Testnet deployment status API endpoint with 83 tests — read-only aggregation module: GET /v1/testnet/deployment-status consolidates config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist (14 steps), format report
+- ✅ Testnet token discovery with 41 tests — read-only WQUAI/WQI candidate probing: probeAddress() bytecode + ERC-20 validation, discoverToken() candidate scoring by symbol/name, runTokenDiscovery() full discovery, checkTokenMatch() validation, formatDiscoveryReport() human-readable output, advisory-only (no auto-config update)
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
