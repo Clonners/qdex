@@ -237,14 +237,15 @@ Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from 
 
 - ✅ RPC URL provided and configured
 - ✅ Chain ID detected: 15000 (Quai Orchard, read-only public param)
-- ✅ Explorer URL configured: ⏳ (null, awaiting Quai Orchard explorer URL)
+- ✅ Explorer URL configured: `https://orchard.quaiscan.io` (verified HTTP 200, helpers exported)
 - ✅ Testnet connection probe module with 12 tests — verifies RPC connectivity, chain ID, block number, network version, config completeness, safety metadata
+- ✅ Explorer helper utilities with 13 tests — `explorerUrlForTx()`, `explorerUrlForAddress()`, `explorerUrlForBlock()`
 - ✅ Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard)
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
 
-Completed this run: testnet connection probe module `services/api/src/testnet-connection-probe.js` with `probeChainId()`, `probeBlockNumber()`, `probeNetworkVersion()`, `probeTestnetReadiness()`, `sendRpcRequest()` — all read-only JSON-RPC (`eth_chainId`, `eth_blockNumber`, `net_version`), fail-closed when RPC URL absent, explicit safety metadata (`noWalletLoaded`, `noSigning`, `noBroadcasting`, `noFundsMovement`, `noContractDeploy`, `approvalGate`). Detected Quai Orchard chain ID 15000, block ~7,277,130. Updated `testnet-config.js` chainId from null→15000. Added 12 RED/GREEN tests in `tests/testnet-connection-probe.test.mjs`. Fixed stale `testnet-cutover-readiness-plan.test.mjs` ratchet (campaign status format drift). Workspace: 505 pass, 28 pre-existing failures.
+Completed this run: testnet explorer URL configured (`https://orchard.quaiscan.io` verified HTTP 200) plus explorer helper utilities `explorerUrlForTx()`, `explorerUrlForAddress()`, `explorerUrlForBlock()` in `testnet-config.js` with fail-closed null guards (including block 0 edge case). Updated `testnet-connection-probe.js` readiness report with `explorerConfigured` + `explorerBaseUrl` fields. Added `tests/testnet-explorer-helpers.test.mjs` with 13 tests covering URL construction, 0x normalization, null/undefined/empty guards, block 0 edge case, safety verification (no RPC/wallet/signing in source), and readiness report integration. Updated ratchet tests for explorer no longer null. 25/25 testnet probe/explorer tests GREEN, 522/546 workspace (24 pre-existing: 20 Hardhat contracts + 3 stale terminal UI ratchets).
 
 ## Testnet cutover readiness plan
 
