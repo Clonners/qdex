@@ -228,12 +228,12 @@ test('validateTestnetTokens — null tokens tracked correctly', async () => {
   assert.equal(result.ready, false);
 });
 
-test('validateTestnetTokens — warnings include null token notice', async () => {
+test('validateTestnetTokens — warnings do not include null token notice (tokens configured)', async () => {
   const result = await validateTestnetTokens();
   const hasNullWarning = result.warnings.some((w) =>
-    w.includes('token addresses null') || w.includes('null')
+    w.includes('token addresses null') || (w.includes('null') && w.includes('token'))
   );
-  assert.equal(hasNullWarning, true);
+  assert.equal(hasNullWarning, false);
 });
 
 test('validateTestnetTokens — network info present', async () => {
@@ -281,18 +281,19 @@ test('checkTokenConfigCompleteness — returns expected structure', () => {
   assert.ok(Array.isArray(result.configured));
 });
 
-test('checkTokenConfigCompleteness — null tokens are incomplete', () => {
+test('checkTokenConfigCompleteness — tokens configured (WQUAI + WQI on Orchard)', () => {
   const result = checkTokenConfigCompleteness();
-  // Before deploy, WQUAI and WQI are null
-  assert.equal(result.complete, false);
-  assert.ok(result.missing.includes('WQUAI'));
-  assert.ok(result.missing.includes('WQI'));
+  // After Clonners provided token addresses, both are configured
+  assert.equal(result.complete, true);
+  assert.ok(result.configured.includes('WQUAI'));
+  assert.ok(result.configured.includes('WQI'));
+  assert.equal(result.missing.length, 0);
 });
 
 test('checkTokenConfigCompleteness — configured count matches', () => {
   const result = checkTokenConfigCompleteness();
   assert.equal(result.configured.length + result.missing.length, 2);
-  assert.equal(result.configured.length, 0); // All null before deploy
+  assert.equal(result.configured.length, 2); // Both WQUAI and WQI configured
 });
 
 // ── verifySourceSafety ────────────────────────────────────────────────

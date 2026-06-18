@@ -24,8 +24,8 @@ export const TESTNET_CONFIG = Object.freeze({
     DelegateKeyRegistry: null,
   }),
   tokens: Object.freeze({
-    WQUAI: null,
-    WQI: null,
+    WQUAI: '0x005c46f661Baef20671943f2b4c087Df3E7CEb13', // Quai Orchard testnet
+    WQI:   '0x002b2596EcF05C93a31ff916E8b456DF6C77c750', // Quai Orchard testnet
   }),
   mode: 'testnet-ready',
 });
