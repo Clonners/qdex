@@ -9,6 +9,7 @@
 - Executor: oh-my-pi (omp) via no-agent cronjob
 
 ## Current git baseline
+- dedc306 slice: testnet deployment status API endpoint with 83 tests — read-only aggregation of config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist
 - 99289de slice: testnet deployment orchestrator with 68 tests — state machine for draft→validated→deploying→deployed lifecycle
 - e3277b4 fix: make live RPC tests resilient to network failures
 - 346aaab slice: Python SDK trades stream consumers standalone test
@@ -17,7 +18,7 @@
 
 ## Campaign history
 
-Completed this run: testnet deployment orchestrator `testnet-deploy-orchestrator.js` — state machine for deployment lifecycle (draft→validated→deploying→partially_deployed→deployed/failed), approval metadata gate (`setApproval()` requires approvalId/approvedBy/approvedAt), manifest validation before deployment, dependency enforcement for contract recording (Settlement requires all 5 dependencies), address tracking with valid hex format checks, `getProgress()` with nextDeployable computation, `formatStatusReport()` human-readable output, idempotent state transitions (reset from any state to draft), deployment log with timestamps; added `tests/testnet-deploy-orchestrator.test.mjs` with 68 RED/GREEN tests covering module exports (DEPLOYABLE_CONTRACTS=6, POST_DEPLOY_STEPS=3, ALL_STEP_CONTRACTS=9, DEPLOYMENT_STATES=6, STATE_TRANSITIONS), state transition rules (draft/validated/deploying/partially_deployed/deployed/failed), orchestrator lifecycle (initialize/validate/beginDeployment/recordAddress/getProgress/reset), approval metadata (required fields, optional scope, safety metadata), address recording (valid/rejected/duplicate/dependency enforcement), full deployment cycle (all 6 contracts), deployment log with timestamps, format report (network info, deployer, pending addresses, safety notice), source safety scan (no wallet/RPC/signing/broadcast patterns), and readiness integration (testnet config chainId, deploy order matching); preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcAccess: true`, `noFundsMovement: true`, `noBroadcast: true`, `custody: non-custodial-deploy-orchestrator`, `approvalGate: explicit-approval-required-before-deploy`; 906 workspace tests pass, 21 pre-existing Hardhat failures.
+Completed this run: testnet deployment status API endpoint `testnet-deployment-status.js` — read-only aggregation module for deployment readiness: `getTestnetDeploymentStatus()` consolidates config completeness (RPC, chainId, deployer, zone, explorer), deploy manifest validation, safety metadata integrity, contract address tracking (6 contracts: TradingVault/NonceManager/MarketRegistry/FeeManager/DelegateKeyRegistry/Settlement), token address tracking (WQUAI/WQI), deployment order with dependency chain, verdict computation (READY/BLOCKED with emoji + blockers + warnings), readiness score (0-100), deployment checklist (14 steps from cutover plan Task 7), `formatDeploymentStatusReport()` human-readable output; added `GET /v1/testnet/deployment-status` public API route; added `tests/testnet-deployment-status.test.mjs` with 83 RED/GREEN tests covering module exports (8), getContractStatus (7), getTokenStatus (5), getManifestStatus (7), getDeploymentOrder (4), computeVerdict (7), buildDeploymentChecklist (5), getTestnetDeploymentStatus full shape (24), formatDeploymentStatusReport (10), source safety scan (2), readiness integration (4); 989 workspace tests pass, 21 pre-existing Hardhat failures; preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`, `custody: non-custodial-deploy-status`.
 
 Completed this run: fix live RPC test resilience and stale ratchet — guard assertions behind success checks in 4 test files (`testnet-deployer-balance.test.mjs` ratchet substring check, `testnet-gas-estimation.test.mjs` probeGasPrice live + estimateDeploymentCost live, `testnet-rpc-latency.test.mjs` measureBlockCadence + readiness chainId comparison); all 5 non-Hardhat failures resolved; 741/762 workspace GREEN (21 pre-existing Hardhat HH1 contract failures); preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`.
 
@@ -234,7 +235,9 @@ Completed this run: testnet RPC verification module `testnet-rpc-verification.js
 
 ## Next autonomous slice
 
-**Testnet cutover — deployment orchestrator built, all pre-deployment gates validated, deployment approval pending.**
+**Testnet cutover — deployment status API endpoint added, all pre-deployment gates consolidated, deployment approval pending.**
+
+Deployment status API: `GET /v1/testnet/deployment-status` — read-only aggregation of config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist (14 steps). 83 tests.
 
 Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard).
 RPC: `https://orchard.rpc.quai.network/cyprus1` (chainId 15000).
@@ -247,8 +250,9 @@ Deployment orchestrator: state machine with approval gate, dependency enforcemen
 All 6 deployable contracts have valid compiled artifacts (ABI + bytecode present).
 Estimated total deployment gas: ~7.2M gas (10.8M with 1.5× safety).
 Acceptance script confirms score 100/100 across all 8 gates + readiness score 100/100.
+Deployment status API endpoint consolidates all evidence into single operator-facing route.
 
-Next bounded slice: deploy contracts to Orchard testnet (requires explicit approval).
+Next bounded slice: testnet token discovery/verification on Orchard (find WQUAI/WQI addresses via read-only RPC probes) or deployment simulation enhancement with full constructor parameter validation.
 
 - ✅ RPC URL provided and configured
 - ✅ Chain ID detected: 15000 (Quai Orchard, read-only public param)
@@ -268,6 +272,7 @@ Next bounded slice: deploy contracts to Orchard testnet (requires explicit appro
 - ✅ Testnet deployment simulation with 30 tests — read-only pre-deployment gate: constructs unsigned deployment transactions for all 6 contracts, encodes constructor parameters (address types), estimates per-contract gas costs from bytecode (EIP-2028: 16 gas/byte + 4 gas/zero-byte), produces structured deployment report with sequence, constructor validation, and total gas estimate
 - ✅ Testnet RPC verification with 39 tests — pre-deployment readiness gate: aggregates 7 probe modules (rpc-connectivity, gas-price, deployment-cost, deployer-balance, token-addresses, deploy-readiness, contract-artifacts) into single verification call with go/no-go verdict (READY/WARNING/BLOCKED), parallel execution, formatVerificationReport(), assertTestnetReady() gate
 - ✅ Testnet deployment orchestrator with 68 tests — state machine for deployment lifecycle (draft→validated→deploying→deployed), approval metadata gate, dependency enforcement, address tracking, progress reporting, format report, idempotent reset
+- ✅ Testnet deployment status API endpoint with 83 tests — read-only aggregation module: GET /v1/testnet/deployment-status consolidates config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist (14 steps), format report
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
