@@ -171,13 +171,14 @@ export async function probeDeployerBalance(address = DEPLOYER_ADDRESS) {
 
   // Convert wei to QUAI (1 QUAI = 10^18 wei)
   const WEI_PER_QUAI = 10n ** 18n;
-  const balanceQuai = Number(balanceWei / WEI_PER_QUAI);
-  const balanceQuaiDecimal = Number((balanceWei % WEI_PER_QUAI) / (10n ** 15n)) / 1000;
+  // Use Number for the full decimal value, then format
+  const balanceQuaiFull = Number(balanceWei) / 1e18;
+  const balanceQuaiStr = balanceQuaiFull.toFixed(6);
 
   return {
     address: normalized,
     balanceWei: balanceWei.toString(),
-    balanceQuai: `${balanceQuai}.${balanceQuaiDecimal.toFixed(3)}`,
+    balanceQuai: balanceQuaiStr,
     success: true,
     error: null,
   };
