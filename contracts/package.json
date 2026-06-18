@@ -15,6 +15,7 @@
     "hardhat": "^2.19.5"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "quais": "^1.0.0-alpha.54"
   }
 }

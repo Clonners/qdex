@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { existsSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import test from 'node:test';
 
 const repoRoot = new URL('../', import.meta.url);
@@ -96,4 +98,80 @@ test('local harness documentation tracks current local contract coverage', async
   ]) {
     assert.ok(readme.includes(requiredText), `contracts README should include: ${requiredText}`);
   }
+});
+
+test('deploy scripts require explicit approval marker and cannot run autonomously', async () => {
+  const scriptsDir = join(repoRoot.pathname, 'contracts', 'scripts');
+  assert.ok(existsSync(scriptsDir), 'contracts/scripts directory should exist');
+
+  const files = readdirSync(scriptsDir).filter(f => f.startsWith('deploy-') && f.endsWith('.js'));
+  assert.ok(files.length > 0, 'deploy scripts should exist in contracts/scripts');
+
+  for (const file of files) {
+    const content = await readFile(join(scriptsDir, file), 'utf8');
+
+    // Each deploy script must carry an explicit approval-required marker
+    assert.ok(
+      content.includes('APPROVAL REQUIRED') || content.includes('approval-required') || content.includes('Requires explicit approval'),
+      `${file} must carry explicit approval-required marker`
+    );
+
+    // Deploy scripts must not contain hardcoded private keys
+    assert.doesNotMatch(
+      content,
+      /0x[0-9a-fA-F]{64}/u,
+      `${file} must not contain hardcoded private keys`
+    );
+
+    // Deploy scripts must reference an external network (not local hardhat)
+    assert.ok(
+      content.includes('quaiOrchard') || content.includes('orchard') || content.includes('testnet') || content.includes('15000'),
+      `${file} must target an external network, not local hardhat`
+    );
+  }
+
+  // Verify hardhat config does NOT define the external network these scripts need
+  const config = await readRepoFile('contracts/hardhat.config.cjs');
+  const configuredNetworkNames = [...config.matchAll(/^\s{4}([A-Za-z0-9_]+):\s*\{/gm)].map(m => m[1]);
+  assert.ok(
+    !configuredNetworkNames.includes('quaiOrchard'),
+    'hardhat config must NOT define quaiOrchard network autonomously'
+  );
+  assert.ok(
+    !configuredNetworkNames.includes('orchard'),
+    'hardhat config must NOT define orchard network autonomously'
+  );
+});
+
+test('check-balance script is read-only and does not require deploy network', async () => {
+  const scriptsDir = join(repoRoot.pathname, 'contracts', 'scripts');
+  const checkBalance = join(scriptsDir, 'check-balance.js');
+
+  if (!existsSync(checkBalance)) {
+    // Script optional — skip if absent
+    return;
+  }
+
+  const content = await readFile(checkBalance, 'utf8');
+
+  // check-balance must not contain signing/broadcast/deploy patterns
+  // NOTE: getSigners() is read-only in Hardhat (lists configured accounts)
+  for (const forbiddenPattern of [
+    /signTransaction/iu,
+    /sendTransaction/iu,
+    /deploy\s*\(/iu,
+    /\.deploy\(/iu,
+  ]) {
+    assert.doesNotMatch(
+      content,
+      forbiddenPattern,
+      `check-balance.js must not include ${forbiddenPattern}`
+    );
+  }
+
+  // check-balance should only read balances (getBalance)
+  assert.ok(
+    content.includes('getBalance'),
+    'check-balance.js should read balances'
+  );
 });
