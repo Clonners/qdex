@@ -24,7 +24,7 @@ test('testnet-config is imported with correct testnet-ready mode', async () => {
   assert.equal(TESTNET_CONFIG.rpcUrl, 'https://orchard.rpc.quai.network/cyprus1', 'rpcUrl should be set');
   assert.equal(TESTNET_CONFIG.mode, 'testnet-ready', 'mode should be testnet-ready');
   assert.equal(TESTNET_CONFIG.chainId, 15000, 'chainId should be 15000 (detected from Orchard)');
-  assert.equal(TESTNET_CONFIG.explorerBaseUrl, null, 'explorerBaseUrl should still be null');
+  assert.equal(TESTNET_CONFIG.explorerBaseUrl, 'https://orchard.quaiscan.io', 'explorerBaseUrl should be configured for Orchard');
   assert.equal(TESTNET_CONFIG.deployer, '0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267', 'deployer should be configured');
   assert.deepStrictEqual(Object.keys(TESTNET_CONFIG.contracts), [
     'TradingVault', 'Settlement', 'NonceManager', 'MarketRegistry', 'FeeManager', 'DelegateKeyRegistry'
@@ -83,15 +83,17 @@ test('readiness report identifies missing config fields', async () => {
 
   const report = await probeTestnetReadiness();
 
-  // explorerBaseUrl is still null; deployer is now configured
-  assert.ok(report.missingFields.some(f => f.includes('explorerBaseUrl')), 'should list explorerBaseUrl as missing');
+  // explorerBaseUrl is now configured (orchard.quaiscan.io)
+  assert.ok(!report.missingFields.some(f => f.includes('explorerBaseUrl')), 'explorerBaseUrl should NOT be missing (configured)');
+  assert.equal(report.explorerConfigured, true, 'explorer should be configured');
+  assert.equal(report.explorerBaseUrl, 'https://orchard.quaiscan.io', 'explorerBaseUrl should match Orchard explorer');
   // deployer is no longer missing (configured: 0x005CAD...)
   assert.ok(!report.missingFields.some(f => f.includes('deployer')), 'deployer should NOT be missing (configured)');
   // chainId is populated (15000), so it should NOT be in missing fields
   assert.ok(!report.missingFields.some(f => f.includes('chainId')), 'chainId should NOT be missing (detected 15000)');
   assert.ok(report.missingFields.some(f => f.includes('contracts')), 'should list contracts as missing');
   assert.ok(report.missingFields.some(f => f.includes('tokens')), 'should list tokens as missing');
-  assert.equal(report.configComplete, false, 'config should not be complete yet');
+  assert.equal(report.configComplete, false, 'config should not be complete yet (contracts and tokens still null)');
 });
 
 test('readiness report connected flag reflects actual probe success', async () => {

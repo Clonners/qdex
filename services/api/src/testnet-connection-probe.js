@@ -229,6 +229,9 @@ export async function probeTestnetReadiness() {
     missingFields.push(`tokens (${tokenAddresses.length}/2 null)`);
   }
 
+  // Explorer readiness
+  const explorerConfigured = TESTNET_CONFIG.explorerBaseUrl !== null;
+
   return {
     // Network connectivity
     rpcConfigured,
@@ -236,6 +239,10 @@ export async function probeTestnetReadiness() {
     networkName: TESTNET_CONFIG.networkName,
     zone: TESTNET_CONFIG.zone,
     connected,
+
+    // Explorer
+    explorerConfigured,
+    explorerBaseUrl: TESTNET_CONFIG.explorerBaseUrl || null,
 
     // Probe results
     chainId: chainIdResult,
