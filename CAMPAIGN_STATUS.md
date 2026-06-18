@@ -9,11 +9,14 @@
 - Executor: oh-my-pi (omp) via no-agent cronjob
 
 ## Current git baseline
+- e3277b4 fix: make live RPC tests resilient to network failures
 - 346aaab slice: Python SDK trades stream consumers standalone test
 - 57297d5 status: checkpoint klines stream test + next slice: trades stream standalone
 - d7609ee slice: Python SDK klines stream consumers standalone test
 
 ## Campaign history
+
+Completed this run: fix live RPC test resilience and stale ratchet — guard assertions behind success checks in 4 test files (`testnet-deployer-balance.test.mjs` ratchet substring check, `testnet-gas-estimation.test.mjs` probeGasPrice live + estimateDeploymentCost live, `testnet-rpc-latency.test.mjs` measureBlockCadence + readiness chainId comparison); all 5 non-Hardhat failures resolved; 741/762 workspace GREEN (21 pre-existing Hardhat HH1 contract failures); preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`.
 
 Completed this run: testnet contract ABI completeness validator `testnet-contract-abi-completeness.js` — read-only pre-deployment gate that validates all 6 deployable contracts have the required functions and events for the DEX protocol (TradingVault: deposit/withdraw/balanceOf/owner/setSettlementAuthority + Deposit/Withdraw; Settlement: settleTrade/settlementStatus + TradeSettled; NonceManager: incrementNonce/cancelNonce/cancelNonceRange + NonceUsed/NonceCancelled/NonceRangeCancelled; MarketRegistry: addMarket/disableMarket/isMarketEnabled + MarketAdded/MarketDisabled; FeeManager: setFeePolicy/getFeeBps + FeesUpdated; DelegateKeyRegistry: registerKey/revokeKey/getKeyPermissions + DelegateKeyRegistered/DelegateKeyRevoked); events aligned with cutover plan Task 5 and event-truth adapter EVENT_TRUTH_EVENT_TYPES; `checkAbiCompleteness()` unit tests, `validateAbiCompleteness()` live integration, `assertAbiComplete()` fail-closed gate, `formatAbiCompletenessSummary()` human-readable report, source safety scan (no wallet/signing/RPC), readiness integration (contracts match testnet-config, events match event-truth adapter); added `tests/testnet-contract-abi-completeness.test.mjs` with 28 RED/GREEN tests; 740/762 workspace GREEN (22 pre-existing Hardhat contract failures); preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`.
 
