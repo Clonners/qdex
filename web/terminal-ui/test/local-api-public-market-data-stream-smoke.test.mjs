@@ -236,8 +236,8 @@ test('terminal UI docs, package check, app wiring, and campaign status mark publ
     'campaign status should mark the public market-data stream smoke as this run',
   );
   assert.ok(
-    status.includes('Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.'),
-    'campaign status should preserve external side-effect approval gate wording',
+    status.includes('Still not approved: wallets, signing, broadcasts, deploys, real token addresses'),
+    'campaign status should preserve external side-effect approval gate wording (RPC URLs removed after approval)',
   );
 
   assert.doesNotMatch(

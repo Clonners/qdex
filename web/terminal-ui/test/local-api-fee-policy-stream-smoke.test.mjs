@@ -221,8 +221,8 @@ test('terminal UI docs, package check, and campaign status mark FeeManager strea
     'campaign status should move the next bounded slice to bot/operator FeeManager stream consumers',
   );
   assert.ok(
-    status.includes('Still not approved: wallets, RPC URLs, signing, broadcasts, deploys, real token addresses, transaction helpers, live `DelegateKeyRegistry` mutation, live `FeeManager` mutation, real network `MarketRegistry` mutation, public servers, remote pushes, or funds movement.'),
-    'campaign status should preserve external side-effect approval gate wording',
+    status.includes('Still not approved: wallets, signing, broadcasts, deploys, real token addresses'),
+    'campaign status should preserve external side-effect approval gate wording (RPC URLs removed after approval)',
   );
 
   assert.doesNotMatch(

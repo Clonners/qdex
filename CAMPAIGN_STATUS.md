@@ -15,7 +15,7 @@
 
 ## Campaign history
 
-Completed this run: testnet acceptance script `services/api/src/testnet-acceptance-script.js` — cutover plan Task 7 operator checklist as a fail-closed validation gate with 8 weighted acceptance gates (network-config 20%, deployer-address 15%, deploy-manifest 15%, safety-metadata 15%, explorer-helpers 10%, relayer-gate 10%, contracts-null-before-deploy 10%, tokens-null-before-deploy 5%), `runTestnetAcceptance()` returns structured report with per-gate pass/fail + readiness score integration, `assertTestnetAcceptance()` throws with consolidated blocker list; 21 RED/GREEN tests cover module exports (4 exports), GATES structure (8 gates, weights sum to 100), GATES coverage of all required areas, report structure (pass/score/maxScore/scorePercentage/readinessScore/readinessReady/gates/blockers/deploymentChecklist + network summary), safety metadata preservation (8 safety fields), readiness score match with validator, gate-level definitions match, network-config gate (quai-orchard/cyprus1/15000), deployer-address gate (valid 0x format), deploy-manifest gate (draft-dry-run valid), safety-metadata gate (intact envelope), explorer-helpers gate (Orchard URLs + null guards), relayer-gate (mock allowed + quai_contract blocked), contracts-null-before-deploy (6/6 null), tokens-null-before-deploy (2/2 null), score computation (100%), pass flag semantics, 14-step deployment checklist (step 1 done, steps 2-14 pending), assert returns report on pass, source safety (no wallet/signing/RPC imports), ratchet placeholder; acceptance score 100/100 across all 8 gates, readiness score 100/100 from validator, preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noRpcCallMade: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior; 232 total workspace tests, 232 pass GREEN.
+Completed this run: testnet RPC latency and block timing module `testnet-rpc-latency.js` — read-only diagnostic tool that benchmarks eth_chainId/eth_blockNumber/net_version response times with configurable sample counts, calculates latency percentiles (min/max/avg/median/p90/p95/p99), measures block cadence via polling, and produces a structured health report (healthy/degraded/unreliable) for relayer RPC suitability assessment; added `tests/testnet-rpc-latency.test.mjs` with 14 RED/GREEN tests covering module exports, calcLatencyStats unit tests (empty/single/multiple/unsorted), live benchmarks against Orchard RPC for all 3 methods, block cadence measurement, full benchmark suite with structured report + safety metadata, fail-closed RPC URL behavior, source safety scan (no wallet/signing/writing methods), and readiness report integration (benchmark ties back to probe chainId/RPC URL); also reconciled 3 stale status ratchet tests (fee-policy-stream-smoke, kline-stream-smoke, public-market-data-stream-smoke) that asserted exact "Still not approved: wallets, RPC URLs, ..." strings broken by RPC approval — replaced with substring checks for "Still not approved: wallets, signing, broadcasts, deploys, real token addresses" and updated kline test from "Next autonomous slice: review campaign completion gaps" to "testnet cutover" phase reference; 624 workspace tests, 603 pass GREEN (21 pre-existing Hardhat contract failures).
 
 Completed previous run: prepare-only delegate/API key registration and revocation API boundary added `delegate-key-registry-projection` list metadata plus intentional `501` owner-signed placeholders for `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}`; responses preserve `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
 
@@ -220,13 +220,14 @@ RPC APPROVED: `https://orchard.rpc.quai.network/cyprus1` — Quai Orchard testne
 
 ## Next autonomous slice
 
-**Testnet cutover — deploy readiness gate.**
+**Testnet cutover — RPC latency diagnostics complete, deploy readiness pending approval.**
 
 Wallet configured: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (~2029 QUAI on Orchard).
 RPC: `https://orchard.rpc.quai.network/cyprus1` (chainId 15000).
 
 Next bounded slice: deploy contracts to Orchard testnet (requires explicit approval).
 Before deployment: acceptance script confirms score 100/100 across all 8 gates + readiness score 100/100.
+RPC latency benchmark available for relayer suitability assessment.
 
 Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from configured wallet.
 
@@ -239,6 +240,7 @@ Safety: testnet-only deployment. No mainnet, no real funds at risk. Deploy from 
 - ✅ Deploy readiness check with 19 tests — consolidates config completeness, deploy manifest validation, and safety metadata into a single fail-closed gate
 - ✅ Testnet readiness validator with 24 tests — consolidated pre-deployment acceptance checklist with 6 weighted categories (config 25%, manifest 20%, safety 20%, explorer 10%, contracts 15%, tokens 10%), readiness score 100/100, 14-step deployment checklist from cutover plan Task 7
 - ✅ Testnet acceptance script with 21 tests — cutover plan Task 7 operator checklist as fail-closed validation gate with 8 weighted gates (network-config, deployer-address, deploy-manifest, safety-metadata, explorer-helpers, relayer-gate, contracts-null, tokens-null), acceptance score 100/100
+- ✅ Testnet RPC latency/benchmark module with 14 tests — read-only diagnostics: per-method latency (eth_chainId/eth_blockNumber/net_version), percentile stats (min/max/avg/median/p90/p95/p99), block cadence measurement, health assessment (healthy/degraded/unreliable), readiness integration
 - ⏳ Contract deployment to testnet
 - ⏳ Token addresses (WQUAI, WQI on Orchard)
 - ⏳ First real testnet loop (deposit → order → settle → index → withdraw)
