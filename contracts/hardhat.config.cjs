@@ -7,7 +7,7 @@ module.exports = {
     version: '0.8.20',
     settings: {
       optimizer: { enabled: true, runs: 1000 },
-      metadata: { bytecodeHash: 'ipfs', useLiteralContent: true },
+      metadata: { bytecodeHash: 'none' },
       evmVersion: 'london',
     },
   },

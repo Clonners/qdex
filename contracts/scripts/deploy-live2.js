@@ -1,15 +1,15 @@
 /**
- * QDEX Live Deployment — fetch for reads, quais for deploy
- *
+ * QDEX Live Deployment — curl for RPC reads, quais for deploy
+ * 
  * 🔴 APPROVAL REQUIRED — Requires explicit approval from Clonners before execution.
  * This script submits real transactions to Quai Orchard testnet.
  * Do NOT run autonomously. Run only with explicit operator approval.
- *
+ * 
  * Workaround: quais JsonRpcProvider has low internal timeout.
- * Use fetch() for balance/nonce/gas, then ContractFactory for deploy.
+ * Use curl via child_process for balance/nonce/gas, then ContractFactory for deploy.
  */
 
-const { Wallet, ContractFactory, JsonRpcProvider } = require('quais');
+const { Wallet, ContractFactory, JsonRpcProvider, Interface } = require('quais');
 const { execSync } = require('child_process');
 require('dotenv').config();
 const fs = require('fs');
@@ -23,12 +23,21 @@ if (!PK) {
   process.exit(1);
 }
 
-function rpcCall(method, params = []) {
+function rpcCall(method, params = [], retries = 3) {
   const body = JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 });
   const cmd = `curl -s -m 15 -X POST ${RPC} -H "Content-Type: application/json" -d '${body}'`;
-  const res = JSON.parse(execSync(cmd, { encoding: 'utf8' }));
-  if (res.error) throw new Error(res.error.message);
-  return res.result;
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = JSON.parse(execSync(cmd, { encoding: 'utf8' }));
+      if (res.error) throw new Error(res.error.message);
+      return res.result;
+    } catch (e) {
+      if (i === retries - 1) throw e;
+      console.log(`  RPC retry ${i+1}/${retries}...`);
+      execSync(`sleep ${5 * (i + 1)}`, { encoding: 'utf8' });
+    }
+  }
 }
 
 async function main() {
@@ -64,10 +73,13 @@ async function main() {
     fs.readFileSync(path.join(__dirname, '../artifacts/src/Settlement.sol/Settlement.json'), 'utf8')
   );
   
+  // Handle artifact ABI format (object with numeric keys or array)
+  const abi = Array.isArray(artifact.abi) ? artifact.abi : Object.values(artifact.abi);
+  const bytecode = typeof artifact.bytecode === 'string' ? artifact.bytecode : artifact.bytecode.object;
+  
   console.log('\nDeploying Settlement...');
   
-  const bytecode = typeof artifact.bytecode === 'string' ? artifact.bytecode : artifact.bytecode.object;
-  const factory = new ContractFactory(wallet, artifact.abi, bytecode, null);
+  const factory = new ContractFactory(abi, bytecode, wallet, 'a2bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
   
   const deployParams = {
     nonce,
@@ -94,14 +106,19 @@ async function main() {
   console.log('\nReading internal contracts...');
   await new Promise(r => setTimeout(r, 5000));
   
-  const abi = artifact.abi;
-  const iface = new (require('quais').Interface)(abi);
+  const iface = new Interface(abi);
   
   const readAddr = (fnName) => {
     const data = iface.encodeFunctionData(fnName, []);
     const result = rpcCall('eth_call', [{ to: settlementAddr, data }, 'latest']);
     return '0x' + result.slice(26);
   };
+  
+  const vaultAddr = readAddr('vault');
+  const nonceAddr = readAddr('nonceManager');
+  const marketAddr = readAddr('marketRegistry');
+  const feeAddr = readAddr('feeManager');
+  const delegateAddr = readAddr('delegateKeyRegistry');
   
   console.log('TradingVault:', vaultAddr);
   console.log('NonceManager:', nonceAddr);
