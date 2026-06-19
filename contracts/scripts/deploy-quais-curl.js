@@ -8,6 +8,7 @@
  */
 
 const { QuaiHDWallet, Mnemonic, Zone, ContractFactory } = require('quais');
+require('dotenv').config();
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -27,8 +28,13 @@ function rpcCurl(method, params = []) {
 
 async function main() {
   console.log('=== QDEX Deploy (quais sign + curl send) ===\n');
-  
-  const mnemonic = Mnemonic.fromPhrase('foil another wet focus half casino bullet subway level busy saddle seat');
+
+  const mnemonicPhrase = process.env.DEPLOYER_MNEMONIC || process.env.WALLET_MNEMONIC;
+  if (!mnemonicPhrase) {
+    console.error('ERROR: DEPLOYER_MNEMONIC (or WALLET_MNEMONIC) not set in environment');
+    process.exit(1);
+  }
+  const mnemonic = Mnemonic.fromPhrase(mnemonicPhrase);
   const hdWallet = QuaiHDWallet.fromMnemonic(mnemonic);
   const addrInfo = hdWallet.getNextAddressSync(0, Zone.Cyprus1);
   
