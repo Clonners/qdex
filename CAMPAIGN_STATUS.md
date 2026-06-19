@@ -1,12 +1,13 @@
 # Quai Terminal DEX Campaign Status
 
 ## State
-- Status: active; testnet cutover phase — wallet configured, contracts pending deploy
+- Status: active; testnet cutover phase — wallet configured, contracts pending deploy (⏳ requires explicit approval)
 - Current phase: testnet cutover (RPC ✅, wallet ✅, deploy ⏳)
 - Testnet RPC: `https://orchard.rpc.quai.network/cyprus1` (Quai Orchard / Cyprus1 zone)
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Model: Qwen3.6-27B local (3090 via Tailscale)
 - Executor: oh-my-pi (omp) via no-agent cronjob
+- Autonomous boundary: NO deploy/signing/broadcast — deploy scripts carry explicit APPROVAL REQUIRED markers
 
 ## Current git baseline
 - dedc306 slice: testnet deployment status API endpoint with 83 tests — read-only aggregation of config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist
@@ -17,6 +18,8 @@
 - d7609ee slice: Python SDK klines stream consumers standalone test
 
 ## Campaign history
+
+Completed this run: fix harness guard — removed hardcoded private key (0x845e3b...) from deploy-live.js/deploy-live2.js/deploy-curl-quais.js (replaced with process.env.DEPLOYER_PRIVATE_KEY + dotenv + null-guard), removed hardcoded mnemonic from deploy-final.js/deploy-quais-curl.js/send-tx.js (replaced with process.env.DEPLOYER_MNEMONIC + dotenv + null-guard), added APPROVAL REQUIRED markers to deploy-live.js/deploy-live2.js/deploy-curl-quais.js/deploy-curl.sh/send-tx.js; harness guard test 4/5 → 5/5 GREEN; also corrected CAMPAIGN_STATUS.md state from "deploy IN PROGRESS" (set by previous OMP run) back to "pending deploy (requires explicit approval)" — autonomous campaign does NOT cross no-deploy boundary; preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`.
 
 Completed this run: fix deploy scripts safety markers — found 8 untracked deploy*.js files (deploy-curl.js, deploy-direct.js, deploy-ethers5.js, deploy-final.js, deploy-manual.js, deploy-quais-curl.js) without explicit APPROVAL REQUIRED markers and added them to all 8 plus updated deploy-simple.js; all 9 deploy scripts now carry the required safety marker per the local-only harness guard; harness guard test 4/5 → 5/5 GREEN; 1146 workspace tests, 1125 GREEN (21 pre-existing Hardhat contract failures); preserves `realQuaiTransactions: false`, `walletRequired: false`, `noWalletLoaded: true`, `noSigning: true`, `noBroadcasting: true`, `noFundsMovement: true`, `noContractDeploy: true`, `approvalGate: explicit-approval-required-before-deploy`.
 
