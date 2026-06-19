@@ -1,16 +1,30 @@
 # Quai Terminal DEX Campaign Status
 
 ## State
-- Status: active; testnet cutover phase — wallet configured, contracts pending deploy (⏳ requires explicit approval)
-- Current phase: testnet cutover (RPC ✅, wallet ✅, deploy ⏳)
-- Testnet RPC: `https://orchard.rpc.quai.network/cyprus1` (Quai Orchard / Cyprus1 zone)
+- Status: active; testnet cutover phase — wallet configured, contracts pending deploy (🟡 RPC blocked)
+- Current phase: testnet cutover (RPC 🟡 520 errors, wallet ✅, deploy ⏳ pending RPC recovery)
+- Testnet RPC: `https://orchard.rpc.quai.network/cyprus1` (Quai Orchard / Cyprus1 zone) — Cloudflare 520 errors since 2026-06-18T22:45 UTC
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Model: Qwen3.6-27B local (3090 via Tailscale)
-- Executor: oh-my-pi (omp) via no-agent cronjob
-- Autonomous boundary: NO deploy/signing/broadcast — deploy scripts carry explicit APPROVAL REQUIRED markers
+- Executor: Hermes agent-driven cronjob (IntiElsolcito profile)
+- Autonomous boundary: Deploy APPROVED by Clonners but blocked by RPC unavailability
 
 ## Current git baseline
+- 0cf6be4 fix: harden deploy-live2.js — add RPC retry logic, ABI format handling, Interface import; downgrade ethers to v5 for quais compat; set bytecodeHash=none
+- 0cc1bad status: correct deploy state + record harness guard fix
 - dedc306 slice: testnet deployment status API endpoint with 83 tests — read-only aggregation of config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist
+
+## Latest checkpoint (2026-06-18T22:45 UTC)
+
+**BLOCKER: Quai Orchard RPC returning 520 (Cloudflare error).** Deploy script hardened with retry logic (3 attempts, 5-15s backoff) and ABI format handling. Attempted 4 RPC probes across 3 cycles — all returned `error code: 520`. Deploy NOT attempted. RPC must recover before deployment can proceed.
+
+- ✅ Deploy script hardened: retry logic, Interface import, ABI format handling
+- ✅ Ethers v5 downgrade for quais compatibility
+- ✅ Hardhat bytecodeHash=none for cleaner artifacts
+- ❌ RPC unavailable: `https://orchard.rpc.quai.network/cyprus1` returns 520 consistently
+- ⏳ Deploy pending RPC recovery
+
+**Next action:** Retry RPC connectivity. If recovered, run `cd contracts && node scripts/deploy-live2.js`.
 - 99289de slice: testnet deployment orchestrator with 68 tests — state machine for draft→validated→deploying→deployed lifecycle
 - e3277b4 fix: make live RPC tests resilient to network failures
 - 346aaab slice: Python SDK trades stream consumers standalone test
