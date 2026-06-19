@@ -1,30 +1,28 @@
 # Quai Terminal DEX Campaign Status
 
 ## State
-- Status: active; testnet cutover phase — wallet configured, contracts pending deploy (🟡 RPC blocked)
-- Current phase: testnet cutover (RPC 🟡 520 errors, wallet ✅, deploy ⏳ pending RPC recovery)
+- Status: active; testnet cutover phase — wallet configured, contracts pending deploy (🔴 RPC down)
+- Current phase: testnet cutover (RPC 🔴 520 — all zones down, wallet ✅, deploy ⏳ blocked)
 - Testnet RPC: `https://orchard.rpc.quai.network/cyprus1` (Quai Orchard / Cyprus1 zone) — Cloudflare 520 errors since 2026-06-18T22:45 UTC
 - Workdir: `/home/clonners/.hermes/hermes-agent/quai-terminal-dex`
 - Model: Qwen3.6-27B local (3090 via Tailscale)
 - Executor: Hermes agent-driven cronjob (IntiElsolcito profile)
 - Autonomous boundary: Deploy APPROVED by Clonners but blocked by RPC unavailability
 
-## Current git baseline
-- 0cf6be4 fix: harden deploy-live2.js — add RPC retry logic, ABI format handling, Interface import; downgrade ethers to v5 for quais compat; set bytecodeHash=none
-- 0cc1bad status: correct deploy state + record harness guard fix
-- dedc306 slice: testnet deployment status API endpoint with 83 tests — read-only aggregation of config, manifest, safety, contracts, tokens, verdict, readiness score, deployment checklist
+## Latest checkpoint (2026-06-18T23:35 UTC)
 
-## Latest checkpoint (2026-06-18T22:45 UTC)
+**BLOCKER: Quai Orchard RPC DOWN — all zones returning 520 (Cloudflare origin error).** Deploy script `deploy-raw.js` attempted execution, failed on first RPC call (eth_getBalance). Probed all 4 endpoints (root, cyprus1, paxos1, hydra1) — all return `error code: 520`. Deploy NOT attempted. RPC must recover before deployment can proceed.
 
-**BLOCKER: Quai Orchard RPC returning 520 (Cloudflare error).** Deploy script hardened with retry logic (3 attempts, 5-15s backoff) and ABI format handling. Attempted 4 RPC probes across 3 cycles — all returned `error code: 520`. Deploy NOT attempted. RPC must recover before deployment can proceed.
-
-- ✅ Deploy script hardened: retry logic, Interface import, ABI format handling
-- ✅ Ethers v5 downgrade for quais compatibility
-- ✅ Hardhat bytecodeHash=none for cleaner artifacts
-- ❌ RPC unavailable: `https://orchard.rpc.quai.network/cyprus1` returns 520 consistently
+- ✅ Deploy script: `contracts/scripts/deploy-raw.js` (15M gas, retry logic, Interface import)
+- ✅ Settlement artifact exists at `artifacts/src/Settlement.sol/Settlement.json`
+- ✅ Deployer: `0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267` (Cyprus1)
+- ✅ Deployer nonce: `3` (0x3) — previous failed tx consumed nonce(s)
+- ✅ .env configured with DEPLOYER_PRIVATE_KEY
+- ❌ RPC unavailable: ALL endpoints (root, cyprus1, paxos1, hydra1) return 520 consistently (5+ attempts across multiple cycles)
+- ❌ Deploy NOT attempted — RPC down before first call
 - ⏳ Deploy pending RPC recovery
 
-**Next action:** Retry RPC connectivity. If recovered, run `cd contracts && node scripts/deploy-live2.js`.
+**Next action:** Retry RPC connectivity. If recovered, run `cd contracts && node scripts/deploy-raw.js`.
 - 99289de slice: testnet deployment orchestrator with 68 tests — state machine for draft→validated→deploying→deployed lifecycle
 - e3277b4 fix: make live RPC tests resilient to network failures
 - 346aaab slice: Python SDK trades stream consumers standalone test
