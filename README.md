@@ -29,6 +29,32 @@ Terminal UI / SDK / Bots
 - API-first from day one for agents, bots, and market makers.
 - Terminal/TUI-style web interface.
 
+## Web Frontend
+
+### Approval Batcher
+
+Batch ERC-20 approvals — **1 click, N approvals**.
+
+```bash
+cd web/approval-batcher
+npm install
+npm test
+```
+
+Usage:
+```typescript
+import { approveAll, getTokenAddresses } from '@qdex/approval-batcher';
+
+const tokens = getTokenAddresses('orchard');
+const result = await approveAll(wallet, userAddress, vaultAddress, tokens);
+```
+
+See `web/approval-batcher/README.md` for full docs.
+
+### Terminal UI
+
+Browser TUI frontend. Run with `node src/app.js`.
+
 ## Repository layout
 
 ```text

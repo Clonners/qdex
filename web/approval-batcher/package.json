@@ -1,0 +1,18 @@
+{
+  "name": "@qdex/approval-batcher",
+  "version": "0.1.0",
+  "description": "Batch ERC-20 approvals for QDEX - 1 click, N approvals",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
