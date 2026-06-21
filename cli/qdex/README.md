@@ -1,97 +1,163 @@
-# qdex CLI
+# @qdex/cli — Generic DEX & Token CLI
 
-Terminal client for humans, bots and ops.
+Generic CLI wallet for interacting with **any ERC20 token**, **native QUAI**, and **any UniswapV2-compatible router** on Quai Network.
 
-Implemented smoke/read-only stubs:
+## Features
+
+- ✅ Native QUAI: balance, transfer
+- ✅ Any ERC20 token: balance, transfer, approve, allowance, info
+- ✅ Any UniswapV2-compatible router: quote, swap
+- ✅ Native ↔ token swaps (QUAI → token, token → QUAI)
+- ✅ Token/router registry in `config/dex.json`
+- ✅ Dry-run mode for swaps
+- ✅ Explorer links
+- ✅ Multi-shard support via `QUAI_RPC` env var
+- ✅ No wallet extension needed — uses CLI private key
+
+## Installation
 
 ```bash
-qdex --base-url http://127.0.0.1:8787 markets
-qdex --base-url http://127.0.0.1:8787 ticker WQUAI-WQI
-qdex --base-url http://127.0.0.1:8787 klines WQUAI-WQI --interval 1m
-qdex --base-url http://127.0.0.1:8787 book WQUAI-WQI
-qdex --base-url http://127.0.0.1:8787 account
-qdex --base-url http://127.0.0.1:8787 balance
-qdex --base-url http://127.0.0.1:8787 contracts
-qdex --base-url http://127.0.0.1:8787 fees
-qdex --base-url http://127.0.0.1:8787 listings policy
-qdex --base-url http://127.0.0.1:8787 listings review-flow
-qdex --base-url http://127.0.0.1:8787 listings requests
-qdex --base-url http://127.0.0.1:8787 listings request --prepare --base-symbol COMMUNITY --quote-symbol WQUAI --token-model erc20-style-vault-token --market-id COMMUNITY-WQUAI --price-precision 8 --amount-precision 8 --min-amount 1
-qdex --base-url http://127.0.0.1:8787 listings request --local-review-queue --base-symbol COMMUNITY --quote-symbol WQI --token-model erc20-style-vault-token --market-id COMMUNITY-WQI --price-precision 8 --amount-precision 8 --min-amount 1
-qdex --base-url http://127.0.0.1:8787 listings request decision <request-id> --decision approve --review-stage clonners_local_approval --decision-notes "metadata-only local approval"
-qdex --base-url http://127.0.0.1:8787 relayer gate
-qdex --base-url http://127.0.0.1:8787 nonces cancel --prepare --owner 0xowner --nonce 42 --chain-id 0 --nonce-manager-contract 0xnonce-manager --expires-at 1780003600 --signature 0xowner-signature
-qdex --base-url http://127.0.0.1:8787 api registrations
-qdex --base-url http://127.0.0.1:8787 api revocations
-qdex --base-url http://127.0.0.1:8787 api create-key bot-mm-1 --prepare --owner 0xowner --delegate 0xdelegate --allowed-market WQUAI-WQI --max-notional 1000 --expires-at 1780003600 --permission PLACE_ORDER --signature 0xowner-signature
-qdex --base-url http://127.0.0.1:8787 api revoke-key bot-mm-1 --prepare --owner 0xowner --signature 0xowner-signature
-qdex --base-url http://127.0.0.1:8787 vault deposits
-qdex --base-url http://127.0.0.1:8787 vault withdrawals
-qdex --base-url http://127.0.0.1:8787 vault deposit --prepare --owner 0xowner --asset-symbol WQI --amount 10 --chain-id 0 --vault-contract-ref local-only-not-deployed
-qdex --base-url http://127.0.0.1:8787 vault withdraw --prepare --owner 0xowner --asset-symbol WQUAI --amount 1 --chain-id 0 --vault-contract-ref local-only-not-deployed
-qdex --base-url http://127.0.0.1:8787 stream fills --limit 1
-qdex --base-url http://127.0.0.1:8787 stream orders --limit 1
-qdex --base-url http://127.0.0.1:8787 stream deposits --limit 1
-qdex --base-url http://127.0.0.1:8787 stream withdrawals --limit 1
-qdex --base-url http://127.0.0.1:8787 stream delegate-key-registrations --limit 1
-qdex --base-url http://127.0.0.1:8787 stream delegate-key-revocations --limit 1
-qdex --base-url http://127.0.0.1:8787 stream fees --limit 1
-qdex --base-url http://127.0.0.1:8787 stream nonce-cancellations --limit 1
-qdex --base-url http://127.0.0.1:8787 stream tickers --limit 1
-qdex --base-url http://127.0.0.1:8787 stream depth WQUAI-WQI --limit 1
-qdex --base-url http://127.0.0.1:8787 stream trades WQUAI-WQI --limit 1
-qdex --base-url http://127.0.0.1:8787 stream klines WQUAI-WQI --interval 1m --limit 1
-qdex --base-url http://127.0.0.1:8787 smoke
+cd cli/qdex
+npm install
 ```
 
-`qdex contracts` prints the `GET /v1/contracts` registry as local-only metadata: `local-only-not-deployed`, null addresses, no real Quai tx, no wallet required, and no deploy authority. It includes read-only `listedAssetStatus` metadata: `wrapped-token-listing`, primary quote assets `WQUAI` and `WQI`, user-listed token support, and the safety notice that the MVP settles listed vault tokens such as WQUAI, WQI, and approved community tokens with no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real native Qi settlement claim. Listing policy metadata is already exposed through GET /v1/listings/policy; listing requests remain prepare-only through POST /v1/listings/requests; runtime listing submission or MarketRegistry admin mutation requires explicit Clonners approval.
+## Configuration
 
-`qdex fees` prints `GET /v1/fees` read-only FeeManager fee schedule metadata with `source: feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
+Edit `cli/qdex/config/dex.json`:
 
-`qdex stream fees` consumes bounded public FeeManager fee schedule snapshots from `/v1/ws?channel=fees`. Output messages carry `fee_schedule_projection`, `public-read-only-no-custody`, `feemanager-policy-projection`, `FeeScheduleProjection`, `eventName: FeesUpdated`, `hardMaxFeeBps: 1000`, `feeRecipient: null`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `feeManagerMutation: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior, no fee-authority runtime keys, and no live FeeManager or TradingVault mutation authority.
+```json
+{
+  "tokens": {
+    "WQUAI": {
+      "address": "0x005c46f661Baef20671943f2b4c087Df3E7CEb13",
+      "symbol": "WQUAI",
+      "decimals": 18,
+      "wrappedNative": true,
+      "nativeAlias": "QUAI"
+    },
+    "WQI": {
+      "address": "0x002b2596EcF05C93a31ff916E8b456DF6C77c750",
+      "symbol": "WQI",
+      "decimals": 18,
+      "wrappedNative": true,
+      "nativeAlias": "QI"
+    }
+  },
+  "routers": {
+    "quaiswap": {
+      "address": "0x0044E4779b3e1C88f931DE4940bC87C1a85628c3",
+      "type": "uniswap-v2"
+    }
+  },
+  "defaults": {
+    "slippage": 0.05,
+    "deadlineSec": 3600,
+    "gasLimit": 500000,
+    "rpc": "https://orchard.rpc.quai.network/cyprus1",
+    "explorer": "https://testnet.explorer.quai.network/tx/"
+  }
+}
+```
 
-`qdex stream tickers`, `qdex stream depth WQUAI-WQI`, `qdex stream trades WQUAI-WQI`, and `qdex stream klines WQUAI-WQI --interval 1m --limit 1` consume bounded public market-data snapshots from `/v1/ws?channel=global.tickers`, `/v1/ws?channel=market.<MARKET>.depth`, `/v1/ws?channel=market.<MARKET>.trades`, and `/v1/ws?channel=market.<MARKET>.klines.1m`. `qdex klines WQUAI-WQI --interval 1m` reads `/v1/klines/<MARKET>?interval=1m`. Output messages carry `ticker_snapshot` / `orderbook_depth` / `trade_projection` / `kline_snapshot`, `public-read-only-no-custody`, `mock-market-data`, `mock-orderbook`, `in-memory-indexer-projection`, `mock-candle-projection`, and `confirmed-settlement-only` trade projection semantics with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+## Usage
 
-`qdex account` prints `GET /v1/account` as read-only `mock-account-overview` metadata: `mock-local-no-wallet-session`, nested `mock-vault-projection` balances, matcher-local `mock-order-projection` open orders, confirmed-only `IndexedFillProjection` rows, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
+```bash
+node src/dex.js <command> [subcommand] [args]
+```
 
-`qdex account-orders` prints `GET /v1/account/orders` as read-only `mock-order-projection` metadata: `projectionType: LocalOrderProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `matcherLocalOnly: true`, `settlementMode: mock`, mock-null `settlementTx`/`blockNumber`/`blockHash`/`eventIndex`/`explorerUrl`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false`. It has no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and cannot grant delegate withdrawal/admin authority.
+### Native QUAI
 
-`qdex ticker WQUAI-WQI` prints `GET /v1/tickers/WQUAI-WQI` public read-only mock market-data metadata (`source: mock-market-data`, null `lastPrice`/`bestBid`/`bestAsk`, and `volume24h: "0"`) with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+```bash
+node src/dex.js native balance
+node src/dex.js native transfer 0xRecipient... 10
+```
 
-`qdex balance` prints `GET /v1/account/balances` as read-only `mock-vault-projection` metadata: `settlementMode: mock`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, no real Quai tx, no wallet required, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.
+### Token (any ERC20)
 
-`qdex vault deposits` and `qdex vault withdrawals` print `GET /v1/vault/deposits` and `GET /v1/vault/withdrawals` as read-only `source: tradingvault-event-projection` history envelopes. They expose `TradingVaultDepositProjection` / `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `realQuaiTransactions: false`, `walletRequired: false`, `fundsMoved: false`, and `tradingVaultMutation: false` with mock-null event evidence and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+```bash
+# Check balance
+node src/dex.js token balance WQUAI
+node src/dex.js token balance 0xAnyToken...
+node src/dex.js token balance WQUAI 0xOwnerAddress...  # anyone's balance
 
-`qdex vault deposit --prepare` and `qdex vault withdraw --prepare` call `POST /v1/vault/deposits/prepare` and `POST /v1/vault/withdrawals/prepare` and print the intentional 501 owner-wallet placeholders (`owner_wallet_vault_deposit_not_implemented` / `owner_wallet_vault_withdrawal_not_implemented`). The output preserves `source: owner-wallet-vault-operation-placeholder`, `custody: non-custodial-contract-vault`, `operationStatus: prepare-only-not-implemented`, `ownerAuthorization: owner-wallet-required`, `delegateAuthority: delegates-cannot-deposit-or-withdraw`, `NO_WITHDRAW`, `NO_ADMIN`, `fundsMoved: false`, and `tradingVaultMutation: false`; the commands treat the placeholder as a boundary response with no wallet/RPC/sign/broadcast/deploy/tx/funds behavior.
+# Transfer
+node src/dex.js token transfer WQUAI 0xRecipient... 10
 
-`qdex listings policy` prints `GET /v1/listings/policy` read-only `listed-asset-marketregistry-policy` / `design-only-local-metadata` for WQUAI, WQI, and `community-created-erc20-style-token` assets. It exposes `MarketRegistry-enabled-pair-metadata`, `NO_WITHDRAW`, and `NO_ADMIN` safety only; there is no wallet loading, signing, broadcast, RPC URL access, transaction submission, deploy, or real funds, and the metadata cannot move TradingVault balances or grant withdrawal/admin power.
+# Approve spender
+node src/dex.js token approve WQUAI 0xRouter... 1000
 
-`qdex listings review-flow` prints `GET /v1/listings/review-flow` read-only `listed-asset-marketregistry-review-flow` / `design-only-local-metadata` for `phase: clonners-managed-local-review-before-dao`. It exposes local-only review statuses like `approved-local-metadata-only` and `rejected-local-metadata-only`, keeps `NO_WITHDRAW` and `NO_ADMIN`, has no wallets/RPC/signing/broadcast/deploy/tx/funds behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
+# Check allowance
+node src/dex.js token allowance WQUAI 0xSpender...
 
-`qdex listings request --prepare` calls `POST /v1/listings/requests` and prints the prepare-only 501 placeholder body (`listing_request_not_implemented`, `not-implemented-approval-required`, `listed-asset-marketregistry-policy`, `design-only-local-metadata`) for WQUAI/WQI `community-created-erc20-style-token` metadata. It treats the intentional 501 as a boundary response, not a generic transport failure and not proof of submission: it preserves `NO_WITHDRAW`/`NO_ADMIN`, no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and does not prove a listing request was submitted on-chain.
+# Token info
+node src/dex.js token info WQUAI
 
-`qdex listings requests` calls `GET /v1/listings/requests`, and `qdex listings request --local-review-queue` calls `POST /v1/listings/requests with requestMode: local_review_queue`. The local queue output carries `listed-asset-marketregistry-review-flow`, `local-in-memory-review-queue`, `in-memory-local-server-only`, `queued-local-review`, and `pending-local-review` metadata only. It preserves `NO_WITHDRAW`/`NO_ADMIN`, has no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior, and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
+# List all tokens
+node src/dex.js token list
+```
 
-`qdex listings request decision <request-id>` calls `POST /v1/listings/requests/{requestId}/decision` with `decisionMode: local_review_decision` and records immutable local review metadata only. The output carries `reviewed-local-metadata-only`, `approved-local-metadata-only` / `rejected-local-metadata-only`, `explicit Clonners approval required before MarketRegistry.addMarket`, `NO_WITHDRAW`, and `NO_ADMIN`; it has no wallet/RPC/sign/broadcast/deploy/tx/funds/MarketRegistry mutation behavior and cannot move TradingVault balances, mutate MarketRegistry, or grant withdrawal/admin power.
+### Router (any UniswapV2-compatible)
 
-`qdex relayer gate` prints `GET /v1/relayer/settlement-mode-gate` read-only `relayer-approval-gate` metadata for `currentSettlementMode: mock` plus `real_quai_approval_gate_blocked` for `quai_contract`; it performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.
+```bash
+# Token → Token
+node src/dex.js router quote quaiswap WQUAI,WQI 1
+node src/dex.js router swap quaiswap WQUAI,WQI 1
 
-`qdex nonces cancel --prepare` calls `POST /v1/nonces/cancel` and prints the prepare-only 501 placeholder (`owner_signed_nonce_cancel_not_implemented`, `owner-signed-required`, `NO_WITHDRAW`, `NO_ADMIN`) with no wallet loading, signing, broadcast, or relayer submission.
+# Native → Token (QUAI keyword)
+node src/dex.js router swap quaiswap QUAI,WQI 1
 
-`qdex stream nonce-cancellations` consumes `/v1/ws?channel=nonce-cancellations` for bounded private NonceManager cancellation history snapshots. The stream output preserves `nonce-manager-event-projection`, `payload: nonce_cancellation_projection`, `custody: non-custodial-no-withdrawal-authority`, `NonceCancelledProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `nonceManagerMutation: false`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+# Token → Native (QUAI keyword)
+node src/dex.js router swap quaiswap WQI,QUAI 1
 
-`qdex stream open-orders` consumes `/v1/ws?channel=open-orders` for bounded private open orders snapshots. The stream output preserves `mock-order-projection`, `payload: open_orders_projection`, `custody: non-custodial-no-withdrawal-authority`, `LocalOrderProjection`, `matcherLocalOnly: true`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `tradingVaultMutation: false`, and no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+# Dry run (no actual transaction)
+node src/dex.js router swap quaiswap QUAI,WQI 1 --dry-run
 
-`qdex api registrations` and `qdex api revocations` print `GET /v1/delegate-keys/registrations` and `GET /v1/delegate-keys/revocations` as read-only `source: delegatekeyregistry-event-projection` history envelopes. They expose `DelegateKeyRegisteredProjection` / `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateKeyRegistryMutation: false`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+# Custom params
+node src/dex.js router swap quaiswap WQUAI,WQI 1 0.9 3600 500000
 
-`qdex stream delegate-key-registrations` and `qdex stream delegate-key-revocations` consume `/v1/ws?channel=delegate-key-registrations` and `/v1/ws?channel=delegate-key-revocations` for bounded private DelegateKeyRegistry history snapshots. The stream output preserves `delegatekeyregistry-event-projection`, `DelegateKeyRegisteredProjection`, `DelegateKeyRevokedProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `delegateCanWithdraw: false`, `delegateCanAdmin: false`, and `delegateKeyRegistryMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+# List all routers
+node src/dex.js router list
+```
 
-`qdex api create-key bot-mm-1 --prepare` and `qdex api revoke-key bot-mm-1 --prepare` call `POST /v1/delegate-keys` and `DELETE /v1/delegate-keys/{keyId}` and print intentional 501 owner-signed delegate/API key placeholders (`delegate_key_registration_not_implemented` / `delegate_key_revocation_not_implemented`). The output preserves `source: delegate-key-owner-signed-prepare-boundary`, `operationStatus: prepare-only-owner-signed-required`, `ownerAuthorization: owner-wallet-signature-required`, `NO_WITHDRAW`, `NO_ADMIN`, `delegateCanWithdraw: false`, and `delegateCanAdmin: false`; these commands have no wallet/RPC/signing/broadcast/deploy/tx/funds behavior and do not mutate a live DelegateKeyRegistry or TradingVault.
+### Shortcuts
 
-`qdex stream fills` consumes `/v1/ws?channel=fills` and prints bounded WebSocket snapshot messages. Private stream output is read-only and preserves `READ_ONLY`, `NO_WITHDRAW`, and `NO_ADMIN` permission metadata.
+```bash
+node src/dex.js balances  # All balances (native + tokens)
+```
 
-`qdex stream orders` consumes `/v1/ws?channel=orders` for bounded order/cancel monitors. Matcher-local cancellation stream events keep `matcher-local-cancel-only-on-chain-nonce-unchanged` wording visible and never imply withdrawal/admin authority.
+## Multi-Shard
 
-`qdex stream deposits` and `qdex stream withdrawals` consume `/v1/ws?channel=deposits` and `/v1/ws?channel=withdrawals` for bounded private TradingVault history snapshots. The stream output preserves `tradingvault-event-projection`, `TradingVaultDepositProjection`, `TradingVaultWithdrawalProjection`, `READ_ONLY`, `NO_WITHDRAW`, `NO_ADMIN`, `settlementMode: mock`, `fundsMoved: false`, and `tradingVaultMutation: false` with no wallet/RPC/signing/broadcast/deploy/tx/funds behavior.
+```bash
+QUAI_RPC=https://orchard.rpc.quai.network/cyprus2 node src/dex.js token balance WQUAI
+```
 
-`qdex smoke` submits two deterministic mock signed orders, verifies the indexed fill/proof loop, and prints explicit public fill projection fields (`projectionType: IndexedFillProjection`, `sourceEventId`) plus mock-settlement safety fields (`settlementMode: mock`, `settlementTx: null`, `explorerUrl: null`, no real Quai tx/no funds moved). The fill rows are not matcher/relayer FillPacket handoffs. Delegate/API-key safety remains `NO_WITHDRAW`/`NO_ADMIN` by default.
+## Adding New Tokens
+
+Add to `config/dex.json`:
+
+```json
+"TOKENS": {
+  "NEW": {
+    "address": "0xYourToken...",
+    "symbol": "NEW",
+    "decimals": 18,
+    "wrappedNative": false
+  }
+}
+```
+
+For native tokens, add `nativeAlias` to enable native swap support:
+
+```json
+"WQUAI": {
+  "address": "...",
+  "symbol": "WQUAI",
+  "decimals": 18,
+  "wrappedNative": true,
+  "nativeAlias": "QUAI"  // enables 'QUAI' keyword in router paths
+}
+```
+
+## License
+
+Private

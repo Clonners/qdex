@@ -4,10 +4,14 @@
   "private": true,
   "type": "module",
   "bin": {
-    "qdex": "src/cli.js"
+    "qdex": "src/cli.js",
+    "qdex-dex": "src/dex.js"
   },
   "scripts": {
-    "check": "node --check src/cli.js && node --test test/*.test.mjs",
+    "check": "node --check src/cli.js && node --check src/dex.js && node --test test/*.test.mjs",
     "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "quais": "^1.0.0-alpha.54"
   }
 }
