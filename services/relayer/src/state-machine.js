@@ -340,7 +340,9 @@ export function createRelayerStateMachine(settlementConfig = {}) {
       // On-chain settlement for quai_contract mode
       if (fill.settlementMode === 'quai_contract' && adapter && onChainParams) {
         try {
-          await adapter.init();
+          const initPromise = adapter.init();
+          const initTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('init timeout')), 10000));
+          await Promise.race([initPromise, initTimeout]);
 
                     // Build settle params from fillPacket
           const fp = onChainParams;
@@ -351,6 +353,7 @@ export function createRelayerStateMachine(settlementConfig = {}) {
           const marketIdMap = { 'WQUAI-WQI': '0xc9160def9f9681b77acdccf0caeda5701a190f9a034bf694595796b03350ef9b' };
           const marketIdBytes32 = marketIdMap[fp.marketId] || toBytes32(fp.marketId);
           
+          const wallet = await adapter.getWallet();
           const settleParams = {
             fillId: fillIdBytes32,
             marketId: marketIdBytes32,
@@ -370,6 +373,7 @@ export function createRelayerStateMachine(settlementConfig = {}) {
             expiresAt: '9999999999',
             chainId: '15000',
             feeRecipient: settlementConfig.privateKey ? (await adapter.getWallet()).address : '0x0000000000000000000000000000000000000000',
+            nonce: String(await adapter.getProvider().getTransactionCount((await adapter.getWallet()).address)), 
             maxFeeBps: '100',
             makerOrderAmount: fp.amount,
             takerOrderAmount: fp.amount,
@@ -379,7 +383,9 @@ export function createRelayerStateMachine(settlementConfig = {}) {
             takerSignature: '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
           };
 
-          const result = await adapter.settle(settleParams);
+          const settlePromise = adapter.settle(settleParams);
+          const settleTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('settle timeout')), 30000));
+          const result = await Promise.race([settlePromise, settleTimeout]);
 
           events.push({
             type: 'SETTLEMENT_CONFIRMED',

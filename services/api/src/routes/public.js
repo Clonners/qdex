@@ -67,6 +67,34 @@ const listingRequestDecisionId = (pathname) => {
 
 export const handlePublicRoute = (context) => {
   const { method, pathname, searchParams, state } = context;
+  // Orderbook endpoint
+  if (method === 'GET' && pathname.startsWith('/v1/orderbook')) {
+    const marketId = marketPathValue(pathname, '/v1/orderbook/') || MARKET_ID;
+    const limit = Math.min(Number(searchParams.get('limit')) || 20, 100);
+    const dex = state;
+    if (dex) {
+      const orders = dex.getOpenOrders();
+      const filtered = (orders || []).filter(o => o.marketId === marketId).slice(0, limit * 2);
+      const bids = filtered.filter(o => o.side === 'buy').sort((a, b) => Number(b.price) - Number(a.price)).slice(0, limit);
+      const asks = filtered.filter(o => o.side === 'sell').sort((a, b) => Number(a.price) - Number(b.price)).slice(0, limit);
+      const trades = dex.getRecentTrades(marketId, limit);
+      return jsonResult(200, {
+        marketId,
+        bids: bids.map(o => ({ price: o.price, amount: o.remainingAmount, orderHash: o.orderHash })),
+        asks: asks.map(o => ({ price: o.price, amount: o.remainingAmount, orderHash: o.orderHash })),
+        recentTrades: (trades || []).slice(0, limit),
+        source: 'mock-matching-engine',
+      });
+    }
+    return jsonResult(200, {
+      marketId,
+      bids: [],
+      asks: [],
+      recentTrades: [],
+      source: 'mock-matching-engine',
+    });
+  }
+
   if (method === 'GET' && pathname === '/v1/health') {
     return jsonResult(200, {
       ok: true,

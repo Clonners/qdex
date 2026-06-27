@@ -328,7 +328,19 @@ export function createSettlementAdapter(config = {}) {
 
     // Sign and send raw transaction (bypass access list creation)
     const signedTx = await wallet.signTransaction(txRequest);
-    const txHash = await provider.send('eth_sendRawTransaction', [signedTx]);
+    let txHash;
+    try {
+      txHash = await provider.send('eth_sendRawTransaction', [signedTx]);
+    } catch (error) {
+      // Handle "already known" - tx was sent before (e.g., after restart)
+      if (error.message && error.message.includes('already known')) {
+        // Extract txHash from the signed transaction
+        const { createHash } = await import('node:crypto');
+        txHash = '0x' + createHash('keccak256').update(Buffer.from(signedTx.slice(2), 'hex')).digest('hex');
+      } else {
+        throw error;
+      }
+    }
 
     const tx = { hash: txHash };
 

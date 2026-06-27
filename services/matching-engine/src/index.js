@@ -144,6 +144,8 @@ const applyFill = (order, amount) => {
 const publicOrder = ({ acceptedSequence, signedOrder, ...order }) => clone(order);
 const bookOrder = (order) => ({
   orderHash: order.orderHash,
+  marketId: order.marketId,
+  side: order.side,
   price: order.price,
   amount: order.amount,
   remainingAmount: order.remainingAmount,
@@ -246,6 +248,7 @@ export function createMatchingEngine() {
         type: order.type,
         amount: order.amount,
         price: order.price,
+        timeInForce: order.timeInForce,
         filledAmount: '0',
         remainingAmount: order.amount,
         status: 'open',
@@ -379,6 +382,13 @@ export function createMatchingEngine() {
         asks: state.book.asks.map(bookOrder),
         source: 'mock-orderbook',
       };
+    },
+
+    getOpenOrders() {
+      return [
+        ...state.book.bids.map(bookOrder),
+        ...state.book.asks.map(bookOrder),
+      ];
     },
   };
 }

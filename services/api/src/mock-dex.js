@@ -363,12 +363,12 @@ export const createMockDexState = ({
       fillId: fillPacket.fillId,
       tradeId,
       orderHashes: [fillPacket.makerOrderHash, fillPacket.takerOrderHash],
-      settlementMode: 'mock',
-      mockSettlementReference,
-      settlementTx: null,
-      blockNumber: null,
-      blockHash: null,
-      eventIndex,
+      settlementMode: activeSettlementMode,
+      mockSettlementReference: activeSettlementMode === 'mock' ? mockSettlementReference : null,
+      settlementTx: relayerConfirm.settlementTx ?? null,
+      blockNumber: relayerConfirm.blockNumber ?? null,
+      blockHash: relayerConfirm.blockHash ?? null,
+      eventIndex: relayerConfirm.eventIndex ?? eventIndex,
       maker: fillPacket.maker,
       taker: fillPacket.taker,
       market: fillPacket.marketId,
@@ -378,7 +378,7 @@ export const createMockDexState = ({
         maker: fillPacket.makerFee ?? '0',
         taker: fillPacket.takerFee ?? '0',
       },
-      explorerUrl: null,
+      explorerUrl: relayerConfirm.explorerUrl ?? null,
     };
 
     const projectionResult = indexer.projectSettlementEvent(settlementEvent);
@@ -550,6 +550,16 @@ export const createMockDexState = ({
       const pending = relayer.getPendingFills();
       const confirmed = relayer.getConfirmedFills();
       return [...confirmed, ...pending];
+    },
+
+    getOpenOrders() {
+      // Return all open orders from the matching engine
+      return engine.getOpenOrders() || [];
+    },
+
+    getRecentTrades(marketId = MARKET_ID, limit = 20) {
+      const fills = indexer.listFills().filter(f => f.marketId === marketId);
+      return fills.slice(-limit);
     },
 
     submitListingRequest(request) {
