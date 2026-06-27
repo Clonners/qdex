@@ -587,6 +587,10 @@ export const createMockDexState = ({
       return result.statusCode === 200 ? clone(result.body.proof) : null;
     },
 
+    listProofs() {
+      return indexer.listProofs();
+    },
+
     getOrderbook(marketId) {
       return engine.getOrderbook(marketId);
     },
