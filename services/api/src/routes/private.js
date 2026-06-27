@@ -32,7 +32,7 @@ const ownerSignedNonceCancelPlaceholder = () => jsonResult(501, {
   approvalGate: 'explicit-approval-required-before-wallet-signing-or-quai-broadcast',
 });
 
-export const handlePrivateRoute = (context) => {
+export const handlePrivateRoute = async (context) => {
   const { method, pathname } = context;
 
   if (method === 'POST' && pathname === '/v1/auth/challenge') {
@@ -123,7 +123,7 @@ export const handlePrivateRoute = (context) => {
   }
 
   if (method === 'POST' && pathname === '/v1/orders') {
-    const result = context.state.submitOrder(context.body?.order);
+    const result = await context.state.submitOrder(context.body);
     return jsonResult(result.statusCode, result.body);
   }
 
