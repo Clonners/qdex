@@ -8,10 +8,41 @@ import { createMockDexState } from './mock-dex.js';
 import { handlePrivateRoute } from './routes/private.js';
 import { handleProofRoute } from './routes/proofs.js';
 import { handlePublicRoute } from './routes/public.js';
+import { handleRealNetworkRoute } from './real-network-routes.js';
 import { attachStreamWebSocketUpgrade } from './websocket.js';
 
+// Load .env if present
+const loadEnv = () => {
+  const envPath = path.join(process.cwd(), '.env');
+  try {
+    const content = fs.readFileSync(envPath, 'utf8');
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx < 0) continue;
+      const key = trimmed.slice(0, eqIdx).trim();
+      let value = trimmed.slice(eqIdx + 1).trim();
+      // Strip surrounding quotes
+      if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) {
+        value = value.slice(1, -1);
+      }
+      if (!process.env[key]) process.env[key] = value;
+    }
+  } catch { /* .env not found, that's fine */ }
+};
+loadEnv();
+
+// Settlement config for on-chain settlement on Orchard testnet
+const settlementConfig = {
+  rpcUrl: process.env.QUAI_RPC_URL || 'https://orchard.rpc.quai.network/cyprus1',
+  privateKey: process.env.DEPLOYER_PRIVATE_KEY || null,
+  settlementAddress: process.env.DEPLOYED_SETTLEMENT || null,
+  marketRegistryAddress: process.env.DEPLOYED_MARKET_REGISTRY || null,
+};
+
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
-const ROUTE_HANDLERS = [handlePublicRoute, handlePrivateRoute, handleProofRoute];
+const ROUTE_HANDLERS = [handlePublicRoute, handlePrivateRoute, handleProofRoute, handleRealNetworkRoute];
 const METHODS_WITH_JSON_BODY = new Set(['POST', 'PUT', 'PATCH']);
 const MAX_JSON_BODY_BYTES = 1_000_000;
 const UI_DIR = path.join(process.cwd(), 'web', 'terminal-ui');
@@ -90,7 +121,7 @@ const readJsonBody = async (request) => {
   }
 };
 
-export const handleApiRequest = (request, state = createMockDexState(), body = null) => {
+export const handleApiRequest = async (request, state = createMockDexState({ settlementConfig }), body = null) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
   const context = {
     method: request.method ?? 'GET',
@@ -102,7 +133,7 @@ export const handleApiRequest = (request, state = createMockDexState(), body = n
   };
 
   for (const handleRoute of ROUTE_HANDLERS) {
-    const result = handleRoute(context, request);
+    const result = await handleRoute(context, request);
     if (result !== null) {
       return result;
     }
@@ -118,7 +149,7 @@ const sendCorsJson = (response, result) => {
   sendJson(response, result);
 };
 
-export const createApiServer = ({ state = createMockDexState() } = {}) => {
+export const createApiServer = ({ state = createMockDexState({ settlementConfig }) } = {}) => {
   const server = http.createServer(async (request, response) => {
     try {
       const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
@@ -152,7 +183,8 @@ export const createApiServer = ({ state = createMockDexState() } = {}) => {
         return;
       }
 
-      sendCorsJson(response, handleApiRequest(request, state, bodyResult.body));
+      const result = await handleApiRequest(request, state, bodyResult.body);
+      sendCorsJson(response, result);
     } catch (error) {
       sendCorsJson(response, {
         statusCode: 500,

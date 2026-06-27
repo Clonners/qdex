@@ -7,7 +7,7 @@ import {
   REAL_MODE_REQUIRED_CHECKS,
 } from '../../relayer/src/real-mode-gate.js';
 
-const CURRENT_SETTLEMENT_MODE = 'mock';
+const CURRENT_SETTLEMENT_MODE = 'quai_contract';
 
 const SAFETY = Object.freeze({
   approvalRequired: true,

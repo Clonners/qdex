@@ -16,18 +16,30 @@ export const TESTNET_CONFIG = Object.freeze({
   explorerBaseUrl: 'https://orchard.quaiscan.io', // Quai Orchard testnet explorer
   deployer: '0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267',
   contracts: Object.freeze({
-    TradingVault: null,
-    Settlement: null,
-    NonceManager: null,
-    MarketRegistry: null,
-    FeeManager: null,
-    DelegateKeyRegistry: null,
+    Settlement: '0x004C1D112dB14611A16Bf1dA825Ee5C3F67adD22',
+    TradingVault: '0x0078293b837B677Cd87776d087659AAEEf9B9e0E',
+    NonceManager: '0x0046E3FAfa50e7AF3306400F5C6e35Ba6d0eAb0d',
+    MarketRegistry: '0x00312df1022EF1dF16472D2470925A3666655852',
+    FeeManager: '0x005E9892A46fD3a7eaCF8Dd85C2c885829283c7b',
+    DelegateKeyRegistry: '0x003EA9612F140D51375bBd2a68884d88677f6264',
   }),
   tokens: Object.freeze({
     WQUAI: '0x005c46f661Baef20671943f2b4c087Df3E7CEb13', // Quai Orchard testnet
     WQI:   '0x002b2596EcF05C93a31ff916E8b456DF6C77c750', // Quai Orchard testnet
   }),
   mode: 'testnet-ready',
+  deployment: Object.freeze({
+    deployedAt: '2026-06-20T19:30:00-03:00',
+    deployScript: 'scripts/deploy-quai.mjs',
+    zone: '0x00', // Cyprus-1
+    settlementSubContracts: {
+      vault: '0x002325d071d57bafd3169f270a71b67a05360abf',
+      nonceManager: '0x000c826c29746b9c35a9712fed465ba0a9902584',
+      marketRegistry: '0x00793e6ac77dd2b895cc57eb90a7b3274d69353d',
+      feeManager: '0x005a069df8705f4c47f3cd924ad9b8f39517f383',
+      delegateKeyRegistry: '0x002a307a11d6f736d480a7e08fbe519e2d44b676',
+    },
+  }),
 });
 
 /**

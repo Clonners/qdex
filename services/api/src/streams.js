@@ -305,11 +305,12 @@ export const createStreamSnapshot = ({ channel, state } = {}) => {
   }
 
   if (channel === 'balances') {
+    const allBalances = state.listVaultBalances('all');
     return privateSnapshot({
       channel,
       payload: 'vault_balance_projection',
       source: MOCK_VAULT_PROJECTION_SOURCE,
-      data: createMockVaultBalanceProjection(),
+      data: createMockVaultBalanceProjection(allBalances),
     });
   }
 

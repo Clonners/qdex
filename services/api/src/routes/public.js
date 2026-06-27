@@ -1,5 +1,5 @@
 import { createContractRegistryResponse } from '../contract-registry.js';
-import { createFeeScheduleResponse } from '../fee-policy.js';
+import { createFeeScheduleResponse, updateFeeSchedule, getFeeSchedule, FEEMANAGER_POLICY_PROJECTION_SOURCE } from '../fee-policy.js';
 import { jsonResult } from '../http.js';
 import {
   createListingRequestPlaceholderResponse,
@@ -8,6 +8,7 @@ import {
 } from '../listing-policy.js';
 import { createRelayerSettlementModeGateStatus } from '../relayer-gate-status.js';
 import { getTestnetDeploymentStatus } from '../testnet-deployment-status.js';
+import { TESTNET_CONFIG } from '../testnet-config.js';
 
 const MARKET_ID = 'WQUAI-WQI';
 
@@ -16,10 +17,11 @@ const markets = Object.freeze([
     id: MARKET_ID,
     base: 'WQUAI',
     quote: 'WQI',
-    status: 'planned',
+    status: 'active',
     zone: 'single-zone-mvp',
     custodyModel: 'contract-vault-non-custodial',
-    settlementSource: 'mock-until-quai-contracts',
+    settlementSource: 'quai-contract-deployed',
+    settlementContract: TESTNET_CONFIG.contracts.Settlement,
   }),
   Object.freeze({
     id: 'WQUAI-USDT',
@@ -28,7 +30,8 @@ const markets = Object.freeze([
     status: 'planned',
     zone: 'single-zone-mvp',
     custodyModel: 'contract-vault-non-custodial',
-    settlementSource: 'mock-until-quai-contracts',
+    settlementSource: 'quai-contract-deployed',
+    settlementContract: TESTNET_CONFIG.contracts.Settlement,
   }),
   Object.freeze({
     id: 'WQI-USDT',
@@ -37,7 +40,8 @@ const markets = Object.freeze([
     status: 'planned',
     zone: 'single-zone-mvp',
     custodyModel: 'contract-vault-non-custodial',
-    settlementSource: 'mock-until-quai-contracts',
+    settlementSource: 'quai-contract-deployed',
+    settlementContract: TESTNET_CONFIG.contracts.Settlement,
   }),
 ]);
 
@@ -67,9 +71,13 @@ export const handlePublicRoute = (context) => {
     return jsonResult(200, {
       ok: true,
       service: '@qdex/api',
-      mode: 'mock-mvp',
+      mode: 'testnet-live',
       custody: 'non-custodial',
-      settlement: 'mock-now-quai-contract-later',
+      settlement: 'quai-contract-deployed',
+      network: TESTNET_CONFIG.networkName,
+      zone: TESTNET_CONFIG.zone,
+      chainId: TESTNET_CONFIG.chainId,
+      rpc: TESTNET_CONFIG.rpcUrl,
     });
   }
 
@@ -130,6 +138,25 @@ export const handlePublicRoute = (context) => {
     return jsonResult(200, createFeeScheduleResponse());
   }
 
+  if (method === 'POST' && pathname === '/v1/fees/update') {
+    const { makerFeeBps, takerFeeBps } = context.body ?? {};
+    const result = updateFeeSchedule(makerFeeBps, takerFeeBps);
+    if (!result.accepted) {
+      return jsonResult(400, {
+        error: 'fee_update_rejected',
+        reason: result.reason,
+        hardMaxFeeBps: result.hardMaxFeeBps,
+        custody: 'non-custodial-fee-policy',
+      });
+    }
+    return jsonResult(200, {
+      updated: true,
+      feeSchedule: getFeeSchedule(),
+      source: FEEMANAGER_POLICY_PROJECTION_SOURCE,
+      custody: 'non-custodial-fee-policy',
+    });
+  }
+
   if (method === 'GET' && pathname === '/v1/contracts') {
     return jsonResult(200, createContractRegistryResponse());
   }
@@ -163,6 +190,43 @@ export const handlePublicRoute = (context) => {
 
   if (method === 'GET' && pathname === '/v1/relayer/settlement-mode-gate') {
     return jsonResult(200, createRelayerSettlementModeGateStatus());
+  }
+
+  // Relayer settlement lifecycle — pending fills and confirmed fills
+  if (method === 'GET' && pathname === '/v1/settlements') {
+    return jsonResult(200, {
+      pending: state.getRelayerPendingFills(),
+      confirmed: state.getRelayerConfirmedFills(),
+      source: 'relayer-state-machine',
+      settlementMode: 'mock',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      custody: 'non-custodial-relayer',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+    });
+  }
+
+  const settlementFillId = marketPathValue(pathname, '/v1/settlements/');
+  if (method === 'GET' && settlementFillId !== null) {
+    const fillState = state.getRelayerFillState(settlementFillId);
+    if (fillState === null) {
+      return jsonResult(404, {
+        error: 'fill_not_found',
+        fillId: settlementFillId,
+        source: 'relayer-state-machine',
+        custody: 'non-custodial-relayer',
+        message: 'No relayer settlement lifecycle found for this fillId.',
+      });
+    }
+    return jsonResult(200, {
+      ...fillState,
+      source: 'relayer-state-machine',
+      settlementMode: 'mock',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      custody: 'non-custodial-relayer',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+    });
   }
 
   if (method === 'GET' && pathname === '/v1/testnet/deployment-status') {

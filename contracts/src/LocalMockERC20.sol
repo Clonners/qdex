@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /// @notice Minimal ERC-20-style token used only by local Hardhat tests.
 contract LocalMockERC20 {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /// @notice Source of truth for enabled spot markets and precision/minimum constraints.
 /// @dev Admin operations should be timelocked or multisig-controlled before any value-bearing deployment.

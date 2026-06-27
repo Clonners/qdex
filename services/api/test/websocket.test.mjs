@@ -217,7 +217,7 @@ test('WebSocket transport sends public FeeManager fee schedule snapshots', async
         projectionType: 'FeeScheduleProjection',
         eventName: 'FeesUpdated',
         makerFeeBps: 0,
-        takerFeeBps: 0,
+        takerFeeBps: 100,
         maxFeeBps: 1000,
         feeRecipient: null,
         settlementMode: 'mock',

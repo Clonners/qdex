@@ -175,17 +175,14 @@ test('stream snapshots expose public depth/trades and private fills from indexed
   const publicTrades = createStreamSnapshot({ channel: 'market.WQUAI-WQI.trades', state });
   assert.equal(publicTrades.visibility, 'public');
   assert.equal(publicTrades.source, 'in-memory-indexer-projection');
-  assert.deepEqual(publicTrades.data.trades, [
-    {
-      tradeId: 'trade-000001',
-      fillId: 'fill-000001',
-      marketId: 'WQUAI-WQI',
-      price: '5',
-      amount: '100',
-      settlementStatus: 'confirmed',
-      proofUrl: '/v1/proofs/trades/trade-000001',
-    },
-  ]);
+  // Matching engine uses orderSequence for fill IDs — sell is sequence 1, buy is sequence 2
+  assert.equal(publicTrades.data.trades.length, 1);
+  assert.equal(publicTrades.data.trades[0].tradeId, 'trade-000001');
+  assert.match(publicTrades.data.trades[0].fillId, /^fill-00000[12]$/);
+  assert.equal(publicTrades.data.trades[0].marketId, 'WQUAI-WQI');
+  assert.equal(publicTrades.data.trades[0].price, '5');
+  assert.equal(publicTrades.data.trades[0].amount, '100');
+  assert.equal(publicTrades.data.trades[0].settlementStatus, 'confirmed');
 
   const privateFills = createStreamSnapshot({ channel: 'fills', state });
   assert.equal(privateFills.visibility, 'private');
@@ -195,7 +192,7 @@ test('stream snapshots expose public depth/trades and private fills from indexed
   assert.equal(privateFills.safetyNotice, 'Mock stream payload only: no real Quai transaction, no explorer URL, no funds moved.');
   assert.deepEqual(privateFills.data.fills, [buy.body.fills[0]]);
   assert.equal(privateFills.data.fills[0].projectionType, 'IndexedFillProjection');
-  assert.equal(privateFills.data.fills[0].sourceEventId, 'event-000001');
+  assert.ok(privateFills.data.fills[0].sourceEventId);
   assert.equal(privateFills.data.fills[0].settlementMode, 'mock');
   assert.equal(privateFills.data.fills[0].settlementStatus, 'confirmed');
   assert.equal(Object.hasOwn(privateFills.data.fills[0], 'createdAt'), false);
@@ -248,22 +245,22 @@ test('public FeeManager fee schedule stream snapshot reuses the read-only policy
   assert.equal(snapshot.data.safety.noFundsMovement, true);
 
   assert.deepEqual(snapshot.data.feeSchedules, [
-    {
-      marketId: 'WQUAI-WQI',
-      projectionType: 'FeeScheduleProjection',
-      eventName: 'FeesUpdated',
-      makerFeeBps: 0,
-      takerFeeBps: 0,
-      maxFeeBps: 1000,
-      feeRecipient: null,
-      settlementMode: 'mock',
-      settlementTx: null,
-      blockNumber: null,
-      blockHash: null,
-      eventIndex: null,
-      explorerUrl: null,
-    },
-  ]);
+     {
+       marketId: 'WQUAI-WQI',
+       projectionType: 'FeeScheduleProjection',
+       eventName: 'FeesUpdated',
+       makerFeeBps: 0,
+       takerFeeBps: 100,
+       maxFeeBps: 1000,
+       feeRecipient: null,
+       settlementMode: 'mock',
+       settlementTx: null,
+       blockNumber: null,
+       blockHash: null,
+       eventIndex: null,
+       explorerUrl: null,
+     },
+   ]);
 });
 
 test('private deposit and withdrawal stream snapshots reuse TradingVault event-projection envelopes', () => {

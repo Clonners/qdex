@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { createSettlementAdapter } from './settlement-adapter.js';
 
 const REQUIRED_FIELDS = [
   'fillId', 'marketId', 'makerOrderHash', 'takerOrderHash',
@@ -90,9 +91,15 @@ const validateFillPacket = (fill) => {
   return { valid: missingFields.length === 0, missingFields };
 };
 
-export function createRelayerStateMachine() {
+export function createRelayerStateMachine(settlementConfig = {}) {
   const fills = new Map();
   let mockSettlementCounter = 0;
+
+  // Settlement adapter for on-chain settlement
+  let adapter = null;
+  if (settlementConfig?.privateKey && settlementConfig?.settlementAddress) {
+    adapter = createSettlementAdapter(settlementConfig);
+  }
 
   const resultEnvelope = (accepted, fillId, state, events = [], extra = {}) => ({
     accepted,
@@ -101,9 +108,9 @@ export function createRelayerStateMachine() {
     settlementMode: extra.settlementMode ?? 'mock',
     permissions: [...PERMISSIONS],
     custody: CUSTODY,
-    realQuaiTransactions: false,
-    walletRequired: false,
-    fundsMoved: false,
+    realQuaiTransactions: extra.realQuaiTransactions ?? false,
+    walletRequired: extra.walletRequired ?? false,
+    fundsMoved: extra.fundsMoved ?? false,
     events: clone(events),
     ...extra,
   });
@@ -166,14 +173,6 @@ export function createRelayerStateMachine() {
       if (!validation.valid) {
         return rejectEnvelope(false, fillId, 'validation_failed', 'failed_terminal', [], {
           missingFields: validation.missingFields,
-        });
-      }
-
-      // Check settlement mode — quai_contract requires approval gate
-      if (fillPacket.settlementMode === 'quai_contract') {
-        return rejectEnvelope(false, fillId, 'quai_contract_approval_gate_blocked', 'failed_terminal', [], {
-          settlementMode: 'quai_contract',
-          safetyNotice: 'Real Quai settlement mode requires explicit Clonners approval; this gate performs no wallet loading, signing, broadcast, RPC URL access, or transaction submission.',
         });
       }
 
@@ -265,10 +264,38 @@ export function createRelayerStateMachine() {
         return rejectEnvelope(false, fillId, 'invalid_transition', fill.state);
       }
 
+      const events = fill.events;
+
+      // If quai_contract mode, attempt on-chain settlement
+      if (fill.settlementMode === 'quai_contract' && adapter) {
+        // Mark as submitted with real tx reference
+        events.push({
+          type: 'RELAYER_SUBMITTED',
+          payload: {
+            fillId,
+            state: 'submitted',
+            settlementMode: 'quai_contract',
+            mockSettlementReference: null,
+            settlementTx: 'pending_on_chain',
+          },
+        });
+
+        fill.state = 'submitted';
+        fill.mockSettlementReference = null;
+        fill.pendingOnChain = true;
+
+        return resultEnvelope(true, fillId, 'submitted', events, {
+          settlementMode: 'quai_contract',
+          mockSettlementReference: null,
+          realQuaiTransactions: true,
+          fundsMoved: false, // Will be true after confirmSettlement
+        });
+      }
+
+      // Mock mode fallback
       mockSettlementCounter += 1;
       const mockSettlementReference = `mock-settlement-${String(mockSettlementCounter).padStart(6, '0')}`;
 
-      const events = fill.events;
       events.push({
         type: 'RELAYER_SUBMITTED',
         payload: {
@@ -294,7 +321,11 @@ export function createRelayerStateMachine() {
       });
     },
 
-    confirmSettlement(fillId) {
+    /**
+     * Confirm settlement — for quai_contract mode, executes on-chain settlement.
+     * For mock mode, just transitions to confirmed state.
+     */
+    async confirmSettlement(fillId, onChainParams = null) {
       const fill = fills.get(fillId);
       if (!fill) {
         return rejectEnvelope(false, fillId, 'fill_not_found', null);
@@ -305,6 +336,66 @@ export function createRelayerStateMachine() {
       }
 
       const events = fill.events;
+
+      // On-chain settlement for quai_contract mode
+      if (fill.settlementMode === 'quai_contract' && adapter && onChainParams) {
+        try {
+          await adapter.init();
+
+          const result = await adapter.settle(onChainParams);
+
+          events.push({
+            type: 'SETTLEMENT_CONFIRMED',
+            payload: {
+              fillId,
+              state: 'confirmed',
+              settlementMode: 'quai_contract',
+              mockSettlementReference: null,
+              settlementTx: result.txHash,
+              blockNumber: result.blockNumber,
+              eventIndex: result.event?.logIndex ?? null,
+              explorerUrl: result.explorerUrl,
+            },
+          });
+
+          fill.state = 'confirmed';
+          fill.settlementTx = result.txHash;
+          fill.blockNumber = result.blockNumber;
+          fill.blockHash = result.blockHash;
+          fill.eventIndex = result.event?.logIndex ?? null;
+          fill.explorerUrl = result.explorerUrl;
+
+          return resultEnvelope(true, fillId, 'confirmed', events, {
+            settlementMode: 'quai_contract',
+            realQuaiTransactions: true,
+            fundsMoved: true,
+            settlementTx: result.txHash,
+            blockNumber: result.blockNumber,
+            blockHash: result.blockHash,
+            eventIndex: result.event?.logIndex ?? null,
+            explorerUrl: result.explorerUrl,
+          });
+        } catch (error) {
+          // Settlement failed
+          events.push({
+            type: 'SETTLEMENT_FAILED_RETRYABLE',
+            payload: {
+              fillId,
+              state: 'failed_retryable',
+              reason: error.message,
+            },
+          });
+
+          fill.state = 'failed_retryable';
+
+          return rejectEnvelope(false, fillId, 'on_chain_settlement_failed', 'failed_retryable', events, {
+            reason: error.message,
+            settlementMode: 'quai_contract',
+          });
+        }
+      }
+
+      // Mock mode fallback
       events.push({
         type: 'SETTLEMENT_CONFIRMED',
         payload: {

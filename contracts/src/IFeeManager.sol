@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /// @notice Transparent maker/taker fee interface with a hard cap.
 /// @dev Fee changes should be timelocked before production; implementations must reject values above maxFeeBps().

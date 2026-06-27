@@ -1,0 +1,21 @@
+{
+  "network": "orchard-cyprus1",
+  "chainId": 15000,
+  "deployer": "0x005CADdF8Fe81F1ea33ABF16Db610CAd0aaD3267",
+  "deployedAt": "2026-06-20T16:30:00-03:00",
+  "contracts": {
+    "Settlement": {
+      "address": "0x00497118fAA729aC1d981c680080d7428fE8a4Bd",
+      "zone": "0x00",
+      "codeLength": 19804,
+      "subContracts": {
+        "vault": "0x002325d071d57bafd3169f270a71b67a05360abf",
+        "nonceManager": "0x000c826c29746b9c35a9712fed465ba0a9902584",
+        "marketRegistry": "0x00793e6ac77dd2b895cc57eb90a7b3274d69353d",
+        "feeManager": "0x005a069df8705f4c47f3cd924ad9b8f39517f383",
+        "delegateKeyRegistry": "0x002a307a11d6f736d480a7e08fbe519e2d44b676"
+      }
+    }
+  },
+  "explorer": "https://orchard.quaiscan.io/address/0x00497118fAA729aC1d981c680080d7428fE8a4Bd"
+}

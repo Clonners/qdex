@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /// @notice Trade-only delegate key registry for API keys, SDKs, bots, and autonomous agents.
 /// @dev Delegates are explicitly non-withdrawing and non-admin. Withdrawal remains main-wallet authority only.

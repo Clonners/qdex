@@ -49,15 +49,30 @@ export const handlePrivateRoute = (context) => {
   }
 
   if (method === 'GET' && pathname === '/v1/account') {
+    const owner = context.searchParams.get('owner') ?? '0x1111111111111111111111111111111111111111';
     return jsonResult(200, createMockAccountOverview({
       orders: context.state.listOrders(),
       fills: context.state.listFills(),
+      balances: context.state.listVaultBalances(owner),
       projectionSource: context.state.projectionSource ?? 'in-memory-indexer-projection',
     }));
   }
 
   if (method === 'GET' && pathname === '/v1/account/balances') {
-    return jsonResult(200, createMockVaultBalanceProjection());
+    const owner = context.searchParams.get('owner') ?? '0x1111111111111111111111111111111111111111';
+    return jsonResult(200, createMockVaultBalanceProjection(context.state.listVaultBalances(owner)));
+  }
+
+  if (method === 'POST' && pathname === '/v1/deposits') {
+    const { owner, token, amount } = context.body ?? {};
+    const result = context.state.deposit({ owner, token, amount });
+    return jsonResult(result.statusCode, result.body);
+  }
+
+  if (method === 'POST' && pathname === '/v1/withdrawals') {
+    const { owner, token, amount } = context.body ?? {};
+    const result = context.state.withdraw({ owner, token, amount });
+    return jsonResult(result.statusCode, result.body);
   }
 
   if (method === 'GET' && pathname === '/v1/account/orders') {
@@ -65,11 +80,31 @@ export const handlePrivateRoute = (context) => {
   }
 
   if (method === 'GET' && pathname === '/v1/vault/deposits') {
-    return jsonResult(200, createVaultHistoryProjectionEnvelope('deposit'));
+    const owner = context.searchParams.get('owner') ?? null;
+    return jsonResult(200, {
+      deposits: context.state.listDeposits(owner),
+      source: 'mock-vault-projection',
+      custody: 'non-custodial-contract-vault',
+      settlementMode: 'mock',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      fundsMoved: false,
+      safetyNotice: 'Mock vault deposit history only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+    });
   }
 
   if (method === 'GET' && pathname === '/v1/vault/withdrawals') {
-    return jsonResult(200, createVaultHistoryProjectionEnvelope('withdrawal'));
+    const owner = context.searchParams.get('owner') ?? null;
+    return jsonResult(200, {
+      withdrawals: context.state.listWithdrawals(owner),
+      source: 'mock-vault-projection',
+      custody: 'non-custodial-contract-vault',
+      settlementMode: 'mock',
+      realQuaiTransactions: false,
+      walletRequired: false,
+      fundsMoved: false,
+      safetyNotice: 'Mock vault withdrawal history only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.',
+    });
   }
 
   if (method === 'POST' && pathname === '/v1/vault/deposits/prepare') {

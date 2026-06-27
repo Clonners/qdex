@@ -1,10 +1,13 @@
 const MOCK_SAFETY_NOTICE = 'Mock proof only: no real Quai transaction, no explorer URL, no funds moved.';
 const NONCE_CANCELLATION_SAFETY_NOTICE = 'Owner-signed NonceManager cancellation proof: verify txHash, blockNumber, eventIndex, and explorerUrl against the NonceManager event.';
+const MOCK_VAULT_SAFETY_NOTICE = 'Mock vault operation only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.';
 const FINAL_SETTLEMENT_EVENT = 'SETTLEMENT_CONFIRMED';
+const VAULT_EVENT_TYPES = new Set(['VAULT_DEPOSIT', 'VAULT_WITHDRAWAL']);
 const NONCE_CANCELLATION_EVENTS = new Set(['NONCE_CANCEL_CONFIRMED', 'NONCE_RANGE_CANCEL_CONFIRMED']);
 const MOCK_SETTLEMENT_MODE = 'mock';
 const QUAI_CONTRACT_SETTLEMENT_MODE = 'quai_contract';
 const MATCHER_LOCAL_NONCE_UNCHANGED = 'matcher-local-cancel-only-on-chain-nonce-unchanged';
+const ALLOWED_VAULT_TOKENS = new Set(['WQUAI', 'WQI', 'USDT']);
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -240,13 +243,88 @@ const projectNonceCancellationProof = (event) => ({
   safetyNotice: NONCE_CANCELLATION_SAFETY_NOTICE,
 });
 
+const validateVaultEvent = (event) => {
+  if (!VAULT_EVENT_TYPES.has(event.type)) {
+    return {
+      projected: false,
+      reason: 'not_vault_event',
+      eventType: event.type,
+    };
+  }
+
+  const commonMissing = missingFields(event, [
+    'eventId',
+    'source',
+    'owner',
+    'token',
+    'amount',
+    'vaultSequence',
+  ]);
+  if (commonMissing.length > 0) {
+    return {
+      projected: false,
+      reason: 'invalid_vault_event',
+      missingFields: commonMissing,
+    };
+  }
+
+  if (!ALLOWED_VAULT_TOKENS.has(event.token)) {
+    return {
+      projected: false,
+      reason: 'unsupported_token',
+      token: event.token,
+    };
+  }
+
+  return null;
+};
+
+const projectDepositRecord = (event) => ({
+  projectionType: 'MockVaultDepositProjection',
+  eventId: event.eventId,
+  type: event.type,
+  owner: event.owner,
+  token: event.token,
+  amount: event.amount,
+  vaultSequence: event.vaultSequence,
+  source: event.source,
+  settlementMode: 'mock',
+  settlementTx: null,
+  blockNumber: null,
+  blockHash: null,
+  explorerUrl: null,
+  safetyNotice: MOCK_VAULT_SAFETY_NOTICE,
+});
+
+const projectWithdrawalRecord = (event) => ({
+  projectionType: 'MockVaultWithdrawalProjection',
+  eventId: event.eventId,
+  type: event.type,
+  owner: event.owner,
+  token: event.token,
+  amount: event.amount,
+  vaultSequence: event.vaultSequence,
+  source: event.source,
+  settlementMode: 'mock',
+  settlementTx: null,
+  blockNumber: null,
+  blockHash: null,
+  explorerUrl: null,
+  safetyNotice: MOCK_VAULT_SAFETY_NOTICE,
+});
+
 export const createInMemoryIndexerProjection = () => {
   const acceptedEventIdentities = new Set();
   const acceptedNonceCancellationEventIdentities = new Set();
+  const acceptedVaultEventIdentities = new Set();
   const fills = [];
   const trades = [];
   const proofs = new Map();
   const nonceCancellationProofs = new Map();
+  const deposits = [];
+  const withdrawals = [];
+  const vaultBalances = new Map(); // key: `${owner}:${token}`, value: BigInt
+  let vaultSequence = 0;
 
   return {
     projectSettlementEvent(inputEvent) {
@@ -326,6 +404,120 @@ export const createInMemoryIndexerProjection = () => {
 
     getNonceCancellationProof(proofId) {
       return nonceCancellationProofs.has(proofId) ? clone(nonceCancellationProofs.get(proofId)) : null;
+    },
+
+    projectDepositEvent(inputEvent) {
+      const event = clone(inputEvent);
+      const validation = validateVaultEvent(event);
+      if (validation !== null) {
+        return validation;
+      }
+
+      const eventIdentity = `vault:${event.type}:${event.owner}:${event.token}:${event.vaultSequence}`;
+      if (acceptedVaultEventIdentities.has(eventIdentity)) {
+        return {
+          projected: false,
+          reason: 'duplicate_vault_event',
+          eventIdentity,
+        };
+      }
+
+      acceptedVaultEventIdentities.add(eventIdentity);
+      const balanceKey = `${event.owner}:${event.token}`;
+      const current = vaultBalances.has(balanceKey) ? vaultBalances.get(balanceKey) : 0n;
+      vaultBalances.set(balanceKey, current + BigInt(event.amount));
+      const record = projectDepositRecord(event);
+      deposits.push(record);
+
+      return {
+        projected: true,
+        eventIdentity,
+        record,
+        newBalance: vaultBalances.get(balanceKey).toString(),
+      };
+    },
+
+    projectWithdrawalEvent(inputEvent) {
+      const event = clone(inputEvent);
+      const validation = validateVaultEvent(event);
+      if (validation !== null) {
+        return validation;
+      }
+
+      const eventIdentity = `vault:${event.type}:${event.owner}:${event.token}:${event.vaultSequence}`;
+      if (acceptedVaultEventIdentities.has(eventIdentity)) {
+        return {
+          projected: false,
+          reason: 'duplicate_vault_event',
+          eventIdentity,
+        };
+      }
+
+      const balanceKey = `${event.owner}:${event.token}`;
+      const current = vaultBalances.has(balanceKey) ? vaultBalances.get(balanceKey) : 0n;
+      const withdrawAmount = BigInt(event.amount);
+
+      if (current < withdrawAmount) {
+        return {
+          projected: false,
+          reason: 'insufficient_vault_balance',
+          available: current.toString(),
+          requested: event.amount,
+        };
+      }
+
+      acceptedVaultEventIdentities.add(eventIdentity);
+      vaultBalances.set(balanceKey, current - withdrawAmount);
+      const record = projectWithdrawalRecord(event);
+      withdrawals.push(record);
+
+      return {
+        projected: true,
+        eventIdentity,
+        record,
+        newBalance: vaultBalances.get(balanceKey).toString(),
+      };
+    },
+
+    getVaultBalance(owner, token) {
+      const balanceKey = `${owner}:${token}`;
+      return vaultBalances.has(balanceKey) ? vaultBalances.get(balanceKey).toString() : '0';
+    },
+
+    listVaultBalances(owner) {
+      const balances = [];
+      for (const [key, value] of vaultBalances) {
+        const [balOwner, token] = key.split(':');
+        if (owner === 'all' || balOwner === owner) {
+          if (value > 0n) {
+            balances.push({
+              owner: balOwner,
+              token,
+              balance: value.toString(),
+            });
+          }
+        }
+      }
+      return clone(balances);
+    },
+
+    listDeposits(owner) {
+      if (owner) {
+        return clone(deposits.filter((d) => d.owner === owner));
+      }
+      return clone(deposits);
+    },
+
+    listWithdrawals(owner) {
+      if (owner) {
+        return clone(withdrawals.filter((w) => w.owner === owner));
+      }
+      return clone(withdrawals);
+    },
+
+    nextVaultSequence() {
+      vaultSequence += 1;
+      return vaultSequence;
     },
   };
 };

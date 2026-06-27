@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /// @notice Replay protection and cancellation interface for signed orders.
 /// @dev Implementations must restrict nonce consumption to settlement after validating the corresponding order hash.

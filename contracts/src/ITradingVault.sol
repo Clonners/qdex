@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 /// @notice Interface for the non-custodial trading vault.
 /// @dev Implementations must ensure only users can withdraw their own available balances.

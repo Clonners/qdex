@@ -1,8 +1,11 @@
 import { createHash } from 'node:crypto';
 
+import { createMatchingEngine } from '../../matching-engine/src/index.js';
+import { createRelayerStateMachine } from '../../relayer/src/state-machine.js';
 import { createInMemoryIndexerProjection } from '../../indexer/src/in-memory-projection.js';
 import { createListingReviewQueue } from './listing-review-queue.js';
 import { createInMemoryProofService } from '../../proof-service/src/in-memory-proof-service.js';
+import { calculateFee, getFeeSchedule } from './fee-policy.js';
 
 export const MARKET_ID = 'WQUAI-WQI';
 export const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
@@ -32,6 +35,7 @@ const MOCK_EPOCH_SECONDS = 1780000000;
 const ALLOWED_SIDES = new Set(['buy', 'sell']);
 const ALLOWED_TYPES = new Set(['limit', 'market_ioc']);
 const ALLOWED_TIME_IN_FORCE = new Set(['GTC', 'IOC', 'FOK', 'POST_ONLY']);
+const ALLOWED_VAULT_TOKENS = new Set(['WQUAI', 'WQI', 'USDT']);
 const REQUIRED_ORDER_FIELDS = [
   'marketId',
   'side',
@@ -50,6 +54,10 @@ const REQUIRED_ORDER_FIELDS = [
   'settlementContract',
   'signature',
 ];
+
+const MOCK_VAULT_OPERATION_SAFETY_NOTICE = 'Mock vault operation only: no real Quai transaction, no wallet loaded, no funds moved, and no delegate withdrawal/admin authority.';
+const DEPOSIT_PERMISSIONS = ['DEPOSIT', 'NO_WITHDRAW', 'NO_ADMIN'];
+const WITHDRAW_PERMISSIONS = ['WITHDRAW', 'NO_DEPOSIT', 'NO_ADMIN'];
 
 const canonicalOrder = (order) => ({
   marketId: order.marketId,
@@ -70,7 +78,18 @@ const canonicalOrder = (order) => ({
 });
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
-export const createMockVaultBalanceProjection = () => clone(MOCK_VAULT_BALANCE_PROJECTION);
+
+export const createMockVaultBalanceProjection = (balances = []) => clone({
+  balances,
+  source: MOCK_VAULT_PROJECTION_SOURCE,
+  custody: 'non-custodial-contract-vault',
+  permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+  withdrawalAuthority: 'owner-wallet-only',
+  settlementMode: 'mock',
+  realQuaiTransactions: false,
+  walletRequired: false,
+  safetyNotice: MOCK_VAULT_BALANCE_SAFETY_NOTICE,
+});
 
 const MOCK_OPEN_ORDERS_PROJECTION = {
   orders: [],
@@ -100,6 +119,7 @@ export const createMockOpenOrdersEnvelope = (orders = []) => ({
 export const createMockAccountOverview = ({
   orders = [],
   fills = [],
+  balances = [],
   projectionSource = INDEXER_SOURCE,
 } = {}) => ({
   account: null,
@@ -112,7 +132,7 @@ export const createMockAccountOverview = ({
     walletRequired: false,
   },
   permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
-  balances: createMockVaultBalanceProjection(),
+  balances: createMockVaultBalanceProjection(balances),
   orders: {
     open: clone(orders),
     source: 'mock-order-projection',
@@ -274,18 +294,23 @@ export const createMockDexState = ({
   indexer = createInMemoryIndexerProjection(),
   listingReviewQueue = createListingReviewQueue(),
   proofService = createInMemoryProofService({ indexer }),
+  settlementConfig,
 } = {}) => {
-  const state = {
-    orderSequence: 0,
-    fillSequence: 0,
-    tradeSequence: 0,
-    orders: new Map(),
-    book: {
-      bids: [],
-      asks: [],
-    },
-  };
+  // Matching engine — deterministic price-time priority matching
+  const engine = createMatchingEngine();
+
+  // Relayer — fill settlement state machine (received → validated → submitted → confirmed)
+  // Wire settlement adapter for on-chain settlement when config is provided
+  const relayer = createRelayerStateMachine(settlementConfig);
+
+  // Determine settlement mode: quai_contract when adapter is configured, mock otherwise
+  const hasOnChainConfig = !!(settlementConfig && settlementConfig.privateKey && settlementConfig.settlementAddress);
+  const activeSettlementMode = hasOnChainConfig ? 'quai_contract' : 'mock';
+
+  // Internal state for stream listeners and settlement sequencing
   const streamListeners = new Set();
+  let fillSequence = 0;
+  let tradeSequence = 0;
 
   const emitStreamUpdate = ({ fills = [], reason, channels, ...metadata }) => {
     const streamEvent = {
@@ -300,81 +325,68 @@ export const createMockDexState = ({
     }
   };
 
-  const sortedBookSide = (side) => {
-    const orders = side === 'buy' ? state.book.bids : state.book.asks;
-    orders.sort(compareRestingOrders(side));
-    return orders;
-  };
+  const projectSettlementEvent = async (fillPacket) => {
+    // Route FillPacket through relayer state machine: received → validated → submitted → confirmed
+    const relayerSubmit = relayer.submitFillPacket(fillPacket);
+    if (!relayerSubmit.accepted) {
+      return null;
+    }
 
-  const projectFill = ({ maker, taker, price, amount }) => {
-    state.fillSequence += 1;
-    state.tradeSequence += 1;
+    const relayerValidate = relayer.validateFill(fillPacket.fillId);
+    if (!relayerValidate.accepted) {
+      return null;
+    }
 
-    const fillId = paddedId('fill', state.fillSequence);
-    const tradeId = paddedId('trade', state.tradeSequence);
-    const eventId = paddedId('event', state.fillSequence);
-    const eventIndex = state.fillSequence - 1;
-    const mockSettlementReference = `mock-settlement-${fillId}`;
+    const relayerSubmitFill = relayer.submitFill(fillPacket.fillId);
+    if (!relayerSubmitFill.accepted) {
+      return null;
+    }
+
+    const relayerConfirm = await relayer.confirmSettlement(fillPacket.fillId);
+    if (!relayerConfirm.accepted) {
+      return null;
+    }
+
+    // Relayer confirmed — project settlement event to indexer
+    fillSequence += 1;
+    tradeSequence += 1;
+
+    const eventId = paddedId('event', fillSequence);
+    const tradeId = paddedId('trade', tradeSequence);
+    const eventIndex = fillSequence - 1;
+    const mockSettlementReference = relayerConfirm.mockSettlementReference ?? `mock-settlement-${fillPacket.fillId}`;
 
     const settlementEvent = {
       eventId,
       type: 'SETTLEMENT_CONFIRMED',
       source: 'mock-settlement',
-      fillId,
+      fillId: fillPacket.fillId,
       tradeId,
-      orderHashes: [maker.orderHash, taker.orderHash],
+      orderHashes: [fillPacket.makerOrderHash, fillPacket.takerOrderHash],
       settlementMode: 'mock',
       mockSettlementReference,
       settlementTx: null,
       blockNumber: null,
       blockHash: null,
       eventIndex,
-      maker: maker.owner,
-      taker: taker.owner,
-      market: MARKET_ID,
-      price,
-      amount,
+      maker: fillPacket.maker,
+      taker: fillPacket.taker,
+      market: fillPacket.marketId,
+      price: fillPacket.price,
+      amount: fillPacket.amount,
       fees: {
-        maker: '0',
-        taker: '0',
+        maker: fillPacket.makerFee ?? '0',
+        taker: fillPacket.takerFee ?? '0',
       },
       explorerUrl: null,
     };
 
     const projectionResult = indexer.projectSettlementEvent(settlementEvent);
     if (!projectionResult.projected) {
-      throw new Error(`Mock settlement event failed indexer projection: ${projectionResult.reason ?? 'unknown'}`);
+      return null;
     }
 
-    const projectedFill = indexer.listFills().find((fill) => fill.fillId === fillId);
-    if (projectedFill === undefined) {
-      throw new Error(`Indexer did not expose projected fill ${fillId}`);
-    }
-
-    return projectedFill;
-  };
-
-  const removeFilledRestingOrders = () => {
-    state.book.bids = state.book.bids.filter((order) => order.remainingAmount !== '0');
-    state.book.asks = state.book.asks.filter((order) => order.remainingAmount !== '0');
-  };
-
-  const removeRestingOrder = (orderHash) => {
-    state.book.bids = state.book.bids.filter((order) => order.orderHash !== orderHash);
-    state.book.asks = state.book.asks.filter((order) => order.orderHash !== orderHash);
-  };
-
-  const cancelProjectedOrder = (order, reason) => {
-    const cancelledAmount = order.remainingAmount;
-
-    order.remainingAmount = '0';
-    order.status = 'cancelled';
-    order.cancelledAmount = cancelledAmount;
-    order.cancelReason = reason;
-    order.nonceCancellation = 'not-implied-matcher-local-only';
-    removeRestingOrder(order.orderHash);
-
-    return publicOrder(order);
+    return indexer.listFills().find((fill) => fill.fillId === fillPacket.fillId) ?? null;
   };
 
   const cancellationBody = ({ cancelledOrders, permissions, filters, orderHash }) => ({
@@ -390,17 +402,6 @@ export const createMockDexState = ({
     message: CANCELLATION_MESSAGE,
   });
 
-  const cancellationErrorBody = ({ error, orderHash, status, message }) => ({
-    error,
-    orderHash,
-    ...(status === undefined ? {} : { status }),
-    source: 'mock-matching-engine',
-    custody: CUSTODY_NOTE,
-    nonceManager: CANCELLATION_NONCE_NOTE,
-    permissions: CANCEL_ORDER_PERMISSIONS,
-    message,
-  });
-
   const cancellationStreamUpdate = ({ cancelledOrders, permissions, reason, filters }) => ({
     fills: [],
     reason,
@@ -414,178 +415,141 @@ export const createMockDexState = ({
     message: CANCELLATION_MESSAGE,
   });
 
-  const matchOrder = (incoming) => {
-    const fills = [];
-    const oppositeSide = incoming.side === 'buy' ? 'sell' : 'buy';
-    const oppositeOrders = sortedBookSide(oppositeSide);
-
-    for (const resting of [...oppositeOrders]) {
-      if (incoming.remainingAmount === '0' || !crosses(incoming, resting)) {
-        break;
-      }
-
-      const fillAmount = BigInt(incoming.remainingAmount) < BigInt(resting.remainingAmount)
-        ? incoming.remainingAmount
-        : resting.remainingAmount;
-      const price = resting.price;
-
-      applyFill(resting, fillAmount);
-      applyFill(incoming, fillAmount);
-      fills.push(projectFill({ maker: resting, taker: incoming, price, amount: fillAmount }));
-    }
-
-    removeFilledRestingOrders();
-    return fills;
-  };
-
-  const restOrder = (order) => {
-    if (!canRest(order) || order.remainingAmount === '0') {
-      return;
-    }
-
-    const bookSide = order.side === 'buy' ? state.book.bids : state.book.asks;
-    bookSide.push(order);
-    sortedBookSide(order.side);
-  };
-
   return {
     projectionSource: INDEXER_SOURCE,
 
-    submitOrder(order) {
+    async submitOrder(order) {
       const validation = validateOrder(order);
       if (!validation.accepted) {
         return validation;
       }
 
-      const orderHash = createOrderHash(order);
-      if (state.orders.has(orderHash)) {
-        return rejectOrder('duplicate_order', 'Order hash already exists in the mock matcher.');
+      // Delegate to matching engine — deterministic price-time priority matching
+      const engineResult = engine.submitOrder(order);
+      if (!engineResult.accepted) {
+        return engineResult;
       }
 
-      state.orderSequence += 1;
-      const projectedOrder = {
-        orderHash,
-        marketId: order.marketId,
-        owner: order.owner,
-        delegate: order.delegate,
-        side: order.side,
-        type: order.type,
-        amount: order.amount,
-        price: order.price,
-        filledAmount: '0',
-        remainingAmount: order.amount,
-        status: 'open',
-        custody: CUSTODY_NOTE,
-        acceptedSequence: state.orderSequence,
-        signedOrder: clone(order),
-      };
+      // Route engine fills through relayer → indexer pipeline
+      const projectedFills = [];
+      const { makerFeeBps, takerFeeBps } = getFeeSchedule();
 
-      state.orders.set(orderHash, projectedOrder);
-      const fills = matchOrder(projectedOrder);
-      restOrder(projectedOrder);
-      emitStreamUpdate({ fills });
+      for (const fillPacket of engineResult.body.fills ?? []) {
+        // Calculate fees from FeeManager schedule
+        const makerFee = calculateFee(fillPacket.price, fillPacket.amount, makerFeeBps);
+        const takerFee = calculateFee(fillPacket.price, fillPacket.amount, takerFeeBps);
+
+        // Ensure relayer-required fields
+        const fillForRelayer = {
+          ...fillPacket,
+          makerFee,
+          takerFee,
+          settlementMode: activeSettlementMode,
+        };
+        const projected = await projectSettlementEvent(fillForRelayer);
+        if (projected) {
+          projectedFills.push(projected);
+        }
+      }
+
+      emitStreamUpdate({ fills: projectedFills });
 
       return {
         accepted: true,
         statusCode: 201,
         body: {
-          ...publicOrder(projectedOrder),
-          fills,
+          ...engineResult.body,
+          fills: projectedFills,
           source: 'mock-matching-engine',
-          settlement: fills.length > 0 ? 'mock-settlement-confirmed' : 'awaiting-cross',
+          settlement: projectedFills.length > 0 ? 'mock-settlement-confirmed' : 'awaiting-cross',
         },
       };
     },
 
     listOrders() {
-      return Array.from(state.orders.values()).map(publicOrder);
+      return engine.listOrders();
     },
 
     cancelOrder(orderHash) {
-      const order = state.orders.get(orderHash);
-      if (order === undefined) {
+      const engineResult = engine.cancelOrder(orderHash);
+
+      if (engineResult.statusCode === 404 || engineResult.statusCode === 409) {
         return {
-          statusCode: 404,
-          body: cancellationErrorBody({
-            error: 'order_not_found',
+          statusCode: engineResult.statusCode,
+          body: {
+            error: engineResult.body.error,
             orderHash,
-            message: 'No mock matcher order exists for this orderHash.',
-          }),
+            ...(engineResult.body.status ? { status: engineResult.body.status } : {}),
+            source: 'mock-matching-engine',
+            custody: CUSTODY_NOTE,
+            nonceManager: CANCELLATION_NONCE_NOTE,
+            permissions: CANCEL_ORDER_PERMISSIONS,
+            message: engineResult.body.message ?? 'Cancellation failed.',
+          },
         };
       }
 
-      if (!hasOpenQuantity(order)) {
-        return {
-          statusCode: 409,
-          body: cancellationErrorBody({
-            error: 'order_not_open',
-            orderHash,
-            status: order.status,
-            message: 'Only remaining matcher-open quantity can be cancelled.',
-          }),
-        };
-      }
-
-      const cancelledOrders = [cancelProjectedOrder(order, 'cancel_order')];
       emitStreamUpdate(cancellationStreamUpdate({
-        cancelledOrders,
+        cancelledOrders: engineResult.body.cancelledOrders ?? [],
         permissions: CANCEL_ORDER_PERMISSIONS,
         reason: 'matcher_local_order_cancelled',
       }));
 
-      return {
-        statusCode: 200,
-        body: cancellationBody({
-          cancelledOrders,
-          orderHash,
-          permissions: CANCEL_ORDER_PERMISSIONS,
-        }),
-      };
+      return engineResult;
     },
 
     cancelAll(options = {}) {
-      const filters = {
-        marketId: options?.marketId ?? null,
-        owner: options?.owner ?? null,
-      };
-      const candidates = Array.from(state.orders.values()).filter((order) => {
-        if (!hasOpenQuantity(order)) {
-          return false;
-        }
+      const engineResult = engine.cancelAll(options);
 
-        if (filters.marketId !== null && order.marketId !== filters.marketId) {
-          return false;
-        }
-
-        if (filters.owner !== null && order.owner !== filters.owner) {
-          return false;
-        }
-
-        return true;
-      });
-
-      const cancelledOrders = candidates.map((order) => cancelProjectedOrder(order, 'cancel_all'));
-      if (cancelledOrders.length > 0) {
+      if (engineResult.body.cancelledCount > 0) {
         emitStreamUpdate(cancellationStreamUpdate({
-          cancelledOrders,
+          cancelledOrders: engineResult.body.cancelledOrders ?? [],
           permissions: CANCEL_ALL_PERMISSIONS,
           reason: 'matcher_local_orders_cancelled',
-          filters,
+          filters: engineResult.body.filters,
         }));
       }
 
-      return {
-        statusCode: 200,
-        body: cancellationBody({
-          cancelledOrders,
-          filters,
-          permissions: CANCEL_ALL_PERMISSIONS,
-        }),
-      };
+      return engineResult;
     },
 
     listFills() {
       return indexer.listFills();
+    },
+
+    // Relayer state accessors — settlement lifecycle visibility
+    getRelayerFillState(fillId) {
+      return relayer.getFillState(fillId);
+    },
+
+    getSettlements() {
+      const pending = relayer.getPendingFills();
+      const confirmed = relayer.getConfirmedFills();
+      const all = [...confirmed, ...pending];
+
+      return {
+        status: 'active',
+        settlementMode: 'mock',
+        fills: all.map((fill) => ({
+          fillId: fill.fillId,
+          status: fill.state,
+          settlementMode: fill.settlementMode,
+        })),
+      };
+    },
+
+    getRelayerPendingFills() {
+      return relayer.getPendingFills();
+    },
+
+    getRelayerConfirmedFills() {
+      return relayer.getConfirmedFills();
+    },
+
+    getRelayerFills() {
+      const pending = relayer.getPendingFills();
+      const confirmed = relayer.getConfirmedFills();
+      return [...confirmed, ...pending];
     },
 
     submitListingRequest(request) {
@@ -614,13 +578,19 @@ export const createMockDexState = ({
     },
 
     getOrderbook(marketId) {
-      return {
-        marketId,
-        sequence: state.orderSequence,
-        bids: state.book.bids.map(bookOrder),
-        asks: state.book.asks.map(bookOrder),
-        source: 'mock-orderbook',
-      };
+      return engine.getOrderbook(marketId);
+    },
+
+    listVaultBalances(owner) {
+      return indexer.listVaultBalances(owner);
+    },
+
+    listDeposits(owner) {
+      return indexer.listDeposits(owner);
+    },
+
+    listWithdrawals(owner) {
+      return indexer.listWithdrawals(owner);
     },
 
     subscribeStreamUpdates(listener) {
@@ -631,6 +601,251 @@ export const createMockDexState = ({
       streamListeners.add(listener);
       return () => {
         streamListeners.delete(listener);
+      };
+    },
+
+    deposit({ owner, token, amount } = {}) {
+      if (!owner || typeof owner !== 'string' || owner.length < 10) {
+        return {
+          accepted: false,
+          statusCode: 400,
+          body: {
+            error: 'vault_deposit_rejected',
+            reason: 'invalid_owner',
+            message: 'Owner address is required for vault deposit.',
+            custody: CUSTODY_NOTE,
+            permissions: DEPOSIT_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      if (!token || !ALLOWED_VAULT_TOKENS.has(token)) {
+        return {
+          accepted: false,
+          statusCode: 400,
+          body: {
+            error: 'vault_deposit_rejected',
+            reason: 'unsupported_token',
+            message: `Token must be one of: ${Array.from(ALLOWED_VAULT_TOKENS).join(', ')}.`,
+            custody: CUSTODY_NOTE,
+            permissions: DEPOSIT_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      if (!isPositiveDecimalString(amount)) {
+        return {
+          accepted: false,
+          statusCode: 400,
+          body: {
+            error: 'vault_deposit_rejected',
+            reason: 'invalid_amount',
+            message: 'Amount must be a positive decimal string.',
+            custody: CUSTODY_NOTE,
+            permissions: DEPOSIT_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      const vaultSequence = indexer.nextVaultSequence();
+      const eventId = paddedId('vault-event', vaultSequence);
+
+      const depositEvent = {
+        eventId,
+        type: 'VAULT_DEPOSIT',
+        source: 'mock-vault',
+        owner,
+        token,
+        amount,
+        vaultSequence,
+      };
+
+      const projectionResult = indexer.projectDepositEvent(depositEvent);
+      if (!projectionResult.projected) {
+        return {
+          accepted: false,
+          statusCode: 400,
+          body: {
+            error: 'vault_deposit_rejected',
+            reason: projectionResult.reason,
+            message: `Vault deposit projection failed: ${projectionResult.reason}.`,
+            custody: CUSTODY_NOTE,
+            permissions: DEPOSIT_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            ...projectionResult,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      emitStreamUpdate({
+        fills: [],
+        reason: 'mock_vault_deposit',
+        channels: ['vault.balances', 'vault.deposits'],
+        deposit: projectionResult.record,
+      });
+
+      return {
+        accepted: true,
+        statusCode: 200,
+        body: {
+          deposited: true,
+          ...projectionResult.record,
+          newBalance: projectionResult.newBalance,
+          owner,
+          token,
+          amount,
+          source: 'mock-vault',
+          custody: CUSTODY_NOTE,
+          permissions: DEPOSIT_PERMISSIONS,
+          settlementMode: 'mock',
+          realQuaiTransactions: false,
+          walletRequired: false,
+          fundsMoved: false,
+          safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+        },
+      };
+    },
+
+    withdraw({ owner, token, amount } = {}) {
+      if (!owner || typeof owner !== 'string' || owner.length < 10) {
+        return {
+          accepted: false,
+          statusCode: 400,
+          body: {
+            error: 'vault_withdrawal_rejected',
+            reason: 'invalid_owner',
+            message: 'Owner address is required for vault withdrawal.',
+            custody: CUSTODY_NOTE,
+            permissions: WITHDRAW_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      if (!token || !ALLOWED_VAULT_TOKENS.has(token)) {
+        return {
+          accepted: false,
+          statusCode: 400,
+          body: {
+            error: 'vault_withdrawal_rejected',
+            reason: 'unsupported_token',
+            message: `Token must be one of: ${Array.from(ALLOWED_VAULT_TOKENS).join(', ')}.`,
+            custody: CUSTODY_NOTE,
+            permissions: WITHDRAW_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      if (!isPositiveDecimalString(amount)) {
+        return {
+          accepted: false,
+          statusCode: 400,
+          body: {
+            error: 'vault_withdrawal_rejected',
+            reason: 'invalid_amount',
+            message: 'Amount must be a positive decimal string.',
+            custody: CUSTODY_NOTE,
+            permissions: WITHDRAW_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      const vaultSequence = indexer.nextVaultSequence();
+      const eventId = paddedId('vault-event', vaultSequence);
+
+      const withdrawalEvent = {
+        eventId,
+        type: 'VAULT_WITHDRAWAL',
+        source: 'mock-vault',
+        owner,
+        token,
+        amount,
+        vaultSequence,
+      };
+
+      const projectionResult = indexer.projectWithdrawalEvent(withdrawalEvent);
+      if (!projectionResult.projected) {
+        const status = projectionResult.reason === 'insufficient_vault_balance' ? 422 : 400;
+        return {
+          accepted: false,
+          statusCode: status,
+          body: {
+            error: 'vault_withdrawal_rejected',
+            reason: projectionResult.reason,
+            message: projectionResult.reason === 'insufficient_vault_balance'
+              ? `Insufficient vault balance: ${projectionResult.available} available, ${projectionResult.requested} requested.`
+              : `Vault withdrawal projection failed: ${projectionResult.reason}.`,
+            custody: CUSTODY_NOTE,
+            permissions: WITHDRAW_PERMISSIONS,
+            settlementMode: 'mock',
+            realQuaiTransactions: false,
+            walletRequired: false,
+            fundsMoved: false,
+            ...projectionResult,
+            safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+          },
+        };
+      }
+
+      emitStreamUpdate({
+        fills: [],
+        reason: 'mock_vault_withdrawal',
+        channels: ['vault.balances', 'vault.withdrawals'],
+        withdrawal: projectionResult.record,
+      });
+
+      return {
+        accepted: true,
+        statusCode: 200,
+        body: {
+          withdrawn: true,
+          ...projectionResult.record,
+          newBalance: projectionResult.newBalance,
+          owner,
+          token,
+          amount,
+          source: 'mock-vault',
+          custody: CUSTODY_NOTE,
+          permissions: WITHDRAW_PERMISSIONS,
+          settlementMode: 'mock',
+          realQuaiTransactions: false,
+          walletRequired: false,
+          fundsMoved: false,
+          safetyNotice: MOCK_VAULT_OPERATION_SAFETY_NOTICE,
+        },
       };
     },
   };

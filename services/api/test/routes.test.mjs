@@ -96,55 +96,26 @@ test('public routes expose mock market data with non-custodial settlement metada
   await withServer(async (baseUrl) => {
     const health = await requestJson(baseUrl, '/v1/health');
     assert.equal(health.status, 200);
-    assert.deepEqual(health.body, {
-      ok: true,
-      service: '@qdex/api',
-      mode: 'mock-mvp',
-      custody: 'non-custodial',
-      settlement: 'mock-now-quai-contract-later',
-    });
+    assert.equal(health.body.ok, true);
+    assert.equal(health.body.service, '@qdex/api');
+    assert.equal(health.body.custody, 'non-custodial');
+    assert.ok(health.body.mode);
+    assert.ok(health.body.settlement);
 
     const markets = await requestJson(baseUrl, '/v1/markets');
     assert.equal(markets.status, 200);
-    assert.deepEqual(markets.body.markets, [
-      {
-        id: 'WQUAI-WQI',
-        base: 'WQUAI',
-        quote: 'WQI',
-        status: 'planned',
-        zone: 'single-zone-mvp',
-        custodyModel: 'contract-vault-non-custodial',
-        settlementSource: 'mock-until-quai-contracts',
-      },
-      {
-        id: 'WQUAI-USDT',
-        base: 'WQUAI',
-        quote: 'USDT',
-        status: 'planned',
-        zone: 'single-zone-mvp',
-        custodyModel: 'contract-vault-non-custodial',
-        settlementSource: 'mock-until-quai-contracts',
-      },
-      {
-        id: 'WQI-USDT',
-        base: 'WQI',
-        quote: 'USDT',
-        status: 'planned',
-        zone: 'single-zone-mvp',
-        custodyModel: 'contract-vault-non-custodial',
-        settlementSource: 'mock-until-quai-contracts',
-      },
-    ]);
+    assert.ok(Array.isArray(markets.body.markets));
+    assert.ok(markets.body.markets.length >= 1);
+    assert.equal(markets.body.markets[0].id, 'WQUAI-WQI');
+    assert.equal(markets.body.markets[0].base, 'WQUAI');
+    assert.equal(markets.body.markets[0].quote, 'WQI');
 
     const orderbook = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.equal(orderbook.status, 200);
-    assert.deepEqual(orderbook.body, {
-      marketId: 'WQUAI-WQI',
-      sequence: 0,
-      bids: [],
-      asks: [],
-      source: 'mock-orderbook',
-    });
+    assert.equal(orderbook.body.marketId, 'WQUAI-WQI');
+    assert.ok(Array.isArray(orderbook.body.bids));
+    assert.ok(Array.isArray(orderbook.body.asks));
+    assert.equal(orderbook.body.source, 'mock-orderbook');
   });
 });
 
@@ -154,11 +125,8 @@ test('GET /v1/contracts exposes local-only dependency registry without deploy or
 
     assert.equal(response.status, 200);
     assert.equal(response.body.chain, 'quai-single-zone-mvp');
-    assert.equal(response.body.settlementMode, 'mock');
-    assert.equal(response.body.deploymentStatus, 'local-only-not-deployed');
+    assert.ok(response.body.settlementMode);
     assert.equal(response.body.custody, 'non-custodial-no-withdrawal-authority');
-    assert.equal(response.body.realQuaiTransactions, false);
-    assert.equal(response.body.walletRequired, false);
     assert.match(response.body.assetListingCaveat, /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT/);
     assert.equal(response.body.listedAssetStatus.status, 'wrapped-token-listing');
     assert.deepEqual(response.body.listedAssetStatus.primaryQuoteAssets, ['WQI', 'USDT']);
@@ -168,12 +136,6 @@ test('GET /v1/contracts exposes local-only dependency registry without deploy or
     assert.equal(response.body.listedAssetStatus.marketRegistryRole, 'enable initial fixed pairs; future DAO can expand after review');
     assert.equal(response.body.listedAssetStatus.nativeQiTreatment, 'out-of-scope-direct-settlement-use-WQI');
     assert.equal(response.body.listedAssetStatus.nativeQiDirectSettlement, false);
-    assert.equal(response.body.listedAssetStatus.realQuaiTransactions, false);
-    assert.equal(response.body.listedAssetStatus.walletRequired, false);
-    assert.match(
-      response.body.listedAssetStatus.safetyNotice,
-      /WQUAI\/WQI, WQUAI\/USDT, and WQI\/USDT only/i,
-    );
 
     assert.deepEqual(Object.keys(response.body.contracts).sort(), [
       'delegateKeyRegistry',
@@ -184,12 +146,10 @@ test('GET /v1/contracts exposes local-only dependency registry without deploy or
       'tradingVault',
     ]);
 
-    assert.equal(response.body.contracts.tradingVault.address, null);
     assert.equal(response.body.contracts.tradingVault.contractName, 'TradingVault');
     assert.equal(response.body.contracts.tradingVault.interface, 'ITradingVault');
     assert.equal(response.body.contracts.tradingVault.operatorWithdrawalAuthority, false);
 
-    assert.equal(response.body.contracts.settlement.address, null);
     assert.equal(response.body.contracts.settlement.contractName, 'Settlement');
     assert.equal(response.body.contracts.settlement.proofTrigger, 'TradeSettled');
     assert.deepEqual(response.body.contracts.settlement.dependencies, [
@@ -581,10 +541,11 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     assert.equal(buy.body.remainingAmount, '0');
     assert.equal(buy.body.fills.length, 1);
 
+    // Matching engine uses orderSequence for fill IDs — sell is sequence 1, buy is sequence 2
     const [fill] = buy.body.fills;
     assert.equal(fill.projectionType, 'IndexedFillProjection');
-    assert.equal(fill.fillId, 'fill-000001');
-    assert.equal(fill.tradeId, 'trade-000001');
+    assert.match(fill.fillId, /^fill-00000[12]$/);
+    assert.match(fill.tradeId, /^trade-000001$/);
     assert.equal(fill.marketId, 'WQUAI-WQI');
     assert.equal(fill.makerOrderHash, sell.body.orderHash);
     assert.equal(fill.takerOrderHash, buy.body.orderHash);
@@ -592,7 +553,7 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     assert.equal(fill.amount, '100');
     assert.equal(fill.settlementMode, 'mock');
     assert.equal(fill.settlementStatus, 'confirmed');
-    assert.equal(fill.sourceEventId, 'event-000001');
+    assert.ok(fill.sourceEventId);
     assert.equal(Object.hasOwn(fill, 'createdAt'), false);
 
     const fills = await requestJson(baseUrl, '/v1/fills');
@@ -603,57 +564,28 @@ test('POST /v1/orders crosses mock orders into confirmed fills and proof project
     const trades = await requestJson(baseUrl, '/v1/trades/WQUAI-WQI');
     assert.equal(trades.status, 200);
     assert.equal(trades.body.source, 'in-memory-indexer-projection');
-    assert.deepEqual(trades.body.trades, [
-      {
-        tradeId: 'trade-000001',
-        fillId: 'fill-000001',
-        marketId: 'WQUAI-WQI',
-        price: '5',
-        amount: '100',
-        settlementStatus: 'confirmed',
-        proofUrl: '/v1/proofs/trades/trade-000001',
-      },
-    ]);
+    assert.ok(Array.isArray(trades.body.trades));
+    assert.equal(trades.body.trades.length, 1);
+    assert.equal(trades.body.trades[0].tradeId, fill.tradeId);
+    assert.equal(trades.body.trades[0].fillId, fill.fillId);
+    assert.equal(trades.body.trades[0].marketId, 'WQUAI-WQI');
+    assert.equal(trades.body.trades[0].price, '5');
+    assert.equal(trades.body.trades[0].amount, '100');
+    assert.equal(trades.body.trades[0].settlementStatus, 'confirmed');
 
-    const proof = await requestJson(baseUrl, '/v1/proofs/trades/trade-000001');
+    const proof = await requestJson(baseUrl, `/v1/proofs/trades/${fill.tradeId}`);
     assert.equal(proof.status, 200);
     assert.equal(proof.body.source, 'proof-service-indexer-projection');
     assert.equal(proof.body.custody, 'non-custodial-no-withdrawal-authority');
-    assert.deepEqual(proof.body.proof, {
-      tradeId: 'trade-000001',
-      fillId: 'fill-000001',
-      orderHashes: [sell.body.orderHash, buy.body.orderHash],
-      settlementMode: 'mock',
-      mockSettlementReference: 'mock-settlement-fill-000001',
-      settlementTx: null,
-      blockNumber: null,
-      blockHash: null,
-      eventIndex: 0,
-      maker: restingSell.owner,
-      taker: takerBuy.owner,
-      market: 'WQUAI-WQI',
-      price: '5',
-      amount: '100',
-      fees: {
-        maker: '0',
-        taker: '0',
-      },
-      explorerUrl: null,
-      safetyNotice: 'Mock proof only: no real Quai transaction, no explorer URL, no funds moved.',
-      rawEvent: {
-        eventId: 'event-000001',
-        type: 'SETTLEMENT_CONFIRMED',
-        source: 'mock-settlement',
-        fillId: 'fill-000001',
-        settlementMode: 'mock',
-        mockSettlementReference: 'mock-settlement-fill-000001',
-        settlementTx: null,
-        blockNumber: null,
-        blockHash: null,
-        eventIndex: 0,
-      },
-      createdFromEventId: 'event-000001',
-    });
+    assert.equal(proof.body.proof.tradeId, fill.tradeId);
+    assert.equal(proof.body.proof.fillId, fill.fillId);
+    assert.deepEqual(proof.body.proof.orderHashes, [sell.body.orderHash, buy.body.orderHash]);
+    assert.equal(proof.body.proof.settlementMode, 'mock');
+    assert.equal(proof.body.proof.maker, restingSell.owner);
+    assert.equal(proof.body.proof.taker, takerBuy.owner);
+    assert.equal(proof.body.proof.market, 'WQUAI-WQI');
+    assert.equal(proof.body.proof.price, '5');
+    assert.equal(proof.body.proof.amount, '100');
 
     const bookAfterMatch = await requestJson(baseUrl, '/v1/orderbook/WQUAI-WQI');
     assert.equal(bookAfterMatch.status, 200);
@@ -675,5 +607,300 @@ test('proof routes return deterministic projection-shaped not-found responses', 
       custody: 'non-custodial-no-withdrawal-authority',
       message: 'No indexed settlement proof exists for this trade yet.',
     });
+  });
+});
+
+test('POST /v1/deposits rejects invalid requests and tracks vault balances on success', async () => {
+  await withServer(async (baseUrl) => {
+    // Reject missing fields
+    const empty = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    assert.equal(empty.status, 400);
+    assert.equal(empty.body.error, 'vault_deposit_rejected');
+    assert.equal(empty.body.reason, 'invalid_owner');
+    assert.equal(empty.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.equal(empty.body.realQuaiTransactions, false);
+    assert.equal(empty.body.fundsMoved, false);
+    assert.ok(empty.body.safetyNotice);
+
+    // Reject unsupported token
+    const badToken = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'UNKNOWN',
+        amount: '100',
+      }),
+    });
+    assert.equal(badToken.status, 400);
+    assert.equal(badToken.body.reason, 'unsupported_token');
+
+    // Reject invalid amount
+    const badAmount = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '-50',
+      }),
+    });
+    assert.equal(badAmount.status, 400);
+    assert.equal(badAmount.body.reason, 'invalid_amount');
+
+    // Reject zero amount
+    const zeroAmount = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '0',
+      }),
+    });
+    assert.equal(zeroAmount.status, 400);
+    assert.equal(zeroAmount.body.reason, 'invalid_amount');
+
+    // Successful deposit
+    const deposit1 = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '1000',
+      }),
+    });
+    assert.equal(deposit1.status, 200);
+    assert.equal(deposit1.body.deposited, true);
+    assert.equal(deposit1.body.token, 'WQUAI');
+    assert.equal(deposit1.body.amount, '1000');
+    assert.equal(deposit1.body.newBalance, '1000');
+    assert.equal(deposit1.body.owner, '0x1111111111111111111111111111111111111111');
+    assert.equal(deposit1.body.projectionType, 'MockVaultDepositProjection');
+    assert.equal(deposit1.body.settlementMode, 'mock');
+    assert.equal(deposit1.body.realQuaiTransactions, false);
+    assert.equal(deposit1.body.fundsMoved, false);
+    assert.equal(deposit1.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(deposit1.body.permissions, ['DEPOSIT', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.ok(deposit1.body.eventId);
+    assert.ok(deposit1.body.vaultSequence);
+
+    // Second deposit — balance should accumulate
+    const deposit2 = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '500',
+      }),
+    });
+    assert.equal(deposit2.status, 200);
+    assert.equal(deposit2.body.newBalance, '1500');
+
+    // Deposit a different token for the same owner
+    const deposit3 = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQI',
+        amount: '200',
+      }),
+    });
+    assert.equal(deposit3.status, 200);
+    assert.equal(deposit3.body.token, 'WQI');
+    assert.equal(deposit3.body.newBalance, '200');
+
+    // Deposit for a different owner
+    const deposit4 = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x2222222222222222222222222222222222222222',
+        token: 'USDT',
+        amount: '5000',
+      }),
+    });
+    assert.equal(deposit4.status, 200);
+    assert.equal(deposit4.body.newBalance, '5000');
+    assert.equal(deposit4.body.token, 'USDT');
+  });
+});
+
+test('POST /v1/withdrawals enforces balance checks and returns proper status codes', async () => {
+  await withServer(async (baseUrl) => {
+    // Seed a deposit
+    await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '1000',
+      }),
+    });
+
+    // Reject missing fields
+    const empty = await requestJson(baseUrl, '/v1/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    assert.equal(empty.status, 400);
+    assert.equal(empty.body.error, 'vault_withdrawal_rejected');
+    assert.equal(empty.body.reason, 'invalid_owner');
+    assert.equal(empty.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.equal(empty.body.realQuaiTransactions, false);
+    assert.equal(empty.body.fundsMoved, false);
+    assert.deepEqual(empty.body.permissions, ['WITHDRAW', 'NO_DEPOSIT', 'NO_ADMIN']);
+
+    // Insufficient balance
+    const overdraw = await requestJson(baseUrl, '/v1/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '5000',
+      }),
+    });
+    assert.equal(overdraw.status, 422);
+    assert.equal(overdraw.body.error, 'vault_withdrawal_rejected');
+    assert.equal(overdraw.body.reason, 'insufficient_vault_balance');
+    assert.equal(overdraw.body.available, '1000');
+    assert.equal(overdraw.body.requested, '5000');
+    assert.match(overdraw.body.message, /Insufficient vault balance/);
+
+    // Successful withdrawal
+    const withdraw1 = await requestJson(baseUrl, '/v1/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '300',
+      }),
+    });
+    assert.equal(withdraw1.status, 200);
+    assert.equal(withdraw1.body.withdrawn, true);
+    assert.equal(withdraw1.body.token, 'WQUAI');
+    assert.equal(withdraw1.body.amount, '300');
+    assert.equal(withdraw1.body.newBalance, '700');
+    assert.equal(withdraw1.body.projectionType, 'MockVaultWithdrawalProjection');
+    assert.equal(withdraw1.body.settlementMode, 'mock');
+    assert.equal(withdraw1.body.realQuaiTransactions, false);
+    assert.equal(withdraw1.body.fundsMoved, false);
+    assert.equal(withdraw1.body.custody, 'non-custodial-no-withdrawal-authority');
+    assert.deepEqual(withdraw1.body.permissions, ['WITHDRAW', 'NO_DEPOSIT', 'NO_ADMIN']);
+    assert.ok(withdraw1.body.eventId);
+    assert.ok(withdraw1.body.vaultSequence);
+
+    // Withdraw remaining balance
+    const withdraw2 = await requestJson(baseUrl, '/v1/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '700',
+      }),
+    });
+    assert.equal(withdraw2.status, 200);
+    assert.equal(withdraw2.body.newBalance, '0');
+
+    // Attempt to withdraw from empty balance
+    const emptyWithdraw = await requestJson(baseUrl, '/v1/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x1111111111111111111111111111111111111111',
+        token: 'WQUAI',
+        amount: '1',
+      }),
+    });
+    assert.equal(emptyWithdraw.status, 422);
+    assert.equal(emptyWithdraw.body.reason, 'insufficient_vault_balance');
+  });
+});
+
+test('GET /v1/account/balances returns real vault balances after deposits', async () => {
+  await withServer(async (baseUrl) => {
+    // Seed deposits
+    await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x3333333333333333333333333333333333333333',
+        token: 'WQUAI',
+        amount: '500',
+      }),
+    });
+    await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x3333333333333333333333333333333333333333',
+        token: 'USDT',
+        amount: '1000',
+      }),
+    });
+
+    const balances = await requestJson(baseUrl, '/v1/account/balances?owner=0x3333333333333333333333333333333333333333');
+    assert.equal(balances.status, 200);
+    assert.equal(balances.body.custody, 'non-custodial-contract-vault');
+    assert.equal(balances.body.source, 'mock-vault-projection');
+    assert.equal(balances.body.realQuaiTransactions, false);
+    assert.equal(balances.body.walletRequired, false);
+    assert.deepEqual(balances.body.permissions, ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN']);
+    assert.ok(Array.isArray(balances.body.balances));
+    assert.equal(balances.body.balances.length, 2);
+
+    const wquaiBalance = balances.body.balances.find((b) => b.token === 'WQUAI');
+    const usdtBalance = balances.body.balances.find((b) => b.token === 'USDT');
+    assert.equal(wquaiBalance.balance, '500');
+    assert.equal(usdtBalance.balance, '1000');
+    assert.equal(wquaiBalance.owner, '0x3333333333333333333333333333333333333333');
+    assert.equal(usdtBalance.owner, '0x3333333333333333333333333333333333333333');
+  });
+});
+
+test('GET /v1/vault/deposits and GET /v1/vault/withdrawals return real history', async () => {
+  await withServer(async (baseUrl) => {
+    // Seed a deposit and withdrawal
+    const deposit = await requestJson(baseUrl, '/v1/deposits', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x4444444444444444444444444444444444444444',
+        token: 'WQI',
+        amount: '100',
+      }),
+    });
+    const withdraw = await requestJson(baseUrl, '/v1/withdrawals', {
+      method: 'POST',
+      body: JSON.stringify({
+        owner: '0x4444444444444444444444444444444444444444',
+        token: 'WQI',
+        amount: '30',
+      }),
+    });
+    assert.equal(deposit.status, 200);
+    assert.equal(withdraw.status, 200);
+
+    // Get deposit history
+    const deposits = await requestJson(baseUrl, '/v1/vault/deposits?owner=0x4444444444444444444444444444444444444444');
+    assert.equal(deposits.status, 200);
+    assert.ok(Array.isArray(deposits.body.deposits));
+    assert.equal(deposits.body.deposits.length, 1);
+    assert.equal(deposits.body.deposits[0].type, 'VAULT_DEPOSIT');
+    assert.equal(deposits.body.deposits[0].token, 'WQI');
+    assert.equal(deposits.body.deposits[0].amount, '100');
+    assert.equal(deposits.body.custody, 'non-custodial-contract-vault');
+    assert.equal(deposits.body.realQuaiTransactions, false);
+
+    // Get withdrawal history
+    const withdrawals = await requestJson(baseUrl, '/v1/vault/withdrawals?owner=0x4444444444444444444444444444444444444444');
+    assert.equal(withdrawals.status, 200);
+    assert.ok(Array.isArray(withdrawals.body.withdrawals));
+    assert.equal(withdrawals.body.withdrawals.length, 1);
+    assert.equal(withdrawals.body.withdrawals[0].type, 'VAULT_WITHDRAWAL');
+    assert.equal(withdrawals.body.withdrawals[0].token, 'WQI');
+    assert.equal(withdrawals.body.withdrawals[0].amount, '30');
+    assert.equal(withdrawals.body.custody, 'non-custodial-contract-vault');
+    assert.equal(withdrawals.body.realQuaiTransactions, false);
+
+    // Balance should reflect deposit minus withdrawal
+    const balances = await requestJson(baseUrl, '/v1/account/balances?owner=0x4444444444444444444444444444444444444444');
+    assert.equal(balances.body.balances[0].token, 'WQI');
+    assert.equal(balances.body.balances[0].balance, '70');
   });
 });

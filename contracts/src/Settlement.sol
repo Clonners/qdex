@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.8.19;
 
 import {ISettlement} from "./ISettlement.sol";
 import {ITradingVault} from "./ITradingVault.sol";
@@ -13,10 +13,9 @@ import {MarketRegistry} from "./MarketRegistry.sol";
 import {NonceManager} from "./NonceManager.sol";
 import {TradingVault} from "./TradingVault.sol";
 
-/// @notice Local-only settlement skeleton for signed fill validation, nonce unavailability, expiry, replay-domain, partial-fill caps, fee policy, and proof-event truth.
-/// @dev This is intentionally minimal: real Quai proof wiring remains a future ratchet. NM-02/MR-02/FM-02
-///      wire nonce, market, and fee truth through local dependency contracts without adding deploy scripts, RPC URLs,
-///      wallets, cancellation wrappers, or admin withdrawal paths.
+/// @notice Settlement contract with cross-shard sister contract linking
+/// @dev Supports linking to sister contracts in other zones for cross-shard settlement
+/// @dev Uses Quai-specific opcodes: isaddrinternal, etx
 contract Settlement is ISettlement {
     uint256 private constant BPS_DENOMINATOR = 10_000;
 
@@ -29,13 +28,153 @@ contract Settlement is ISettlement {
     mapping(address => mapping(uint256 => bytes32)) private activeOrderHashByNonce;
     mapping(bytes32 => uint256) private orderFilledAmountByHash;
 
+    // Cross-shard sister contract registry (TOFU - Trust On First Use)
+    mapping(uint8 zoneIndex => SisterContract) private sisterContracts;
+    uint8[] private sisterZoneIndices;
+    address public owner;
+
+    // NOTE: Quai-specific opcodes (isaddrinternal, etx) are only available on Quai EVM
+    // For local development/testing, these functions use mock implementations
+    // In production on Quai, replace with actual opcode calls
+
     constructor() {
+        owner = msg.sender;
         vault = ITradingVault(address(new TradingVault()));
         nonceManager = INonceManager(address(new NonceManager(address(this))));
         marketRegistry = IMarketRegistry(address(new MarketRegistry(msg.sender)));
         feeManager = IFeeManager(address(new FeeManager(msg.sender, msg.sender)));
         delegateKeyRegistry = IDelegateKeyRegistry(address(new DelegateKeyRegistry()));
     }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "ST_NOT_OWNER");
+        _;
+    }
+
+    // ── Cross-shard sister contract management ──
+
+    function setSisterContracts(
+        uint8[] calldata zoneIndices,
+        address[] calldata settlementAddresses
+    ) external onlyOwner {
+        require(zoneIndices.length == settlementAddresses.length, "ST_LENGTH_MISMATCH");
+        require(zoneIndices.length > 0, "ST_EMPTY_LIST");
+
+        for (uint i = 0; i < zoneIndices.length; i++) {
+            uint8 zone = zoneIndices[i];
+            address settlement = settlementAddresses[i];
+
+            require(settlement != address(0), "ST_ZERO_ADDRESS");
+
+            bool exists = false;
+            for (uint j = 0; j < sisterZoneIndices.length; j++) {
+                if (sisterZoneIndices[j] == zone) {
+                    exists = true;
+                    sisterContracts[zone].settlementAddress = settlement;
+                    sisterContracts[zone].active = true;
+                    break;
+                }
+            }
+
+            if (!exists) {
+                sisterZoneIndices.push(zone);
+                sisterContracts[zone] = SisterContract({
+                    zoneIndex: zone,
+                    settlementAddress: settlement,
+                    active: true
+                });
+            }
+        }
+
+        emit SisterContractsLinked(zoneIndices, settlementAddresses, block.timestamp);
+    }
+
+    function sisterContract(uint8 zoneIndex) external view returns (SisterContract memory) {
+        return sisterContracts[zoneIndex];
+    }
+
+    function getActiveSisterContracts() external view returns (SisterContract[] memory) {
+        SisterContract[] memory result = new SisterContract[](sisterZoneIndices.length);
+        for (uint i = 0; i < sisterZoneIndices.length; i++) {
+            result[i] = sisterContracts[sisterZoneIndices[i]];
+        }
+        return result;
+    }
+
+     /**
+     * @notice Check if an address is within the current zone context
+     * @dev Uses Quai's isaddrinternal opcode to determine if a cross-zone ETX is needed
+     * @dev NOTE: On Quai EVM, replace with actual opcode: result := isaddrinternal(target)
+     */
+    function isAddressInternal(address target) public view returns (bool) {
+        // Mock for local development - assumes same zone
+        // On Quai EVM: assembly { result := isaddrinternal(target) }
+        bool result;
+        // TODO: Implement with Quai isaddrinternal opcode
+        result = true; // Default to internal for same-zone operations
+        return result;
+    }
+
+    /**
+     * @notice Forward settlement data to a sister contract on another zone via ETX
+     * @dev Uses Quai's etx opcode for cross-zone communication
+     * @param zoneIndex Zone index of the sister contract
+     * @param fillId Fill identifier for tracking
+     * @param data Encoded data to send to the sister contract
+     * @param gasLimit Gas limit for destination chain execution
+     * @param minerTip Miner tip in wei
+     * @param baseFee Base fee in wei
+     */
+    function forwardToSister(
+        uint8 zoneIndex,
+        bytes32 fillId,
+        bytes calldata data,
+        uint256 gasLimit,
+        uint256 minerTip,
+        uint256 baseFee
+    ) external payable onlyOwner {
+        SisterContract storage sister = sisterContracts[zoneIndex];
+        require(sister.active, "ST_SISTER_NOT_ACTIVE");
+        require(sister.settlementAddress != address(0), "ST_SISTER_ZERO");
+
+        // Verify gas payment
+        uint256 totalGas = (baseFee + minerTip) * gasLimit;
+        require(msg.value >= totalGas, "ST_INSUFFICIENT_GAS_FOR_ETX");
+
+        // NOTE: On Quai EVM, use actual etx opcode:
+        // assembly {
+        //     success := etx(0, sister.settlementAddress, 0, gasLimit, minerTip, baseFee, ...)
+        // }
+        
+        // Mock for local development
+        emit CrossZoneForwarded(fillId, zoneIndex, sister.settlementAddress);
+    }
+
+    /**
+     * @notice Receive settlement data from a sister contract on another zone
+     * @dev Called by sister contracts via ETX cross-zone communication
+     * @dev Verifies that the caller is a registered sister contract
+     */
+    function receiveCrossZoneSettlement(
+        bytes32 fillId,
+        uint256 zoneIndex,
+        uint256 minerTip,
+        uint256 baseFee,
+        address originContract,
+        address feeRecipient,
+        uint256 timestamp
+    ) external {
+        require(originContract != address(0), "ST_ORIGIN_ZERO");
+
+        // Verify that the caller (msg.sender) is a registered sister contract
+        SisterContract storage sister = sisterContracts[uint8(zoneIndex)];
+        require(sister.active, "ST_SISTER_NOT_ACTIVE");
+        require(sister.settlementAddress == msg.sender, "ST_UNAUTHORIZED_SISTER");
+
+        emit CrossZoneForwarded(fillId, uint8(zoneIndex), msg.sender);
+    }
+
+    // ── Settlement functions ──
 
     function isNonceUsed(address user, uint256 nonce) external view returns (bool) {
         return nonceManager.isNonceUsed(user, nonce);
