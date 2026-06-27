@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 import { notFound, sendJson } from './http.js';
 import { createMockDexState } from './mock-dex.js';
+import { createVaultAdapter } from './vault-adapter.js';
 import { handlePrivateRoute } from './routes/private.js';
 import { handleProofRoute } from './routes/proofs.js';
 import { handlePublicRoute } from './routes/public.js';
@@ -42,6 +43,19 @@ const settlementConfig = {
   baseTokenAddress: '0x005c46f661baef20671943f2b4c087df3e7ceb13', // WQUAI on Orchard
   quoteTokenAddress: '0x002b2596ecf05c93a31ff916e8b456df6c77c750', // WQI on Orchard
 };
+
+// Create vault adapter for real on-chain vault operations
+const vaultAdapter = createVaultAdapter({
+  rpcUrl: settlementConfig.rpcUrl,
+  privateKey: settlementConfig.privateKey,
+  vaultAddress: process.env.DEPLOYED_VAULT || null,
+  tokens: {
+    WQUAI: settlementConfig.baseTokenAddress,
+    WQI: settlementConfig.quoteTokenAddress,
+  },
+});
+
+const createDexState = () => createMockDexState({ settlementConfig, vaultAdapter });
 
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
 const ROUTE_HANDLERS = [handlePublicRoute, handlePrivateRoute, handleProofRoute, handleRealNetworkRoute];
@@ -123,7 +137,7 @@ const readJsonBody = async (request) => {
   }
 };
 
-export const handleApiRequest = async (request, state = createMockDexState({ settlementConfig }), body = null) => {
+export const handleApiRequest = async (request, state = createDexState(), body = null) => {
   const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
   const context = {
     method: request.method ?? 'GET',
@@ -151,7 +165,7 @@ const sendCorsJson = (response, result) => {
   sendJson(response, result);
 };
 
-export const createApiServer = ({ state = createMockDexState({ settlementConfig }) } = {}) => {
+export const createApiServer = ({ state = createDexState() } = {}) => {
   const server = http.createServer(async (request, response) => {
     try {
       const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);

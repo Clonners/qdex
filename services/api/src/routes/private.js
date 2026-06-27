@@ -108,11 +108,111 @@ export const handlePrivateRoute = async (context) => {
   }
 
   if (method === 'POST' && pathname === '/v1/vault/deposits/prepare') {
+    // Try real vault deposit if vault adapter is available
+    if (context.state.vaultAdapter && context.state.vaultAdapter.isReal) {
+      try {
+        const { owner, token, amount } = context.body ?? {};
+        const result = await context.state.vaultAdapter.deposit(token, amount);
+        return jsonResult(200, {
+          ...result,
+          source: 'real-vault-adapter',
+          realQuaiTransactions: true,
+        });
+      } catch (error) {
+        return jsonResult(500, {
+          error: 'vault_deposit_failed',
+          message: error.message,
+          source: 'real-vault-adapter',
+        });
+      }
+    }
     return jsonResult(501, createVaultOperationPreparePlaceholder('deposit'));
   }
 
   if (method === 'POST' && pathname === '/v1/vault/withdrawals/prepare') {
+    // Try real vault withdrawal if vault adapter is available
+    if (context.state.vaultAdapter && context.state.vaultAdapter.isReal) {
+      try {
+        const { owner, token, amount } = context.body ?? {};
+        const result = await context.state.vaultAdapter.withdraw(token, amount, owner);
+        return jsonResult(200, {
+          ...result,
+          source: 'real-vault-adapter',
+          realQuaiTransactions: true,
+        });
+      } catch (error) {
+        return jsonResult(500, {
+          error: 'vault_withdrawal_failed',
+          message: error.message,
+          source: 'real-vault-adapter',
+        });
+      }
+    }
     return jsonResult(501, createVaultOperationPreparePlaceholder('withdrawal'));
+  }
+
+  // Real vault balance endpoint
+  if (method === 'GET' && pathname === '/v1/vault/balances/real') {
+    const owner = context.searchParams.get('owner');
+    const token = context.searchParams.get('token');
+    
+    if (!context.state.vaultAdapter || !context.state.vaultAdapter.isReal) {
+      return jsonResult(503, {
+        error: 'vault_adapter_not_configured',
+        source: 'vault-adapter',
+        message: 'Real vault adapter not configured. Check RPC URL, private key, and vault address.',
+      });
+    }
+    
+    try {
+      const [balance, available, locked] = await Promise.all([
+        context.state.vaultAdapter.getBalance(owner, token),
+        context.state.vaultAdapter.getAvailableBalance(owner, token),
+        context.state.vaultAdapter.getLockedBalance(owner, token),
+      ]);
+      
+      return jsonResult(200, {
+        owner,
+        token,
+        ...balance,
+        ...available,
+        ...locked,
+        source: 'real-vault-adapter',
+        realQuaiTransactions: true,
+      });
+    } catch (error) {
+      return jsonResult(500, {
+        error: 'vault_balance_failed',
+        message: error.message,
+        source: 'real-vault-adapter',
+      });
+    }
+  }
+
+  // Token approval endpoint
+  if (method === 'POST' && pathname === '/v1/vault/approve') {
+    if (!context.state.vaultAdapter || !context.state.vaultAdapter.isReal) {
+      return jsonResult(503, {
+        error: 'vault_adapter_not_configured',
+        source: 'vault-adapter',
+      });
+    }
+    
+    try {
+      const { token, amount } = context.body ?? {};
+      const result = await context.state.vaultAdapter.approveToken(token, amount);
+      return jsonResult(200, {
+        ...result,
+        source: 'real-vault-adapter',
+        realQuaiTransactions: true,
+      });
+    } catch (error) {
+      return jsonResult(500, {
+        error: 'vault_approval_failed',
+        message: error.message,
+        source: 'real-vault-adapter',
+      });
+    }
   }
 
   if (method === 'GET' && pathname === '/v1/orders') {

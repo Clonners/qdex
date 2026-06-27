@@ -295,6 +295,7 @@ export const createMockDexState = ({
   listingReviewQueue = createListingReviewQueue(),
   proofService = createInMemoryProofService({ indexer }),
   settlementConfig,
+  vaultAdapter = null,
 } = {}) => {
   // Matching engine — deterministic price-time priority matching
   const engine = createMatchingEngine();
@@ -606,6 +607,9 @@ export const createMockDexState = ({
     listWithdrawals(owner) {
       return indexer.listWithdrawals(owner);
     },
+
+    // Vault adapter for real on-chain vault operations
+    vaultAdapter,
 
     subscribeStreamUpdates(listener) {
       if (typeof listener !== 'function') {
