@@ -342,7 +342,44 @@ export function createRelayerStateMachine(settlementConfig = {}) {
         try {
           await adapter.init();
 
-          const result = await adapter.settle(onChainParams);
+                    // Build settle params from fillPacket
+          const fp = onChainParams;
+          // Convert string IDs to bytes32 hex for on-chain settlement
+          const toBytes32 = (str) => '0x' + Buffer.from(str).toString('hex').padEnd(64, '0').slice(0, 64);
+          const fillIdBytes32 = toBytes32(fp.fillId);
+          // MarketId: use on-chain marketId for known markets
+          const marketIdMap = { 'WQUAI-WQI': '0xc9160def9f9681b77acdccf0caeda5701a190f9a034bf694595796b03350ef9b' };
+          const marketIdBytes32 = marketIdMap[fp.marketId] || toBytes32(fp.marketId);
+          
+          const settleParams = {
+            fillId: fillIdBytes32,
+            marketId: marketIdBytes32,
+            makerOrderHash: fp.makerOrderHash,
+            takerOrderHash: fp.takerOrderHash,
+            maker: fp.maker,
+            taker: fp.taker,
+            baseToken: settlementConfig.baseTokenAddress || '0x0000000000000000000000000000000000000000',
+            quoteToken: settlementConfig.quoteTokenAddress || '0x0000000000000000000000000000000000000000',
+            price: fp.price,
+            baseAmount: fp.amount,
+            quoteAmount: String(BigInt(fp.price) * BigInt(fp.amount) / 10n ** 18n),
+            makerFee: fp.makerFee,
+            takerFee: fp.takerFee,
+            makerNonce: '1',
+            takerNonce: '2',
+            expiresAt: '9999999999',
+            chainId: '15000',
+            feeRecipient: settlementConfig.privateKey ? (await adapter.getWallet()).address : '0x0000000000000000000000000000000000000000',
+            maxFeeBps: '100',
+            makerOrderAmount: fp.amount,
+            takerOrderAmount: fp.amount,
+            makerFilledAmount: fp.amount,
+            takerFilledAmount: fp.amount,
+            makerSignature: '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+            takerSignature: '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+          };
+
+          const result = await adapter.settle(settleParams);
 
           events.push({
             type: 'SETTLEMENT_CONFIRMED',
@@ -377,7 +414,7 @@ export function createRelayerStateMachine(settlementConfig = {}) {
           });
         } catch (error) {
           // Settlement failed
-          events.push({
+                    events.push({
             type: 'SETTLEMENT_FAILED_RETRYABLE',
             payload: {
               fillId,

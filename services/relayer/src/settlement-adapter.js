@@ -301,22 +301,36 @@ export function createSettlementAdapter(config = {}) {
       BigInt(takerFilledAmount),
     ];
 
-    // Estimate gas with buffer
-    const gasEstimate = await settlementContract.estimateGas.settle(
-      fillPacket,
-      makerSignature,
-      takerSignature
-    ).catch(() => 2_000_000n);
+    // Use fixed gas limit for settlement (estimates are unreliable on Quai)
+    const gasLimit = 3_000_000n;
 
-    const gasLimit = gasEstimate + (gasEstimate * 20n) / 100n; // 20% buffer
-
-    // Send transaction
-    const tx = await settlementContract.settle(
+    // Build transaction data
+    const txData = settlementContract.interface.encodeFunctionData('settle', [
       fillPacket,
       makerSignature,
       takerSignature,
-      { gasLimit }
-    );
+    ]);
+
+    // Get next nonce
+    const nonce = await provider.getTransactionCount(wallet.address);
+
+    // Build raw transaction
+    const gasPrice = parseQuai('0.0000012'); // Minimum gas price for Orchard testnet
+    const txRequest = {
+      from: wallet.address,
+      to: settlementContract.address,
+      data: txData,
+      gasLimit,
+      gasPrice,
+      nonce,
+      chainId: 15000n, // Orchard testnet
+    };
+
+    // Sign and send raw transaction (bypass access list creation)
+    const signedTx = await wallet.signTransaction(txRequest);
+    const txHash = await provider.send('eth_sendRawTransaction', [signedTx]);
+
+    const tx = { hash: txHash };
 
     // Wait for receipt
     const receipt = await waitForReceipt(tx.hash);

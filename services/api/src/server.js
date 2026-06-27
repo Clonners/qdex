@@ -39,6 +39,8 @@ const settlementConfig = {
   privateKey: process.env.DEPLOYER_PRIVATE_KEY || null,
   settlementAddress: process.env.DEPLOYED_SETTLEMENT || null,
   marketRegistryAddress: process.env.DEPLOYED_MARKET_REGISTRY || null,
+  baseTokenAddress: '0x005c46f661baef20671943f2b4c087df3e7ceb13', // WQUAI on Orchard
+  quoteTokenAddress: '0x002b2596ecf05c93a31ff916e8b456df6c77c750', // WQI on Orchard
 };
 
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);

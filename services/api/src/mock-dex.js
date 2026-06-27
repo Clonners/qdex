@@ -342,7 +342,7 @@ export const createMockDexState = ({
       return null;
     }
 
-    const relayerConfirm = await relayer.confirmSettlement(fillPacket.fillId);
+    const relayerConfirm = await relayer.confirmSettlement(fillPacket.fillId, fillPacket);
     if (!relayerConfirm.accepted) {
       return null;
     }
