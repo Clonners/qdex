@@ -189,6 +189,16 @@ export const handlePublicRoute = (context) => {
     return jsonResult(200, createContractRegistryResponse());
   }
 
+  // Stats endpoint - persistent storage metrics
+  if (method === 'GET' && pathname === '/v1/stats') {
+    const stats = state.getStats();
+    return jsonResult(200, {
+      ...stats,
+      source: 'sqlite-storage',
+      persistence: 'persistent',
+    });
+  }
+
   if (method === 'GET' && pathname === '/v1/listings/policy') {
     return jsonResult(200, createTokenListingPolicyResponse());
   }

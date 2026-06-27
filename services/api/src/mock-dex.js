@@ -6,6 +6,7 @@ import { createInMemoryIndexerProjection } from '../../indexer/src/in-memory-pro
 import { createListingReviewQueue } from './listing-review-queue.js';
 import { createInMemoryProofService } from '../../proof-service/src/in-memory-proof-service.js';
 import { calculateFee, getFeeSchedule } from './fee-policy.js';
+import { createSqliteStorage } from './sqlite-storage.js';
 
 export const MARKET_ID = 'WQUAI-WQI';
 export const CUSTODY_NOTE = 'non-custodial-no-withdrawal-authority';
@@ -296,6 +297,7 @@ export const createMockDexState = ({
   proofService = createInMemoryProofService({ indexer }),
   settlementConfig,
   vaultAdapter = null,
+  sqliteStorage = createSqliteStorage(),
 } = {}) => {
   // Matching engine — deterministic price-time priority matching
   const engine = createMatchingEngine();
@@ -385,6 +387,36 @@ export const createMockDexState = ({
     const projectionResult = indexer.projectSettlementEvent(settlementEvent);
     if (!projectionResult.projected) {
       return null;
+    }
+
+    // Persist to SQLite
+    try {
+      const fillData = {
+        fillId: settlementEvent.fillId,
+        tradeId: settlementEvent.tradeId,
+        marketId: settlementEvent.market,
+        makerOrderHash: fillPacket.makerOrderHash,
+        takerOrderHash: fillPacket.takerOrderHash,
+        makerAddress: fillPacket.makerAddress,
+        takerAddress: fillPacket.takerAddress,
+        side: fillPacket.side,
+        price: settlementEvent.price,
+        amount: settlementEvent.amount,
+        quoteAmount: (BigInt(settlementEvent.price) * BigInt(settlementEvent.amount)).toString(),
+        fee: (fillPacket.makerFee || '0'),
+        settlementMode: settlementEvent.settlementMode,
+        settlementStatus: 'confirmed',
+        settlementTx: settlementEvent.settlementTx,
+        blockNumber: settlementEvent.blockNumber,
+        blockHash: settlementEvent.blockHash,
+        mockSettlementReference: settlementEvent.mockSettlementReference,
+        createdAt: Date.now(),
+      };
+      sqliteStorage.saveFill(fillData);
+      sqliteStorage.saveTrade({ ...fillData });
+      sqliteStorage.saveProof({ ...fillData, proof: settlementEvent });
+    } catch (err) {
+      console.warn('[sqlite-storage] Persist error:', err.message);
     }
 
     return indexer.listFills().find((fill) => fill.fillId === fillPacket.fillId) ?? null;
@@ -610,6 +642,11 @@ export const createMockDexState = ({
 
     // Vault adapter for real on-chain vault operations
     vaultAdapter,
+
+    // Persistent storage stats
+    getStats() {
+      return sqliteStorage.getStats();
+    },
 
     subscribeStreamUpdates(listener) {
       if (typeof listener !== 'function') {

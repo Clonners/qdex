@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { notFound, sendJson } from './http.js';
 import { createMockDexState } from './mock-dex.js';
 import { createVaultAdapter } from './vault-adapter.js';
+import { createSqliteStorage } from './sqlite-storage.js';
 import { handlePrivateRoute } from './routes/private.js';
 import { handleProofRoute } from './routes/proofs.js';
 import { handlePublicRoute } from './routes/public.js';
@@ -55,7 +56,11 @@ const vaultAdapter = createVaultAdapter({
   },
 });
 
-const createDexState = () => createMockDexState({ settlementConfig, vaultAdapter });
+// Create persistent SQLite storage
+const sqliteStorage = createSqliteStorage();
+console.log('[qdex] SQLite storage initialized at', sqliteStorage.db.name);
+
+const createDexState = () => createMockDexState({ settlementConfig, vaultAdapter, sqliteStorage });
 
 const PORT = Number.parseInt(process.env.PORT ?? '8787', 10);
 const ROUTE_HANDLERS = [handlePublicRoute, handlePrivateRoute, handleProofRoute, handleRealNetworkRoute];
