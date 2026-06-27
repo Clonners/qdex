@@ -1,0 +1,11 @@
+# Sensitive config (NOT the example)
+.env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+cache/
+artifacts/

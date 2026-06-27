@@ -1,93 +1,79 @@
-# Quai Terminal DEX
+# QDEX — Quai Non-Custodial Orderbook DEX
 
-Terminal-native, API-first, non-custodial orderbook DEX for Quai.
+Open-source non-custodial DEX built on Quai Network. Terminal-style exchange UI with real on-chain settlement.
 
-## Product thesis
+## Architecture
 
-This is not a CEX. It is a CEX-like interface with DEX custody and on-chain settlement:
-
-```text
-Terminal UI / SDK / Bots
-  -> REST + WebSocket API
-  -> Off-chain orderbook + matching engine
-  -> Relayer
-  -> Quai smart contracts
-  -> Indexer + proof service
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│  Frontend       │────▶│  API Server      │────▶│  Quai Network   │
+│  (bitquai.live) │     │  :8787           │     │  (Orchard)      │
+│  React-free     │     │                  │     │                 │
+│  Vanilla JS     │◀────│  Matching Engine │◀────│  Settlement     │
+└─────────────────┘     └──────────────────┘     └─────────────────┘
+                            │                          │
+                            ▼                          ▼
+                       SQLite Store              TradingVault
+                       (Persistent)              (On-chain)
 ```
 
-## MVP scope
+## Components
 
-- Single Quai zone/shard first.
-- Spot markets only.
-- No perps, leverage, margin, bridges, or cross-zone settlement in v0.
-- **ERC-20 only — no native QUAI/QI handling.**
-- Quote assets: `USDT`, `WQI` (wrapped QI). Native QUAI/QI for denomination only.
-- Pairs: `<token>/USDT`, `<token>/WQI` (e.g., `WQUAI/USDT`, `WQUAI/WQI`, `WQI/USDT`).
-- Non-custodial vault contracts as source of funds.
-- Off-chain matching for speed.
-- On-chain settlement for finality and verifiability.
-- API-first from day one for agents, bots, and market makers.
-- Terminal/TUI-style web interface.
+| Service | Path | Description |
+|---|---|---|
+| API Server | `services/api/` | REST + WebSocket endpoints |
+| Matching Engine | `matching-engine/` | Price-time priority order matching |
+| Relayer | `relayer/` | Fill settlement state machine |
+| Indexer | `services/indexer/` | In-memory fill/trade projection |
+| Proof Service | `services/proof-service/` | Settlement proof generation |
+| Frontend | See bitquai.live | Terminal-style DEX UI |
 
-## Web Frontend
+## API Endpoints
 
-### Approval Batcher
+### Public
+- `GET /v1/health` — Service health check
+- `GET /v1/markets` — Available markets
+- `GET /v1/orderbook/{marketId}` — Order book depth
+- `GET /v1/trades/{marketId}` — Trade history
+- `GET /v1/proofs` — Settlement proofs list
+- `GET /v1/proofs/trades/{tradeId}` — Individual proof
+- `GET /v1/contracts` — Deployed contract addresses
+- `GET /v1/fees` — Fee schedule
+- `GET /v1/stats` — Persistent storage statistics
 
-Batch ERC-20 approvals — **1 click, N approvals**.
+### Private (Authenticated)
+- `POST /v1/orders` — Submit signed order
+- `GET /v1/orders` — List orders
+- `DELETE /v1/orders/{hash}` — Cancel order
+- `POST /v1/vault/approve` — Approve token for vault
+- `POST /v1/vault/deposits/prepare` — Deposit to vault
+- `POST /v1/vault/withdrawals/prepare` — Withdraw from vault
+- `GET /v1/vault/balances/real` — Real vault balances
+
+### Real Network
+- `GET /v1/real/network` — Quai network status
+- `GET /v1/real/balances/{address}` — Real balances
+- `GET /v1/real/events/trades` — On-chain trade events
+- `GET /v1/real/events/deposits` — On-chain deposit events
+
+## Wallet Integration
+
+Supports Quai Network wallets only (Pelagus, MetaMask with Quai network).
+
+Chain IDs supported:
+- 15000 (Orchard Cyprus-1)
+- 15001 (Orchard Cyprus-2)
+- 15002 (Orchard Cyprus-3)
+- 100-102 (Mainnet)
+
+## Setup
 
 ```bash
-cd web/approval-batcher
+cp .env.example .env
 npm install
-npm test
+node services/api/src/server.js
 ```
 
-Usage:
-```typescript
-import { approveAll, getTokenAddresses } from '@qdex/approval-batcher';
+## License
 
-const tokens = getTokenAddresses('orchard');
-const result = await approveAll(wallet, userAddress, vaultAddress, tokens);
-```
-
-See `web/approval-batcher/README.md` for full docs.
-
-### Terminal UI
-
-Browser TUI frontend. Run with `node src/app.js`.
-
-## Repository layout
-
-```text
-contracts/                 Quai/EVM smart contracts
-services/api/              REST API and WebSocket gateway
-services/matching-engine/  Matching engine integration/adaptor
-services/relayer/          Settlement transaction submitter
-services/indexer/          On-chain event indexer
-services/proof-service/    Trade/order/fill proof endpoints
-web/terminal-ui/           Browser TUI frontend
-sdk/typescript/            TypeScript SDK
-sdk/python/                Python SDK
-cli/qdex/                  CLI client for bots/operators
-docs/                      Architecture, API and implementation plans
-```
-
-## Design rules
-
-1. Operator cannot withdraw user funds.
-2. API/delegate keys cannot withdraw by default.
-3. Market orders are IOC limit orders with slippage protection.
-4. Contract events are the final balance/fill truth.
-5. Every trade should have a proof link: order hash, settlement tx, block, event index, price, amount and fees.
-6. Admin operations need caps, timelocks, multisig or explicit governance before production.
-
-## Initial stack direction
-
-- API/services: TypeScript first for fast iteration.
-- Matching engine: `exchange-core` integration or compatible isolated engine service.
-- Contracts: Solidity-compatible Quai contracts once target tooling is confirmed.
-- UI: custom terminal-native web UI.
-- SDKs: TypeScript + Python.
-
-## Status
-
-Early architecture scaffold. Not production code.
+MIT
