@@ -197,16 +197,13 @@ export const handleApiRequest = async (request, state = createDexState(), body =
 };
 
 const sendCorsJson = (response, result, rateLimit) => {
-  for (const [key, value] of Object.entries(CORS_HEADERS)) {
-    response.setHeader(key, value);
-  }
-  // Add rate limit headers to successful responses
+  const extraHeaders = {};
   if (rateLimit) {
-    response.setHeader('X-RateLimit-Limit', String(RATE_LIMIT_MAX_REQUESTS));
-    response.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
-    response.setHeader('X-RateLimit-Reset', String(rateLimit.resetAt));
+    extraHeaders['x-ratelimit-limit'] = String(RATE_LIMIT_MAX_REQUESTS);
+    extraHeaders['x-ratelimit-remaining'] = String(rateLimit.remaining);
+    extraHeaders['x-ratelimit-reset'] = String(rateLimit.resetAt);
   }
-  sendJson(response, result);
+  sendJson(response, result, extraHeaders);
 };
 
 export const createApiServer = ({ state = createDexState() } = {}) => {

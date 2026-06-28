@@ -8,10 +8,11 @@ const JSON_RESPONSE_HEADERS = Object.freeze({
   'access-control-allow-headers': 'content-type, authorization',
 });
 
-export const sendJson = (response, { statusCode, body }) => {
+export const sendJson = (response, { statusCode, body }, extraHeaders = {}) => {
   const payload = JSON.stringify(body, null, 2);
 
-  response.writeHead(statusCode, JSON_RESPONSE_HEADERS);
+  const headers = { ...JSON_RESPONSE_HEADERS, ...extraHeaders };
+  response.writeHead(statusCode, headers);
   response.end(`${payload}\n`);
 };
 
