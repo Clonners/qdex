@@ -189,12 +189,21 @@ export const handlePublicRoute = (context) => {
     return jsonResult(200, createContractRegistryResponse());
   }
 
-  // Stats endpoint - persistent storage metrics
+  // Stats endpoint - persistent storage metrics + in-memory live data
   if (method === 'GET' && pathname === '/v1/stats') {
-    const stats = state.getStats();
+    const sqliteStats = state.getStats?.() ?? {};
+    const openOrdersInMemory = state.getOpenOrders?.()?.length ?? sqliteStats?.openOrders ?? 0;
+    const fills = state.listFills?.() ?? [];
+    const trades = state.listTrades?.(MARKET_ID) ?? [];
+    const proofs = state.listProofs?.() ?? [];
     return jsonResult(200, {
-      ...stats,
-      source: 'sqlite-storage',
+      openOrders: openOrdersInMemory,
+      totalFills: fills.length,
+      totalTrades: trades.length,
+      totalProofs: proofs.length,
+      totalDeposits: sqliteStats?.totalDeposits ?? 0,
+      totalWithdrawals: sqliteStats?.totalWithdrawals ?? 0,
+      source: 'mock-matching-engine + sqlite-storage',
       persistence: 'persistent',
     });
   }
