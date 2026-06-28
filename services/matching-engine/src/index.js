@@ -98,8 +98,8 @@ const validateOrder = (order) => {
     return rejectOrder('missing_replay_domain', 'chainId and settlementContract are required replay-domain fields.');
   }
 
-  if (!isObject(order.signature) || order.signature.scheme !== 'mock' || typeof order.signature.signer !== 'string' || typeof order.signature.value !== 'string') {
-    return rejectOrder('invalid_signature', 'MVP orders require a mock signature with signer and value.');
+  if (!isObject(order.signature) || (order.signature.scheme !== 'mock' && order.signature.scheme !== 'ethers-v4') || typeof order.signature.signer !== 'string' || typeof order.signature.value !== 'string') {
+    return rejectOrder('invalid_signature', 'Order requires a mock or ethers-v4 signature with signer and value.');
   }
 
   if (order.signature.signer !== order.owner && order.signature.signer !== order.delegate) {
@@ -152,7 +152,13 @@ const bookOrder = (order) => ({
   owner: order.owner,
 });
 
-export function createMatchingEngine() {
+/**
+ * Persistence callback types:
+ *   saveOrder(order) -> void
+ *   updateOrderStatus(orderHash, status) -> void
+ *   loadOpenOrders() -> Order[]
+ */
+export function createMatchingEngine({ storage } = {}) {
   const state = {
     orderSequence: 0,
     orders: new Map(),
@@ -161,6 +167,44 @@ export function createMatchingEngine() {
       asks: [],
     },
   };
+
+  // Restore open orders from persistent storage on startup
+  if (storage) {
+    try {
+      const persisted = storage.loadOpenOrders?.() ?? [];
+      for (const row of persisted) {
+        const projectedOrder = {
+          orderHash: row.orderHash,
+          marketId: row.marketId,
+          owner: row.owner,
+          delegate: row.delegate ?? '',
+          side: row.side,
+          type: row.type,
+          amount: row.amount,
+          price: row.price,
+          timeInForce: row.timeInForce ?? 'GTC',
+          filledAmount: (BigInt(row.amount) - BigInt(row.remainingAmount)).toString(),
+          remainingAmount: row.remainingAmount,
+          status: row.status === 'open' ? 'open' : (row.remainingAmount !== '0' ? 'partially_filled' : row.status),
+          custody: CUSTODY_NOTE,
+          acceptedSequence: Number(row.createdAt) ?? 0,
+          signedOrder: null,
+        };
+        state.orders.set(row.orderHash, projectedOrder);
+        // Restore to book if still open
+        if (projectedOrder.remainingAmount !== '0') {
+          restOrder(projectedOrder);
+        }
+      }
+      // Set sequence counter beyond restored orders
+      if (persisted.length > 0) {
+        state.orderSequence = Math.max(...persisted.map(r => Number(r.createdAt) ?? 0), state.orderSequence);
+      }
+      console.log(`[matcher] Restored ${persisted.length} open orders from persistent storage`);
+    } catch (err) {
+      console.warn('[matcher] Failed to restore orders from storage:', err.message);
+    }
+  }
 
   const sortedBookSide = (side) => {
     const orders = side === 'buy' ? state.book.bids : state.book.asks;
@@ -176,6 +220,46 @@ export function createMatchingEngine() {
   const removeRestingOrder = (orderHash) => {
     state.book.bids = state.book.bids.filter((o) => o.orderHash !== orderHash);
     state.book.asks = state.book.asks.filter((o) => o.orderHash !== orderHash);
+  };
+
+  const persistOrder = (projectedOrder) => {
+    if (!storage) return;
+    try {
+      storage.saveOrder?.({
+        orderHash: projectedOrder.orderHash,
+        marketId: projectedOrder.marketId,
+        side: projectedOrder.side,
+        type: projectedOrder.type,
+        baseToken: projectedOrder.signedOrder?.baseToken ?? '',
+        quoteToken: projectedOrder.signedOrder?.quoteToken ?? '',
+        amount: projectedOrder.amount,
+        remainingAmount: projectedOrder.remainingAmount,
+        price: projectedOrder.price,
+        timeInForce: projectedOrder.timeInForce,
+        maxSlippageBps: projectedOrder.signedOrder?.maxSlippageBps ?? 0,
+        owner: projectedOrder.owner,
+        delegate: projectedOrder.delegate ?? '',
+        nonce: projectedOrder.signedOrder?.nonce ?? '',
+        expiresAt: projectedOrder.signedOrder?.expiresAt ?? null,
+        chainId: projectedOrder.signedOrder?.chainId ?? 15000,
+        settlementContract: projectedOrder.signedOrder?.settlementContract ?? '',
+        clientOrderId: projectedOrder.signedOrder?.clientOrderId ?? null,
+        status: projectedOrder.status,
+        createdAt: projectedOrder.acceptedSequence,
+        updatedAt: Date.now(),
+      });
+    } catch (err) {
+      console.warn('[matcher] Persist order error:', err.message);
+    }
+  };
+
+  const persistOrderStatus = (orderHash, status) => {
+    if (!storage) return;
+    try {
+      storage.updateOrderStatus?.(orderHash, status);
+    } catch (err) {
+      console.warn('[matcher] Persist order status error:', err.message);
+    }
   };
 
   const matchOrder = (incoming) => {
@@ -198,6 +282,8 @@ export function createMatchingEngine() {
 
       // Sync resting order state back to the map since applyFill mutates in place
       state.orders.set(resting.orderHash, resting);
+      persistOrder(resting);
+      persistOrderStatus(resting.orderHash, resting.status);
 
       fills.push({
         fillId: `fill-${String(state.orderSequence).padStart(6, '0')}`,
@@ -258,8 +344,13 @@ export function createMatchingEngine() {
       };
 
       state.orders.set(orderHash, projectedOrder);
+      persistOrder(projectedOrder);
       const fills = matchOrder(projectedOrder);
       restOrder(projectedOrder);
+
+      // Persist final state after matching
+      persistOrder(projectedOrder);
+      persistOrderStatus(orderHash, projectedOrder.status);
 
       return {
         accepted: true,
@@ -317,6 +408,7 @@ export function createMatchingEngine() {
       order.cancelReason = 'cancel_order';
       order.nonceCancellation = 'not-implied-matcher-local-only';
       removeRestingOrder(orderHash);
+      persistOrderStatus(orderHash, 'cancelled');
 
       return {
         statusCode: 200,
@@ -355,6 +447,7 @@ export function createMatchingEngine() {
         order.cancelReason = 'cancel_all';
         order.nonceCancellation = 'not-implied-matcher-local-only';
         removeRestingOrder(order.orderHash);
+        persistOrderStatus(order.orderHash, 'cancelled');
         return publicOrder(order);
       });
 

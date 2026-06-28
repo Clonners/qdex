@@ -13,6 +13,39 @@ import { handlePublicRoute } from './routes/public.js';
 import { handleRealNetworkRoute } from './real-network-routes.js';
 import { attachStreamWebSocketUpgrade } from './websocket.js';
 
+// Rate limiter — sliding window per IP
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 120; // 2 req/s average per IP
+const rateLimitStore = new Map();
+
+const checkRateLimit = (remoteAddress) => {
+  const now = Date.now();
+  const key = remoteAddress;
+  const bucket = rateLimitStore.get(key) ?? { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+
+  if (now > bucket.resetAt) {
+    bucket.count = 0;
+    bucket.resetAt = now + RATE_LIMIT_WINDOW_MS;
+  }
+
+  bucket.count += 1;
+  rateLimitStore.set(key, bucket);
+
+  // Cleanup old entries periodically
+  if (rateLimitStore.size > 1000) {
+    const expired = now - RATE_LIMIT_WINDOW_MS * 2;
+    for (const [k, v] of rateLimitStore) {
+      if (v.resetAt < expired) rateLimitStore.delete(k);
+    }
+  }
+
+  return {
+    allowed: bucket.count <= RATE_LIMIT_MAX_REQUESTS,
+    remaining: Math.max(0, RATE_LIMIT_MAX_REQUESTS - bucket.count),
+    resetAt: Math.ceil(bucket.resetAt / 1000),
+  };
+};
+
 // Load .env if present
 const loadEnv = () => {
   const envPath = path.join(process.cwd(), '.env');
@@ -163,9 +196,15 @@ export const handleApiRequest = async (request, state = createDexState(), body =
   return notFound(context);
 };
 
-const sendCorsJson = (response, result) => {
+const sendCorsJson = (response, result, rateLimit) => {
   for (const [key, value] of Object.entries(CORS_HEADERS)) {
     response.setHeader(key, value);
+  }
+  // Add rate limit headers to successful responses
+  if (rateLimit) {
+    response.setHeader('X-RateLimit-Limit', String(RATE_LIMIT_MAX_REQUESTS));
+    response.setHeader('X-RateLimit-Remaining', String(rateLimit.remaining));
+    response.setHeader('X-RateLimit-Reset', String(rateLimit.resetAt));
   }
   sendJson(response, result);
 };
@@ -175,6 +214,25 @@ export const createApiServer = ({ state = createDexState() } = {}) => {
     try {
       const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
       const pathname = url.pathname;
+
+      // Rate limiting — apply to all API routes
+      const remoteAddr = request.socket.remoteAddress ?? request.headers['x-forwarded-for'] ?? 'unknown';
+      const rateLimit = checkRateLimit(remoteAddr);
+      if (!rateLimit.allowed) {
+        response.writeHead(429, {
+          ...CORS_HEADERS,
+          'Retry-After': String(rateLimit.resetAt - Math.floor(Date.now() / 1000)),
+          'X-RateLimit-Limit': String(RATE_LIMIT_MAX_REQUESTS),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(rateLimit.resetAt),
+        });
+        response.end(JSON.stringify({
+          error: 'rate_limit_exceeded',
+          message: `Too many requests. Limit: ${RATE_LIMIT_MAX_REQUESTS} per minute.`,
+          retryAfter: rateLimit.resetAt - Math.floor(Date.now() / 1000),
+        }));
+        return;
+      }
 
       // Handle OPTIONS preflight
       if (request.method === 'OPTIONS') {
@@ -200,18 +258,20 @@ export const createApiServer = ({ state = createDexState() } = {}) => {
       // API routes
       const bodyResult = await readJsonBody(request);
       if (bodyResult.error !== undefined) {
-        sendCorsJson(response, bodyResult.error);
+        sendCorsJson(response, bodyResult.error, rateLimit);
         return;
       }
 
       const result = await handleApiRequest(request, state, bodyResult.body);
-      sendCorsJson(response, result);
+      sendCorsJson(response, result, rateLimit);
     } catch (error) {
       sendCorsJson(response, {
         statusCode: 500,
         body: {
           error: 'internal_error',
           message: error instanceof Error ? error.message : 'Unknown API error',
+          requestPath: pathname,
+          method: request.method ?? 'GET',
         },
       });
     }

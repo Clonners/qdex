@@ -318,6 +318,14 @@ export function createSqliteStorage({ path: dbPath = DB_PATH } = {}) {
       return stmts.getOpenOrders.all();
     },
 
+    loadOpenOrders() {
+      // Return only orders that still have remaining quantity (not fully filled/cancelled)
+      const stmt = db.prepare(`
+        SELECT * FROM orders WHERE status IN ('open', 'partially_filled') AND remainingAmount > '0' ORDER BY createdAt ASC
+      `);
+      return stmt.all();
+    },
+
     getOrdersByMarket(marketId) {
       return stmts.getOrdersByMarket.all(marketId);
     },

@@ -254,8 +254,8 @@ const validateOrder = (order) => {
     return rejectOrder('missing_replay_domain', 'chainId and settlementContract are required replay-domain fields.');
   }
 
-  if (!isObject(order.signature) || order.signature.scheme !== 'mock' || typeof order.signature.signer !== 'string' || typeof order.signature.value !== 'string') {
-    return rejectOrder('invalid_signature', 'MVP orders require a mock signature with signer and value.');
+  if (!isObject(order.signature) || (order.signature.scheme !== 'mock' && order.signature.scheme !== 'ethers-v4') || typeof order.signature.signer !== 'string' || typeof order.signature.value !== 'string') {
+    return rejectOrder('invalid_signature', 'Order requires a mock or ethers-v4 signature with signer and value.');
   }
 
   if (order.signature.signer !== order.owner && order.signature.signer !== order.delegate) {
@@ -300,7 +300,7 @@ export const createMockDexState = ({
   sqliteStorage = createSqliteStorage(),
 } = {}) => {
   // Matching engine — deterministic price-time priority matching
-  const engine = createMatchingEngine();
+  const engine = createMatchingEngine({ storage: sqliteStorage });
 
   // Relayer — fill settlement state machine (received → validated → submitted → confirmed)
   // Wire settlement adapter for on-chain settlement when config is provided
