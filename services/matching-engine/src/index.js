@@ -169,6 +169,23 @@ export function createMatchingEngine({ storage } = {}) {
   };
 
   // Restore open orders from persistent storage on startup
+
+  const restOrder = (order) => {
+    if (!canRest(order) || order.remainingAmount === '0') {
+      return;
+    }
+    const bookSide = order.side === 'buy' ? state.book.bids : state.book.asks;
+    bookSide.push(order);
+    sortedBookSide(order.side);
+  };
+
+  const sortedBookSide = (side) => {
+    const orders = side === 'buy' ? state.book.bids : state.book.asks;
+    orders.sort(compareRestingOrders(side));
+    return orders;
+  };
+
+  // Restore open orders from persistent storage on startup
   if (storage) {
     try {
       const persisted = storage.loadOpenOrders?.() ?? [];
@@ -191,12 +208,10 @@ export function createMatchingEngine({ storage } = {}) {
           signedOrder: null,
         };
         state.orders.set(row.orderHash, projectedOrder);
-        // Restore to book if still open
         if (projectedOrder.remainingAmount !== '0') {
           restOrder(projectedOrder);
         }
       }
-      // Set sequence counter beyond restored orders
       if (persisted.length > 0) {
         state.orderSequence = Math.max(...persisted.map(r => Number(r.createdAt) ?? 0), state.orderSequence);
       }
@@ -205,12 +220,6 @@ export function createMatchingEngine({ storage } = {}) {
       console.warn('[matcher] Failed to restore orders from storage:', err.message);
     }
   }
-
-  const sortedBookSide = (side) => {
-    const orders = side === 'buy' ? state.book.bids : state.book.asks;
-    orders.sort(compareRestingOrders(side));
-    return orders;
-  };
 
   const removeFilledRestingOrders = () => {
     state.book.bids = state.book.bids.filter((o) => o.remainingAmount !== '0');
@@ -301,15 +310,6 @@ export function createMatchingEngine({ storage } = {}) {
 
     removeFilledRestingOrders();
     return fills;
-  };
-
-  const restOrder = (order) => {
-    if (!canRest(order) || order.remainingAmount === '0') {
-      return;
-    }
-    const bookSide = order.side === 'buy' ? state.book.bids : state.book.asks;
-    bookSide.push(order);
-    sortedBookSide(order.side);
   };
 
   return {
