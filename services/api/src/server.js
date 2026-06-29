@@ -11,16 +11,43 @@ import { handlePrivateRoute } from './routes/private.js';
 import { handleProofRoute } from './routes/proofs.js';
 import { handlePublicRoute } from './routes/public.js';
 import { handleRealNetworkRoute } from './real-network-routes.js';
-import { attachStreamWebSocketUpgrade } from './websocket.js';
+import { attachStreamWebSocketUpgrade, attachWebSocketServer } from './websocket.js';
 
-// Rate limiter — sliding window per IP
+// Rate limiter — sliding window per IP, tier-based
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 120; // 2 req/s average per IP
+
+// Public endpoints: 60 req/min
+const RATE_LIMIT_PUBLIC_MAX = 60;
+// Authenticated/private endpoints: 120 req/min
+const RATE_LIMIT_PRIVATE_MAX = 120;
+
 const rateLimitStore = new Map();
 
-const checkRateLimit = (remoteAddress) => {
+const isPublicEndpoint = (pathname, method) => {
+  // Public: GET requests to read-only endpoints
+  if (method !== 'GET') return false;
+  const publicPaths = [
+    '/v1/health',
+    '/v1/markets',
+    '/v1/tickers',
+    '/v1/orderbook',
+    '/v1/fees',
+    '/v1/contracts',
+    '/v1/stats',
+    '/v1/listings/policy',
+    '/v1/listings/review-flow',
+    '/v1/listings/requests',
+    '/v1/relayer/settlement-mode-gate',
+    '/v1/settlements',
+    '/v1/testnet/deployment-status',
+  ];
+  return publicPaths.some(p => pathname === p || pathname.startsWith(p + '/'));
+};
+
+const checkRateLimit = (remoteAddress, tier = 'public') => {
+  const maxRequests = tier === 'private' ? RATE_LIMIT_PRIVATE_MAX : RATE_LIMIT_PUBLIC_MAX;
+  const key = `${remoteAddress}:${tier}`;
   const now = Date.now();
-  const key = remoteAddress;
   const bucket = rateLimitStore.get(key) ?? { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
 
   if (now > bucket.resetAt) {
@@ -32,7 +59,7 @@ const checkRateLimit = (remoteAddress) => {
   rateLimitStore.set(key, bucket);
 
   // Cleanup old entries periodically
-  if (rateLimitStore.size > 1000) {
+  if (rateLimitStore.size > 2000) {
     const expired = now - RATE_LIMIT_WINDOW_MS * 2;
     for (const [k, v] of rateLimitStore) {
       if (v.resetAt < expired) rateLimitStore.delete(k);
@@ -40,9 +67,11 @@ const checkRateLimit = (remoteAddress) => {
   }
 
   return {
-    allowed: bucket.count <= RATE_LIMIT_MAX_REQUESTS,
-    remaining: Math.max(0, RATE_LIMIT_MAX_REQUESTS - bucket.count),
+    allowed: bucket.count <= maxRequests,
+    max: maxRequests,
+    remaining: Math.max(0, maxRequests - bucket.count),
     resetAt: Math.ceil(bucket.resetAt / 1000),
+    tier,
   };
 };
 
@@ -199,9 +228,10 @@ export const handleApiRequest = async (request, state = createDexState(), body =
 const sendCorsJson = (response, result, rateLimit) => {
   const extraHeaders = {};
   if (rateLimit) {
-    extraHeaders['x-ratelimit-limit'] = String(RATE_LIMIT_MAX_REQUESTS);
+    extraHeaders['x-ratelimit-limit'] = String(rateLimit.max);
     extraHeaders['x-ratelimit-remaining'] = String(rateLimit.remaining);
     extraHeaders['x-ratelimit-reset'] = String(rateLimit.resetAt);
+    extraHeaders['x-ratelimit-tier'] = rateLimit.tier ?? 'public';
   }
   sendJson(response, result, extraHeaders);
 };
@@ -212,21 +242,24 @@ export const createApiServer = ({ state = createDexState() } = {}) => {
       const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
       const pathname = url.pathname;
 
-      // Rate limiting — apply to all API routes
+      // Rate limiting — tier-based: public (60/min) vs private (120/min)
       const remoteAddr = request.socket.remoteAddress ?? request.headers['x-forwarded-for'] ?? 'unknown';
-      const rateLimit = checkRateLimit(remoteAddr);
+      const tier = isPublicEndpoint(pathname, request.method) ? 'public' : 'private';
+      const rateLimit = checkRateLimit(remoteAddr, tier);
       if (!rateLimit.allowed) {
         response.writeHead(429, {
           ...CORS_HEADERS,
           'Retry-After': String(rateLimit.resetAt - Math.floor(Date.now() / 1000)),
-          'X-RateLimit-Limit': String(RATE_LIMIT_MAX_REQUESTS),
+          'X-RateLimit-Limit': String(rateLimit.max),
           'X-RateLimit-Remaining': '0',
           'X-RateLimit-Reset': String(rateLimit.resetAt),
+          'X-RateLimit-Tier': tier,
         });
         response.end(JSON.stringify({
           error: 'rate_limit_exceeded',
-          message: `Too many requests. Limit: ${RATE_LIMIT_MAX_REQUESTS} per minute.`,
+          message: `Too many requests. Limit: ${rateLimit.max} per minute (${tier} tier).`,
           retryAfter: rateLimit.resetAt - Math.floor(Date.now() / 1000),
+          tier,
         }));
         return;
       }
@@ -274,15 +307,22 @@ export const createApiServer = ({ state = createDexState() } = {}) => {
     }
   });
 
-  return attachStreamWebSocketUpgrade(server, { state });
+  // Attach WebSocket support — ws library handles /v1/ws, raw handler handles others
+  const wsCleanup = attachWebSocketServer(server, { state });
+
+  // Also keep raw upgrade handler for non-/v1/ws WebSocket paths (legacy)
+  attachStreamWebSocketUpgrade(server, { state });
+
+  return { server, wsCleanup };
 };
 
 const shouldListen = () => process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (shouldListen()) {
-  const server = createApiServer();
+  const { server } = createApiServer();
   const host = process.env.HOST ?? '0.0.0.0';
   server.listen(PORT, host, () => {
     console.log(`@qdex/api listening on http://${host}:${PORT}`);
+    console.log(`WebSocket endpoint: ws://${host}:${PORT}/v1/ws`);
   });
 }

@@ -1,71 +1,100 @@
-/**
- * Real vault adapter for TradingVault contract on Quai Network
- * 
- * Handles real approve/transfer operations for vault deposits and withdrawals
- * Uses quais SDK for signing and broadcasting transactions
- */
-
 import { ethers } from 'ethers';
 
 const VAULT_ABI = [
-  // Deposit functions
   'function deposit(address token, uint256 amount)',
   'function withdraw(address token, uint256 amount, address to)',
-  
-  // Balance queries
   'function balanceOf(address owner, address token) view returns (uint256)',
   'function availableBalanceOf(address owner, address token) view returns (uint256)',
   'function lockedBalanceOf(address owner, address token) view returns (uint256)',
-  
-  // Settlement
   'function lockForSettlement(address token, uint256 amount)',
   'function unlockFromSettlement(address token, uint256 amount)',
   'function settleLockedBalance(address token, uint256 amount)',
   'function settlementAuthority() view returns (address)',
-  
-  // Events
-  'event Deposit(address indexed owner, address indexed token, uint256 amount)',
-  'event Withdraw(address indexed owner, address indexed token, uint256 amount, address indexed to)',
-  'event LockForSettlement(address indexed owner, address indexed token, uint256 amount)',
-  'event UnlockFromSettlement(address indexed owner, address indexed token, uint256 amount)',
-  'event Settlement(address indexed owner, address indexed token, uint256 amount, bytes32 indexed tradeId)',
 ];
 
 const ERC20_ABI = [
   'function approve(address spender, uint256 amount) returns (bool)',
   'function allowance(address owner, address spender) view returns (uint256)',
-  'function transfer(address to, uint256 amount) returns (bool)',
   'function balanceOf(address owner) view returns (uint256)',
 ];
 
-/**
- * Create a vault adapter that interacts with the real TradingVault contract
- */
+async function rpcCall(rpcUrl, method, params = []) {
+  const response = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      jsonrpc: '2.0',
+      method,
+      params,
+      id: 1,
+    }),
+  });
+  
+  const data = await response.json();
+  if (data.error) {
+    throw new Error(data.error.message || JSON.stringify(data.error));
+  }
+  return data.result;
+}
+
+async function callView(rpcUrl, contractAddress, selector, params = []) {
+  const encoded = params.map(p => p.slice(2).padStart(64, '0')).join('');
+  const result = await rpcCall(rpcUrl, 'eth_call', [{
+    to: contractAddress,
+    data: selector + encoded,
+  }, 'latest']);
+  
+  if (!result || result === '0x' || result === '0x0') {
+    return '0x' + '0'.repeat(64);
+  }
+  return result;
+}
+
+const VAULT_SELECTORS = {
+  balanceOf: '0xf7888aec',
+  availableBalanceOf: '0x2a7575ee',
+  lockedBalanceOf: '0x1fad6d6e',
+};
+
 export const createVaultAdapter = ({
   rpcUrl,
   privateKey,
   vaultAddress,
-  tokens = {}, // { WQUAI: '0x...', WQI: '0x...' }
+  tokens = {},
 }) => {
-  if (!rpcUrl || !privateKey || !vaultAddress) {
+  if (!rpcUrl || !vaultAddress) {
     console.warn('[vault-adapter] Missing config - vault operations will be read-only');
     return createReadOnlyVaultAdapter();
   }
 
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-  const wallet = new ethers.Wallet(privateKey, provider);
-  const vault = new ethers.Contract(vaultAddress, VAULT_ABI, wallet);
+  const isReal = !!privateKey;
+  let wallet = null;
+  let provider = null;
+
+  if (privateKey) {
+    try {
+      provider = new ethers.JsonRpcProvider(rpcUrl, { name: 'quai-orchard', chainId: 15000 });
+      wallet = new ethers.Wallet(privateKey, provider);
+    } catch (e) {
+      console.warn('[vault-adapter] Failed to create wallet:', e.message);
+    }
+  }
+
+  const callVault = async (selector, params = []) => {
+    return callView(rpcUrl, vaultAddress, selector, params);
+  };
 
   return {
-    // Check if adapter is initialized with real signing capability
-    isReal: true,
+    isReal,
+    vaultAddress,
+    tokens,
+    rpcUrl,
 
-    // Get vault balance for an owner
     async getBalance(owner, tokenAddress) {
       try {
-        const balance = await vault.balanceOf(owner, tokenAddress);
+        const result = await callVault(VAULT_SELECTORS.balanceOf, [owner, tokenAddress]);
         return {
-          balance: balance.toString(),
+          balance: BigInt(result).toString(),
           token: tokenAddress,
           owner,
           source: 'real-vault-adapter',
@@ -76,12 +105,11 @@ export const createVaultAdapter = ({
       }
     },
 
-    // Get available (unlocked) balance
     async getAvailableBalance(owner, tokenAddress) {
       try {
-        const balance = await vault.availableBalanceOf(owner, tokenAddress);
+        const result = await callVault(VAULT_SELECTORS.availableBalanceOf, [owner, tokenAddress]);
         return {
-          available: balance.toString(),
+          available: BigInt(result).toString(),
           token: tokenAddress,
           owner,
           source: 'real-vault-adapter',
@@ -92,12 +120,11 @@ export const createVaultAdapter = ({
       }
     },
 
-    // Get locked balance (reserved for settlement)
     async getLockedBalance(owner, tokenAddress) {
       try {
-        const balance = await vault.lockedBalanceOf(owner, tokenAddress);
+        const result = await callVault(VAULT_SELECTORS.lockedBalanceOf, [owner, tokenAddress]);
         return {
-          locked: balance.toString(),
+          locked: BigInt(result).toString(),
           token: tokenAddress,
           owner,
           source: 'real-vault-adapter',
@@ -108,37 +135,18 @@ export const createVaultAdapter = ({
       }
     },
 
-    // Approve token for vault deposit
-    async approveToken(tokenAddress, amount) {
+    async approveToken(owner, tokenAddress, amount) {
+      if (!wallet) {
+        throw new Error('Vault adapter not configured for signing');
+      }
       try {
-        const token = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
-        
-        // Check current allowance
-        const currentAllowance = await token.allowance(wallet.address, vaultAddress);
-        
-        if (currentAllowance >= BigInt(amount)) {
-          return {
-            approved: false,
-            reason: 'already_approved',
-            currentAllowance: currentAllowance.toString(),
-            requestedAmount: amount.toString(),
-            source: 'real-vault-adapter',
-          };
-        }
-
-        // Approve the token
-        const tx = await token.approve(vaultAddress, amount);
-        console.log(`[vault-adapter] Approval tx sent: ${tx.hash}`);
-        
-        const receipt = await tx.wait();
-        
+        const contract = new ethers.Contract(tokenAddress, ERC20_ABI, wallet);
+        const tx = await contract.approve(vaultAddress, ethers.parseUnits(amount, 18));
         return {
-          approved: true,
           txHash: tx.hash,
-          blockNumber: receipt.blockNumber,
+          owner,
           token: tokenAddress,
-          amount: amount.toString(),
-          spender: vaultAddress,
+          amount,
           source: 'real-vault-adapter',
         };
       } catch (error) {
@@ -147,28 +155,19 @@ export const createVaultAdapter = ({
       }
     },
 
-    // Deposit tokens to vault
-    async deposit(tokenAddress, amount) {
+    async deposit(owner, tokenAddress, amount) {
+      if (!wallet) {
+        throw new Error('Vault adapter not configured for signing');
+      }
       try {
-        // Ensure approval first
-        const approval = await this.approveToken(tokenAddress, amount);
-        if (!approval.approved && approval.reason !== 'already_approved') {
-          throw new Error(`Approval failed: ${approval.reason}`);
-        }
-
-        // Execute deposit
-        const tx = await vault.deposit(tokenAddress, amount);
-        console.log(`[vault-adapter] Deposit tx sent: ${tx.hash}`);
-        
-        const receipt = await tx.wait();
-        
+        await this.approveToken(owner, tokenAddress, amount);
+        const vaultContract = new ethers.Contract(vaultAddress, VAULT_ABI, wallet);
+        const tx = await vaultContract.deposit(tokenAddress, ethers.parseUnits(amount, 18));
         return {
-          deposited: true,
           txHash: tx.hash,
-          blockNumber: receipt.blockNumber,
+          owner,
           token: tokenAddress,
-          amount: amount.toString(),
-          owner: wallet.address,
+          amount,
           source: 'real-vault-adapter',
         };
       } catch (error) {
@@ -177,21 +176,19 @@ export const createVaultAdapter = ({
       }
     },
 
-    // Withdraw tokens from vault
-    async withdraw(tokenAddress, amount, to) {
+    async withdraw(owner, tokenAddress, amount, toAddress) {
+      if (!wallet) {
+        throw new Error('Vault adapter not configured for signing');
+      }
       try {
-        const tx = await vault.withdraw(tokenAddress, amount, to || wallet.address);
-        console.log(`[vault-adapter] Withdraw tx sent: ${tx.hash}`);
-        
-        const receipt = await tx.wait();
-        
+        const vaultContract = new ethers.Contract(vaultAddress, VAULT_ABI, wallet);
+        const tx = await vaultContract.withdraw(tokenAddress, ethers.parseUnits(amount, 18), toAddress);
         return {
-          withdrawn: true,
           txHash: tx.hash,
-          blockNumber: receipt.blockNumber,
+          owner,
           token: tokenAddress,
-          amount: amount.toString(),
-          to: to || wallet.address,
+          amount,
+          to: toAddress,
           source: 'real-vault-adapter',
         };
       } catch (error) {
@@ -199,142 +196,33 @@ export const createVaultAdapter = ({
         throw error;
       }
     },
-
-    // Lock tokens for settlement (prepare for trade)
-    async lockForSettlement(tokenAddress, amount) {
-      try {
-        const tx = await vault.lockForSettlement(tokenAddress, amount);
-        console.log(`[vault-adapter] Lock tx sent: ${tx.hash}`);
-        
-        const receipt = await tx.wait();
-        
-        return {
-          locked: true,
-          txHash: tx.hash,
-          blockNumber: receipt.blockNumber,
-          token: tokenAddress,
-          amount: amount.toString(),
-          source: 'real-vault-adapter',
-        };
-      } catch (error) {
-        console.error('[vault-adapter] lockForSettlement error:', error.message);
-        throw error;
-      }
-    },
-
-    // Unlock tokens from settlement (cancel trade preparation)
-    async unlockFromSettlement(tokenAddress, amount) {
-      try {
-        const tx = await vault.unlockFromSettlement(tokenAddress, amount);
-        console.log(`[vault-adapter] Unlock tx sent: ${tx.hash}`);
-        
-        const receipt = await tx.wait();
-        
-        return {
-          unlocked: true,
-          txHash: tx.hash,
-          blockNumber: receipt.blockNumber,
-          token: tokenAddress,
-          amount: amount.toString(),
-          source: 'real-vault-adapter',
-        };
-      } catch (error) {
-        console.error('[vault-adapter] unlockFromSettlement error:', error.message);
-        throw error;
-      }
-    },
-
-    // Settle locked balance (execute trade)
-    async settleLockedBalance(tokenAddress, amount) {
-      try {
-        const tx = await vault.settleLockedBalance(tokenAddress, amount);
-        console.log(`[vault-adapter] Settlement tx sent: ${tx.hash}`);
-        
-        const receipt = await tx.wait();
-        
-        return {
-          settled: true,
-          txHash: tx.hash,
-          blockNumber: receipt.blockNumber,
-          token: tokenAddress,
-          amount: amount.toString(),
-          source: 'real-vault-adapter',
-        };
-      } catch (error) {
-        console.error('[vault-adapter] settleLockedBalance error:', error.message);
-        throw error;
-      }
-    },
-
-    // Get settlement authority address
-    async getSettlementAuthority() {
-      try {
-        const authority = await vault.settlementAuthority();
-        return {
-          authority,
-          source: 'real-vault-adapter',
-        };
-      } catch (error) {
-        console.error('[vault-adapter] getSettlementAuthority error:', error.message);
-        throw error;
-      }
-    },
   };
 };
 
-/**
- * Read-only vault adapter for when signing is not available
- */
 const createReadOnlyVaultAdapter = () => ({
   isReal: false,
-  
   getBalance: async () => ({
     error: 'read_only_mode',
     source: 'vault-adapter',
     message: 'Vault adapter is in read-only mode. Missing RPC URL, private key, or vault address.',
   }),
-  
   getAvailableBalance: async () => ({
     error: 'read_only_mode',
     source: 'vault-adapter',
   }),
-  
   getLockedBalance: async () => ({
     error: 'read_only_mode',
     source: 'vault-adapter',
   }),
-  
   approveToken: async () => ({
     error: 'read_only_mode',
     source: 'vault-adapter',
   }),
-  
   deposit: async () => ({
     error: 'read_only_mode',
     source: 'vault-adapter',
   }),
-  
   withdraw: async () => ({
-    error: 'read_only_mode',
-    source: 'vault-adapter',
-  }),
-  
-  lockForSettlement: async () => ({
-    error: 'read_only_mode',
-    source: 'vault-adapter',
-  }),
-  
-  unlockFromSettlement: async () => ({
-    error: 'read_only_mode',
-    source: 'vault-adapter',
-  }),
-  
-  settleLockedBalance: async () => ({
-    error: 'read_only_mode',
-    source: 'vault-adapter',
-  }),
-  
-  getSettlementAuthority: async () => ({
     error: 'read_only_mode',
     source: 'vault-adapter',
   }),

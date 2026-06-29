@@ -20,6 +20,17 @@ const pathValue = (pathname, prefix) => {
   return rawValue.length > 0 ? decodeURIComponent(rawValue) : null;
 };
 
+const pathValueWithSuffix = (pathname, prefix, suffix) => {
+  if (!pathname.startsWith(prefix) || !pathname.endsWith(suffix)) {
+    return null;
+  }
+
+  const rawValue = pathname.slice(prefix.length, pathname.length - suffix.length);
+  return rawValue.length > 0 && !rawValue.includes('/') ? decodeURIComponent(rawValue) : null;
+};
+
+const VAULT_TOKEN_LIST = ['WQUAI', 'WQI', 'USDT'];
+
 const ownerSignedNonceCancelPlaceholder = () => jsonResult(501, {
   error: 'owner_signed_nonce_cancel_not_implemented',
   source: 'owner-signed-nonce-cancel-placeholder',
@@ -63,13 +74,111 @@ export const handlePrivateRoute = async (context) => {
     return jsonResult(200, createMockVaultBalanceProjection(context.state.listVaultBalances(owner)));
   }
 
+  // Real wallet balances from on-chain vault
+  const walletAddress = pathValue(pathname, '/v1/wallet/');
+  if (method === 'GET' && walletAddress !== null && pathname.endsWith('/balances')) {
+    const address = walletAddress;
+
+    // Try real vault adapter first if available
+    if (context.state.vaultAdapter && context.state.vaultAdapter.isReal) {
+      try {
+        const tokenPromises = [];
+        const tokenEntries = Object.entries(context.state.vaultAdapter.tokens ?? {});
+        for (const [tokenSymbol, tokenAddress] of tokenEntries) {
+          tokenPromises.push(
+            Promise.all([
+              context.state.vaultAdapter.getBalance(address, tokenAddress).then(r => r.balance ?? '0'),
+              context.state.vaultAdapter.getAvailableBalance(address, tokenAddress).then(r => r.available ?? '0'),
+              context.state.vaultAdapter.getLockedBalance(address, tokenAddress).then(r => r.locked ?? '0'),
+            ]).then(([balance, available, locked]) => ({
+              token: tokenSymbol,
+              tokenAddress,
+              balance,
+              available,
+              locked,
+            }))
+          );
+        }
+        const balances = await Promise.all(tokenPromises);
+        return jsonResult(200, {
+          address,
+          balances,
+          source: 'real-vault-adapter',
+          realQuaiTransactions: true,
+          custody: 'non-custodial-contract-vault',
+          withdrawalAuthority: 'owner-wallet-only',
+          permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+        });
+      } catch (error) {
+        return jsonResult(500, {
+          error: 'vault_balance_failed',
+          message: error.message,
+          source: 'real-vault-adapter',
+        });
+      }
+    }
+
+    // Fallback to mock vault balances
+    return jsonResult(200, {
+      address,
+      balances: context.state.listVaultBalances(address),
+      source: 'mock-vault-projection',
+      realQuaiTransactions: false,
+      custody: 'non-custodial-contract-vault',
+      withdrawalAuthority: 'owner-wallet-only',
+      permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
+      safetyNotice: 'Mock vault projection only: no real Quai transaction, no wallet loaded, no funds moved.',
+    });
+  }
+
   if (method === 'POST' && pathname === '/v1/deposits') {
+    // If real vault adapter is available, use it for on-chain deposits
+    if (context.state.vaultAdapter && context.state.vaultAdapter.isReal) {
+      try {
+        const { owner, token, amount } = context.body ?? {};
+        const tokenAddress = context.state.vaultAdapter.tokens[token] || token;
+        const result = await context.state.vaultAdapter.deposit(owner, tokenAddress, amount);
+        return jsonResult(200, {
+          ...result,
+          owner,
+          source: 'real-vault-adapter',
+          realQuaiTransactions: true,
+          custody: 'non-custodial-contract-vault',
+        });
+      } catch (error) {
+        return jsonResult(500, {
+          error: 'vault_deposit_failed',
+          message: error.message,
+          source: 'real-vault-adapter',
+        });
+      }
+    }
     const { owner, token, amount } = context.body ?? {};
     const result = context.state.deposit({ owner, token, amount });
     return jsonResult(result.statusCode, result.body);
   }
 
   if (method === 'POST' && pathname === '/v1/withdrawals') {
+    // If real vault adapter is available, use it for on-chain withdrawals
+    if (context.state.vaultAdapter && context.state.vaultAdapter.isReal) {
+      try {
+        const { owner, token, amount } = context.body ?? {};
+        const tokenAddress = context.state.vaultAdapter.tokens[token] || token;
+        const result = await context.state.vaultAdapter.withdraw(owner, tokenAddress, amount, owner);
+        return jsonResult(200, {
+          ...result,
+          source: 'real-vault-adapter',
+          realQuaiTransactions: true,
+          custody: 'non-custodial-contract-vault',
+        });
+      } catch (error) {
+        return jsonResult(500, {
+          error: 'vault_withdrawal_failed',
+          message: error.message,
+          source: 'real-vault-adapter',
+        });
+      }
+    }
     const { owner, token, amount } = context.body ?? {};
     const result = context.state.withdraw({ owner, token, amount });
     return jsonResult(result.statusCode, result.body);
@@ -224,6 +333,12 @@ export const handlePrivateRoute = async (context) => {
 
   if (method === 'POST' && pathname === '/v1/orders') {
     const result = await context.state.submitOrder(context.body);
+    return jsonResult(result.statusCode, result.body);
+  }
+
+  const orderCancelHash = pathValueWithSuffix(pathname, '/v1/orders/', '/cancel');
+  if (method === 'POST' && orderCancelHash !== null) {
+    const result = context.state.cancelOrder(orderCancelHash);
     return jsonResult(result.statusCode, result.body);
   }
 

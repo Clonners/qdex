@@ -6,7 +6,7 @@
  *
  * @module settlement-adapter
  */
-import { Wallet, JsonRpcProvider, Contract, formatMixedCaseChecksumAddress, parseQuai } from 'quais';
+import { Wallet, JsonRpcProvider, Contract, formatMixedCaseChecksumAddress, parseQuai, keccak256, toUtf8Bytes } from 'quais';
 
 // Settlement contract ABI (interface subset for settlement operations)
 const SETTLEMENT_ABI = [
@@ -95,37 +95,54 @@ export function createSettlementAdapter(config = {}) {
     throw new Error(`Receipt timeout for ${txHash} after ${receiptWait.maxWaitMs}ms`);
   }
 
-  /**
-   * Extract TradeSettled event from receipt.
-   *
-   * @param {Object} receipt - Transaction receipt
-   * @returns {Object|null} Parsed TradeSettled event or null
-   */
-  function extractTradeSettled(receipt) {
-    if (!receipt || !receipt.logs) return null;
-
-    const tradeSettledTopic = '0x' +
-      'd4b9e5e6e3e8c6b3a2f1d0c9b8a7968574635241300ffeeddccbbaa9988776655'.substring(2); // placeholder
-
-    // Try to find TradeSettled by log structure
-    for (const log of receipt.logs) {
-      if (log.topics && log.topics.length >= 3) {
-        // TradeSettled has 3 indexed topics: tradeId, fillId, marketId
-        const fillId = log.topics[2]; // Second indexed = fillId
-        return {
-          tradeId: log.topics[0],
-          fillId: fillId,
-          marketId: log.topics[1],
-          logIndex: log.index,
-          blockNumber: receipt.blockNumber,
-          blockHash: receipt.blockHash,
-          transactionHash: receipt.transactionHash,
-        };
-      }
-    }
-
-    return null;
+ /**
+ * Compute the TradeSettled event topic hash (keccak256 of the event signature).
+ * Returns cached result after first call.
+ */
+let _tradeSettledTopic = null;
+function getTradeSettledTopic() {
+  if (!_tradeSettledTopic) {
+    _tradeSettledTopic = keccak256(toUtf8Bytes(
+      'TradeSettled(bytes32,bytes32,bytes32,bytes32,bytes32,address,address,uint256,uint256,uint256,uint256,uint256,address)'
+    ));
   }
+  return _tradeSettledTopic;
+}
+
+/**
+ * Extract TradeSettled event from receipt.
+ *
+ * TradeSettled has 5 indexed topics: tradeId, fillId, marketId, makerOrderHash, takerOrderHash
+ * Non-indexed data: maker, taker, price, baseAmount, quoteAmount, makerFee, takerFee, feeRecipient
+ *
+ * @param {Object} receipt - Transaction receipt
+ * @returns {Object|null} Parsed TradeSettled event or null
+ */
+function extractTradeSettled(receipt) {
+  if (!receipt || !receipt.logs) return null;
+
+  const topic0 = getTradeSettledTopic();
+
+  // Try to find TradeSettled by matching the event signature topic
+  for (const log of receipt.logs) {
+    if (log.topics && log.topics[0] && log.topics[0].toLowerCase() === topic0.toLowerCase()) {
+      // TradeSettled has 5 indexed topics: tradeId, fillId, marketId, makerOrderHash, takerOrderHash
+      return {
+        tradeId: log.topics[1],
+        fillId: log.topics[2],
+        marketId: log.topics[3],
+        makerOrderHash: log.topics[4],
+        takerOrderHash: log.topics[5] || null,
+        logIndex: typeof log.index === 'number' ? log.index : (log.logIndex ? parseInt(log.logIndex, 16) : null),
+        blockNumber: typeof receipt.blockNumber === 'number' ? receipt.blockNumber : (receipt.blockNumber ? parseInt(receipt.blockNumber, 16) : null),
+        blockHash: receipt.blockHash,
+        transactionHash: receipt.transactionHash,
+      };
+    }
+  }
+
+  return null;
+}
 
   /**
    * Register a new market on MarketRegistry.
@@ -311,54 +328,64 @@ export function createSettlementAdapter(config = {}) {
       takerSignature,
     ]);
 
-    // Get next nonce
-    const nonce = await provider.getTransactionCount(wallet.address);
-
-    // Build raw transaction
     const gasPrice = parseQuai('0.0000012'); // Minimum gas price for Orchard testnet
-    const txRequest = {
-      from: wallet.address,
-      to: settlementContract.address,
-      data: txData,
-      gasLimit,
-      gasPrice,
-      nonce,
-      chainId: 15000n, // Orchard testnet
-    };
 
-    // Sign and send raw transaction (bypass access list creation)
-    const signedTx = await wallet.signTransaction(txRequest);
-    let txHash;
-    try {
-      txHash = await provider.send('eth_sendRawTransaction', [signedTx]);
-    } catch (error) {
-      // Handle "already known" - tx was sent before (e.g., after restart)
-      if (error.message && error.message.includes('already known')) {
-        // Extract txHash from the signed transaction
-        const { createHash } = await import('node:crypto');
-        txHash = '0x' + createHash('keccak256').update(Buffer.from(signedTx.slice(2), 'hex')).digest('hex');
-      } else {
-        throw error;
+    // Retry loop to handle nonce collisions (up to 3 attempts)
+    const maxRetries = 3;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      // Get fresh nonce before each attempt to avoid collisions
+      const nonce = await provider.getTransactionCount(wallet.address, 'pending');
+
+      // Build raw transaction
+      const txRequest = {
+        from: wallet.address,
+        to: settlementContract.address,
+        data: txData,
+        gasLimit,
+        gasPrice,
+        nonce,
+        chainId: 15000n, // Orchard testnet
+      };
+
+      // Sign and send raw transaction (bypass access list creation)
+      const signedTx = await wallet.signTransaction(txRequest);
+      let txHash;
+      try {
+        txHash = await provider.send('eth_sendRawTransaction', [signedTx]);
+      } catch (error) {
+        // Handle "already known" - tx was sent before (e.g., after restart)
+        if (error.message && error.message.includes('already known')) {
+          // Extract txHash from the signed transaction
+          const { createHash } = await import('node:crypto');
+          txHash = '0x' + createHash('keccak256').update(Buffer.from(signedTx.slice(2), 'hex')).digest('hex');
+        } else if (error.message && (error.message.includes('nonce') || error.message.includes('replacement'))) {
+          // Nonce too low or replacement fee too low — retry with next nonce
+          continue;
+        } else {
+          throw error;
+        }
       }
+
+      const tx = { hash: txHash };
+
+      // Wait for receipt
+      const receipt = await waitForReceipt(tx.hash);
+
+      // Extract event
+      const event = extractTradeSettled(receipt);
+
+      return {
+        txHash: tx.hash,
+        receipt,
+        event,
+        blockNumber: receipt.blockNumber,
+        blockHash: receipt.blockHash,
+        gasUsed: receipt.gasUsed.toString(),
+        explorerUrl: `https://orchard.quaiscan.io/tx/${tx.hash}`,
+      };
     }
 
-    const tx = { hash: txHash };
-
-    // Wait for receipt
-    const receipt = await waitForReceipt(tx.hash);
-
-    // Extract event
-    const event = extractTradeSettled(receipt);
-
-    return {
-      txHash: tx.hash,
-      receipt,
-      event,
-      blockNumber: receipt.blockNumber,
-      blockHash: receipt.blockHash,
-      gasUsed: receipt.gasUsed.toString(),
-      explorerUrl: `https://orchard.quaiscan.io/tx/${tx.hash}`,
-    };
+    throw new Error('Settlement failed after ' + maxRetries + ' nonce retry attempts');
   }
 
   return {

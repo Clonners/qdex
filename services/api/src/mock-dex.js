@@ -362,7 +362,7 @@ export const createMockDexState = ({
     const settlementEvent = {
       eventId,
       type: 'SETTLEMENT_CONFIRMED',
-      source: 'mock-settlement',
+      source: activeSettlementMode === 'quai_contract' ? 'on-chain-settlement' : 'mock-settlement',
       fillId: fillPacket.fillId,
       tradeId,
       orderHashes: [fillPacket.makerOrderHash, fillPacket.takerOrderHash],
@@ -372,6 +372,8 @@ export const createMockDexState = ({
       blockNumber: relayerConfirm.blockNumber ?? null,
       blockHash: relayerConfirm.blockHash ?? null,
       eventIndex: relayerConfirm.eventIndex ?? eventIndex,
+      realQuaiTransactions: activeSettlementMode === 'quai_contract',
+      fundsMoved: relayerConfirm.fundsMoved ?? (activeSettlementMode === 'quai_contract'),
       maker: fillPacket.maker,
       taker: fillPacket.taker,
       market: fillPacket.marketId,
@@ -562,11 +564,14 @@ export const createMockDexState = ({
 
       return {
         status: 'active',
-        settlementMode: 'mock',
+        settlementMode: activeSettlementMode,
         fills: all.map((fill) => ({
           fillId: fill.fillId,
           status: fill.state,
           settlementMode: fill.settlementMode,
+          settlementTx: fill.settlementTx ?? null,
+          blockNumber: fill.blockNumber ?? null,
+          explorerUrl: fill.explorerUrl ?? null,
         })),
       };
     },

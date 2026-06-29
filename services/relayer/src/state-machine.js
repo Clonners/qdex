@@ -101,6 +101,10 @@ export function createRelayerStateMachine(settlementConfig = {}) {
     adapter = createSettlementAdapter(settlementConfig);
   }
 
+  // Capture config references for use inside closures
+  const baseTokenAddress = settlementConfig.baseTokenAddress || null;
+  const quoteTokenAddress = settlementConfig.quoteTokenAddress || null;
+
   const resultEnvelope = (accepted, fillId, state, events = [], extra = {}) => ({
     accepted,
     fillId,
@@ -354,6 +358,12 @@ export function createRelayerStateMachine(settlementConfig = {}) {
           const marketIdBytes32 = marketIdMap[fp.marketId] || toBytes32(fp.marketId);
           
           const wallet = await adapter.getWallet();
+          const feeRecipientAddr = settlementConfig.privateKey ? (await adapter.getWallet()).address : '0x0000000000000000000000000000000000000000';
+          
+          // Use market-specific token addresses from config or from fillPacket
+          const baseToken = baseTokenAddress || fp.baseToken || '0x005c46f661Baef20671943f2b4c087Df3E7CEb13';
+          const quoteToken = quoteTokenAddress || fp.quoteToken || '0x002b2596EcF05C93a31ff916E8b456DF6C77c750';
+          
           const settleParams = {
             fillId: fillIdBytes32,
             marketId: marketIdBytes32,
@@ -361,26 +371,25 @@ export function createRelayerStateMachine(settlementConfig = {}) {
             takerOrderHash: fp.takerOrderHash,
             maker: fp.maker,
             taker: fp.taker,
-            baseToken: settlementConfig.baseTokenAddress || '0x0000000000000000000000000000000000000000',
-            quoteToken: settlementConfig.quoteTokenAddress || '0x0000000000000000000000000000000000000000',
+            baseToken,
+            quoteToken,
             price: fp.price,
             baseAmount: fp.amount,
             quoteAmount: String(BigInt(fp.price) * BigInt(fp.amount) / 10n ** 18n),
             makerFee: fp.makerFee,
             takerFee: fp.takerFee,
-            makerNonce: '1',
-            takerNonce: '2',
-            expiresAt: '9999999999',
-            chainId: '15000',
-            feeRecipient: settlementConfig.privateKey ? (await adapter.getWallet()).address : '0x0000000000000000000000000000000000000000',
-            nonce: String(await adapter.getProvider().getTransactionCount((await adapter.getWallet()).address)), 
-            maxFeeBps: '100',
-            makerOrderAmount: fp.amount,
-            takerOrderAmount: fp.amount,
-            makerFilledAmount: fp.amount,
-            takerFilledAmount: fp.amount,
-            makerSignature: '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
-            takerSignature: '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+            makerNonce: String(fp.makerNonce || 1),
+            takerNonce: String(fp.takerNonce || 2),
+            expiresAt: String(fp.expiresAt || 9999999999),
+            chainId: String(fp.chainId || 15000),
+            feeRecipient: feeRecipientAddr,
+            maxFeeBps: String(fp.maxFeeBps || 100),
+            makerOrderAmount: fp.makerOrderAmount || fp.amount,
+            takerOrderAmount: fp.takerOrderAmount || fp.amount,
+            makerFilledAmount: fp.makerFilledAmount || fp.amount,
+            takerFilledAmount: fp.takerFilledAmount || fp.amount,
+            makerSignature: fp.makerSignature || '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+            takerSignature: fp.takerSignature || '0x0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
           };
 
           const settlePromise = adapter.settle(settleParams);

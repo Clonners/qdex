@@ -1,8 +1,11 @@
 import { createHash } from 'node:crypto';
+import { WebSocketServer, WebSocket } from 'ws';
 
 import { createStreamSnapshot } from './streams.js';
 
 export const STREAM_WEBSOCKET_PATH = '/v1/ws';
+
+// ---------- Legacy raw-socket helpers (kept for backward compat) ----------
 
 const WEBSOCKET_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 const MAX_CONTROL_BODY_BYTES = 1_024;
@@ -73,94 +76,315 @@ const snapshotMessage = ({ channel, state, streamEvent }) => {
   };
 };
 
+/**
+ * Legacy raw-socket WebSocket upgrade handler.
+ * Handles any upgrade requests that ws does not claim (non-/v1/ws paths).
+ */
 export const attachStreamWebSocketUpgrade = (server, { state }) => {
   server.on('upgrade', (request, socket) => {
-    socket.on('error', () => {});
+    // If ws already handled this (socket destroyed), skip
+    if (socket.destroyed) return;
 
     try {
       const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
-      if (url.pathname !== STREAM_WEBSOCKET_PATH) {
-        rejectUpgrade(socket, 404, {
-          error: 'websocket_route_not_found',
-          message: `Use ${STREAM_WEBSOCKET_PATH}?channel=<stream-channel> for local MVP stream snapshots.`,
-        });
+      if (url.pathname === STREAM_WEBSOCKET_PATH) {
+        // ws library should handle this; reject if it didn't
+        socket.destroy();
         return;
       }
 
-      const channel = url.searchParams.get('channel');
-      if (channel === null || channel.length === 0) {
-        rejectUpgrade(socket, 400, {
-          error: 'missing_stream_channel',
-          message: 'WebSocket stream transport requires a channel query parameter.',
-        });
-        return;
-      }
-
-      const key = request.headers['sec-websocket-key'];
-      if (typeof key !== 'string' || request.headers['sec-websocket-version'] !== '13') {
-        rejectUpgrade(socket, 400, {
-          error: 'invalid_websocket_upgrade',
-          message: 'Expected an RFC 6455 WebSocket upgrade with Sec-WebSocket-Version 13.',
-        });
-        return;
-      }
-
-      socket.write([
-        'HTTP/1.1 101 Switching Protocols',
-        'Upgrade: websocket',
-        'Connection: Upgrade',
-        `Sec-WebSocket-Accept: ${websocketAccept(key)}`,
-        '',
-        '',
-      ].join('\r\n'));
-
-      socket.write(encodeTextFrame(JSON.stringify(snapshotMessage({ channel, state }))));
-
-      let unsubscribe = () => {};
-      const cleanup = () => {
-        unsubscribe();
-        unsubscribe = () => {};
-      };
-
-      if (typeof state.subscribeStreamUpdates === 'function') {
-        unsubscribe = state.subscribeStreamUpdates((streamEvent) => {
-          if (!streamEvent.channels.includes(channel) || socket.destroyed) {
-            return;
-          }
-
-          try {
-            socket.write(encodeTextFrame(JSON.stringify(snapshotMessage({ channel, state, streamEvent }))));
-          } catch {
-            cleanup();
-          }
-        });
-      }
-
-      socket.on('close', cleanup);
-      socket.on('end', cleanup);
-      socket.on('error', cleanup);
-
-      socket.on('data', (chunk) => {
-        if (chunk.length === 0) {
-          return;
-        }
-
-        const opcode = chunk[0] & 0x0f;
-        if (opcode === 0x08) {
-          cleanup();
-          socket.write(Buffer.from([0x88, 0x00]));
-          socket.end();
-        }
+      rejectUpgrade(socket, 404, {
+        error: 'websocket_route_not_found',
+        message: `Use ${STREAM_WEBSOCKET_PATH}?channel=<stream-channel> for local MVP stream snapshots.`,
       });
-    } catch (error) {
+    } catch {
       if (!socket.destroyed) {
-        rejectUpgrade(socket, 500, {
-          error: 'websocket_internal_error',
-          message: error instanceof Error ? error.message : 'Unknown WebSocket transport error.',
-        });
+        socket.destroy();
       }
     }
   });
 
   return server;
+};
+
+// ---------- ws-based WebSocket server ----------
+
+/**
+ * Attach a ws-powered WebSocket server to the given HTTP server.
+ * Listens on /v1/ws and supports:
+ *   - Query-string channel subscriptions: ?channel=market.WQUAI-WQI.depth
+ *   - JSON subscribe/unsubscribe messages (multi-channel)
+ *   - Polls mock-dex for data updates every 2s and pushes changes
+ */
+export const attachWebSocketServer = (httpServer, { state }) => {
+  const wss = new WebSocketServer({
+    noServer: true,
+  });
+
+  // Map of ws connection -> Set of channel names
+  const connections = new WeakMap();
+
+  // Map of channel -> Set of ws connections
+  const channelSubscribers = new Map();
+
+  // Track previous polled state to detect changes
+  let previousSnapshots = new Map();
+
+  /**
+   * Handle WebSocket upgrade request from the HTTP server.
+   */
+  httpServer.on('upgrade', (request, socket, head) => {
+    try {
+      const url = new URL(request.url ?? '/', `http://${request.headers.host ?? 'localhost'}`);
+
+      if (url.pathname !== STREAM_WEBSOCKET_PATH) {
+        // Let the raw handler deal with non-ws paths
+        return;
+      }
+
+      const channel = url.searchParams.get('channel');
+
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request, channel);
+      });
+    } catch {
+      if (!socket.destroyed) {
+        socket.destroy();
+      }
+    }
+  });
+
+  /**
+   * Subscribe a client to a channel and send initial snapshot.
+   */
+  const subscribeClient = (ws, channel) => {
+    const clientChannels = connections.get(ws) ?? new Set();
+    clientChannels.add(channel);
+    connections.set(ws, clientChannels);
+
+    if (!channelSubscribers.has(channel)) {
+      channelSubscribers.set(channel, new Set());
+    }
+    channelSubscribers.get(channel).add(ws);
+
+    // Send initial snapshot
+    const message = snapshotMessage({ channel, state });
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  };
+
+  /**
+   * Unsubscribe a client from a channel.
+   */
+  const unsubscribeClient = (ws, channel) => {
+    const clientChannels = connections.get(ws);
+    if (clientChannels) {
+      clientChannels.delete(channel);
+    }
+    const subs = channelSubscribers.get(channel);
+    if (subs) {
+      subs.delete(ws);
+    }
+  };
+
+  /**
+   * Send a JSON message to a specific client.
+   */
+  const sendToClient = (ws, message) => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  };
+
+  /**
+   * Broadcast a snapshot to all subscribers of a channel.
+   */
+  const broadcastToChannel = (channel, message) => {
+    const subs = channelSubscribers.get(channel);
+    if (!subs) return;
+    for (const ws of subs) {
+      sendToClient(ws, message);
+    }
+  };
+
+  /**
+   * Compute a simple hash of state data to detect changes.
+   */
+  const dataHash = (data) => {
+    if (!data) return 'empty';
+    return createHash('md5').update(JSON.stringify(data)).digest('hex');
+  };
+
+  /**
+   * Get stream snapshot data for a channel.
+   */
+  const getSnapshotForChannel = (channel) => {
+    try {
+      const snap = createStreamSnapshot({ channel, state });
+      if (snap.error !== undefined) return null;
+      return snap;
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Poll mock-dex for data changes and broadcast to subscribed clients.
+   */
+  const pollForChanges = () => {
+    const channelsToPoll = [
+      'market.WQUAI-WQI.depth',
+      'market.WQUAI-WQI.trades',
+      'global.tickers',
+      'balances',
+    ];
+
+    for (const channel of channelsToPoll) {
+      const subs = channelSubscribers.get(channel);
+      if (!subs || subs.size === 0) continue;
+
+      const currentSnapshot = getSnapshotForChannel(channel);
+      const currentHash = dataHash(currentSnapshot?.data);
+      const prevHash = previousSnapshots.get(channel);
+
+      if (currentHash !== prevHash && currentSnapshot) {
+        previousSnapshots.set(channel, currentHash);
+
+        const message = snapshotMessage({
+          channel,
+          state,
+          streamEvent: {
+            reason: 'polling_update',
+            marketId: 'WQUAI-WQI',
+            channels: [channel],
+          },
+        });
+
+        broadcastToChannel(channel, message);
+      }
+    }
+  };
+
+  /**
+   * Handle new WebSocket connection.
+   */
+  wss.on('connection', (ws, request, initialChannel) => {
+    const clientChannels = new Set();
+    connections.set(ws, clientChannels);
+
+    // Handle initial channel from query string
+    if (initialChannel) {
+      subscribeClient(ws, initialChannel);
+    }
+
+    // Handle incoming JSON messages
+    ws.on('message', (data) => {
+      let message;
+      try {
+        message = JSON.parse(data.toString());
+      } catch {
+        sendToClient(ws, {
+          type: 'error',
+          transport: 'websocket',
+          error: 'invalid_json',
+          message: 'Expected valid JSON message.',
+        });
+        return;
+      }
+
+      if (message.type === 'subscribe' && message.channel) {
+        if (message.channels && Array.isArray(message.channels)) {
+          for (const ch of message.channels) {
+            subscribeClient(ws, ch);
+          }
+        } else {
+          subscribeClient(ws, message.channel);
+        }
+      } else if (message.type === 'unsubscribe' && message.channel) {
+        if (message.channels && Array.isArray(message.channels)) {
+          for (const ch of message.channels) {
+            unsubscribeClient(ws, ch);
+          }
+        } else {
+          unsubscribeClient(ws, message.channel);
+        }
+      } else {
+        sendToClient(ws, {
+          type: 'error',
+          transport: 'websocket',
+          error: 'unknown_message_type',
+          message: `Unsupported message type: "${message.type}". Use "subscribe" or "unsubscribe".`,
+        });
+      }
+    });
+
+    // Handle client disconnect
+    ws.on('close', () => {
+      const channels = connections.get(ws);
+      if (channels) {
+        for (const channel of channels) {
+          const subs = channelSubscribers.get(channel);
+          if (subs) {
+            subs.delete(ws);
+          }
+        }
+      }
+      connections.delete(ws);
+    });
+
+    ws.on('error', () => {
+      // Cleanup on error
+      const channels = connections.get(ws);
+      if (channels) {
+        for (const channel of channels) {
+          const subs = channelSubscribers.get(channel);
+          if (subs) {
+            subs.delete(ws);
+          }
+        }
+      }
+      connections.delete(ws);
+    });
+  });
+
+  // Wire up event-driven stream updates from mock-dex (subscribeStreamUpdates)
+  let unsubscribeStream = () => {};
+  if (typeof state.subscribeStreamUpdates === 'function') {
+    unsubscribeStream = state.subscribeStreamUpdates((streamEvent) => {
+      const channels = streamEvent.channels || [];
+      for (const channel of channels) {
+        const subs = channelSubscribers.get(channel);
+        if (!subs || subs.size === 0) continue;
+
+        const snap = getSnapshotForChannel(channel);
+        if (!snap) continue;
+
+        const currentHash = dataHash(snap.data);
+        previousSnapshots.set(channel, currentHash);
+
+        const message = snapshotMessage({
+          channel,
+          state,
+          streamEvent,
+        });
+
+        broadcastToChannel(channel, message);
+      }
+    });
+  }
+
+  // Start polling for data updates every 2 seconds
+  const pollInterval = setInterval(pollForChanges, 2000);
+  pollInterval.unref(); // Don't keep process alive
+
+  // Return cleanup function
+  return {
+    wss,
+    cleanup: () => {
+      clearInterval(pollInterval);
+      unsubscribeStream();
+      wss.close();
+    },
+  };
 };
