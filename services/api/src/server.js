@@ -106,6 +106,10 @@ const settlementConfig = {
   baseTokenAddress: '0x005c46f661baef20671943f2b4c087df3e7ceb13', // WQUAI on Orchard
   quoteTokenAddress: '0x002b2596ecf05c93a31ff916e8b456df6c77c750', // WQI on Orchard
 };
+console.log('[qdex] Settlement config:', {
+  privateKey: settlementConfig.privateKey ? 'SET' : 'MISSING',
+  settlementAddress: settlementConfig.settlementAddress ? 'SET' : 'MISSING',
+});
 
 // Create vault adapter for real on-chain vault operations
 const vaultAdapter = createVaultAdapter({

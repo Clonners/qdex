@@ -50,7 +50,7 @@ const createFeeScheduleProjection = () => ({
   takerFeeBps: feeState.takerFeeBps,
   maxFeeBps: feeState.maxFeeBps,
   feeRecipient: null,
-  settlementMode: 'mock',
+  settlementMode: process.env.SETTLEMENT_MODE || "quai_contract",
   settlementTx: null,
   blockNumber: null,
   blockHash: null,
@@ -61,7 +61,7 @@ const createFeeScheduleProjection = () => ({
 export const createFeeScheduleResponse = () => ({
   feeSchedules: [createFeeScheduleProjection()],
   source: FEEMANAGER_POLICY_PROJECTION_SOURCE,
-  status: 'local-only-not-deployed',
+  status: process.env.SETTLEMENT_MODE === "quai_contract" ? "quai-contract-deployed" : "local-only",
   custody: 'non-custodial-fee-policy',
   permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
   hardMaxFeeBps: LOCAL_MAX_FEE_BPS,
