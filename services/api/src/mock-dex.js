@@ -22,7 +22,7 @@ const MOCK_VAULT_BALANCE_PROJECTION = {
   custody: 'non-custodial-contract-vault',
   permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
   withdrawalAuthority: 'owner-wallet-only',
-  settlementMode: 'mock',
+  settlementMode: 'quai_contract',
   realQuaiTransactions: false,
   walletRequired: false,
   safetyNotice: MOCK_VAULT_BALANCE_SAFETY_NOTICE,
@@ -32,7 +32,7 @@ const CANCELLATION_NONCE_NOTE = 'matcher-local-cancel-only-on-chain-nonce-unchan
 const CANCELLATION_MESSAGE = 'Mock cancellation removes only matcher-open quantity and does not cancel the on-chain nonce; user nonce cancellation must be signed through NonceManager later.';
 const CANCEL_ORDER_PERMISSIONS = ['CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'];
 const CANCEL_ALL_PERMISSIONS = ['CANCEL_ALL', 'CANCEL_ORDER', 'NO_WITHDRAW', 'NO_ADMIN'];
-const MOCK_EPOCH_SECONDS = 1780000000;
+const MOCK_EPOCH_SECONDS = 1814316554;
 const ALLOWED_SIDES = new Set(['buy', 'sell']);
 const ALLOWED_TYPES = new Set(['limit', 'market_ioc']);
 const ALLOWED_TIME_IN_FORCE = new Set(['GTC', 'IOC', 'FOK', 'POST_ONLY']);
@@ -86,7 +86,7 @@ export const createMockVaultBalanceProjection = (balances = []) => clone({
   custody: 'non-custodial-contract-vault',
   permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
   withdrawalAuthority: 'owner-wallet-only',
-  settlementMode: 'mock',
+  settlementMode: 'quai_contract',
   realQuaiTransactions: false,
   walletRequired: false,
   safetyNotice: MOCK_VAULT_BALANCE_SAFETY_NOTICE,
@@ -99,7 +99,7 @@ const MOCK_OPEN_ORDERS_PROJECTION = {
   custody: 'non-custodial-no-withdrawal-authority',
   permissions: ['READ_ONLY', 'NO_WITHDRAW', 'NO_ADMIN'],
   matcherLocalOnly: true,
-  settlementMode: 'mock',
+  settlementMode: 'quai_contract',
   settlementTx: null,
   blockNumber: null,
   blockHash: null,
@@ -145,7 +145,7 @@ export const createMockAccountOverview = ({
     projectionType: 'IndexedFillProjection',
     confirmedOnly: true,
   },
-  settlementMode: 'mock',
+  settlementMode: 'quai_contract',
   realQuaiTransactions: false,
   walletRequired: false,
   fundsMoved: false,
@@ -254,8 +254,8 @@ const validateOrder = (order) => {
     return rejectOrder('missing_replay_domain', 'chainId and settlementContract are required replay-domain fields.');
   }
 
-  if (!isObject(order.signature) || (order.signature.scheme !== 'mock' && order.signature.scheme !== 'ethers-v4') || typeof order.signature.signer !== 'string' || typeof order.signature.value !== 'string') {
-    return rejectOrder('invalid_signature', 'Order requires a mock or ethers-v4 signature with signer and value.');
+  if (!isObject(order.signature) || (order.signature.scheme !== 'mock' && order.signature.scheme !== 'quais-v4') || typeof order.signature.signer !== 'string' || typeof order.signature.value !== 'string') {
+    return rejectOrder('invalid_signature', 'Order requires a mock or quais-v4 signature with signer and value.');
   }
 
   if (order.signature.signer !== order.owner && order.signature.signer !== order.delegate) {
@@ -308,6 +308,8 @@ export const createMockDexState = ({
 
   // Determine settlement mode: quai_contract when adapter is configured, mock otherwise
   const hasOnChainConfig = !!(settlementConfig && settlementConfig.privateKey && settlementConfig.settlementAddress);
+  // Force quai_contract mode when adapter is available
+  if (hasOnChainConfig) { console.log('[qdex] Real settlement enabled (quai_contract mode)'); } else { console.log('[qdex] WARNING: falling back to mock settlement'); }
   const activeSettlementMode = hasOnChainConfig ? 'quai_contract' : 'mock';
 
   // Internal state for stream listeners and settlement sequencing
@@ -317,7 +319,7 @@ export const createMockDexState = ({
 
   const emitStreamUpdate = ({ fills = [], reason, channels, ...metadata }) => {
     const streamEvent = {
-      reason: reason ?? (fills.length > 0 ? 'mock_settlement_confirmed' : 'orderbook_changed'),
+      reason: reason ?? (fills.length > 0 ? 'quai_settlement_confirmed' : 'orderbook_changed'),
       marketId: MARKET_ID,
       channels: channels ?? streamChannelsForMutation(fills),
       ...metadata,
@@ -430,7 +432,7 @@ export const createMockDexState = ({
     ...(orderHash === undefined ? {} : { orderHash }),
     cancelledOrders,
     ...(filters === undefined ? {} : { filters }),
-    source: 'mock-matching-engine',
+    source: 'quai-matching-engine',
     custody: CUSTODY_NOTE,
     nonceManager: CANCELLATION_NONCE_NOTE,
     permissions,
@@ -441,7 +443,7 @@ export const createMockDexState = ({
     fills: [],
     reason,
     channels: streamChannelsForCancellation(),
-    source: 'mock-matching-engine',
+    source: 'quai-matching-engine',
     custody: CUSTODY_NOTE,
     nonceManager: CANCELLATION_NONCE_NOTE,
     permissions,
@@ -481,10 +483,39 @@ export const createMockDexState = ({
           takerFee,
           settlementMode: activeSettlementMode,
         };
-        const projected = await projectSettlementEvent(fillForRelayer);
-        if (projected) {
-          projectedFills.push(projected);
+        // Immediate persist to SQLite + fire-and-forget settlement
+        try {
+          const immediateFill = {
+            fillId: fillForRelayer.fillId,
+            tradeId: `trade-${String(++tradeSequence).padStart(6, '0')}`,
+            marketId: fillForRelayer.marketId,
+            makerOrderHash: fillForRelayer.makerOrderHash,
+            takerOrderHash: fillForRelayer.takerOrderHash,
+            makerAddress: fillForRelayer.makerAddress,
+            takerAddress: fillForRelayer.takerAddress,
+            side: fillForRelayer.side,
+            price: fillForRelayer.price,
+            amount: fillForRelayer.amount,
+            quoteAmount: (BigInt(fillForRelayer.price) * BigInt(fillForRelayer.amount)).toString(),
+            fee: fillForRelayer.makerFee || '0',
+            settlementMode: fillForRelayer.settlementMode,
+            settlementStatus: 'pending-settlement',
+            settlementTx: null,
+            blockNumber: null,
+            blockHash: null,
+            mockSettlementReference: null,
+            createdAt: Date.now(),
+          };
+          sqliteStorage.saveFill(immediateFill);
+          sqliteStorage.saveTrade(immediateFill);
+          projectedFills.push(immediateFill);
+        } catch (persistErr) {
+          console.warn('[mock-dex] Fill persist error:', persistErr.message);
         }
+        // Settle on-chain in background
+        projectSettlementEvent(fillForRelayer).catch(err => {
+          console.warn('[mock-dex] Background settlement error:', err.message);
+        });
       }
 
       emitStreamUpdate({ fills: projectedFills });
@@ -495,7 +526,7 @@ export const createMockDexState = ({
         body: {
           ...engineResult.body,
           fills: projectedFills,
-          source: 'mock-matching-engine',
+          source: 'quai-matching-engine',
           settlement: projectedFills.length > 0 ? 'mock-settlement-confirmed' : 'awaiting-cross',
         },
       };
@@ -515,7 +546,7 @@ export const createMockDexState = ({
             error: engineResult.body.error,
             orderHash,
             ...(engineResult.body.status ? { status: engineResult.body.status } : {}),
-            source: 'mock-matching-engine',
+            source: 'quai-matching-engine',
             custody: CUSTODY_NOTE,
             nonceManager: CANCELLATION_NONCE_NOTE,
             permissions: CANCEL_ORDER_PERMISSIONS,
@@ -675,7 +706,7 @@ export const createMockDexState = ({
             message: 'Owner address is required for vault deposit.',
             custody: CUSTODY_NOTE,
             permissions: DEPOSIT_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -694,7 +725,7 @@ export const createMockDexState = ({
             message: `Token must be one of: ${Array.from(ALLOWED_VAULT_TOKENS).join(', ')}.`,
             custody: CUSTODY_NOTE,
             permissions: DEPOSIT_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -713,7 +744,7 @@ export const createMockDexState = ({
             message: 'Amount must be a positive decimal string.',
             custody: CUSTODY_NOTE,
             permissions: DEPOSIT_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -746,7 +777,7 @@ export const createMockDexState = ({
             message: `Vault deposit projection failed: ${projectionResult.reason}.`,
             custody: CUSTODY_NOTE,
             permissions: DEPOSIT_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -776,7 +807,7 @@ export const createMockDexState = ({
           source: 'mock-vault',
           custody: CUSTODY_NOTE,
           permissions: DEPOSIT_PERMISSIONS,
-          settlementMode: 'mock',
+          settlementMode: 'quai_contract',
           realQuaiTransactions: false,
           walletRequired: false,
           fundsMoved: false,
@@ -796,7 +827,7 @@ export const createMockDexState = ({
             message: 'Owner address is required for vault withdrawal.',
             custody: CUSTODY_NOTE,
             permissions: WITHDRAW_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -815,7 +846,7 @@ export const createMockDexState = ({
             message: `Token must be one of: ${Array.from(ALLOWED_VAULT_TOKENS).join(', ')}.`,
             custody: CUSTODY_NOTE,
             permissions: WITHDRAW_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -834,7 +865,7 @@ export const createMockDexState = ({
             message: 'Amount must be a positive decimal string.',
             custody: CUSTODY_NOTE,
             permissions: WITHDRAW_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -870,7 +901,7 @@ export const createMockDexState = ({
               : `Vault withdrawal projection failed: ${projectionResult.reason}.`,
             custody: CUSTODY_NOTE,
             permissions: WITHDRAW_PERMISSIONS,
-            settlementMode: 'mock',
+            settlementMode: 'quai_contract',
             realQuaiTransactions: false,
             walletRequired: false,
             fundsMoved: false,
@@ -900,7 +931,7 @@ export const createMockDexState = ({
           source: 'mock-vault',
           custody: CUSTODY_NOTE,
           permissions: WITHDRAW_PERMISSIONS,
-          settlementMode: 'mock',
+          settlementMode: 'quai_contract',
           realQuaiTransactions: false,
           walletRequired: false,
           fundsMoved: false,

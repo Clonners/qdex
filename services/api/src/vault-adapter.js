@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { Interface, JsonRpcProvider, Wallet, Contract, parseUnits } from 'quais';
 
 const VAULT_ABI = [
   'function deposit(address token, uint256 amount)',
@@ -57,7 +57,7 @@ function encodeQuaiAddress(addr) {
   return '0x00' + a;
 }
 
-// For ethers.js Interface encoding — addresses need standard 40-char format
+// For quaisEthers.js Interface encoding — addresses need standard 40-char format
 function toEthAddress(addr) {
   let a = addr.toLowerCase();
   if (a.startsWith('0x')) a = a.slice(2);
@@ -78,7 +78,7 @@ const VAULT_SELECTORS = {
 };
 
 function buildTxData(contractAddress, abi, functionName, params, overrides = {}) {
-  const iface = new ethers.Interface(abi);
+  const iface = new Interface(abi);
   const data = iface.encodeFunctionData(functionName, params);
   return {
     to: contractAddress,
@@ -98,8 +98,8 @@ export const createVaultAdapter = ({ rpcUrl, privateKey, vaultAddress, tokens = 
 
   if (privateKey) {
     try {
-      provider = new ethers.JsonRpcProvider(rpcUrl, { name: 'quai-orchard', chainId: 15000 });
-      wallet = new ethers.Wallet(privateKey, provider);
+      provider = new JsonRpcProvider(rpcUrl, { name: 'quai-orchard', chainId: 15000 });
+      wallet = new Wallet(privateKey, provider);
     } catch (e) {
       console.warn('[vault-adapter] Failed to create wallet:', e.message);
     }
@@ -175,9 +175,9 @@ export const createVaultAdapter = ({ rpcUrl, privateKey, vaultAddress, tokens = 
       const ethVault = toEthAddress(vaultAddress);
       const quaiVault = encodeQuaiAddress(vaultAddress);
       return {
-        tx: buildTxData(tokenAddress, ERC20_ABI, 'approve', [ethVault, ethers.parseUnits(amount.toString(), 18).toString()], { gasLimit: '0xc350' }),
+        tx: buildTxData(tokenAddress, ERC20_ABI, 'approve', [ethVault, parseUnits(amount.toString(), 18).toString()], { gasLimit: '0xc350' }),
         token: tokenAddress, spender: vaultAddress,
-        amount: ethers.parseUnits(amount.toString(), 18).toString(),
+        amount: parseUnits(amount.toString(), 18).toString(),
         source: 'vault-adapter',
       };
     },
@@ -185,8 +185,8 @@ export const createVaultAdapter = ({ rpcUrl, privateKey, vaultAddress, tokens = 
     buildDepositTx(tokenAddress, amount) {
       const ethToken = toEthAddress(tokenAddress);
       return {
-        tx: buildTxData(vaultAddress, VAULT_ABI, 'deposit', [ethToken, ethers.parseUnits(amount.toString(), 18).toString()], { gasLimit: '0x222e0' }),
-        token: tokenAddress, amount: ethers.parseUnits(amount.toString(), 18).toString(),
+        tx: buildTxData(vaultAddress, VAULT_ABI, 'deposit', [ethToken, parseUnits(amount.toString(), 18).toString()], { gasLimit: '0x222e0' }),
+        token: tokenAddress, amount: parseUnits(amount.toString(), 18).toString(),
         source: 'vault-adapter',
       };
     },
@@ -194,18 +194,18 @@ export const createVaultAdapter = ({ rpcUrl, privateKey, vaultAddress, tokens = 
     buildWithdrawTx(tokenAddress, amount) {
       const ethToken = toEthAddress(tokenAddress);
       return {
-        tx: buildTxData(vaultAddress, VAULT_ABI, 'withdraw', [ethToken, ethers.parseUnits(amount.toString(), 18).toString()], { gasLimit: '0x222e0' }),
-        token: tokenAddress, amount: ethers.parseUnits(amount.toString(), 18).toString(),
+        tx: buildTxData(vaultAddress, VAULT_ABI, 'withdraw', [ethToken, parseUnits(amount.toString(), 18).toString()], { gasLimit: '0x222e0' }),
+        token: tokenAddress, amount: parseUnits(amount.toString(), 18).toString(),
         source: 'vault-adapter',
       };
     },
 
     async lockForSettlement(user, tokenAddress, amount, orderHash) {
       if (!wallet) throw new Error('Vault adapter not configured for signing');
-      const vaultContract = new ethers.Contract(vaultAddress, VAULT_ABI, wallet);
+      const vaultContract = new Contract(vaultAddress, VAULT_ABI, wallet);
       const tx = await vaultContract.lockForSettlement(
         encodeQuaiAddress(user), encodeQuaiAddress(tokenAddress),
-        ethers.parseUnits(amount.toString(), 18), orderHash
+        parseUnits(amount.toString(), 18), orderHash
       );
       return { txHash: tx.hash, source: 'vault-adapter' };
     },
